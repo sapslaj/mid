@@ -27,6 +27,8 @@ func (m *module) Construct(ctx *pulumi.Context, name, typ, urn string) (r pulumi
 		r = &Package{}
 	case "mid:resource:Service":
 		r = &Service{}
+	case "mid:resource:SystemdService":
+		r = &SystemdService{}
 	default:
 		return nil, fmt.Errorf("unknown resource type: %s", typ)
 	}

@@ -21,6 +21,7 @@
     "resource/index.ts",
     "resource/package.ts",
     "resource/service.ts",
+    "resource/systemdService.ts",
     "types/index.ts",
     "types/input.ts",
     "types/output.ts",

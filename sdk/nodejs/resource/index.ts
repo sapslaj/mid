@@ -20,6 +20,11 @@ export type Service = import("./service").Service;
 export const Service: typeof import("./service").Service = null as any;
 utilities.lazyLoad(exports, ["Service"], () => require("./service"));
 
+export { SystemdServiceArgs } from "./systemdService";
+export type SystemdService = import("./systemdService").SystemdService;
+export const SystemdService: typeof import("./systemdService").SystemdService = null as any;
+utilities.lazyLoad(exports, ["SystemdService"], () => require("./systemdService"));
+
 const _module = {
   version: utilities.getVersion(),
   construct: (name: string, type: string, urn: string): pulumi.Resource => {
@@ -30,6 +35,8 @@ const _module = {
         return new Package(name, <any> undefined, { urn });
       case "mid:resource:Service":
         return new Service(name, <any> undefined, { urn });
+      case "mid:resource:SystemdService":
+        return new SystemdService(name, <any> undefined, { urn });
       default:
         throw new Error(`unknown resource type ${type}`);
     }
