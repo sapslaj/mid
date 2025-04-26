@@ -1,7 +1,8 @@
 import * as pulumi from "@pulumi/pulumi";
-import * as mid from "@pulumi/mid";
+import * as ansible from "@sapslaj/pulumi-provider-ansible";
 
-const myRandomResource = new mid.Random("myRandomResource", {length: 24});
-export const output = {
-    value: myRandomResource.result,
-};
+const vim = new ansible.resource.Package("vim", {});
+const emacs = new ansible.resource.Package("emacs", {
+    name: "emacs",
+    state: "absent",
+});

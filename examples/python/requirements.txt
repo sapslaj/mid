@@ -1,2 +1,2 @@
+pulumi-ansible==0.0.1-alpha.1739670166+d5117777
 pulumi>=3.0.0,<4.0.0
-pulumi-mid==1.1.173

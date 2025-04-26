@@ -1,7 +1,7 @@
 import pulumi
-import pulumi_mid as mid
+import pulumi_ansible as ansible
 
-my_random_resource = mid.Random("myRandomResource", length=24)
-pulumi.export("output", {
-    "value": my_random_resource.result,
-})
+vim = ansible.resource.Package("vim")
+emacs = ansible.resource.Package("emacs",
+    name="emacs",
+    state="absent")

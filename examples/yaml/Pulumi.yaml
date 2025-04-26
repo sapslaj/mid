@@ -6,15 +6,10 @@ plugins:
       path: ../../bin
 
 resources:
-  myRandomResource:
-    type: mid:Random
+  vim:
+    type: mid:resource:Package
+  emacs:
+    type: mid:resource:Package
     properties:
-      length: 24
-  myRandomComponent:
-    type: mid:RandomComponent
-    properties:
-      length: 24
-
-outputs:
-  output:
-    value: ${myRandomResource.result}
+      name: emacs
+      state: absent
