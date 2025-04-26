@@ -17,8 +17,13 @@
         "config/vars.ts",
         "index.ts",
         "provider.ts",
-        "random.ts",
-        "randomComponent.ts",
+        "resource/file.ts",
+        "resource/index.ts",
+        "resource/package.ts",
+        "resource/service.ts",
+        "types/index.ts",
+        "types/input.ts",
+        "types/output.ts",
         "utilities.ts"
     ]
 }
