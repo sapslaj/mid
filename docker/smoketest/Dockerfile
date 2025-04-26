@@ -5,6 +5,7 @@ RUN set -eux && \
   apt-get update && \
   apt-get install -y --no-install-recommends \
     openssh-server \
+    python3 \
   && \
   sed -i 's/^#\(PermitRootLogin\) .*/\1 yes/' /etc/ssh/sshd_config && \
   sed -i 's/^\(UsePAM yes\)/# \1/' /etc/ssh/sshd_config && \
