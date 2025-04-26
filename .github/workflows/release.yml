@@ -64,6 +64,7 @@ jobs:
           tools: all
       - name: Build
         run: |
+          git config --global url.ssh://git@github.com/.insteadOf https://github.com/
           just provider_version=${{ inputs.version }} build sdk examples
           just tidy
           just fmt
