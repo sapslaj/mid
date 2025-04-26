@@ -14,9 +14,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: docker://ghcr.io/pulumi/devcontainer:latest
-      options: --user root
     permissions:
       contents: read
       packages: read
