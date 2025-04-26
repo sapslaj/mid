@@ -72,8 +72,9 @@ jobs:
           create_branch: false
       - name: Download builds
         uses: actions/download-artifact@v4
-        path: dist/
-        pattern: pulumi-resource-mid-*
+        with:
+          path: dist/
+          pattern: pulumi-resource-mid-*
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
