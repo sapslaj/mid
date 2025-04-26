@@ -24,12 +24,8 @@ jobs:
         id: git
         with:
           submodules: "recursive"
-      - name: Unshallow clone for tags
-        id: tags
-        run: |
-          sudo chown -R $(whoami) /__w/mid/mid
-          git config --global --add safe.directory /__w/mid/mid
-          git fetch --prune --unshallow --tags
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
