@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-	mid "github.com/sapslaj/mid/sdk/go/ansible"
-	"github.com/sapslaj/mid/sdk/go/ansible/resource"
-	"github.com/sapslaj/mid/sdk/go/ansible/types"
+	"github.com/sapslaj/mid/sdk/go/mid"
+	"github.com/sapslaj/mid/sdk/go/mid/resource"
+	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 func main() {

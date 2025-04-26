@@ -38,7 +38,7 @@ func Provider() p.Provider {
 				"go": map[string]any{
 					"respectSchemaVersion":           true,
 					"generateResourceContainerTypes": true,
-					"importBasePath":                 "github.com/sapslaj/mid/sdk/go/ansible",
+					"importBasePath":                 "github.com/sapslaj/mid/sdk/go/mid",
 				},
 				"nodejs": map[string]any{
 					"respectSchemaVersion": true,

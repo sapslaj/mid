@@ -6,7 +6,7 @@ package config
 import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
-	"github.com/sapslaj/mid/sdk/go/ansible/internal"
+	"github.com/sapslaj/mid/sdk/go/mid/internal"
 )
 
 var _ = internal.GetEnvOrDefault
