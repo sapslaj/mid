@@ -4,6 +4,9 @@ on:
     tags:
       - v*.*.*
       - '!v*.*.*-**'
+permissions:
+  contents: write
+  packages: write
 env:
   PROVIDER: mid
   # THIS GITHUB_TOKEN IS A REQUIREMENT TO BE ABLE TO WRITE TO GH RELEASES
