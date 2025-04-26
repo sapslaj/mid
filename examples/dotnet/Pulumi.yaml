@@ -1,0 +1,6 @@
+name: provider-mid
+runtime: dotnet
+plugins:
+  providers:
+    - name: mid
+      path: ../../bin

@@ -1,0 +1,20 @@
+name: provider-mid
+runtime: yaml
+plugins:
+  providers:
+    - name: mid
+      path: ../../bin
+
+resources:
+  myRandomResource:
+    type: mid:Random
+    properties:
+      length: 24
+  myRandomComponent:
+    type: mid:RandomComponent
+    properties:
+      length: 24
+
+outputs:
+  output:
+    value: ${myRandomResource.result}

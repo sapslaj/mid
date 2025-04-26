@@ -1,0 +1,6 @@
+name: provider-mid
+runtime: go
+plugins:
+  providers:
+    - name: mid
+      path: ../../bin
