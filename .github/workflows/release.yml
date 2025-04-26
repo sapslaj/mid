@@ -41,12 +41,14 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: "0"
-        run: go build -o "./bin/pulumi-resource-mid-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}" -ldflags "-X github.com/sapslaj/mid/provider.Version=$PROVIDER_VERSION" ./provider/cmd/pulumi-resource-mid
+        run: |
+          go build -o ./pulumi-resource-mid -ldflags "-X github.com/sapslaj/mid/provider.Version=$PROVIDER_VERSION" ./provider/cmd/pulumi-resource-mid
+          tar zcf pulumi-resource-mid-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz pulumi-resource-mid README.md LICENSE
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: pulumi-resource-mid-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ./bin/pulumi-resource-mid-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: pulumi-resource-mid-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
+          path: ./pulumi-resource-mid-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz
           retention-days: 1
 
   release:
