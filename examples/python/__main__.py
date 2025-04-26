@@ -1,7 +1,14 @@
 import pulumi
-import pulumi_ansible as ansible
+import pulumi_mid as mid
 
-vim = ansible.resource.Package("vim")
-emacs = ansible.resource.Package("emacs",
+provider = mid.Provider("provider", connection={
+    "user": "root",
+    "password": "hunter2",
+    "host": "localhost",
+    "port": 2222,
+})
+vim = mid.resource.Package("vim", opts = pulumi.ResourceOptions(provider=provider))
+emacs = mid.resource.Package("emacs",
     name="emacs",
-    state="absent")
+    state="absent",
+    opts = pulumi.ResourceOptions(provider=provider))

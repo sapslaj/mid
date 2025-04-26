@@ -6,6 +6,6 @@
 	"dependencies": {
 		"typescript": "^4.0.0",
 		"@pulumi/pulumi": "^3.0.0",
-		"@sapslaj/pulumi-provider-ansible": "0.0.1-alpha.1739670166+d5117777"
+		"@sapslaj/pulumi-mid": "0.0.1-alpha.1745671333+b5eb2858.dirty"
 	}
 }
