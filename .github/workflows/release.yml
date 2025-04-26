@@ -55,13 +55,15 @@ jobs:
     needs: build-provider
     steps:
       - uses: actions/checkout@v4
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
           tools: all
       - name: Build
         run: |
-          git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
           just provider_version=${{ inputs.version }} build sdk examples
           just tidy
           just fmt
