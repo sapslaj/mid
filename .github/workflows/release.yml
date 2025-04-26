@@ -85,7 +85,9 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
-          files: dist/*
+          fail_on_unmatched_files: true
+          files: |
+            dist/*
           target_commitish: ${{ steps.commit.outputs.commit_hash }}
       - uses: JS-DevTools/npm-publish@v3
         with:
