@@ -214,31 +214,36 @@ func (result *copyTaskResult) IsChanged() bool {
 	return changed || hasDiff
 }
 
-func (r File) argsToCopyTaskParameters(input FileArgs) (*copyTaskParameters, error) {
-	var source *string
-
-	isRemoteSource := input.RemoteSource != nil
-
-	if isRemoteSource {
-		source = input.RemoteSource
+func (r File) argsToSource(input FileArgs) (*string, error) {
+	if input.RemoteSource != nil {
+		return input.RemoteSource, nil
 	} else if input.Source != nil {
 		if input.Source.Asset != nil {
 			if input.Source.Asset.Text != "" {
-				input.Content = &input.Source.Asset.Text
-			} else {
+				return &input.Source.Asset.Text, nil
+			} else if input.Source.Asset.Path != "" {
 				abs, err := filepath.Abs(input.Source.Asset.Path)
 				if err != nil {
 					return nil, err
 				}
-				source = &abs
+				return &abs, nil
 			}
 		} else if input.Source.Archive != nil {
 			abs, err := filepath.Abs(input.Source.Archive.Path)
 			if err != nil {
 				return nil, err
 			}
-			source = &abs
+			return &abs, nil
 		}
+	}
+	return nil, nil
+}
+
+func (r File) argsToCopyTaskParameters(input FileArgs) (*copyTaskParameters, error) {
+	isRemoteSource := input.RemoteSource != nil
+	source, err := r.argsToSource(input)
+	if err != nil {
+		return nil, err
 	}
 
 	return &copyTaskParameters{
@@ -362,14 +367,11 @@ func (r File) Diff(
 		o := pair[1]
 		n := pair[2]
 
-		oValue := reflect.ValueOf(o)
-		nValue := reflect.ValueOf(n)
-
-		if nValue.IsNil() {
+		if reflect.ValueOf(n).IsNil() {
 			continue
 		}
 
-		if oValue.IsNil() {
+		if reflect.ValueOf(o).IsNil() {
 			diff.HasChanges = true
 			diff.DetailedDiff[key] = p.PropertyDiff{
 				Kind:      p.Add,
@@ -378,7 +380,7 @@ func (r File) Diff(
 			continue
 		}
 
-		if !nValue.Elem().Equal(oValue.Elem()) {
+		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
 			diff.HasChanges = true
 			diff.DetailedDiff[key] = p.PropertyDiff{
 				Kind:      p.Update,
@@ -447,6 +449,17 @@ func (r File) runCreateUpdatePlay(
 		input.Recurse,
 		input.Ensure,
 	)
+
+	if preview && copyNeeded {
+		source, err := r.argsToSource(input)
+		if err != nil {
+			return state, err
+		}
+		if source == nil {
+			copyNeeded = false
+			fileNeeded = true
+		}
+	}
 
 	if copyNeeded {
 		params, err := r.argsToCopyTaskParameters(input)
