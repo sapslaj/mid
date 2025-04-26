@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -83,7 +84,7 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 
 	err = cmd.Run()
 	if err != nil {
-		return nil, fmt.Errorf(
+		return stdoutBuffer.Bytes(), fmt.Errorf(
 			"command exited with non success code: %d stderr=%s stdout=%s err=%w",
 			cmd.ProcessState.ExitCode(),
 			stderrBuffer.String(),
@@ -134,13 +135,27 @@ type PlayOutput struct {
 }
 
 func GetTaskResult[T any](playOutput PlayOutput, play int, task int) (T, error) {
+	var taskOutput T
+	if play > len(playOutput.Results)-1 {
+		return taskOutput, fmt.Errorf(
+			"not enough results in play output to reach index '%d' (len=%d)",
+			play,
+			len(playOutput.Results),
+		)
+	}
+	if task > len(playOutput.Results[play].Tasks)-1 {
+		return taskOutput, fmt.Errorf(
+			"not enough task results in play output to reach index '%d' (len=%d)",
+			task,
+			len(playOutput.Results[play].Tasks),
+		)
+	}
 	var host string
 	for h := range playOutput.Results[play].Tasks[task].Hosts {
 		host = h
 		break
 	}
 	taskOutputUntyped := playOutput.Results[play].Tasks[task].Hosts[host]
-	var taskOutput T
 	data, err := json.Marshal(taskOutputUntyped)
 	if err != nil {
 		return taskOutput, err
@@ -177,10 +192,10 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 	}
 
 	resultData, err := RunPlaybook(ctx, connection, playbookData)
-	if err != nil {
-		return playOutput, err
-	}
 
-	err = json.Unmarshal(resultData, &playOutput)
+	playOutputErr := json.Unmarshal(resultData, &playOutput)
+	if playOutputErr != nil {
+		err = errors.Join(err, playOutputErr)
+	}
 	return playOutput, err
 }
