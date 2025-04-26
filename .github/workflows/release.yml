@@ -87,7 +87,7 @@ jobs:
           tag_name: ${{ inputs.version }}
           fail_on_unmatched_files: true
           files: |
-            dist/*
+            dist/**/*
           target_commitish: ${{ steps.commit.outputs.commit_hash }}
       - uses: JS-DevTools/npm-publish@v3
         with:
