@@ -13,7 +13,7 @@ resources:
         user: root
         password: hunter2
         host: localhost
-        port: 22
+        port: 2222
   vim:
     type: mid:resource:Package
     options:
