@@ -1,15 +1,8 @@
-name: Makefile
+name: Build/Test
 
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  schedule:
-    - cron: "0 0 * * *"
 
 jobs:
   build:
@@ -29,28 +22,20 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: go, pulumicli, pulumictl, nodejs, python, dotnet
+          tools: just, go, pulumicli, pulumictl, nodejs, python, dotnet
       - name: Run smoketest container
         run: |
           docker build -t mid-smoketest docker/smoketest/
           docker run -p 2222:22 --name mid-smoketest -d mid-smoketest
       - name: Build
         id: build
-        run: |
-          make build
+        run: just build
       - name: Install
         id: install
-        run: |
-          set -ex
-          make install
+        run: just install
       - name: PulumiUp
         id: up
-        run: make up
+        run: just test-example-up
       - name: PulumiDown
         id: down
-        run: make down
-      - name: Generate multi-language examples from yaml IaC program
-        id: examples
-        run: |
-          set -ex
-          make gen_examples
+        run: just test-example-down

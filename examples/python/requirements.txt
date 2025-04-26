@@ -1,2 +1,0 @@
-pulumi-mid==0.0.1-alpha.1745682762+3cb3b30b.dirty
-pulumi>=3.0.0,<4.0.0
