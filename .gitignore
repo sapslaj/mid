@@ -11,3 +11,5 @@ yarn.lock
 ci-scripts
 /nuget/
 provider/**/schema-embed.json
+# Added by goreleaser init:
+dist/
