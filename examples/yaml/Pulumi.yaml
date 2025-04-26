@@ -4,16 +4,24 @@ plugins:
   providers:
     - name: mid
       path: ../../bin
-config:
-  mid:connection:user: root
-  mid:connection:password: hunter2
-  mid:connection:host: localhost
-  mid:connection:port: 2222
+
 resources:
+  provider:
+    type: pulumi:providers:mid
+    properties:
+      connection:
+        user: root
+        password: hunter2
+        host: localhost
+        port: 22
   vim:
     type: mid:resource:Package
+    options:
+      provider: ${provider}
   emacs:
     type: mid:resource:Package
     properties:
       name: emacs
       state: absent
+    options:
+      provider: ${provider}
