@@ -7,9 +7,9 @@ import (
 	"context"
 	"reflect"
 
-	"example.com/pulumi-mid/sdk/go/mid/internal"
-	"example.com/pulumi-mid/sdk/go/mid/types"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/ansible/internal"
+	"github.com/sapslaj/mid/sdk/go/ansible/types"
 )
 
 type Package struct {
@@ -98,6 +98,56 @@ func (i *Package) ToPackageOutputWithContext(ctx context.Context) PackageOutput 
 	return pulumi.ToOutputWithContext(ctx, i).(PackageOutput)
 }
 
+// PackageArrayInput is an input type that accepts PackageArray and PackageArrayOutput values.
+// You can construct a concrete instance of `PackageArrayInput` via:
+//
+//	PackageArray{ PackageArgs{...} }
+type PackageArrayInput interface {
+	pulumi.Input
+
+	ToPackageArrayOutput() PackageArrayOutput
+	ToPackageArrayOutputWithContext(context.Context) PackageArrayOutput
+}
+
+type PackageArray []PackageInput
+
+func (PackageArray) ElementType() reflect.Type {
+	return reflect.TypeOf((*[]*Package)(nil)).Elem()
+}
+
+func (i PackageArray) ToPackageArrayOutput() PackageArrayOutput {
+	return i.ToPackageArrayOutputWithContext(context.Background())
+}
+
+func (i PackageArray) ToPackageArrayOutputWithContext(ctx context.Context) PackageArrayOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(PackageArrayOutput)
+}
+
+// PackageMapInput is an input type that accepts PackageMap and PackageMapOutput values.
+// You can construct a concrete instance of `PackageMapInput` via:
+//
+//	PackageMap{ "key": PackageArgs{...} }
+type PackageMapInput interface {
+	pulumi.Input
+
+	ToPackageMapOutput() PackageMapOutput
+	ToPackageMapOutputWithContext(context.Context) PackageMapOutput
+}
+
+type PackageMap map[string]PackageInput
+
+func (PackageMap) ElementType() reflect.Type {
+	return reflect.TypeOf((*map[string]*Package)(nil)).Elem()
+}
+
+func (i PackageMap) ToPackageMapOutput() PackageMapOutput {
+	return i.ToPackageMapOutputWithContext(context.Background())
+}
+
+func (i PackageMap) ToPackageMapOutputWithContext(ctx context.Context) PackageMapOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(PackageMapOutput)
+}
+
 type PackageOutput struct{ *pulumi.OutputState }
 
 func (PackageOutput) ElementType() reflect.Type {
@@ -128,7 +178,51 @@ func (o PackageOutput) Triggers() types.TriggersOutputOutput {
 	return o.ApplyT(func(v *Package) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
 }
 
+type PackageArrayOutput struct{ *pulumi.OutputState }
+
+func (PackageArrayOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((*[]*Package)(nil)).Elem()
+}
+
+func (o PackageArrayOutput) ToPackageArrayOutput() PackageArrayOutput {
+	return o
+}
+
+func (o PackageArrayOutput) ToPackageArrayOutputWithContext(ctx context.Context) PackageArrayOutput {
+	return o
+}
+
+func (o PackageArrayOutput) Index(i pulumi.IntInput) PackageOutput {
+	return pulumi.All(o, i).ApplyT(func(vs []interface{}) *Package {
+		return vs[0].([]*Package)[vs[1].(int)]
+	}).(PackageOutput)
+}
+
+type PackageMapOutput struct{ *pulumi.OutputState }
+
+func (PackageMapOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((*map[string]*Package)(nil)).Elem()
+}
+
+func (o PackageMapOutput) ToPackageMapOutput() PackageMapOutput {
+	return o
+}
+
+func (o PackageMapOutput) ToPackageMapOutputWithContext(ctx context.Context) PackageMapOutput {
+	return o
+}
+
+func (o PackageMapOutput) MapIndex(k pulumi.StringInput) PackageOutput {
+	return pulumi.All(o, k).ApplyT(func(vs []interface{}) *Package {
+		return vs[0].(map[string]*Package)[vs[1].(string)]
+	}).(PackageOutput)
+}
+
 func init() {
 	pulumi.RegisterInputType(reflect.TypeOf((*PackageInput)(nil)).Elem(), &Package{})
+	pulumi.RegisterInputType(reflect.TypeOf((*PackageArrayInput)(nil)).Elem(), PackageArray{})
+	pulumi.RegisterInputType(reflect.TypeOf((*PackageMapInput)(nil)).Elem(), PackageMap{})
 	pulumi.RegisterOutputType(PackageOutput{})
+	pulumi.RegisterOutputType(PackageArrayOutput{})
+	pulumi.RegisterOutputType(PackageMapOutput{})
 }

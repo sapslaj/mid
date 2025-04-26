@@ -15,8 +15,53 @@ else:
 from .. import _utilities
 
 __all__ = [
+    'Connection',
     'TriggersOutput',
 ]
+
+@pulumi.output_type
+class Connection(dict):
+    def __init__(__self__, *,
+                 host: str,
+                 password: Optional[str] = None,
+                 port: Optional[float] = None,
+                 private_key: Optional[str] = None,
+                 user: Optional[str] = None):
+        pulumi.set(__self__, "host", host)
+        if password is not None:
+            pulumi.set(__self__, "password", password)
+        if port is not None:
+            pulumi.set(__self__, "port", port)
+        if private_key is not None:
+            pulumi.set(__self__, "private_key", private_key)
+        if user is not None:
+            pulumi.set(__self__, "user", user)
+
+    @property
+    @pulumi.getter
+    def host(self) -> str:
+        return pulumi.get(self, "host")
+
+    @property
+    @pulumi.getter
+    def password(self) -> Optional[str]:
+        return pulumi.get(self, "password")
+
+    @property
+    @pulumi.getter
+    def port(self) -> Optional[float]:
+        return pulumi.get(self, "port")
+
+    @property
+    @pulumi.getter(name="privateKey")
+    def private_key(self) -> Optional[str]:
+        return pulumi.get(self, "private_key")
+
+    @property
+    @pulumi.getter
+    def user(self) -> Optional[str]:
+        return pulumi.get(self, "user")
+
 
 @pulumi.output_type
 class TriggersOutput(dict):

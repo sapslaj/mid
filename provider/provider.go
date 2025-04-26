@@ -17,9 +17,11 @@ package provider
 import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
+	"github.com/pulumi/pulumi-go-provider/middleware/schema"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 
 	"github.com/sapslaj/mid/provider/resource"
+	"github.com/sapslaj/mid/provider/types"
 )
 
 // Version is initialized by the Go linker to contain the semver of this build.
@@ -31,19 +33,27 @@ func Provider() p.Provider {
 	// We tell the provider what resources it needs to support.
 	// In this case, a single resource and component
 	return infer.Provider(infer.Options{
+		Metadata: schema.Metadata{
+			LanguageMap: map[string]any{
+				"go": map[string]any{
+					"respectSchemaVersion":           true,
+					"generateResourceContainerTypes": true,
+					"importBasePath":                 "github.com/sapslaj/mid/sdk/go/ansible",
+				},
+				"nodejs": map[string]any{
+					"respectSchemaVersion": true,
+					"packageName":          "@sapslaj/pulumi-mid",
+				},
+			},
+		},
 		Resources: []infer.InferredResource{
 			infer.Resource[resource.File, resource.FileArgs, resource.FileState](),
 			infer.Resource[resource.Package, resource.PackageArgs, resource.PackageState](),
 			infer.Resource[resource.Service, resource.ServiceArgs, resource.ServiceState](),
 		},
-		Config: infer.Config[Config](),
+		Config: infer.Config[types.Config](),
 		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{
 			"provider": "index",
 		},
 	})
-}
-
-// Define some provider-level configuration
-type Config struct {
-	Scream *bool `pulumi:"itsasecret,optional"`
 }

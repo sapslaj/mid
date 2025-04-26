@@ -2,15 +2,17 @@
 // *** Do not edit by hand unless you're certain you know what you are doing! ***
 
 import * as pulumi from "@pulumi/pulumi";
+import * as inputs from "../types/input";
+import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 declare var exports: any;
 const __config = new pulumi.Config("mid");
 
-export declare const itsasecret: boolean | undefined;
-Object.defineProperty(exports, "itsasecret", {
+export declare const connection: outputs.types.Connection | undefined;
+Object.defineProperty(exports, "connection", {
     get() {
-        return __config.getObject<boolean>("itsasecret");
+        return __config.getObject<outputs.types.Connection>("connection");
     },
     enumerable: true,
 });

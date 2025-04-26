@@ -54,6 +54,14 @@ export namespace resource {
 }
 
 export namespace types {
+    export interface Connection {
+        host: string;
+        password?: string;
+        port?: number;
+        privateKey?: string;
+        user?: string;
+    }
+
     export interface TriggersOutput {
         lastChanged: string;
         refresh?: any[];

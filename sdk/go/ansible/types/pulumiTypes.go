@@ -7,11 +7,204 @@ import (
 	"context"
 	"reflect"
 
-	"example.com/pulumi-mid/sdk/go/mid/internal"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/ansible/internal"
 )
 
 var _ = internal.GetEnvOrDefault
+
+type Connection struct {
+	Host       string   `pulumi:"host"`
+	Password   *string  `pulumi:"password"`
+	Port       *float64 `pulumi:"port"`
+	PrivateKey *string  `pulumi:"privateKey"`
+	User       *string  `pulumi:"user"`
+}
+
+// ConnectionInput is an input type that accepts ConnectionArgs and ConnectionOutput values.
+// You can construct a concrete instance of `ConnectionInput` via:
+//
+//	ConnectionArgs{...}
+type ConnectionInput interface {
+	pulumi.Input
+
+	ToConnectionOutput() ConnectionOutput
+	ToConnectionOutputWithContext(context.Context) ConnectionOutput
+}
+
+type ConnectionArgs struct {
+	Host       pulumi.StringInput     `pulumi:"host"`
+	Password   pulumi.StringPtrInput  `pulumi:"password"`
+	Port       pulumi.Float64PtrInput `pulumi:"port"`
+	PrivateKey pulumi.StringPtrInput  `pulumi:"privateKey"`
+	User       pulumi.StringPtrInput  `pulumi:"user"`
+}
+
+func (ConnectionArgs) ElementType() reflect.Type {
+	return reflect.TypeOf((*Connection)(nil)).Elem()
+}
+
+func (i ConnectionArgs) ToConnectionOutput() ConnectionOutput {
+	return i.ToConnectionOutputWithContext(context.Background())
+}
+
+func (i ConnectionArgs) ToConnectionOutputWithContext(ctx context.Context) ConnectionOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(ConnectionOutput)
+}
+
+func (i ConnectionArgs) ToConnectionPtrOutput() ConnectionPtrOutput {
+	return i.ToConnectionPtrOutputWithContext(context.Background())
+}
+
+func (i ConnectionArgs) ToConnectionPtrOutputWithContext(ctx context.Context) ConnectionPtrOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(ConnectionOutput).ToConnectionPtrOutputWithContext(ctx)
+}
+
+// ConnectionPtrInput is an input type that accepts ConnectionArgs, ConnectionPtr and ConnectionPtrOutput values.
+// You can construct a concrete instance of `ConnectionPtrInput` via:
+//
+//	        ConnectionArgs{...}
+//
+//	or:
+//
+//	        nil
+type ConnectionPtrInput interface {
+	pulumi.Input
+
+	ToConnectionPtrOutput() ConnectionPtrOutput
+	ToConnectionPtrOutputWithContext(context.Context) ConnectionPtrOutput
+}
+
+type connectionPtrType ConnectionArgs
+
+func ConnectionPtr(v *ConnectionArgs) ConnectionPtrInput {
+	return (*connectionPtrType)(v)
+}
+
+func (*connectionPtrType) ElementType() reflect.Type {
+	return reflect.TypeOf((**Connection)(nil)).Elem()
+}
+
+func (i *connectionPtrType) ToConnectionPtrOutput() ConnectionPtrOutput {
+	return i.ToConnectionPtrOutputWithContext(context.Background())
+}
+
+func (i *connectionPtrType) ToConnectionPtrOutputWithContext(ctx context.Context) ConnectionPtrOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(ConnectionPtrOutput)
+}
+
+type ConnectionOutput struct{ *pulumi.OutputState }
+
+func (ConnectionOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((*Connection)(nil)).Elem()
+}
+
+func (o ConnectionOutput) ToConnectionOutput() ConnectionOutput {
+	return o
+}
+
+func (o ConnectionOutput) ToConnectionOutputWithContext(ctx context.Context) ConnectionOutput {
+	return o
+}
+
+func (o ConnectionOutput) ToConnectionPtrOutput() ConnectionPtrOutput {
+	return o.ToConnectionPtrOutputWithContext(context.Background())
+}
+
+func (o ConnectionOutput) ToConnectionPtrOutputWithContext(ctx context.Context) ConnectionPtrOutput {
+	return o.ApplyTWithContext(ctx, func(_ context.Context, v Connection) *Connection {
+		return &v
+	}).(ConnectionPtrOutput)
+}
+
+func (o ConnectionOutput) Host() pulumi.StringOutput {
+	return o.ApplyT(func(v Connection) string { return v.Host }).(pulumi.StringOutput)
+}
+
+func (o ConnectionOutput) Password() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v Connection) *string { return v.Password }).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionOutput) Port() pulumi.Float64PtrOutput {
+	return o.ApplyT(func(v Connection) *float64 { return v.Port }).(pulumi.Float64PtrOutput)
+}
+
+func (o ConnectionOutput) PrivateKey() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v Connection) *string { return v.PrivateKey }).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionOutput) User() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v Connection) *string { return v.User }).(pulumi.StringPtrOutput)
+}
+
+type ConnectionPtrOutput struct{ *pulumi.OutputState }
+
+func (ConnectionPtrOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((**Connection)(nil)).Elem()
+}
+
+func (o ConnectionPtrOutput) ToConnectionPtrOutput() ConnectionPtrOutput {
+	return o
+}
+
+func (o ConnectionPtrOutput) ToConnectionPtrOutputWithContext(ctx context.Context) ConnectionPtrOutput {
+	return o
+}
+
+func (o ConnectionPtrOutput) Elem() ConnectionOutput {
+	return o.ApplyT(func(v *Connection) Connection {
+		if v != nil {
+			return *v
+		}
+		var ret Connection
+		return ret
+	}).(ConnectionOutput)
+}
+
+func (o ConnectionPtrOutput) Host() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Connection) *string {
+		if v == nil {
+			return nil
+		}
+		return &v.Host
+	}).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionPtrOutput) Password() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Connection) *string {
+		if v == nil {
+			return nil
+		}
+		return v.Password
+	}).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionPtrOutput) Port() pulumi.Float64PtrOutput {
+	return o.ApplyT(func(v *Connection) *float64 {
+		if v == nil {
+			return nil
+		}
+		return v.Port
+	}).(pulumi.Float64PtrOutput)
+}
+
+func (o ConnectionPtrOutput) PrivateKey() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Connection) *string {
+		if v == nil {
+			return nil
+		}
+		return v.PrivateKey
+	}).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionPtrOutput) User() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Connection) *string {
+		if v == nil {
+			return nil
+		}
+		return v.User
+	}).(pulumi.StringPtrOutput)
+}
 
 type TriggersInput struct {
 	Refresh []interface{} `pulumi:"refresh"`
@@ -194,8 +387,12 @@ func (o TriggersOutputOutput) Replace() pulumi.ArrayOutput {
 }
 
 func init() {
+	pulumi.RegisterInputType(reflect.TypeOf((*ConnectionInput)(nil)).Elem(), ConnectionArgs{})
+	pulumi.RegisterInputType(reflect.TypeOf((*ConnectionPtrInput)(nil)).Elem(), ConnectionArgs{})
 	pulumi.RegisterInputType(reflect.TypeOf((*TriggersInputInput)(nil)).Elem(), TriggersInputArgs{})
 	pulumi.RegisterInputType(reflect.TypeOf((*TriggersInputPtrInput)(nil)).Elem(), TriggersInputArgs{})
+	pulumi.RegisterOutputType(ConnectionOutput{})
+	pulumi.RegisterOutputType(ConnectionPtrOutput{})
 	pulumi.RegisterOutputType(TriggersInputOutput{})
 	pulumi.RegisterOutputType(TriggersInputPtrOutput{})
 	pulumi.RegisterOutputType(TriggersOutputOutput{})

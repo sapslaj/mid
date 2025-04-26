@@ -13,6 +13,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
+from .. import types as _types
 
 import types
 
@@ -21,6 +22,6 @@ __config__ = pulumi.Config('mid')
 
 class _ExportableConfig(types.ModuleType):
     @property
-    def itsasecret(self) -> Optional[bool]:
-        return __config__.get_bool('itsasecret')
+    def connection(self) -> Optional[str]:
+        return __config__.get('connection')
 

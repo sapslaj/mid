@@ -1,6 +1,6 @@
 {
-    "name": "@pulumi/mid",
-    "version": "${VERSION}",
+    "name": "@sapslaj/pulumi-mid",
+    "version": "0.0.1-alpha.1745671333+b5eb2858.dirty",
     "scripts": {
         "build": "tsc"
     },
@@ -13,6 +13,7 @@
     },
     "pulumi": {
         "resource": true,
-        "name": "mid"
+        "name": "mid",
+        "version": "0.0.1-alpha.1745671333+b5eb2858.dirty"
     }
 }

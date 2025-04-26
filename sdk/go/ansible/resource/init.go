@@ -6,9 +6,9 @@ package resource
 import (
 	"fmt"
 
-	"example.com/pulumi-mid/sdk/go/mid/internal"
 	"github.com/blang/semver"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/ansible/internal"
 )
 
 type module struct {

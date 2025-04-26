@@ -13,6 +13,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
+from .. import types as _types
 
-itsasecret: Optional[bool]
+connection: Optional[str]
 

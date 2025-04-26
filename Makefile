@@ -56,13 +56,13 @@ provider_debug:
 test_provider:
 	cd tests && go test -short -v -count=1 -cover -timeout 2h -parallel ${TESTPARALLELISM} ./...
 
-dotnet_sdk: DOTNET_VERSION := $(shell pulumictl get version --language dotnet)
-dotnet_sdk: $(WORKING_DIR)/bin/$(PROVIDER)
-	rm -rf sdk/dotnet
-	pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language dotnet
-	cd ${PACKDIR}/dotnet/&& \
-		echo "${DOTNET_VERSION}" >version.txt && \
-		dotnet build /p:Version=${DOTNET_VERSION}
+# dotnet_sdk: DOTNET_VERSION := $(shell pulumictl get version --language dotnet)
+# dotnet_sdk: $(WORKING_DIR)/bin/$(PROVIDER)
+# 	rm -rf sdk/dotnet
+# 	pulumi package gen-sdk $(WORKING_DIR)/bin/$(PROVIDER) --language dotnet
+# 	cd ${PACKDIR}/dotnet/&& \
+# 		echo "${DOTNET_VERSION}" >version.txt && \
+# 		dotnet build /p:Version=${DOTNET_VERSION}
 
 go_sdk: $(WORKING_DIR)/bin/$(PROVIDER)
 	rm -rf sdk/go
@@ -93,8 +93,8 @@ python_sdk: $(WORKING_DIR)/bin/$(PROVIDER)
 
 gen_examples: gen_go_example \
 		gen_nodejs_example \
-		gen_python_example \
-		gen_dotnet_example
+		gen_python_example
+		# gen_dotnet_example
 
 gen_%_example:
 	rm -rf ${WORKING_DIR}/examples/$*
@@ -127,7 +127,11 @@ down::
 	pulumi stack rm dev -y
 
 .PHONY: build
-build: provider dotnet_sdk go_sdk nodejs_sdk python_sdk
+build: provider \
+	go_sdk \
+	nodejs_sdk \
+	python_sdk
+	# dotnet_sdk
 
 # Required for the codegen action that runs in pulumi/pulumi
 only_build: build
@@ -137,7 +141,7 @@ lint:
 		pushd $$DIR && golangci-lint run -c ../.golangci.yml --timeout 10m && popd ; \
 	done
 
-install: install_nodejs_sdk install_dotnet_sdk
+install: install_nodejs_sdk # install_dotnet_sdk
 	cp $(WORKING_DIR)/bin/${PROVIDER} ${GOPATH}/bin
 
 GO_TEST	 := go test -v -count=1 -cover -timeout 2h -parallel ${TESTPARALLELISM}

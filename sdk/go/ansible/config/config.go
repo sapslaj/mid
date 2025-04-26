@@ -4,13 +4,13 @@
 package config
 
 import (
-	"example.com/pulumi-mid/sdk/go/mid/internal"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
+	"github.com/sapslaj/mid/sdk/go/ansible/internal"
 )
 
 var _ = internal.GetEnvOrDefault
 
-func GetItsasecret(ctx *pulumi.Context) bool {
-	return config.GetBool(ctx, "mid:itsasecret")
+func GetConnection(ctx *pulumi.Context) string {
+	return config.Get(ctx, "mid:connection")
 }

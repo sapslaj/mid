@@ -15,11 +15,87 @@ else:
 from .. import _utilities
 
 __all__ = [
+    'ConnectionArgs',
+    'ConnectionArgsDict',
     'TriggersInputArgs',
     'TriggersInputArgsDict',
 ]
 
 MYPY = False
+
+if not MYPY:
+    class ConnectionArgsDict(TypedDict):
+        host: pulumi.Input[str]
+        password: NotRequired[pulumi.Input[str]]
+        port: NotRequired[pulumi.Input[float]]
+        private_key: NotRequired[pulumi.Input[str]]
+        user: NotRequired[pulumi.Input[str]]
+elif False:
+    ConnectionArgsDict: TypeAlias = Mapping[str, Any]
+
+@pulumi.input_type
+class ConnectionArgs:
+    def __init__(__self__, *,
+                 host: pulumi.Input[str],
+                 password: Optional[pulumi.Input[str]] = None,
+                 port: Optional[pulumi.Input[float]] = None,
+                 private_key: Optional[pulumi.Input[str]] = None,
+                 user: Optional[pulumi.Input[str]] = None):
+        pulumi.set(__self__, "host", host)
+        if password is not None:
+            pulumi.set(__self__, "password", password)
+        if port is not None:
+            pulumi.set(__self__, "port", port)
+        if private_key is not None:
+            pulumi.set(__self__, "private_key", private_key)
+        if user is not None:
+            pulumi.set(__self__, "user", user)
+
+    @property
+    @pulumi.getter
+    def host(self) -> pulumi.Input[str]:
+        return pulumi.get(self, "host")
+
+    @host.setter
+    def host(self, value: pulumi.Input[str]):
+        pulumi.set(self, "host", value)
+
+    @property
+    @pulumi.getter
+    def password(self) -> Optional[pulumi.Input[str]]:
+        return pulumi.get(self, "password")
+
+    @password.setter
+    def password(self, value: Optional[pulumi.Input[str]]):
+        pulumi.set(self, "password", value)
+
+    @property
+    @pulumi.getter
+    def port(self) -> Optional[pulumi.Input[float]]:
+        return pulumi.get(self, "port")
+
+    @port.setter
+    def port(self, value: Optional[pulumi.Input[float]]):
+        pulumi.set(self, "port", value)
+
+    @property
+    @pulumi.getter(name="privateKey")
+    def private_key(self) -> Optional[pulumi.Input[str]]:
+        return pulumi.get(self, "private_key")
+
+    @private_key.setter
+    def private_key(self, value: Optional[pulumi.Input[str]]):
+        pulumi.set(self, "private_key", value)
+
+    @property
+    @pulumi.getter
+    def user(self) -> Optional[pulumi.Input[str]]:
+        return pulumi.get(self, "user")
+
+    @user.setter
+    def user(self, value: Optional[pulumi.Input[str]]):
+        pulumi.set(self, "user", value)
+
 
 if not MYPY:
     class TriggersInputArgsDict(TypedDict):
