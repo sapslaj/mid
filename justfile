@@ -1,7 +1,7 @@
 #!/usr/bin/env -S just --justfile
 
-provider_version := "${PROVIDER_VERSION:-0.0.1-alpha.0+dev}"
-testparallelism := "${TESTPARALLELISM-4}"
+provider_version := `git describe --tags --abbrev=0` + "-alpha.0+dev"
+testparallelism := "4"
 
 [group('examples')]
 [group('tidy')]
@@ -93,13 +93,20 @@ test-example-down:
   pulumi destroy -y
   pulumi stack rm dev -y
 
-[group('sdk')]
-install-nodejs-sdk:
-  -npm unlink ./sdk/nodejs/bin
-  npm link ./sdk/nodejs/bin
+[group('provider')]
+install-provider:
+  cp ./bin/pulumi-resource-mid "$(go env GOPATH)/bin"
 
 [group('sdk')]
-install: install-nodejs-sdk
+install-nodejs-sdk: sdk-nodejs
+  #!/usr/bin/env sh
+  cd ./sdk/nodejs/bin
+  npm unlink @sapslaj/pulumi-mid
+  npm link
+  echo 'run "npm link @sapslaj/pulumi-mid" in a project to link to local build'
+
+[group('sdk')]
+install: install-provider install-nodejs-sdk
 
 build: provider sdk-go sdk-nodejs
 
