@@ -11,9 +11,8 @@ const __config = new pulumi.Config("mid");
 
 export declare const connection: outputs.types.Connection | undefined;
 Object.defineProperty(exports, "connection", {
-    get() {
-        return __config.getObject<outputs.types.Connection>("connection");
-    },
-    enumerable: true,
+  get() {
+    return __config.getObject<outputs.types.Connection>("connection");
+  },
+  enumerable: true,
 });
-

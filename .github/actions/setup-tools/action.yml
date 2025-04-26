@@ -5,9 +5,11 @@ inputs:
   tools:
     description: |
       Comma separated list of tools to install. The default of "all" installs all tools. Available tools are:
+        dprint
         go
         just
         nodejs
+        pre-commit
         pulumicli
         pulumictl
         schema-tools
@@ -16,6 +18,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install dprint
+      if: inputs.tools == 'all' || contains(inputs.tools, 'dprint')
+      shell: bash
+      run: |
+        curl -fsSL https://dprint.dev/install.sh | sh -s
+        echo "/home/runner/.dprint/bin" >> "$GITHUB_PATH"
+
     - name: Install Go
       if: inputs.tools == 'all' || contains(inputs.tools, 'go')
       uses: actions/setup-go@v5
@@ -36,6 +45,15 @@ runs:
       with:
         node-version: 20.x
         registry-url: https://registry.npmjs.org
+
+    - name: Setup Python
+      if: inputs.tools == 'all' || contains(inputs.tools, 'pre-commit')
+      uses: actions/setup-python@v5
+
+    - name: Setup Python
+      if: inputs.tools == 'all' || contains(inputs.tools, 'pre-commit')
+      shell: bash
+      run: pip install pre-commit
 
     - name: Install pulumictl
       if: inputs.tools == 'all' || contains(inputs.tools, 'pulumictl')

@@ -15,7 +15,7 @@ env:
   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NPM_REGISTRY_URL: https://npm.pkg.github.com
-  PROVIDER_VERSION: ${{ inputs.version }}
+  GOPRIVATE: github.com/sapslaj
 
 jobs:
   build-provider:
@@ -61,8 +61,9 @@ jobs:
           tools: all
       - name: Build
         run: |
-          echo PROVIDER_VERSION=$PROVIDER_VERSION
-          just build sdk examples
+          just provider_version=${{ inputs.version }} build sdk examples
+          just tidy
+          just fmt
           mkdir dist/
       - name: Commit updates
         id: commit
@@ -76,12 +77,6 @@ jobs:
         with:
           path: dist/
           pattern: pulumi-resource-mid-*
-      - name: DEBUG
-        run: |
-          ls -lah dist/
-          echo 'github.sha: ${{ github.sha }}'
-          echo 'git rev-parse HEAD: ' $(git rev-parse HEAD)
-          echo 'steps.commit.outputs.commit_hash: ${{ steps.commit.outputs.commit_hash }}'
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}

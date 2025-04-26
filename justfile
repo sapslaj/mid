@@ -102,3 +102,9 @@ install-nodejs-sdk:
 install: install-nodejs-sdk
 
 build: provider sdk-go sdk-nodejs
+
+fmt:
+  # TODO: figure out how to run `go fmt` via dprint
+  go fmt ./...
+  dprint fmt
+  -pre-commit run -a

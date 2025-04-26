@@ -1,1 +1,253 @@
-{"name":"mid","version":"0.0.1-alpha.0+dev","language":{"go":{"generateResourceContainerTypes":true,"importBasePath":"github.com/sapslaj/mid/sdk/go/mid","respectSchemaVersion":true},"nodejs":{"packageName":"@sapslaj/pulumi-mid","respectSchemaVersion":true}},"config":{"variables":{"connection":{"$ref":"#/types/mid:types:Connection","secret":true}},"defaults":["connection"]},"types":{"mid:resource:FileStateStat":{"properties":{"atime":{"type":"number"},"attributes":{"type":"array","items":{"type":"string"}},"charset":{"type":"string"},"checksum":{"type":"string"},"ctime":{"type":"number"},"dev":{"type":"integer"},"executable":{"type":"boolean"},"exists":{"type":"boolean"},"gid":{"type":"integer"},"gr_name":{"type":"string"},"inode":{"type":"integer"},"isblk":{"type":"boolean"},"ischr":{"type":"boolean"},"isdir":{"type":"boolean"},"isfifo":{"type":"boolean"},"isgid":{"type":"boolean"},"islnk":{"type":"boolean"},"isreg":{"type":"boolean"},"issock":{"type":"boolean"},"isuid":{"type":"boolean"},"lnkSource":{"type":"string"},"lnkTarget":{"type":"string"},"mimetype":{"type":"string"},"mode":{"type":"string"},"mtime":{"type":"number"},"nlink":{"type":"integer"},"path":{"type":"string"},"pwName":{"type":"string"},"readable":{"type":"boolean"},"rgrp":{"type":"boolean"},"roth":{"type":"boolean"},"rusr":{"type":"boolean"},"size":{"type":"integer"},"uid":{"type":"integer"},"version":{"type":"string"},"wgrp":{"type":"boolean"},"woth":{"type":"boolean"},"writeable":{"type":"boolean"},"wusr":{"type":"boolean"},"xgrp":{"type":"boolean"},"xoth":{"type":"boolean"},"xusr":{"type":"boolean"}},"type":"object","required":["atime","attributes","charset","checksum","ctime","dev","executable","exists","gid","gr_name","inode","isblk","ischr","isdir","isfifo","isgid","islnk","isreg","issock","isuid","lnkSource","lnkTarget","mimetype","mode","mtime","nlink","path","pwName","readable","rgrp","roth","rusr","size","uid","version","wgrp","woth","writeable","wusr","xgrp","xoth","xusr"]},"mid:types:Connection":{"properties":{"host":{"type":"string"},"password":{"type":"string","secret":true},"port":{"type":"number"},"privateKey":{"type":"string","secret":true},"user":{"type":"string"}},"type":"object","required":["host"]},"mid:types:TriggersInput":{"properties":{"refresh":{"type":"array","items":{"$ref":"pulumi.json#/Any"}},"replace":{"type":"array","items":{"$ref":"pulumi.json#/Any"},"replaceOnChanges":true}},"type":"object"},"mid:types:TriggersOutput":{"properties":{"lastChanged":{"type":"string"},"refresh":{"type":"array","items":{"$ref":"pulumi.json#/Any"}},"replace":{"type":"array","items":{"$ref":"pulumi.json#/Any"}}},"type":"object","required":["lastChanged"]}},"provider":{"properties":{"connection":{"$ref":"#/types/mid:types:Connection","secret":true}},"required":["connection"],"inputProperties":{"connection":{"$ref":"#/types/mid:types:Connection","secret":true}},"requiredInputs":["connection"]},"resources":{"mid:resource:File":{"properties":{"accessTime":{"type":"string"},"accessTimeFormat":{"type":"string"},"attributes":{"type":"string"},"backup":{"type":"boolean"},"backupFile":{"type":"string"},"checksum":{"type":"string"},"content":{"type":"string"},"directoryMode":{"type":"string"},"ensure":{"type":"string"},"follow":{"type":"boolean"},"force":{"type":"boolean"},"group":{"type":"string"},"localFollow":{"type":"boolean"},"mode":{"type":"string"},"modificationTime":{"type":"string"},"modificationTimeFormat":{"type":"string"},"owner":{"type":"string"},"path":{"type":"string"},"recurse":{"type":"boolean"},"remoteSource":{"type":"string"},"selevel":{"type":"string"},"serole":{"type":"string"},"setype":{"type":"string"},"seuser":{"type":"string"},"source":{"$ref":"pulumi.json#/Asset"},"stat":{"$ref":"#/types/mid:resource:FileStateStat"},"triggers":{"$ref":"#/types/mid:types:TriggersOutput"},"unsafeWrites":{"type":"boolean"},"validate":{"type":"string"}},"required":["path","stat","triggers"],"inputProperties":{"accessTime":{"type":"string"},"accessTimeFormat":{"type":"string"},"attributes":{"type":"string"},"backup":{"type":"boolean"},"checksum":{"type":"string"},"content":{"type":"string"},"directoryMode":{"type":"string"},"ensure":{"type":"string"},"follow":{"type":"boolean"},"force":{"type":"boolean"},"group":{"type":"string"},"localFollow":{"type":"boolean"},"mode":{"type":"string"},"modificationTime":{"type":"string"},"modificationTimeFormat":{"type":"string"},"owner":{"type":"string"},"path":{"type":"string"},"recurse":{"type":"boolean"},"remoteSource":{"type":"string"},"selevel":{"type":"string"},"serole":{"type":"string"},"setype":{"type":"string"},"seuser":{"type":"string"},"source":{"$ref":"pulumi.json#/Asset"},"triggers":{"$ref":"#/types/mid:types:TriggersInput"},"unsafeWrites":{"type":"boolean"},"validate":{"type":"string"}}},"mid:resource:Package":{"properties":{"name":{"type":"string"},"names":{"type":"array","items":{"type":"string"}},"state":{"type":"string"},"triggers":{"$ref":"#/types/mid:types:TriggersOutput"}},"required":["state","triggers"],"inputProperties":{"name":{"type":"string"},"names":{"type":"array","items":{"type":"string"}},"state":{"type":"string"},"triggers":{"$ref":"#/types/mid:types:TriggersInput"}}},"mid:resource:Service":{"properties":{"arguments":{"type":"string"},"enabled":{"type":"boolean"},"name":{"type":"string"},"pattern":{"type":"string"},"runlevel":{"type":"string"},"sleep":{"type":"integer"},"state":{"type":"string"},"triggers":{"$ref":"#/types/mid:types:TriggersOutput"},"use":{"type":"string"}},"required":["name","triggers"],"inputProperties":{"arguments":{"type":"string"},"enabled":{"type":"boolean"},"name":{"type":"string"},"pattern":{"type":"string"},"runlevel":{"type":"string"},"sleep":{"type":"integer"},"state":{"type":"string"},"triggers":{"$ref":"#/types/mid:types:TriggersInput"},"use":{"type":"string"}}}}}
+{
+  "name": "mid",
+  "displayName": "mid",
+  "version": "0.0.1-alpha.0+dev",
+  "description": "Pulumi-native configuration management",
+  "homepage": "https://github.com/sapslaj/mid",
+  "license": "MIT",
+  "repository": "https://github.com/sapslaj/mid",
+  "pluginDownloadURL": "github://api.github.com/sapslaj/mid",
+  "language": {
+    "go": {
+      "generateResourceContainerTypes": true,
+      "importBasePath": "github.com/sapslaj/mid/sdk/go/mid",
+      "respectSchemaVersion": true
+    },
+    "nodejs": { "packageName": "@sapslaj/pulumi-mid", "respectSchemaVersion": true }
+  },
+  "config": {
+    "variables": { "connection": { "$ref": "#/types/mid:types:Connection", "secret": true } },
+    "defaults": ["connection"]
+  },
+  "types": {
+    "mid:resource:FileStateStat": {
+      "properties": {
+        "atime": { "type": "number" },
+        "attributes": { "type": "array", "items": { "type": "string" } },
+        "charset": { "type": "string" },
+        "checksum": { "type": "string" },
+        "ctime": { "type": "number" },
+        "dev": { "type": "integer" },
+        "executable": { "type": "boolean" },
+        "exists": { "type": "boolean" },
+        "gid": { "type": "integer" },
+        "gr_name": { "type": "string" },
+        "inode": { "type": "integer" },
+        "isblk": { "type": "boolean" },
+        "ischr": { "type": "boolean" },
+        "isdir": { "type": "boolean" },
+        "isfifo": { "type": "boolean" },
+        "isgid": { "type": "boolean" },
+        "islnk": { "type": "boolean" },
+        "isreg": { "type": "boolean" },
+        "issock": { "type": "boolean" },
+        "isuid": { "type": "boolean" },
+        "lnkSource": { "type": "string" },
+        "lnkTarget": { "type": "string" },
+        "mimetype": { "type": "string" },
+        "mode": { "type": "string" },
+        "mtime": { "type": "number" },
+        "nlink": { "type": "integer" },
+        "path": { "type": "string" },
+        "pwName": { "type": "string" },
+        "readable": { "type": "boolean" },
+        "rgrp": { "type": "boolean" },
+        "roth": { "type": "boolean" },
+        "rusr": { "type": "boolean" },
+        "size": { "type": "integer" },
+        "uid": { "type": "integer" },
+        "version": { "type": "string" },
+        "wgrp": { "type": "boolean" },
+        "woth": { "type": "boolean" },
+        "writeable": { "type": "boolean" },
+        "wusr": { "type": "boolean" },
+        "xgrp": { "type": "boolean" },
+        "xoth": { "type": "boolean" },
+        "xusr": { "type": "boolean" }
+      },
+      "type": "object",
+      "required": [
+        "atime",
+        "attributes",
+        "charset",
+        "checksum",
+        "ctime",
+        "dev",
+        "executable",
+        "exists",
+        "gid",
+        "gr_name",
+        "inode",
+        "isblk",
+        "ischr",
+        "isdir",
+        "isfifo",
+        "isgid",
+        "islnk",
+        "isreg",
+        "issock",
+        "isuid",
+        "lnkSource",
+        "lnkTarget",
+        "mimetype",
+        "mode",
+        "mtime",
+        "nlink",
+        "path",
+        "pwName",
+        "readable",
+        "rgrp",
+        "roth",
+        "rusr",
+        "size",
+        "uid",
+        "version",
+        "wgrp",
+        "woth",
+        "writeable",
+        "wusr",
+        "xgrp",
+        "xoth",
+        "xusr"
+      ]
+    },
+    "mid:types:Connection": {
+      "properties": {
+        "host": { "type": "string" },
+        "password": { "type": "string", "secret": true },
+        "port": { "type": "number" },
+        "privateKey": { "type": "string", "secret": true },
+        "user": { "type": "string" }
+      },
+      "type": "object",
+      "required": ["host"]
+    },
+    "mid:types:TriggersInput": {
+      "properties": {
+        "refresh": { "type": "array", "items": { "$ref": "pulumi.json#/Any" } },
+        "replace": { "type": "array", "items": { "$ref": "pulumi.json#/Any" }, "replaceOnChanges": true }
+      },
+      "type": "object"
+    },
+    "mid:types:TriggersOutput": {
+      "properties": {
+        "lastChanged": { "type": "string" },
+        "refresh": { "type": "array", "items": { "$ref": "pulumi.json#/Any" } },
+        "replace": { "type": "array", "items": { "$ref": "pulumi.json#/Any" } }
+      },
+      "type": "object",
+      "required": ["lastChanged"]
+    }
+  },
+  "provider": {
+    "properties": { "connection": { "$ref": "#/types/mid:types:Connection", "secret": true } },
+    "required": ["connection"],
+    "inputProperties": { "connection": { "$ref": "#/types/mid:types:Connection", "secret": true } },
+    "requiredInputs": ["connection"]
+  },
+  "resources": {
+    "mid:resource:File": {
+      "properties": {
+        "accessTime": { "type": "string" },
+        "accessTimeFormat": { "type": "string" },
+        "attributes": { "type": "string" },
+        "backup": { "type": "boolean" },
+        "backupFile": { "type": "string" },
+        "checksum": { "type": "string" },
+        "content": { "type": "string" },
+        "directoryMode": { "type": "string" },
+        "ensure": { "type": "string" },
+        "follow": { "type": "boolean" },
+        "force": { "type": "boolean" },
+        "group": { "type": "string" },
+        "localFollow": { "type": "boolean" },
+        "mode": { "type": "string" },
+        "modificationTime": { "type": "string" },
+        "modificationTimeFormat": { "type": "string" },
+        "owner": { "type": "string" },
+        "path": { "type": "string" },
+        "recurse": { "type": "boolean" },
+        "remoteSource": { "type": "string" },
+        "selevel": { "type": "string" },
+        "serole": { "type": "string" },
+        "setype": { "type": "string" },
+        "seuser": { "type": "string" },
+        "source": { "$ref": "pulumi.json#/Asset" },
+        "stat": { "$ref": "#/types/mid:resource:FileStateStat" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersOutput" },
+        "unsafeWrites": { "type": "boolean" },
+        "validate": { "type": "string" }
+      },
+      "required": ["path", "stat", "triggers"],
+      "inputProperties": {
+        "accessTime": { "type": "string" },
+        "accessTimeFormat": { "type": "string" },
+        "attributes": { "type": "string" },
+        "backup": { "type": "boolean" },
+        "checksum": { "type": "string" },
+        "content": { "type": "string" },
+        "directoryMode": { "type": "string" },
+        "ensure": { "type": "string" },
+        "follow": { "type": "boolean" },
+        "force": { "type": "boolean" },
+        "group": { "type": "string" },
+        "localFollow": { "type": "boolean" },
+        "mode": { "type": "string" },
+        "modificationTime": { "type": "string" },
+        "modificationTimeFormat": { "type": "string" },
+        "owner": { "type": "string" },
+        "path": { "type": "string" },
+        "recurse": { "type": "boolean" },
+        "remoteSource": { "type": "string" },
+        "selevel": { "type": "string" },
+        "serole": { "type": "string" },
+        "setype": { "type": "string" },
+        "seuser": { "type": "string" },
+        "source": { "$ref": "pulumi.json#/Asset" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersInput" },
+        "unsafeWrites": { "type": "boolean" },
+        "validate": { "type": "string" }
+      }
+    },
+    "mid:resource:Package": {
+      "properties": {
+        "name": { "type": "string" },
+        "names": { "type": "array", "items": { "type": "string" } },
+        "state": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersOutput" }
+      },
+      "required": ["state", "triggers"],
+      "inputProperties": {
+        "name": { "type": "string" },
+        "names": { "type": "array", "items": { "type": "string" } },
+        "state": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersInput" }
+      }
+    },
+    "mid:resource:Service": {
+      "properties": {
+        "arguments": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "name": { "type": "string" },
+        "pattern": { "type": "string" },
+        "runlevel": { "type": "string" },
+        "sleep": { "type": "integer" },
+        "state": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersOutput" },
+        "use": { "type": "string" }
+      },
+      "required": ["name", "triggers"],
+      "inputProperties": {
+        "arguments": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "name": { "type": "string" },
+        "pattern": { "type": "string" },
+        "runlevel": { "type": "string" },
+        "sleep": { "type": "integer" },
+        "state": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersInput" },
+        "use": { "type": "string" }
+      }
+    }
+  }
+}

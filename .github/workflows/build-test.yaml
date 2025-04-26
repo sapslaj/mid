@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   push:
 
+env:
+  GOPRIVATE: github.com/sapslaj
+
 jobs:
   build:
     runs-on: ubuntu-latest

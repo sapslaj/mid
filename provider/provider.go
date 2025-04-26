@@ -34,6 +34,12 @@ func Provider() p.Provider {
 	// In this case, a single resource and component
 	return infer.Provider(infer.Options{
 		Metadata: schema.Metadata{
+			DisplayName:       "mid",
+			Description:       "Pulumi-native configuration management",
+			Homepage:          "https://github.com/sapslaj/mid",
+			Repository:        "https://github.com/sapslaj/mid",
+			License:           "MIT",
+			PluginDownloadURL: "github://api.github.com/sapslaj/mid",
 			LanguageMap: map[string]any{
 				"go": map[string]any{
 					"respectSchemaVersion":           true,

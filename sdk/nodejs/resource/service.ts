@@ -7,89 +7,89 @@ import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export class Service extends pulumi.CustomResource {
-    /**
-     * Get an existing Service resource's state with the given name, ID, and optional extra
-     * properties used to qualify the lookup.
-     *
-     * @param name The _unique_ name of the resulting resource.
-     * @param id The _unique_ provider ID of the resource to lookup.
-     * @param opts Optional settings to control the behavior of the CustomResource.
-     */
-    public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): Service {
-        return new Service(name, undefined as any, { ...opts, id: id });
+  /**
+   * Get an existing Service resource's state with the given name, ID, and optional extra
+   * properties used to qualify the lookup.
+   *
+   * @param name The _unique_ name of the resulting resource.
+   * @param id The _unique_ provider ID of the resource to lookup.
+   * @param opts Optional settings to control the behavior of the CustomResource.
+   */
+  public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): Service {
+    return new Service(name, undefined as any, { ...opts, id: id });
+  }
+
+  /** @internal */
+  public static readonly __pulumiType = "mid:resource:Service";
+
+  /**
+   * Returns true if the given object is an instance of Service.  This is designed to work even
+   * when multiple copies of the Pulumi SDK have been loaded into the same process.
+   */
+  public static isInstance(obj: any): obj is Service {
+    if (obj === undefined || obj === null) {
+      return false;
     }
+    return obj["__pulumiType"] === Service.__pulumiType;
+  }
 
-    /** @internal */
-    public static readonly __pulumiType = 'mid:resource:Service';
+  public readonly arguments!: pulumi.Output<string | undefined>;
+  public readonly enabled!: pulumi.Output<boolean | undefined>;
+  public readonly name!: pulumi.Output<string>;
+  public readonly pattern!: pulumi.Output<string | undefined>;
+  public readonly runlevel!: pulumi.Output<string | undefined>;
+  public readonly sleep!: pulumi.Output<number | undefined>;
+  public readonly state!: pulumi.Output<string | undefined>;
+  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly use!: pulumi.Output<string | undefined>;
 
-    /**
-     * Returns true if the given object is an instance of Service.  This is designed to work even
-     * when multiple copies of the Pulumi SDK have been loaded into the same process.
-     */
-    public static isInstance(obj: any): obj is Service {
-        if (obj === undefined || obj === null) {
-            return false;
-        }
-        return obj['__pulumiType'] === Service.__pulumiType;
+  /**
+   * Create a Service resource with the given unique name, arguments, and options.
+   *
+   * @param name The _unique_ name of the resource.
+   * @param args The arguments to use to populate this resource's properties.
+   * @param opts A bag of options that control this resource's behavior.
+   */
+  constructor(name: string, args?: ServiceArgs, opts?: pulumi.CustomResourceOptions) {
+    let resourceInputs: pulumi.Inputs = {};
+    opts = opts || {};
+    if (!opts.id) {
+      resourceInputs["arguments"] = args ? args.arguments : undefined;
+      resourceInputs["enabled"] = args ? args.enabled : undefined;
+      resourceInputs["name"] = args ? args.name : undefined;
+      resourceInputs["pattern"] = args ? args.pattern : undefined;
+      resourceInputs["runlevel"] = args ? args.runlevel : undefined;
+      resourceInputs["sleep"] = args ? args.sleep : undefined;
+      resourceInputs["state"] = args ? args.state : undefined;
+      resourceInputs["triggers"] = args ? args.triggers : undefined;
+      resourceInputs["use"] = args ? args.use : undefined;
+    } else {
+      resourceInputs["arguments"] = undefined /*out*/;
+      resourceInputs["enabled"] = undefined /*out*/;
+      resourceInputs["name"] = undefined /*out*/;
+      resourceInputs["pattern"] = undefined /*out*/;
+      resourceInputs["runlevel"] = undefined /*out*/;
+      resourceInputs["sleep"] = undefined /*out*/;
+      resourceInputs["state"] = undefined /*out*/;
+      resourceInputs["triggers"] = undefined /*out*/;
+      resourceInputs["use"] = undefined /*out*/;
     }
-
-    public readonly arguments!: pulumi.Output<string | undefined>;
-    public readonly enabled!: pulumi.Output<boolean | undefined>;
-    public readonly name!: pulumi.Output<string>;
-    public readonly pattern!: pulumi.Output<string | undefined>;
-    public readonly runlevel!: pulumi.Output<string | undefined>;
-    public readonly sleep!: pulumi.Output<number | undefined>;
-    public readonly state!: pulumi.Output<string | undefined>;
-    public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
-    public readonly use!: pulumi.Output<string | undefined>;
-
-    /**
-     * Create a Service resource with the given unique name, arguments, and options.
-     *
-     * @param name The _unique_ name of the resource.
-     * @param args The arguments to use to populate this resource's properties.
-     * @param opts A bag of options that control this resource's behavior.
-     */
-    constructor(name: string, args?: ServiceArgs, opts?: pulumi.CustomResourceOptions) {
-        let resourceInputs: pulumi.Inputs = {};
-        opts = opts || {};
-        if (!opts.id) {
-            resourceInputs["arguments"] = args ? args.arguments : undefined;
-            resourceInputs["enabled"] = args ? args.enabled : undefined;
-            resourceInputs["name"] = args ? args.name : undefined;
-            resourceInputs["pattern"] = args ? args.pattern : undefined;
-            resourceInputs["runlevel"] = args ? args.runlevel : undefined;
-            resourceInputs["sleep"] = args ? args.sleep : undefined;
-            resourceInputs["state"] = args ? args.state : undefined;
-            resourceInputs["triggers"] = args ? args.triggers : undefined;
-            resourceInputs["use"] = args ? args.use : undefined;
-        } else {
-            resourceInputs["arguments"] = undefined /*out*/;
-            resourceInputs["enabled"] = undefined /*out*/;
-            resourceInputs["name"] = undefined /*out*/;
-            resourceInputs["pattern"] = undefined /*out*/;
-            resourceInputs["runlevel"] = undefined /*out*/;
-            resourceInputs["sleep"] = undefined /*out*/;
-            resourceInputs["state"] = undefined /*out*/;
-            resourceInputs["triggers"] = undefined /*out*/;
-            resourceInputs["use"] = undefined /*out*/;
-        }
-        opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
-        super(Service.__pulumiType, name, resourceInputs, opts);
-    }
+    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
+    super(Service.__pulumiType, name, resourceInputs, opts);
+  }
 }
 
 /**
  * The set of arguments for constructing a Service resource.
  */
 export interface ServiceArgs {
-    arguments?: pulumi.Input<string>;
-    enabled?: pulumi.Input<boolean>;
-    name?: pulumi.Input<string>;
-    pattern?: pulumi.Input<string>;
-    runlevel?: pulumi.Input<string>;
-    sleep?: pulumi.Input<number>;
-    state?: pulumi.Input<string>;
-    triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
-    use?: pulumi.Input<string>;
+  arguments?: pulumi.Input<string>;
+  enabled?: pulumi.Input<boolean>;
+  name?: pulumi.Input<string>;
+  pattern?: pulumi.Input<string>;
+  runlevel?: pulumi.Input<string>;
+  sleep?: pulumi.Input<number>;
+  state?: pulumi.Input<string>;
+  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  use?: pulumi.Input<string>;
 }

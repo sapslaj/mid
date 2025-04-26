@@ -20,20 +20,19 @@ export type Service = import("./service").Service;
 export const Service: typeof import("./service").Service = null as any;
 utilities.lazyLoad(exports, ["Service"], () => require("./service"));
 
-
 const _module = {
-    version: utilities.getVersion(),
-    construct: (name: string, type: string, urn: string): pulumi.Resource => {
-        switch (type) {
-            case "mid:resource:File":
-                return new File(name, <any>undefined, { urn })
-            case "mid:resource:Package":
-                return new Package(name, <any>undefined, { urn })
-            case "mid:resource:Service":
-                return new Service(name, <any>undefined, { urn })
-            default:
-                throw new Error(`unknown resource type ${type}`);
-        }
-    },
+  version: utilities.getVersion(),
+  construct: (name: string, type: string, urn: string): pulumi.Resource => {
+    switch (type) {
+      case "mid:resource:File":
+        return new File(name, <any> undefined, { urn });
+      case "mid:resource:Package":
+        return new Package(name, <any> undefined, { urn });
+      case "mid:resource:Service":
+        return new Service(name, <any> undefined, { urn });
+      default:
+        throw new Error(`unknown resource type ${type}`);
+    }
+  },
 };
-pulumi.runtime.registerResourceModule("mid", "resource", _module)
+pulumi.runtime.registerResourceModule("mid", "resource", _module);
