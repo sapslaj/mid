@@ -14,8 +14,7 @@ before:
 
 builds:
   - binary: pulumi-resource-mid
-    dir: provider
-    main: ./cmd/pulumi-resource-mid/
+    main: ./provider/cmd/pulumi-resource-mid/
     env:
       - CGO_ENABLED=0
     goarch:
