@@ -30,6 +30,10 @@ jobs:
         uses: ./.github/actions/setup-tools
         with:
           tools: go, pulumicli, pulumictl, nodejs, python, dotnet
+      - name: Run smoketest container
+        run: |
+          docker build -t mid-smoketest docker/smoketest/
+          docker run -p 2222:22 --name mid-smoketest -d mid-smoketest
       - name: Build
         id: build
         run: |
