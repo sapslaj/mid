@@ -17,6 +17,13 @@ export namespace types {
     user?: pulumi.Input<string>;
   }
 
+  export interface ExecCommandArgs {
+    command: pulumi.Input<pulumi.Input<string>[]>;
+    dir?: pulumi.Input<string>;
+    environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+    stdin?: pulumi.Input<string>;
+  }
+
   export interface TriggersInputArgs {
     refresh?: pulumi.Input<any[]>;
     replace?: pulumi.Input<any[]>;

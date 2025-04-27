@@ -61,6 +61,13 @@ export namespace types {
     user?: string;
   }
 
+  export interface ExecCommand {
+    command: string[];
+    dir?: string;
+    environment?: { [key: string]: string };
+    stdin?: string;
+  }
+
   export interface TriggersOutput {
     lastChanged: string;
     refresh?: any[];

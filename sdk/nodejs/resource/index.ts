@@ -5,6 +5,11 @@ import * as pulumi from "@pulumi/pulumi";
 import * as utilities from "../utilities";
 
 // Export members:
+export { ExecArgs } from "./exec";
+export type Exec = import("./exec").Exec;
+export const Exec: typeof import("./exec").Exec = null as any;
+utilities.lazyLoad(exports, ["Exec"], () => require("./exec"));
+
 export { FileArgs } from "./file";
 export type File = import("./file").File;
 export const File: typeof import("./file").File = null as any;
@@ -29,6 +34,8 @@ const _module = {
   version: utilities.getVersion(),
   construct: (name: string, type: string, urn: string): pulumi.Resource => {
     switch (type) {
+      case "mid:resource:Exec":
+        return new Exec(name, <any> undefined, { urn });
       case "mid:resource:File":
         return new File(name, <any> undefined, { urn });
       case "mid:resource:Package":

@@ -122,6 +122,16 @@
       "type": "object",
       "required": ["host"]
     },
+    "mid:types:ExecCommand": {
+      "properties": {
+        "command": { "type": "array", "items": { "type": "string" } },
+        "dir": { "type": "string" },
+        "environment": { "type": "object", "additionalProperties": { "type": "string" } },
+        "stdin": { "type": "string" }
+      },
+      "type": "object",
+      "required": ["command"]
+    },
     "mid:types:TriggersInput": {
       "properties": {
         "refresh": { "type": "array", "items": { "$ref": "pulumi.json#/Any" } },
@@ -146,6 +156,32 @@
     "requiredInputs": ["connection"]
   },
   "resources": {
+    "mid:resource:Exec": {
+      "properties": {
+        "create": { "$ref": "#/types/mid:types:ExecCommand" },
+        "delete": { "$ref": "#/types/mid:types:ExecCommand" },
+        "dir": { "type": "string" },
+        "environment": { "type": "object", "additionalProperties": { "type": "string" } },
+        "expandArgumentVars": { "type": "boolean" },
+        "logging": { "type": "string" },
+        "stderr": { "type": "string" },
+        "stdout": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersOutput" },
+        "update": { "$ref": "#/types/mid:types:ExecCommand" }
+      },
+      "required": ["create", "stdout", "stderr", "triggers"],
+      "inputProperties": {
+        "create": { "$ref": "#/types/mid:types:ExecCommand" },
+        "delete": { "$ref": "#/types/mid:types:ExecCommand" },
+        "dir": { "type": "string" },
+        "environment": { "type": "object", "additionalProperties": { "type": "string" } },
+        "expandArgumentVars": { "type": "boolean" },
+        "logging": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersInput" },
+        "update": { "$ref": "#/types/mid:types:ExecCommand" }
+      },
+      "requiredInputs": ["create"]
+    },
     "mid:resource:File": {
       "properties": {
         "accessTime": { "type": "string" },

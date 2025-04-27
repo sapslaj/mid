@@ -206,6 +206,184 @@ func (o ConnectionPtrOutput) User() pulumi.StringPtrOutput {
 	}).(pulumi.StringPtrOutput)
 }
 
+type ExecCommand struct {
+	Command     []string          `pulumi:"command"`
+	Dir         *string           `pulumi:"dir"`
+	Environment map[string]string `pulumi:"environment"`
+	Stdin       *string           `pulumi:"stdin"`
+}
+
+// ExecCommandInput is an input type that accepts ExecCommandArgs and ExecCommandOutput values.
+// You can construct a concrete instance of `ExecCommandInput` via:
+//
+//	ExecCommandArgs{...}
+type ExecCommandInput interface {
+	pulumi.Input
+
+	ToExecCommandOutput() ExecCommandOutput
+	ToExecCommandOutputWithContext(context.Context) ExecCommandOutput
+}
+
+type ExecCommandArgs struct {
+	Command     pulumi.StringArrayInput `pulumi:"command"`
+	Dir         pulumi.StringPtrInput   `pulumi:"dir"`
+	Environment pulumi.StringMapInput   `pulumi:"environment"`
+	Stdin       pulumi.StringPtrInput   `pulumi:"stdin"`
+}
+
+func (ExecCommandArgs) ElementType() reflect.Type {
+	return reflect.TypeOf((*ExecCommand)(nil)).Elem()
+}
+
+func (i ExecCommandArgs) ToExecCommandOutput() ExecCommandOutput {
+	return i.ToExecCommandOutputWithContext(context.Background())
+}
+
+func (i ExecCommandArgs) ToExecCommandOutputWithContext(ctx context.Context) ExecCommandOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(ExecCommandOutput)
+}
+
+func (i ExecCommandArgs) ToExecCommandPtrOutput() ExecCommandPtrOutput {
+	return i.ToExecCommandPtrOutputWithContext(context.Background())
+}
+
+func (i ExecCommandArgs) ToExecCommandPtrOutputWithContext(ctx context.Context) ExecCommandPtrOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(ExecCommandOutput).ToExecCommandPtrOutputWithContext(ctx)
+}
+
+// ExecCommandPtrInput is an input type that accepts ExecCommandArgs, ExecCommandPtr and ExecCommandPtrOutput values.
+// You can construct a concrete instance of `ExecCommandPtrInput` via:
+//
+//	        ExecCommandArgs{...}
+//
+//	or:
+//
+//	        nil
+type ExecCommandPtrInput interface {
+	pulumi.Input
+
+	ToExecCommandPtrOutput() ExecCommandPtrOutput
+	ToExecCommandPtrOutputWithContext(context.Context) ExecCommandPtrOutput
+}
+
+type execCommandPtrType ExecCommandArgs
+
+func ExecCommandPtr(v *ExecCommandArgs) ExecCommandPtrInput {
+	return (*execCommandPtrType)(v)
+}
+
+func (*execCommandPtrType) ElementType() reflect.Type {
+	return reflect.TypeOf((**ExecCommand)(nil)).Elem()
+}
+
+func (i *execCommandPtrType) ToExecCommandPtrOutput() ExecCommandPtrOutput {
+	return i.ToExecCommandPtrOutputWithContext(context.Background())
+}
+
+func (i *execCommandPtrType) ToExecCommandPtrOutputWithContext(ctx context.Context) ExecCommandPtrOutput {
+	return pulumi.ToOutputWithContext(ctx, i).(ExecCommandPtrOutput)
+}
+
+type ExecCommandOutput struct{ *pulumi.OutputState }
+
+func (ExecCommandOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((*ExecCommand)(nil)).Elem()
+}
+
+func (o ExecCommandOutput) ToExecCommandOutput() ExecCommandOutput {
+	return o
+}
+
+func (o ExecCommandOutput) ToExecCommandOutputWithContext(ctx context.Context) ExecCommandOutput {
+	return o
+}
+
+func (o ExecCommandOutput) ToExecCommandPtrOutput() ExecCommandPtrOutput {
+	return o.ToExecCommandPtrOutputWithContext(context.Background())
+}
+
+func (o ExecCommandOutput) ToExecCommandPtrOutputWithContext(ctx context.Context) ExecCommandPtrOutput {
+	return o.ApplyTWithContext(ctx, func(_ context.Context, v ExecCommand) *ExecCommand {
+		return &v
+	}).(ExecCommandPtrOutput)
+}
+
+func (o ExecCommandOutput) Command() pulumi.StringArrayOutput {
+	return o.ApplyT(func(v ExecCommand) []string { return v.Command }).(pulumi.StringArrayOutput)
+}
+
+func (o ExecCommandOutput) Dir() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v ExecCommand) *string { return v.Dir }).(pulumi.StringPtrOutput)
+}
+
+func (o ExecCommandOutput) Environment() pulumi.StringMapOutput {
+	return o.ApplyT(func(v ExecCommand) map[string]string { return v.Environment }).(pulumi.StringMapOutput)
+}
+
+func (o ExecCommandOutput) Stdin() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v ExecCommand) *string { return v.Stdin }).(pulumi.StringPtrOutput)
+}
+
+type ExecCommandPtrOutput struct{ *pulumi.OutputState }
+
+func (ExecCommandPtrOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((**ExecCommand)(nil)).Elem()
+}
+
+func (o ExecCommandPtrOutput) ToExecCommandPtrOutput() ExecCommandPtrOutput {
+	return o
+}
+
+func (o ExecCommandPtrOutput) ToExecCommandPtrOutputWithContext(ctx context.Context) ExecCommandPtrOutput {
+	return o
+}
+
+func (o ExecCommandPtrOutput) Elem() ExecCommandOutput {
+	return o.ApplyT(func(v *ExecCommand) ExecCommand {
+		if v != nil {
+			return *v
+		}
+		var ret ExecCommand
+		return ret
+	}).(ExecCommandOutput)
+}
+
+func (o ExecCommandPtrOutput) Command() pulumi.StringArrayOutput {
+	return o.ApplyT(func(v *ExecCommand) []string {
+		if v == nil {
+			return nil
+		}
+		return v.Command
+	}).(pulumi.StringArrayOutput)
+}
+
+func (o ExecCommandPtrOutput) Dir() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *ExecCommand) *string {
+		if v == nil {
+			return nil
+		}
+		return v.Dir
+	}).(pulumi.StringPtrOutput)
+}
+
+func (o ExecCommandPtrOutput) Environment() pulumi.StringMapOutput {
+	return o.ApplyT(func(v *ExecCommand) map[string]string {
+		if v == nil {
+			return nil
+		}
+		return v.Environment
+	}).(pulumi.StringMapOutput)
+}
+
+func (o ExecCommandPtrOutput) Stdin() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *ExecCommand) *string {
+		if v == nil {
+			return nil
+		}
+		return v.Stdin
+	}).(pulumi.StringPtrOutput)
+}
+
 type TriggersInput struct {
 	Refresh []interface{} `pulumi:"refresh"`
 	Replace []interface{} `pulumi:"replace"`
@@ -389,10 +567,14 @@ func (o TriggersOutputOutput) Replace() pulumi.ArrayOutput {
 func init() {
 	pulumi.RegisterInputType(reflect.TypeOf((*ConnectionInput)(nil)).Elem(), ConnectionArgs{})
 	pulumi.RegisterInputType(reflect.TypeOf((*ConnectionPtrInput)(nil)).Elem(), ConnectionArgs{})
+	pulumi.RegisterInputType(reflect.TypeOf((*ExecCommandInput)(nil)).Elem(), ExecCommandArgs{})
+	pulumi.RegisterInputType(reflect.TypeOf((*ExecCommandPtrInput)(nil)).Elem(), ExecCommandArgs{})
 	pulumi.RegisterInputType(reflect.TypeOf((*TriggersInputInput)(nil)).Elem(), TriggersInputArgs{})
 	pulumi.RegisterInputType(reflect.TypeOf((*TriggersInputPtrInput)(nil)).Elem(), TriggersInputArgs{})
 	pulumi.RegisterOutputType(ConnectionOutput{})
 	pulumi.RegisterOutputType(ConnectionPtrOutput{})
+	pulumi.RegisterOutputType(ExecCommandOutput{})
+	pulumi.RegisterOutputType(ExecCommandPtrOutput{})
 	pulumi.RegisterOutputType(TriggersInputOutput{})
 	pulumi.RegisterOutputType(TriggersInputPtrOutput{})
 	pulumi.RegisterOutputType(TriggersOutputOutput{})
