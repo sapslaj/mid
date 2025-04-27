@@ -199,77 +199,33 @@ func (r Apt) Diff(
 		}
 	}
 
-	for _, pair := range [][]any{
-		{"ensure", olds.Ensure, news.Ensure},
-		{"name", olds.Name, news.Name},
-		{"names", olds.Names, news.Names},
-		{"allowChangeHeldPackages", olds.AllowChangeHeldPackages, news.AllowChangeHeldPackages},
-		{"allowDowngrade", olds.AllowDowngrade, news.AllowDowngrade},
-		{"allowUnauthenticated", olds.AllowUnauthenticated, news.AllowUnauthenticated},
-		{"autoclean", olds.Autoclean, news.Autoclean},
-		{"autoremove", olds.Autoremove, news.Autoremove},
-		{"cacheValidTime", olds.CacheValidTime, news.CacheValidTime},
-		{"clean", olds.Clean, news.Clean},
-		{"deb", olds.Deb, news.Deb},
-		{"defaultRelease", olds.DefaultRelease, news.DefaultRelease},
-		{"dpkgOptions", olds.DpkgOptions, news.DpkgOptions},
-		{"failOnAutoremove", olds.FailOnAutoremove, news.FailOnAutoremove},
-		{"force", olds.Force, news.Force},
-		{"forceAptGet", olds.ForceAptGet, news.ForceAptGet},
-		{"installRecommends", olds.InstallRecommends, news.InstallRecommends},
-		{"lockTimeout", olds.LockTimeout, news.LockTimeout},
-		{"onlyUpgrade", olds.OnlyUpgrade, news.OnlyUpgrade},
-		{"policyRcD", olds.PolicyRcD, news.PolicyRcD},
-		{"purge", olds.Purge, news.Purge},
-		{"updateCache", olds.UpdateCache, news.UpdateCache},
-		{"updateCacheRetries", olds.UpdateCacheRetries, news.UpdateCacheRetries},
-		{"updateCacheRetryMaxDelay", olds.UpdateCacheRetryMaxDelay, news.UpdateCacheRetryMaxDelay},
-		{"upgrade", olds.Upgrade, news.Upgrade},
-	} {
-		key := pair[0].(string)
-		o := pair[1]
-		n := pair[2]
+	diff = types.MergeDiffResponses(diff, types.DiffAttributes(olds, news, []string{
+		"ensure",
+		"allowChangeHeldPackages",
+		"allowDowngrade",
+		"allowUnauthenticated",
+		"autoclean",
+		"autoremove",
+		"cacheValidTime",
+		"clean",
+		"deb",
+		"defaultRelease",
+		"dpkgOptions",
+		"failOnAutoremove",
+		"force",
+		"forceAptGet",
+		"installRecommends",
+		"lockTimeout",
+		"onlyUpgrade",
+		"policyRcD",
+		"purge",
+		"updateCache",
+		"updateCacheRetries",
+		"updateCacheRetryMaxDelay",
+		"upgrade",
+	}))
 
-		if n == nil {
-			continue
-		}
-
-		if o == nil {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-			continue
-		}
-
-		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	}
-
-	if news.Triggers != nil {
-		refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
-		if refreshDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-		replaceDiff := resource.NewPropertyValue(olds.Triggers.Replace).Diff(resource.NewPropertyValue(news.Triggers.Replace))
-		if replaceDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.UpdateReplace,
-				InputDiff: true,
-			}
-		}
-	}
+	diff = types.MergeDiffResponses(diff, types.DiffTriggers(olds, news))
 
 	return diff, nil
 }
