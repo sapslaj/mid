@@ -117,15 +117,15 @@ func (r Apt) argsToTaskParameters(input AptArgs) (aptTaskParameters, error) {
 		Upgrade:                  input.Upgrade,
 	}
 
-	if parameters.Upgrade == nil && parameters.State == nil {
-		parameters.State = ptr.String("present")
-	}
 	if input.Names == nil {
 		parameters.Name = *input.Name
 	} else if len(*input.Names) == 1 {
 		parameters.Name = (*input.Names)[0]
 	} else {
 		parameters.Name = *input.Names
+	}
+	if parameters.Name != nil && parameters.Upgrade == nil && parameters.UpdateCache == nil {
+		parameters.State = ptr.String("present")
 	}
 	return parameters, nil
 }
@@ -137,7 +137,7 @@ func (r Apt) updateState(olds AptState, news AptArgs, changed bool) AptState {
 	}
 	if news.Ensure != nil {
 		olds.Ensure = news.Ensure
-	} else if news.Upgrade != nil {
+	} else if news.Upgrade == nil && news.UpdateCache == nil {
 		olds.Ensure = ptr.String("present")
 	}
 	if news.Triggers != nil {
@@ -283,7 +283,7 @@ func (r Apt) Create(
 ) (string, AptState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if input.Upgrade == nil && input.Name == nil && input.Names == nil {
+	if input.Upgrade == nil && input.UpdateCache == nil && input.Name == nil && input.Names == nil {
 		input.Name = ptr.String(name)
 	}
 
@@ -354,7 +354,7 @@ func (r Apt) Read(
 
 	state = r.updateState(state, inputs, result.IsChanged())
 
-	if result.IsChanged() && inputs.Upgrade != nil {
+	if result.IsChanged() && inputs.Upgrade == nil && inputs.UpdateCache == nil {
 		if inputs.Ensure != nil && *inputs.Ensure == "absent" {
 			// we're going from present? to absent
 			if *state.Ensure == "absent" {
@@ -375,7 +375,7 @@ func (r Apt) Update(
 ) (AptState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if news.Upgrade == nil && news.Name == nil && news.Names == nil && olds.Name != nil {
+	if news.Upgrade == nil && news.UpdateCache == nil && news.Name == nil && news.Names == nil && olds.Name != nil {
 		news.Name = olds.Name
 	}
 
