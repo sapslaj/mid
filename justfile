@@ -3,6 +3,20 @@
 provider_version := `git describe --tags --abbrev=0` + "-alpha.0+dev"
 testparallelism := "4"
 
+[group('sdk')]
+[group('provider')]
+build: provider sdk-go sdk-nodejs
+
+[group('sdk')]
+[group('provider')]
+install: install-provider install-nodejs-sdk
+
+fmt:
+  # TODO: figure out how to run `go fmt` via dprint
+  go fmt ./...
+  dprint fmt
+  -pre-commit run -a
+
 [group('examples')]
 [group('tidy')]
 tidy-examples:
@@ -104,14 +118,3 @@ install-nodejs-sdk: sdk-nodejs
   npm unlink @sapslaj/pulumi-mid
   npm link
   echo 'run "npm link @sapslaj/pulumi-mid" in a project to link to local build'
-
-[group('sdk')]
-install: install-provider install-nodejs-sdk
-
-build: provider sdk-go sdk-nodejs
-
-fmt:
-  # TODO: figure out how to run `go fmt` via dprint
-  go fmt ./...
-  dprint fmt
-  -pre-commit run -a
