@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
@@ -133,11 +132,11 @@ func (r FileLine) Diff(
 		o := pair[1]
 		n := pair[2]
 
-		if reflect.ValueOf(n).IsNil() {
+		if n == nil {
 			continue
 		}
 
-		if reflect.ValueOf(o).IsNil() {
+		if o == nil {
 			diff.HasChanges = true
 			diff.DetailedDiff[key] = p.PropertyDiff{
 				Kind:      p.Add,

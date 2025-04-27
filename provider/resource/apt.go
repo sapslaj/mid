@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"reflect"
 	"slices"
 	"time"
 
@@ -117,14 +116,14 @@ func (r Apt) argsToTaskParameters(input AptArgs) (aptTaskParameters, error) {
 		Upgrade:                  input.Upgrade,
 	}
 
-	if input.Names == nil {
+	if input.Names == nil && input.Name != nil {
 		parameters.Name = *input.Name
-	} else if len(*input.Names) == 1 {
+	} else if input.Names != nil && len(*input.Names) == 1 {
 		parameters.Name = (*input.Names)[0]
-	} else {
+	} else if input.Names != nil {
 		parameters.Name = *input.Names
 	}
-	if parameters.Name != nil && parameters.Upgrade == nil && parameters.UpdateCache == nil {
+	if parameters.State == nil && parameters.Name != nil && parameters.Upgrade == nil && parameters.UpdateCache == nil {
 		parameters.State = ptr.String("present")
 	}
 	return parameters, nil
@@ -231,11 +230,11 @@ func (r Apt) Diff(
 		o := pair[1]
 		n := pair[2]
 
-		if reflect.ValueOf(n).IsNil() {
+		if n == nil {
 			continue
 		}
 
-		if reflect.ValueOf(o).IsNil() {
+		if o == nil {
 			diff.HasChanges = true
 			diff.DetailedDiff[key] = p.PropertyDiff{
 				Kind:      p.Add,
@@ -379,7 +378,7 @@ func (r Apt) Update(
 		news.Name = olds.Name
 	}
 
-	if news.Upgrade != nil || (news.Ensure != nil && *news.Ensure == "absent") {
+	if news.Upgrade != nil || (news.UpdateCache != nil && news.Name == nil && news.Names == nil) || (news.Ensure != nil && *news.Ensure == "absent") {
 		parameters, err := r.argsToTaskParameters(news)
 		if err != nil {
 			return olds, err
