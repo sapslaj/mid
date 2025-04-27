@@ -57,6 +57,10 @@ jobs:
     needs: build-provider
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+          fetch-depth: 0
+          fetch-tags: true
       - uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
