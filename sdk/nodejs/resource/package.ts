@@ -33,9 +33,9 @@ export class Package extends pulumi.CustomResource {
     return obj["__pulumiType"] === Package.__pulumiType;
   }
 
+  public readonly ensure!: pulumi.Output<string>;
   public readonly name!: pulumi.Output<string | undefined>;
   public readonly names!: pulumi.Output<string[] | undefined>;
-  public readonly state!: pulumi.Output<string>;
   public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
 
   /**
@@ -49,14 +49,14 @@ export class Package extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
+      resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["name"] = args ? args.name : undefined;
       resourceInputs["names"] = args ? args.names : undefined;
-      resourceInputs["state"] = args ? args.state : undefined;
       resourceInputs["triggers"] = args ? args.triggers : undefined;
     } else {
+      resourceInputs["ensure"] = undefined /*out*/;
       resourceInputs["name"] = undefined /*out*/;
       resourceInputs["names"] = undefined /*out*/;
-      resourceInputs["state"] = undefined /*out*/;
       resourceInputs["triggers"] = undefined /*out*/;
     }
     opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
@@ -68,8 +68,8 @@ export class Package extends pulumi.CustomResource {
  * The set of arguments for constructing a Package resource.
  */
 export interface PackageArgs {
+  ensure?: pulumi.Input<string>;
   name?: pulumi.Input<string>;
   names?: pulumi.Input<pulumi.Input<string>[]>;
-  state?: pulumi.Input<string>;
   triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
 }

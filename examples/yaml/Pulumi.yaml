@@ -22,6 +22,6 @@ resources:
     type: mid:resource:Package
     properties:
       name: emacs
-      state: absent
+      ensure: absent
     options:
       provider: ${provider}

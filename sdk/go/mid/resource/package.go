@@ -15,9 +15,9 @@ import (
 type Package struct {
 	pulumi.CustomResourceState
 
+	Ensure   pulumi.StringOutput        `pulumi:"ensure"`
 	Name     pulumi.StringPtrOutput     `pulumi:"name"`
 	Names    pulumi.StringArrayOutput   `pulumi:"names"`
-	State    pulumi.StringOutput        `pulumi:"state"`
 	Triggers types.TriggersOutputOutput `pulumi:"triggers"`
 }
 
@@ -61,17 +61,17 @@ func (PackageState) ElementType() reflect.Type {
 }
 
 type packageArgs struct {
+	Ensure   *string              `pulumi:"ensure"`
 	Name     *string              `pulumi:"name"`
 	Names    []string             `pulumi:"names"`
-	State    *string              `pulumi:"state"`
 	Triggers *types.TriggersInput `pulumi:"triggers"`
 }
 
 // The set of arguments for constructing a Package resource.
 type PackageArgs struct {
+	Ensure   pulumi.StringPtrInput
 	Name     pulumi.StringPtrInput
 	Names    pulumi.StringArrayInput
-	State    pulumi.StringPtrInput
 	Triggers types.TriggersInputPtrInput
 }
 
@@ -162,16 +162,16 @@ func (o PackageOutput) ToPackageOutputWithContext(ctx context.Context) PackageOu
 	return o
 }
 
+func (o PackageOutput) Ensure() pulumi.StringOutput {
+	return o.ApplyT(func(v *Package) pulumi.StringOutput { return v.Ensure }).(pulumi.StringOutput)
+}
+
 func (o PackageOutput) Name() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Package) pulumi.StringPtrOutput { return v.Name }).(pulumi.StringPtrOutput)
 }
 
 func (o PackageOutput) Names() pulumi.StringArrayOutput {
 	return o.ApplyT(func(v *Package) pulumi.StringArrayOutput { return v.Names }).(pulumi.StringArrayOutput)
-}
-
-func (o PackageOutput) State() pulumi.StringOutput {
-	return o.ApplyT(func(v *Package) pulumi.StringOutput { return v.State }).(pulumi.StringOutput)
 }
 
 func (o PackageOutput) Triggers() types.TriggersOutputOutput {

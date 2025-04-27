@@ -306,16 +306,16 @@
     },
     "mid:resource:Package": {
       "properties": {
+        "ensure": { "type": "string" },
         "name": { "type": "string" },
         "names": { "type": "array", "items": { "type": "string" } },
-        "state": { "type": "string" },
         "triggers": { "$ref": "#/types/mid:types:TriggersOutput" }
       },
-      "required": ["state", "triggers"],
+      "required": ["ensure", "triggers"],
       "inputProperties": {
+        "ensure": { "type": "string" },
         "name": { "type": "string" },
         "names": { "type": "array", "items": { "type": "string" } },
-        "state": { "type": "string" },
         "triggers": { "$ref": "#/types/mid:types:TriggersInput" }
       }
     },

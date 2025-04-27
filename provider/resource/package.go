@@ -20,14 +20,14 @@ type Package struct{}
 type PackageArgs struct {
 	Name     *string              `pulumi:"name,optional"`
 	Names    *[]string            `pulumi:"names,optional"`
-	State    *string              `pulumi:"state,optional"`
+	Ensure   *string              `pulumi:"ensure,optional"`
 	Triggers *types.TriggersInput `pulumi:"triggers,optional"`
 }
 
 type PackageState struct {
 	Name     *string              `pulumi:"name,optional"`
 	Names    *[]string            `pulumi:"names,optional"`
-	State    string               `pulumi:"state"`
+	Ensure   string               `pulumi:"ensure"`
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
@@ -49,8 +49,8 @@ func (result *packageTaskResult) IsChanged() bool {
 
 func (r Package) argsToTaskParameters(input PackageArgs) (packageTaskParameters, error) {
 	parameters := packageTaskParameters{}
-	if input.State != nil {
-		parameters.State = *input.State
+	if input.Ensure != nil {
+		parameters.State = *input.Ensure
 	} else {
 		parameters.State = "present"
 	}
@@ -72,10 +72,10 @@ func (r Package) updateState(olds PackageState, news PackageArgs, changed bool) 
 		olds.Name = news.Name
 		olds.Names = news.Names
 	}
-	if news.State != nil {
-		olds.State = *news.State
+	if news.Ensure != nil {
+		olds.Ensure = *news.Ensure
 	} else {
-		olds.State = "present"
+		olds.Ensure = "present"
 	}
 	if news.Triggers != nil {
 		olds.Triggers.Replace = news.Triggers.Replace
@@ -137,9 +137,9 @@ func (r Package) Diff(
 		}
 	}
 
-	if news.State != nil && *news.State != olds.State {
+	if news.Ensure != nil && *news.Ensure != olds.Ensure {
 		diff.HasChanges = true
-		diff.DetailedDiff["state"] = p.PropertyDiff{
+		diff.DetailedDiff["ensure"] = p.PropertyDiff{
 			Kind:      p.Update,
 			InputDiff: true,
 		}
@@ -247,10 +247,10 @@ func (r Package) Read(
 	state = r.updateState(state, inputs, result.IsChanged())
 
 	if result.IsChanged() {
-		if *inputs.State == "absent" {
+		if *inputs.Ensure == "absent" {
 			// we're going from present? to absent
-			if state.State == "absent" {
-				state.State = "present"
+			if state.Ensure == "absent" {
+				state.Ensure = "present"
 			}
 		}
 	}
@@ -271,7 +271,7 @@ func (r Package) Update(
 		news.Name = olds.Name
 	}
 
-	if news.State != nil && *news.State == "absent" {
+	if news.Ensure != nil && *news.Ensure == "absent" {
 		parameters, err := r.argsToTaskParameters(news)
 		if err != nil {
 			return olds, err
@@ -303,9 +303,9 @@ func (r Package) Update(
 
 	packageStateMap := map[string]string{}
 
-	newState := olds.State
-	if news.State != nil {
-		newState = *news.State
+	newState := olds.Ensure
+	if news.Ensure != nil {
+		newState = *news.Ensure
 	}
 
 	if news.Name != nil {
@@ -400,16 +400,16 @@ func (r Package) Update(
 }
 
 func (r Package) Delete(ctx context.Context, id string, props PackageState) error {
-	if props.State == "absent" {
+	if props.Ensure == "absent" {
 		return nil
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToTaskParameters(PackageArgs{
-		Name:  props.Name,
-		Names: props.Names,
-		State: ptr.String("absent"),
+		Name:   props.Name,
+		Names:  props.Names,
+		Ensure: ptr.String("absent"),
 	})
 	if err != nil {
 		return err

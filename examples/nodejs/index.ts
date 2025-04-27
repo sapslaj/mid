@@ -14,7 +14,7 @@ const vim = new mid.resource.Package("vim", {}, {
 });
 const emacs = new mid.resource.Package("emacs", {
   name: "emacs",
-  state: "absent",
+  ensure: "absent",
 }, {
   provider: provider,
 });

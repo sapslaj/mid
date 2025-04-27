@@ -25,8 +25,8 @@ func main() {
 			return err
 		}
 		_, err = resource.NewPackage(ctx, "emacs", &resource.PackageArgs{
-			Name:  pulumi.String("emacs"),
-			State: pulumi.String("absent"),
+			Name:   pulumi.String("emacs"),
+			Ensure: pulumi.String("absent"),
 		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
