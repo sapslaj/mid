@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -91,13 +90,7 @@ func (r FileLine) argsToTaskParameters(input FileLineArgs) (lineinfileTaskParame
 
 func (r FileLine) updateState(olds FileLineState, news FileLineArgs, changed bool) FileLineState {
 	olds.FileLineArgs = news
-	if news.Triggers != nil {
-		olds.Triggers.Replace = news.Triggers.Replace
-		olds.Triggers.Refresh = news.Triggers.Refresh
-	}
-	if changed {
-		olds.Triggers.LastChanged = time.Now().UTC().Format(time.RFC3339)
-	}
+	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
 
@@ -110,68 +103,28 @@ func (r FileLine) Diff(
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
-		DeleteBeforeReplace: false,
+		DeleteBeforeReplace: true,
 	}
 
-	for _, pair := range [][]any{
-		{"ensure", olds.Ensure, news.Ensure},
-		{"path", olds.Path, news.Path},
-		{"backrefs", olds.Backrefs, news.Backrefs},
-		{"backup", olds.Backup, news.Backup},
-		{"create", olds.Create, news.Create},
-		{"firstMatch", olds.FirstMatch, news.FirstMatch},
-		{"insertBefore", olds.InsertBefore, news.InsertBefore},
-		{"insertAfter", olds.InsertAfter, news.InsertAfter},
-		{"line", olds.Line, news.Line},
-		{"regexp", olds.Regexp, news.Regexp},
-		{"searchString", olds.SearchString, news.SearchString},
-		{"unsafeWrites", olds.UnsafeWrites, news.UnsafeWrites},
-		{"validate", olds.Validate, news.Validate},
-	} {
-		key := pair[0].(string)
-		o := pair[1]
-		n := pair[2]
-
-		if n == nil {
-			continue
-		}
-
-		if o == nil {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-			continue
-		}
-
-		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	}
-
-	if news.Triggers != nil {
-		refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
-		if refreshDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-		replaceDiff := resource.NewPropertyValue(olds.Triggers.Replace).Diff(resource.NewPropertyValue(news.Triggers.Replace))
-		if replaceDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.UpdateReplace,
-				InputDiff: true,
-			}
-		}
-	}
+	diff = types.MergeDiffResponses(
+		diff,
+		types.DiffAttributes(olds, news, []string{
+			"ensure",
+			"path",
+			"backrefs",
+			"backup",
+			"create",
+			"firstMatch",
+			"insertBefore",
+			"insertAfter",
+			"line",
+			"regexp",
+			"searchString",
+			"unsafeWrites",
+			"validate",
+		}),
+		types.DiffTriggers(olds, news),
+	)
 
 	return diff, nil
 }
@@ -265,7 +218,7 @@ func (r FileLine) Update(
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
+		GatherFacts: false,
 		Become:      true,
 		Check:       preview,
 		Tasks: []any{

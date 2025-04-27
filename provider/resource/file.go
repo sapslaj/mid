@@ -4,7 +4,6 @@ import (
 	"context"
 	"path/filepath"
 	"reflect"
-	"time"
 
 	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
@@ -54,9 +53,9 @@ type FileArgs struct {
 	Setype                 *string                `pulumi:"setype,optional"`
 	Seuser                 *string                `pulumi:"seuser,optional"`
 	Source                 *ptypes.AssetOrArchive `pulumi:"source,optional"`
-	Triggers               *types.TriggersInput   `pulumi:"triggers,optional"`
 	UnsafeWrites           *bool                  `pulumi:"unsafeWrites,optional"`
 	Validate               *string                `pulumi:"validate,optional"`
+	Triggers               *types.TriggersInput   `pulumi:"triggers,optional"`
 }
 
 type FileStateStat struct {
@@ -295,13 +294,7 @@ func (r File) updateState(olds FileState, news FileArgs, changed bool) FileState
 	if news.Path != nil {
 		olds.Path = *news.Path
 	}
-	if news.Triggers != nil {
-		olds.Triggers.Replace = news.Triggers.Replace
-		olds.Triggers.Refresh = news.Triggers.Refresh
-	}
-	if changed {
-		olds.Triggers.LastChanged = time.Now().UTC().Format(time.RFC3339)
-	}
+	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
 
@@ -323,7 +316,7 @@ func (r File) Diff(
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
-		DeleteBeforeReplace: false,
+		DeleteBeforeReplace: true,
 	}
 
 	if news.Path == nil {
@@ -336,77 +329,38 @@ func (r File) Diff(
 		}
 	}
 
-	for _, pair := range [][]any{
-		{"accessTime", olds.AccessTime, news.AccessTime},
-		{"accessTimeFormat", olds.AccessTimeFormat, news.AccessTimeFormat},
-		{"attributes", olds.Attributes, news.Attributes},
-		{"backup", olds.Backup, news.Backup},
-		{"checksum", olds.Checksum, news.Checksum},
-		{"content", olds.Content, news.Content},
-		{"directoryMode", olds.DirectoryMode, news.DirectoryMode},
-		{"ensure", olds.Ensure, news.Ensure},
-		{"follow", olds.Follow, news.Follow},
-		{"force", olds.Force, news.Force},
-		{"group", olds.Group, news.Group},
-		{"localFollow", olds.LocalFollow, news.LocalFollow},
-		{"mode", olds.Mode, news.Mode},
-		{"modificationTime", olds.ModificationTime, news.ModificationTime},
-		{"modificationTimeFormat", olds.ModificationTimeFormat, news.ModificationTimeFormat},
-		{"owner", olds.Owner, news.Owner},
-		{"recurse", olds.Recurse, news.Recurse},
-		{"remoteSource", olds.RemoteSource, news.RemoteSource},
-		{"selevel", olds.Selevel, news.Selevel},
-		{"serole", olds.Serole, news.Serole},
-		{"setype", olds.Setype, news.Setype},
-		{"seuser", olds.Seuser, news.Seuser},
-		{"source", olds.Source, news.Source},
-		{"unsafeWrites", olds.UnsafeWrites, news.UnsafeWrites},
-		{"validate", olds.Validate, news.Validate},
-	} {
-		key := pair[0].(string)
-		o := pair[1]
-		n := pair[2]
-
-		if reflect.ValueOf(n).IsNil() {
-			continue
-		}
-
-		if reflect.ValueOf(o).IsNil() {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-			continue
-		}
-
-		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	}
-
-	if news.Triggers != nil {
-		refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
-		if refreshDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-		replaceDiff := resource.NewPropertyValue(olds.Triggers.Replace).Diff(resource.NewPropertyValue(news.Triggers.Replace))
-		if replaceDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.UpdateReplace,
-				InputDiff: true,
-			}
-		}
-	}
+	diff = types.MergeDiffResponses(
+		diff,
+		types.DiffAttributes(olds, news, []string{
+			"accessTime",
+			"accessTimeFormat",
+			"attributes",
+			"backup",
+			"checksum",
+			"content",
+			"directoryMode",
+			"ensure",
+			"follow",
+			"force",
+			"group",
+			"localFollow",
+			"mode",
+			"modificationTime",
+			"modificationTimeFormat",
+			"owner",
+			"path",
+			"recurse",
+			"remoteSource",
+			"selevel",
+			"serole",
+			"setype",
+			"seuser",
+			"source",
+			"unsafeWrites",
+			"validate",
+		}),
+		types.DiffTriggers(olds, news),
+	)
 
 	return diff, nil
 }

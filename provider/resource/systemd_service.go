@@ -2,9 +2,7 @@ package resource
 
 import (
 	"context"
-	"reflect"
 	"strings"
-	"time"
 
 	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
@@ -26,7 +24,7 @@ type SystemdServiceArgs struct {
 	Name         *string              `pulumi:"name,optional"`
 	NoBlock      *bool                `pulumi:"noBlock,optional"`
 	Scope        *string              `pulumi:"scope,optional"`
-	State        *string              `pulumi:"state,optional"` // TODO: enum for this?
+	Ensure       *string              `pulumi:"ensure,optional"` // TODO: enum for this?
 	Triggers     *types.TriggersInput `pulumi:"triggers,optional"`
 }
 
@@ -69,19 +67,13 @@ func (r SystemdService) argsToTaskParameters(input SystemdServiceArgs) (systemdS
 		Name:         input.Name,
 		NoBlock:      input.NoBlock,
 		Scope:        input.Scope,
-		State:        input.State,
+		State:        input.Ensure,
 	}, nil
 }
 
 func (r SystemdService) updateState(olds SystemdServiceState, news SystemdServiceArgs, changed bool) SystemdServiceState {
 	olds.SystemdServiceArgs = news
-	if news.Triggers != nil {
-		olds.Triggers.Replace = news.Triggers.Replace
-		olds.Triggers.Refresh = news.Triggers.Refresh
-	}
-	if changed {
-		olds.Triggers.LastChanged = time.Now().UTC().Format(time.RFC3339)
-	}
+	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
 
@@ -101,62 +93,21 @@ func (r SystemdService) Diff(
 		news.Name = olds.Name
 	}
 
-	for _, pair := range [][]any{
-		{"daemonReexec", olds.DaemonReexec, news.DaemonReexec},
-		{"daemonReload", olds.DaemonReload, news.DaemonReload},
-		{"enabled", olds.Enabled, news.Enabled},
-		{"force", olds.Force, news.Force},
-		{"masked", olds.Masked, news.Masked},
-		{"name", olds.Name, news.Name},
-		{"noBlock", olds.NoBlock, news.NoBlock},
-		{"scope", olds.Scope, news.Scope},
-		{"state", olds.State, news.State},
-	} {
-		key := pair[0].(string)
-		o := pair[1]
-		n := pair[2]
-
-		if reflect.ValueOf(n).IsNil() {
-			continue
-		}
-
-		if reflect.ValueOf(o).IsNil() {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-			continue
-		}
-
-		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	}
-
-	if news.Triggers != nil {
-		refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
-		if refreshDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-		replaceDiff := resource.NewPropertyValue(olds.Triggers.Replace).Diff(resource.NewPropertyValue(news.Triggers.Replace))
-		if replaceDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.UpdateReplace,
-				InputDiff: true,
-			}
-		}
-	}
-
+	diff = types.MergeDiffResponses(
+		diff,
+		types.DiffAttributes(olds, news, []string{
+			"daemonReexec",
+			"daemonReload",
+			"enabled",
+			"ensure",
+			"force",
+			"masked",
+			"name",
+			"noBlock",
+			"scope",
+		}),
+		types.DiffTriggers(olds, news),
+	)
 	return diff, nil
 }
 
@@ -168,7 +119,7 @@ func (r SystemdService) Create(
 ) (string, SystemdServiceState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if input.Name == nil && (input.Enabled != nil || input.Masked != nil || input.State != nil) {
+	if input.Name == nil && (input.Enabled != nil || input.Masked != nil || input.Ensure != nil) {
 		input.Name = ptr.String(name)
 	}
 
@@ -216,7 +167,7 @@ func (r SystemdService) Read(
 ) (string, SystemdServiceArgs, SystemdServiceState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if inputs.Name == nil && state.Name != nil && (inputs.Enabled != nil || inputs.Masked != nil || inputs.State != nil) {
+	if inputs.Name == nil && state.Name != nil && (inputs.Enabled != nil || inputs.Masked != nil || inputs.Ensure != nil) {
 		inputs.Name = state.Name
 	}
 
@@ -258,7 +209,7 @@ func (r SystemdService) Update(
 ) (SystemdServiceState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if news.Name == nil && olds.Name != nil && (news.Enabled != nil || news.Masked != nil || news.State != nil) {
+	if news.Name == nil && olds.Name != nil && (news.Enabled != nil || news.Masked != nil || news.Ensure != nil) {
 		news.Name = olds.Name
 	}
 
@@ -269,7 +220,7 @@ func (r SystemdService) Update(
 
 	refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
 	if refreshDiff != nil {
-		if news.State != nil && *news.State == "started" {
+		if news.Ensure != nil && *news.Ensure == "started" {
 			parameters.State = ptr.String("restarted")
 		}
 	}
@@ -310,7 +261,7 @@ func (r SystemdService) Delete(
 		Name:         props.Name,
 		NoBlock:      props.NoBlock,
 		Scope:        props.Scope,
-		State:        props.State,
+		Ensure:       props.Ensure,
 	}
 
 	runPlay := false
@@ -319,9 +270,9 @@ func (r SystemdService) Delete(
 		runPlay = true
 		args.Enabled = ptr.Bool(false)
 	}
-	if args.State != nil && *args.State != "stopped" {
+	if args.Ensure != nil && *args.Ensure != "stopped" {
 		runPlay = true
-		args.State = ptr.String("stopped")
+		args.Ensure = ptr.String("stopped")
 	}
 
 	if !runPlay {

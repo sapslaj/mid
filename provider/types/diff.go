@@ -3,6 +3,7 @@ package types
 import (
 	"reflect"
 	"strings"
+	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
@@ -100,4 +101,15 @@ func MergeDiffResponses(drs ...p.DiffResponse) p.DiffResponse {
 		}
 	}
 	return diff
+}
+
+func UpdateTriggerState(outs TriggersOutput, ins *TriggersInput, changed bool) TriggersOutput {
+	if ins != nil {
+		outs.Replace = ins.Replace
+		outs.Refresh = ins.Refresh
+	}
+	if changed {
+		outs.LastChanged = time.Now().UTC().Format(time.RFC3339)
+	}
+	return outs
 }

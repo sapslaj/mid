@@ -3,8 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"reflect"
-	"time"
 
 	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
@@ -78,13 +76,7 @@ func (r Service) updateState(olds ServiceState, news ServiceArgs, changed bool) 
 	if news.Name != nil {
 		olds.Name = *news.Name
 	}
-	if news.Triggers != nil {
-		olds.Triggers.Replace = news.Triggers.Replace
-		olds.Triggers.Refresh = news.Triggers.Refresh
-	}
-	if changed {
-		olds.Triggers.LastChanged = time.Now().UTC().Format(time.RFC3339)
-	}
+	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
 
@@ -110,59 +102,19 @@ func (r Service) Diff(
 		}
 	}
 
-	for _, pair := range [][]any{
-		{"arguments", olds.Arguments, news.Arguments},
-		{"enabled", olds.Enabled, news.Enabled},
-		{"pattern", olds.Pattern, news.Pattern},
-		{"runlevel", olds.Runlevel, news.Runlevel},
-		{"sleep", olds.Sleep, news.Sleep},
-		{"state", olds.State, news.State},
-		{"use", olds.Use, news.Use},
-	} {
-		key := pair[0].(string)
-		o := pair[1]
-		n := pair[2]
-
-		if reflect.ValueOf(n).IsNil() {
-			continue
-		}
-
-		if reflect.ValueOf(o).IsNil() {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-			continue
-		}
-
-		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	}
-
-	if news.Triggers != nil {
-		refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
-		if refreshDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-		replaceDiff := resource.NewPropertyValue(olds.Triggers.Replace).Diff(resource.NewPropertyValue(news.Triggers.Replace))
-		if replaceDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.UpdateReplace,
-				InputDiff: true,
-			}
-		}
-	}
+	diff = types.MergeDiffResponses(
+		diff,
+		types.DiffAttributes(olds, news, []string{
+			"arguments",
+			"enabled",
+			"pattern",
+			"runlevel",
+			"sleep",
+			"state",
+			"use",
+		}),
+		types.DiffTriggers(olds, news),
+	)
 
 	return diff, nil
 }

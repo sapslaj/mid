@@ -2,8 +2,6 @@ package resource
 
 import (
 	"context"
-	"reflect"
-	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -16,14 +14,15 @@ import (
 type Exec struct{}
 
 type ExecArgs struct {
-	Create             types.ExecCommand    `pulumi:"create"`
-	Update             *types.ExecCommand   `pulumi:"update,optional"`
-	Delete             *types.ExecCommand   `pulumi:"delete,optional"`
-	ExpandArgumentVars *bool                `pulumi:"expandArgumentVars,optional"`
-	Dir                *string              `pulumi:"dir,optional"`
-	Environment        *map[string]string   `pulumi:"environment,optional"`
-	Logging            *types.ExecLogging   `pulumi:"logging,optional"`
-	Triggers           *types.TriggersInput `pulumi:"triggers,optional"`
+	Create              types.ExecCommand    `pulumi:"create"`
+	Update              *types.ExecCommand   `pulumi:"update,optional"`
+	Delete              *types.ExecCommand   `pulumi:"delete,optional"`
+	ExpandArgumentVars  *bool                `pulumi:"expandArgumentVars,optional"`
+	DeleteBeforeReplace *bool                `pulumi:"deleteBeforeReplace,optional"`
+	Dir                 *string              `pulumi:"dir,optional"`
+	Environment         *map[string]string   `pulumi:"environment,optional"`
+	Logging             *types.ExecLogging   `pulumi:"logging,optional"`
+	Triggers            *types.TriggersInput `pulumi:"triggers,optional"`
 }
 
 type ExecState struct {
@@ -83,13 +82,7 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTas
 
 func (r Exec) updateState(olds ExecState, news ExecArgs, changed bool) ExecState {
 	olds.ExecArgs = news
-	if news.Triggers != nil {
-		olds.Triggers.Replace = news.Triggers.Replace
-		olds.Triggers.Refresh = news.Triggers.Refresh
-	}
-	if changed {
-		olds.Triggers.LastChanged = time.Now().UTC().Format(time.RFC3339)
-	}
+	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
 
@@ -105,59 +98,23 @@ func (r Exec) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	for _, pair := range [][]any{
-		{"create", olds.Create, news.Create},
-		{"update", olds.Update, news.Update},
-		{"delete", olds.Delete, news.Delete},
-		{"expandArgumentVars", olds.ExpandArgumentVars, news.ExpandArgumentVars},
-		{"dir", olds.Dir, news.Dir},
-		{"environment", olds.Environment, news.Environment},
-		{"logging", olds.Logging, news.Logging},
-	} {
-		key := pair[0].(string)
-		o := pair[1]
-		n := pair[2]
-
-		if reflect.ValueOf(n).IsNil() {
-			continue
-		}
-
-		if reflect.ValueOf(o).IsNil() {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-			continue
-		}
-
-		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
-			diff.HasChanges = true
-			diff.DetailedDiff[key] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
+	if news.DeleteBeforeReplace != nil {
+		diff.DeleteBeforeReplace = *news.DeleteBeforeReplace
 	}
 
-	if news.Triggers != nil {
-		refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
-		if refreshDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-		replaceDiff := resource.NewPropertyValue(olds.Triggers.Replace).Diff(resource.NewPropertyValue(news.Triggers.Replace))
-		if replaceDiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["triggers"] = p.PropertyDiff{
-				Kind:      p.UpdateReplace,
-				InputDiff: true,
-			}
-		}
-	}
+	diff = types.MergeDiffResponses(
+		diff,
+		types.DiffAttributes(olds, news, []string{
+			"create",
+			"update",
+			"delete",
+			"expandArgumentVars",
+			"dir",
+			"environment",
+			"logging",
+		}),
+		types.DiffTriggers(olds, news),
+	)
 
 	return diff, nil
 }

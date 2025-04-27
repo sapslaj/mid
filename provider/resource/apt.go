@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -152,13 +151,7 @@ func (r Apt) updateState(olds AptState, news AptArgs, changed bool) AptState {
 	if olds.Ensure == nil && r.canAssumeEnsure(news) {
 		olds.Ensure = ptr.Of("present")
 	}
-	if news.Triggers != nil {
-		olds.Triggers.Replace = news.Triggers.Replace
-		olds.Triggers.Refresh = news.Triggers.Refresh
-	}
-	if changed {
-		olds.Triggers.LastChanged = time.Now().UTC().Format(time.RFC3339)
-	}
+	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
 
@@ -367,7 +360,7 @@ func (r Apt) Update(
 		}
 
 		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-			GatherFacts: true,
+			GatherFacts: false,
 			Become:      true,
 			Check:       preview,
 			Tasks: []any{
@@ -466,7 +459,7 @@ func (r Apt) Update(
 		})
 	}
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
+		GatherFacts: false,
 		Become:      true,
 		Check:       preview,
 		Tasks:       tasks,
