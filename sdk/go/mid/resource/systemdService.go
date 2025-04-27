@@ -18,12 +18,12 @@ type SystemdService struct {
 	DaemonReexec pulumi.BoolPtrOutput       `pulumi:"daemonReexec"`
 	DaemonReload pulumi.BoolPtrOutput       `pulumi:"daemonReload"`
 	Enabled      pulumi.BoolPtrOutput       `pulumi:"enabled"`
+	Ensure       pulumi.StringPtrOutput     `pulumi:"ensure"`
 	Force        pulumi.BoolPtrOutput       `pulumi:"force"`
 	Masked       pulumi.BoolPtrOutput       `pulumi:"masked"`
 	Name         pulumi.StringPtrOutput     `pulumi:"name"`
 	NoBlock      pulumi.BoolPtrOutput       `pulumi:"noBlock"`
 	Scope        pulumi.StringPtrOutput     `pulumi:"scope"`
-	State        pulumi.StringPtrOutput     `pulumi:"state"`
 	Triggers     types.TriggersOutputOutput `pulumi:"triggers"`
 }
 
@@ -70,12 +70,12 @@ type systemdServiceArgs struct {
 	DaemonReexec *bool                `pulumi:"daemonReexec"`
 	DaemonReload *bool                `pulumi:"daemonReload"`
 	Enabled      *bool                `pulumi:"enabled"`
+	Ensure       *string              `pulumi:"ensure"`
 	Force        *bool                `pulumi:"force"`
 	Masked       *bool                `pulumi:"masked"`
 	Name         *string              `pulumi:"name"`
 	NoBlock      *bool                `pulumi:"noBlock"`
 	Scope        *string              `pulumi:"scope"`
-	State        *string              `pulumi:"state"`
 	Triggers     *types.TriggersInput `pulumi:"triggers"`
 }
 
@@ -84,12 +84,12 @@ type SystemdServiceArgs struct {
 	DaemonReexec pulumi.BoolPtrInput
 	DaemonReload pulumi.BoolPtrInput
 	Enabled      pulumi.BoolPtrInput
+	Ensure       pulumi.StringPtrInput
 	Force        pulumi.BoolPtrInput
 	Masked       pulumi.BoolPtrInput
 	Name         pulumi.StringPtrInput
 	NoBlock      pulumi.BoolPtrInput
 	Scope        pulumi.StringPtrInput
-	State        pulumi.StringPtrInput
 	Triggers     types.TriggersInputPtrInput
 }
 
@@ -192,6 +192,10 @@ func (o SystemdServiceOutput) Enabled() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *SystemdService) pulumi.BoolPtrOutput { return v.Enabled }).(pulumi.BoolPtrOutput)
 }
 
+func (o SystemdServiceOutput) Ensure() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *SystemdService) pulumi.StringPtrOutput { return v.Ensure }).(pulumi.StringPtrOutput)
+}
+
 func (o SystemdServiceOutput) Force() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *SystemdService) pulumi.BoolPtrOutput { return v.Force }).(pulumi.BoolPtrOutput)
 }
@@ -210,10 +214,6 @@ func (o SystemdServiceOutput) NoBlock() pulumi.BoolPtrOutput {
 
 func (o SystemdServiceOutput) Scope() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *SystemdService) pulumi.StringPtrOutput { return v.Scope }).(pulumi.StringPtrOutput)
-}
-
-func (o SystemdServiceOutput) State() pulumi.StringPtrOutput {
-	return o.ApplyT(func(v *SystemdService) pulumi.StringPtrOutput { return v.State }).(pulumi.StringPtrOutput)
 }
 
 func (o SystemdServiceOutput) Triggers() types.TriggersOutputOutput {

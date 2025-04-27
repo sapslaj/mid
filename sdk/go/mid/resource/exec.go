@@ -16,16 +16,17 @@ import (
 type Exec struct {
 	pulumi.CustomResourceState
 
-	Create             types.ExecCommandOutput    `pulumi:"create"`
-	Delete             types.ExecCommandPtrOutput `pulumi:"delete"`
-	Dir                pulumi.StringPtrOutput     `pulumi:"dir"`
-	Environment        pulumi.StringMapOutput     `pulumi:"environment"`
-	ExpandArgumentVars pulumi.BoolPtrOutput       `pulumi:"expandArgumentVars"`
-	Logging            pulumi.StringPtrOutput     `pulumi:"logging"`
-	Stderr             pulumi.StringOutput        `pulumi:"stderr"`
-	Stdout             pulumi.StringOutput        `pulumi:"stdout"`
-	Triggers           types.TriggersOutputOutput `pulumi:"triggers"`
-	Update             types.ExecCommandPtrOutput `pulumi:"update"`
+	Create              types.ExecCommandOutput    `pulumi:"create"`
+	Delete              types.ExecCommandPtrOutput `pulumi:"delete"`
+	DeleteBeforeReplace pulumi.BoolPtrOutput       `pulumi:"deleteBeforeReplace"`
+	Dir                 pulumi.StringPtrOutput     `pulumi:"dir"`
+	Environment         pulumi.StringMapOutput     `pulumi:"environment"`
+	ExpandArgumentVars  pulumi.BoolPtrOutput       `pulumi:"expandArgumentVars"`
+	Logging             pulumi.StringPtrOutput     `pulumi:"logging"`
+	Stderr              pulumi.StringOutput        `pulumi:"stderr"`
+	Stdout              pulumi.StringOutput        `pulumi:"stdout"`
+	Triggers            types.TriggersOutputOutput `pulumi:"triggers"`
+	Update              types.ExecCommandPtrOutput `pulumi:"update"`
 }
 
 // NewExec registers a new resource with the given unique name, arguments, and options.
@@ -71,26 +72,28 @@ func (ExecState) ElementType() reflect.Type {
 }
 
 type execArgs struct {
-	Create             types.ExecCommand    `pulumi:"create"`
-	Delete             *types.ExecCommand   `pulumi:"delete"`
-	Dir                *string              `pulumi:"dir"`
-	Environment        map[string]string    `pulumi:"environment"`
-	ExpandArgumentVars *bool                `pulumi:"expandArgumentVars"`
-	Logging            *string              `pulumi:"logging"`
-	Triggers           *types.TriggersInput `pulumi:"triggers"`
-	Update             *types.ExecCommand   `pulumi:"update"`
+	Create              types.ExecCommand    `pulumi:"create"`
+	Delete              *types.ExecCommand   `pulumi:"delete"`
+	DeleteBeforeReplace *bool                `pulumi:"deleteBeforeReplace"`
+	Dir                 *string              `pulumi:"dir"`
+	Environment         map[string]string    `pulumi:"environment"`
+	ExpandArgumentVars  *bool                `pulumi:"expandArgumentVars"`
+	Logging             *string              `pulumi:"logging"`
+	Triggers            *types.TriggersInput `pulumi:"triggers"`
+	Update              *types.ExecCommand   `pulumi:"update"`
 }
 
 // The set of arguments for constructing a Exec resource.
 type ExecArgs struct {
-	Create             types.ExecCommandInput
-	Delete             types.ExecCommandPtrInput
-	Dir                pulumi.StringPtrInput
-	Environment        pulumi.StringMapInput
-	ExpandArgumentVars pulumi.BoolPtrInput
-	Logging            pulumi.StringPtrInput
-	Triggers           types.TriggersInputPtrInput
-	Update             types.ExecCommandPtrInput
+	Create              types.ExecCommandInput
+	Delete              types.ExecCommandPtrInput
+	DeleteBeforeReplace pulumi.BoolPtrInput
+	Dir                 pulumi.StringPtrInput
+	Environment         pulumi.StringMapInput
+	ExpandArgumentVars  pulumi.BoolPtrInput
+	Logging             pulumi.StringPtrInput
+	Triggers            types.TriggersInputPtrInput
+	Update              types.ExecCommandPtrInput
 }
 
 func (ExecArgs) ElementType() reflect.Type {
@@ -186,6 +189,10 @@ func (o ExecOutput) Create() types.ExecCommandOutput {
 
 func (o ExecOutput) Delete() types.ExecCommandPtrOutput {
 	return o.ApplyT(func(v *Exec) types.ExecCommandPtrOutput { return v.Delete }).(types.ExecCommandPtrOutput)
+}
+
+func (o ExecOutput) DeleteBeforeReplace() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v *Exec) pulumi.BoolPtrOutput { return v.DeleteBeforeReplace }).(pulumi.BoolPtrOutput)
 }
 
 func (o ExecOutput) Dir() pulumi.StringPtrOutput {

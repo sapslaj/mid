@@ -36,12 +36,12 @@ export class SystemdService extends pulumi.CustomResource {
   public readonly daemonReexec!: pulumi.Output<boolean | undefined>;
   public readonly daemonReload!: pulumi.Output<boolean | undefined>;
   public readonly enabled!: pulumi.Output<boolean | undefined>;
+  public readonly ensure!: pulumi.Output<string | undefined>;
   public readonly force!: pulumi.Output<boolean | undefined>;
   public readonly masked!: pulumi.Output<boolean | undefined>;
   public readonly name!: pulumi.Output<string | undefined>;
   public readonly noBlock!: pulumi.Output<boolean | undefined>;
   public readonly scope!: pulumi.Output<string | undefined>;
-  public readonly state!: pulumi.Output<string | undefined>;
   public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
 
   /**
@@ -58,23 +58,23 @@ export class SystemdService extends pulumi.CustomResource {
       resourceInputs["daemonReexec"] = args ? args.daemonReexec : undefined;
       resourceInputs["daemonReload"] = args ? args.daemonReload : undefined;
       resourceInputs["enabled"] = args ? args.enabled : undefined;
+      resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["force"] = args ? args.force : undefined;
       resourceInputs["masked"] = args ? args.masked : undefined;
       resourceInputs["name"] = args ? args.name : undefined;
       resourceInputs["noBlock"] = args ? args.noBlock : undefined;
       resourceInputs["scope"] = args ? args.scope : undefined;
-      resourceInputs["state"] = args ? args.state : undefined;
       resourceInputs["triggers"] = args ? args.triggers : undefined;
     } else {
       resourceInputs["daemonReexec"] = undefined /*out*/;
       resourceInputs["daemonReload"] = undefined /*out*/;
       resourceInputs["enabled"] = undefined /*out*/;
+      resourceInputs["ensure"] = undefined /*out*/;
       resourceInputs["force"] = undefined /*out*/;
       resourceInputs["masked"] = undefined /*out*/;
       resourceInputs["name"] = undefined /*out*/;
       resourceInputs["noBlock"] = undefined /*out*/;
       resourceInputs["scope"] = undefined /*out*/;
-      resourceInputs["state"] = undefined /*out*/;
       resourceInputs["triggers"] = undefined /*out*/;
     }
     opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
@@ -89,11 +89,11 @@ export interface SystemdServiceArgs {
   daemonReexec?: pulumi.Input<boolean>;
   daemonReload?: pulumi.Input<boolean>;
   enabled?: pulumi.Input<boolean>;
+  ensure?: pulumi.Input<string>;
   force?: pulumi.Input<boolean>;
   masked?: pulumi.Input<boolean>;
   name?: pulumi.Input<string>;
   noBlock?: pulumi.Input<boolean>;
   scope?: pulumi.Input<string>;
-  state?: pulumi.Input<string>;
   triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
 }

@@ -35,6 +35,7 @@ export class Exec extends pulumi.CustomResource {
 
   public readonly create!: pulumi.Output<outputs.types.ExecCommand>;
   public readonly delete!: pulumi.Output<outputs.types.ExecCommand | undefined>;
+  public readonly deleteBeforeReplace!: pulumi.Output<boolean | undefined>;
   public readonly dir!: pulumi.Output<string | undefined>;
   public readonly environment!: pulumi.Output<{ [key: string]: string } | undefined>;
   public readonly expandArgumentVars!: pulumi.Output<boolean | undefined>;
@@ -60,6 +61,7 @@ export class Exec extends pulumi.CustomResource {
       }
       resourceInputs["create"] = args ? args.create : undefined;
       resourceInputs["delete"] = args ? args.delete : undefined;
+      resourceInputs["deleteBeforeReplace"] = args ? args.deleteBeforeReplace : undefined;
       resourceInputs["dir"] = args ? args.dir : undefined;
       resourceInputs["environment"] = args ? args.environment : undefined;
       resourceInputs["expandArgumentVars"] = args ? args.expandArgumentVars : undefined;
@@ -71,6 +73,7 @@ export class Exec extends pulumi.CustomResource {
     } else {
       resourceInputs["create"] = undefined /*out*/;
       resourceInputs["delete"] = undefined /*out*/;
+      resourceInputs["deleteBeforeReplace"] = undefined /*out*/;
       resourceInputs["dir"] = undefined /*out*/;
       resourceInputs["environment"] = undefined /*out*/;
       resourceInputs["expandArgumentVars"] = undefined /*out*/;
@@ -91,6 +94,7 @@ export class Exec extends pulumi.CustomResource {
 export interface ExecArgs {
   create: pulumi.Input<inputs.types.ExecCommandArgs>;
   delete?: pulumi.Input<inputs.types.ExecCommandArgs>;
+  deleteBeforeReplace?: pulumi.Input<boolean>;
   dir?: pulumi.Input<string>;
   environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
   expandArgumentVars?: pulumi.Input<boolean>;
