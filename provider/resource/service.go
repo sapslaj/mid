@@ -123,14 +123,11 @@ func (r Service) Diff(
 		o := pair[1]
 		n := pair[2]
 
-		oValue := reflect.ValueOf(o)
-		nValue := reflect.ValueOf(n)
-
-		if nValue.IsNil() {
+		if reflect.ValueOf(n).IsNil() {
 			continue
 		}
 
-		if oValue.IsNil() {
+		if reflect.ValueOf(o).IsNil() {
 			diff.HasChanges = true
 			diff.DetailedDiff[key] = p.PropertyDiff{
 				Kind:      p.Add,
@@ -139,7 +136,7 @@ func (r Service) Diff(
 			continue
 		}
 
-		if !nValue.Elem().Equal(oValue.Elem()) {
+		if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
 			diff.HasChanges = true
 			diff.DetailedDiff[key] = p.PropertyDiff{
 				Kind:      p.Update,
