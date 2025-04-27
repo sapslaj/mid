@@ -20,6 +20,11 @@ export type File = import("./file").File;
 export const File: typeof import("./file").File = null as any;
 utilities.lazyLoad(exports, ["File"], () => require("./file"));
 
+export { FileLineArgs } from "./fileLine";
+export type FileLine = import("./fileLine").FileLine;
+export const FileLine: typeof import("./fileLine").FileLine = null as any;
+utilities.lazyLoad(exports, ["FileLine"], () => require("./fileLine"));
+
 export { PackageArgs } from "./package";
 export type Package = import("./package").Package;
 export const Package: typeof import("./package").Package = null as any;
@@ -45,6 +50,8 @@ const _module = {
         return new Exec(name, <any> undefined, { urn });
       case "mid:resource:File":
         return new File(name, <any> undefined, { urn });
+      case "mid:resource:FileLine":
+        return new FileLine(name, <any> undefined, { urn });
       case "mid:resource:Package":
         return new Package(name, <any> undefined, { urn });
       case "mid:resource:Service":

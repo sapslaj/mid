@@ -304,6 +304,42 @@
         "validate": { "type": "string" }
       }
     },
+    "mid:resource:FileLine": {
+      "properties": {
+        "backrefs": { "type": "boolean" },
+        "backup": { "type": "boolean" },
+        "create": { "type": "boolean" },
+        "ensure": { "type": "string" },
+        "firstMatch": { "type": "boolean" },
+        "insertAfter": { "type": "string" },
+        "insertBefore": { "type": "string" },
+        "line": { "type": "string" },
+        "path": { "type": "string" },
+        "regexp": { "type": "string" },
+        "searchString": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersOutput" },
+        "unsafeWrites": { "type": "boolean" },
+        "validate": { "type": "string" }
+      },
+      "required": ["path", "triggers"],
+      "inputProperties": {
+        "backrefs": { "type": "boolean" },
+        "backup": { "type": "boolean" },
+        "create": { "type": "boolean" },
+        "ensure": { "type": "string" },
+        "firstMatch": { "type": "boolean" },
+        "insertAfter": { "type": "string" },
+        "insertBefore": { "type": "string" },
+        "line": { "type": "string" },
+        "path": { "type": "string" },
+        "regexp": { "type": "string" },
+        "searchString": { "type": "string" },
+        "triggers": { "$ref": "#/types/mid:types:TriggersInput" },
+        "unsafeWrites": { "type": "boolean" },
+        "validate": { "type": "string" }
+      },
+      "requiredInputs": ["path"]
+    },
     "mid:resource:Package": {
       "properties": {
         "ensure": { "type": "string" },

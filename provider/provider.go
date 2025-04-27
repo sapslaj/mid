@@ -56,6 +56,7 @@ func Provider() p.Provider {
 			infer.Resource[resource.Apt, resource.AptArgs, resource.AptState](),
 			infer.Resource[resource.Exec, resource.ExecArgs, resource.ExecState](),
 			infer.Resource[resource.File, resource.FileArgs, resource.FileState](),
+			infer.Resource[resource.FileLine, resource.FileLineArgs, resource.FileLineState](),
 			infer.Resource[resource.Package, resource.PackageArgs, resource.PackageState](),
 			infer.Resource[resource.Service, resource.ServiceArgs, resource.ServiceState](),
 			infer.Resource[resource.SystemdService, resource.SystemdServiceArgs, resource.SystemdServiceState](),

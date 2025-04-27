@@ -27,6 +27,8 @@ func (m *module) Construct(ctx *pulumi.Context, name, typ, urn string) (r pulumi
 		r = &Exec{}
 	case "mid:resource:File":
 		r = &File{}
+	case "mid:resource:FileLine":
+		r = &FileLine{}
 	case "mid:resource:Package":
 		r = &Package{}
 	case "mid:resource:Service":
