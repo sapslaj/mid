@@ -21,6 +21,8 @@ func (m *module) Version() semver.Version {
 
 func (m *module) Construct(ctx *pulumi.Context, name, typ, urn string) (r pulumi.Resource, err error) {
 	switch typ {
+	case "mid:resource:Apt":
+		r = &Apt{}
 	case "mid:resource:Exec":
 		r = &Exec{}
 	case "mid:resource:File":

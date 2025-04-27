@@ -17,6 +17,7 @@
     "config/vars.ts",
     "index.ts",
     "provider.ts",
+    "resource/apt.ts",
     "resource/exec.ts",
     "resource/file.ts",
     "resource/index.ts",

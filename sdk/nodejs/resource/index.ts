@@ -5,6 +5,11 @@ import * as pulumi from "@pulumi/pulumi";
 import * as utilities from "../utilities";
 
 // Export members:
+export { AptArgs } from "./apt";
+export type Apt = import("./apt").Apt;
+export const Apt: typeof import("./apt").Apt = null as any;
+utilities.lazyLoad(exports, ["Apt"], () => require("./apt"));
+
 export { ExecArgs } from "./exec";
 export type Exec = import("./exec").Exec;
 export const Exec: typeof import("./exec").Exec = null as any;
@@ -34,6 +39,8 @@ const _module = {
   version: utilities.getVersion(),
   construct: (name: string, type: string, urn: string): pulumi.Resource => {
     switch (type) {
+      case "mid:resource:Apt":
+        return new Apt(name, <any> undefined, { urn });
       case "mid:resource:Exec":
         return new Exec(name, <any> undefined, { urn });
       case "mid:resource:File":

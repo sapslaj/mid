@@ -53,6 +53,7 @@ func Provider() p.Provider {
 			},
 		},
 		Resources: []infer.InferredResource{
+			infer.Resource[resource.Apt, resource.AptArgs, resource.AptState](),
 			infer.Resource[resource.Exec, resource.ExecArgs, resource.ExecState](),
 			infer.Resource[resource.File, resource.FileArgs, resource.FileState](),
 			infer.Resource[resource.Package, resource.PackageArgs, resource.PackageState](),

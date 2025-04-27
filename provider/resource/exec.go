@@ -112,7 +112,7 @@ func (r Exec) Diff(
 		{"expandArgumentVars", olds.ExpandArgumentVars, news.ExpandArgumentVars},
 		{"dir", olds.Dir, news.Dir},
 		{"environment", olds.Environment, news.Environment},
-		{"loggin", olds.Logging, news.Logging},
+		{"logging", olds.Logging, news.Logging},
 	} {
 		key := pair[0].(string)
 		o := pair[1]
