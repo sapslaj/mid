@@ -43,7 +43,7 @@ jobs:
         id: down
         run: just test-example-down
 
-  unit-test:
+  test-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +53,7 @@ jobs:
           tools: go
       - run: go test -timeout=1h -v -race ./provider/...
 
-  unit-integration:
+  test-integration:
     runs-on: ubuntu-latest
     services:
       dind:
