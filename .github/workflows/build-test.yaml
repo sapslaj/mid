@@ -42,3 +42,23 @@ jobs:
       - name: PulumiDown
         id: down
         run: just test-example-down
+
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup tools
+        uses: ./.github/actions/setup-tools
+        with:
+          tools: go
+      - run: go test -timeout=1h -v -race ./provider/...
+
+  unit-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup tools
+        uses: ./.github/actions/setup-tools
+        with:
+          tools: go
+      - run: go test -timeout=1h -v -race ./tests/...

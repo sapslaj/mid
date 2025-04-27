@@ -1,56 +1,117 @@
-// Copyright 2016-2023, Pulumi Corporation.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package tests
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/blang/semver"
+	"github.com/ory/dockertest/v3"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/integration"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/ssh"
 
 	mid "github.com/sapslaj/mid/provider"
 )
 
-func TestRandomCreate(t *testing.T) {
-	prov := provider()
-
-	response, err := prov.Create(p.CreateRequest{
-		Urn: urn("Random"),
-		Properties: resource.PropertyMap{
-			"length": resource.NewNumberProperty(12),
-		},
-		Preview: false,
-	})
-
-	require.NoError(t, err)
-	result := response.Properties["result"].StringValue()
-	assert.Len(t, result, 12)
+func MakeURN(typ string) resource.URN {
+	return resource.NewURN("stack", "proj", "", tokens.Type(typ), "name")
 }
 
-// urn is a helper function to build an urn for running integration tests.
-func urn(typ string) resource.URN {
-	return resource.NewURN("stack", "proj", "",
-		tokens.Type("test:index:"+typ), "name")
-}
-
-// Create a test server.
-func provider() integration.Server {
+func NewProvider() integration.Server {
 	return integration.NewServer(mid.Name, semver.MustParse("1.0.0"), mid.Provider())
+}
+
+var DockertestPool *dockertest.Pool
+
+func init() {
+	var err error
+	DockertestPool, err = dockertest.NewPool("")
+	if err != nil {
+		panic(err)
+	}
+}
+
+type ProviderTestHarness struct {
+	Container *dockertest.Resource
+	Client    *ssh.Client
+	Provider  integration.Server
+}
+
+func NewProviderTestHarness(t *testing.T) *ProviderTestHarness {
+	t.Helper()
+
+	var err error
+	harness := &ProviderTestHarness{}
+
+	name := "mid-" + strings.ToLower(t.Name())
+	t.Logf("running '%s' container", name)
+	harness.Container, err = DockertestPool.BuildAndRun(name, "../docker/smoketest/Dockerfile", []string{})
+	require.NoError(t, err)
+
+	port, err := strconv.Atoi(harness.Container.GetPort("22/tcp"))
+	require.NoError(t, err)
+
+	t.Log("connecting to container over SSH")
+	harness.Client, err = ssh.Dial("tcp", "localhost:"+fmt.Sprint(port), &ssh.ClientConfig{
+		User:            "root",
+		Auth:            []ssh.AuthMethod{ssh.Password("hunter2")},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	})
+	require.NoError(t, err)
+
+	t.Log("creating and configuring provider")
+	harness.Provider = NewProvider()
+	err = harness.Provider.Configure(p.ConfigureRequest{
+		Args: resource.PropertyMap{
+			"connection": resource.NewObjectProperty(resource.PropertyMap{
+				"user":     resource.NewStringProperty("root"),
+				"password": resource.NewStringProperty("hunter2"),
+				"host":     resource.NewStringProperty("localhost"),
+				"port":     resource.NewNumberProperty(float64(port)),
+			}),
+		},
+	})
+	require.NoError(t, err)
+
+	return harness
+}
+
+func (harness *ProviderTestHarness) Close() {
+	if harness.Client != nil {
+		harness.Client.Close()
+	}
+	if harness.Container != nil {
+		DockertestPool.Purge(harness.Container)
+	}
+}
+
+func (harness *ProviderTestHarness) AssertCommand(t *testing.T, cmd string) bool {
+	session, err := harness.Client.NewSession()
+	require.NoError(t, err)
+	defer session.Close()
+
+	var stdout strings.Builder
+	session.Stdout = &stdout
+	var stderr strings.Builder
+	session.Stderr = &stderr
+
+	err = session.Run(cmd)
+	if !assert.NoError(t, err) {
+		t.Logf(
+			"command `%s` failed with error %v (%T)\nstdout=%s\nstderr=%s\n",
+			cmd,
+			err,
+			err,
+			stdout.String(),
+			stderr.String(),
+		)
+		return false
+	}
+	return true
 }

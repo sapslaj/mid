@@ -1,0 +1,241 @@
+package resource
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/sapslaj/mid/ptr"
+)
+
+func TestApt_argsToTaskParameters(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		input                   AptArgs
+		expected                aptTaskParameters
+		taskParametersNeedsName bool
+		canAssumeEnsure         bool
+	}{
+		"install single package": {
+			input: AptArgs{
+				Name: ptr.Of("vim"),
+			},
+			expected: aptTaskParameters{
+				Name: ptr.Of([]string{"vim"}),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"install single package but in a list": {
+			input: AptArgs{
+				Names: ptr.Of([]string{"vim"}),
+			},
+			expected: aptTaskParameters{
+				Name: ptr.Of([]string{"vim"}),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"install multiple packages": {
+			input: AptArgs{
+				Names: ptr.Of([]string{"vim", "emacs"}),
+			},
+			expected: aptTaskParameters{
+				Name: ptr.Of([]string{"vim", "emacs"}),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"update repositories and install package": {
+			input: AptArgs{
+				Name:        ptr.Of("vim"),
+				UpdateCache: ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				Name:        ptr.Of([]string{"vim"}),
+				UpdateCache: ptr.Of(true),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         true,
+		},
+		"remove package": {
+			input: AptArgs{
+				Name:   ptr.Of("emacs"),
+				Ensure: ptr.Of("absent"),
+			},
+			expected: aptTaskParameters{
+				Name:  ptr.Of([]string{"emacs"}),
+				State: ptr.Of("absent"),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"allow downgrade": {
+			input: AptArgs{
+				Name:           ptr.Of("emacs"),
+				AllowDowngrade: ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				Name:           ptr.Of([]string{"emacs"}),
+				AllowDowngrade: ptr.Of(true),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"fail on autoremove": {
+			input: AptArgs{
+				Name:             ptr.Of("vim"),
+				FailOnAutoremove: ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				Name:             ptr.Of([]string{"vim"}),
+				FailOnAutoremove: ptr.Of(true),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"install recommends": {
+			input: AptArgs{
+				Name:              ptr.Of("vim"),
+				InstallRecommends: ptr.Of(false),
+			},
+			expected: aptTaskParameters{
+				Name:              ptr.Of([]string{"vim"}),
+				InstallRecommends: ptr.Of(false),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"update all packages": {
+			input: AptArgs{
+				Name:   ptr.Of("*"),
+				Ensure: ptr.Of("latest"),
+			},
+			expected: aptTaskParameters{
+				Name:  ptr.Of([]string{"*"}),
+				State: ptr.Of("latest"),
+			},
+			taskParametersNeedsName: true,
+			canAssumeEnsure:         true,
+		},
+		"apt dist-upgrade": {
+			input: AptArgs{
+				Upgrade: ptr.Of("dist"),
+			},
+			expected: aptTaskParameters{
+				Upgrade: ptr.Of("dist"),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+		"apt update": {
+			input: AptArgs{
+				UpdateCache: ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				UpdateCache: ptr.Of(true),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+		"apt update with cache valid time": {
+			input: AptArgs{
+				UpdateCache:    ptr.Of(true),
+				CacheValidTime: ptr.Of(3600),
+			},
+			expected: aptTaskParameters{
+				UpdateCache:    ptr.Of(true),
+				CacheValidTime: ptr.Of(3600),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+		"update and upgrade with dpkg options": {
+			input: AptArgs{
+				Upgrade:     ptr.Of("dist"),
+				UpdateCache: ptr.Of(true),
+				DpkgOptions: ptr.Of("force-confold,force-confdef"),
+			},
+			expected: aptTaskParameters{
+				Upgrade:     ptr.Of("dist"),
+				UpdateCache: ptr.Of(true),
+				DpkgOptions: ptr.Of("force-confold,force-confdef"),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+		"install from URL": {
+			input: AptArgs{
+				Deb: ptr.Of("https://ubuntu.pkgs.org/24.04/ubuntu-universe-amd64/neovim_0.9.5-6ubuntu2_amd64.deb.html"),
+			},
+			expected: aptTaskParameters{
+				Deb: ptr.Of("https://ubuntu.pkgs.org/24.04/ubuntu-universe-amd64/neovim_0.9.5-6ubuntu2_amd64.deb.html"),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         true,
+		},
+		"autoclean": {
+			input: AptArgs{
+				Autoclean: ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				Autoclean: ptr.Of(true),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+		"autoremove": {
+			input: AptArgs{
+				Autoremove: ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				Autoremove: ptr.Of(true),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+		"autoremove and purge": {
+			input: AptArgs{
+				Autoremove: ptr.Of(true),
+				Purge:      ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				Autoremove: ptr.Of(true),
+				Purge:      ptr.Of(true),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+		"clean": {
+			input: AptArgs{
+				Clean: ptr.Of(true),
+			},
+			expected: aptTaskParameters{
+				Clean: ptr.Of(true),
+			},
+			taskParametersNeedsName: false,
+			canAssumeEnsure:         false,
+		},
+	}
+
+	for name, tc := range tests {
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			r := Apt{}
+
+			got, err := r.argsToTaskParameters(tc.input)
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.expected, got)
+
+			taskParametersNeedsName := r.taskParametersNeedsName(tc.input)
+			assert.Equal(t, tc.taskParametersNeedsName, taskParametersNeedsName)
+
+			canAssumeEnsure := r.canAssumeEnsure(tc.input)
+			assert.Equal(t, tc.canAssumeEnsure, canAssumeEnsure)
+		})
+	}
+}

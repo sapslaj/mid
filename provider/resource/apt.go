@@ -6,13 +6,13 @@ import (
 	"slices"
 	"time"
 
-	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/ptr"
 )
 
 type Apt struct{}
@@ -52,30 +52,30 @@ type AptState struct {
 }
 
 type aptTaskParameters struct {
-	AllowChangeHeldPackages  *bool   `json:"allow_change_held_packages,omitempty"`
-	AllowDowngrade           *bool   `json:"allow_downgrade,omitempty"`
-	AllowUnauthenticated     *bool   `json:"allow_unauthenticated,omitempty"`
-	Autoclean                *bool   `json:"autoclean,omitempty"`
-	Autoremove               *bool   `json:"autoremove,omitempty"`
-	CacheValidTime           *int    `json:"cache_valid_time,omitempty"`
-	Clean                    *bool   `json:"clean,omitempty"`
-	Deb                      *string `json:"deb,omitempty"`
-	DefaultRelease           *string `json:"default_release,omitempty"`
-	DpkgOptions              *string `json:"dpkg_options,omitempty"`
-	FailOnAutoremove         *bool   `json:"fail_on_autoremove,omitempty"`
-	Force                    *bool   `json:"force,omitempty"`
-	ForceAptGet              *bool   `json:"force_apt_get,omitempty"`
-	InstallRecommends        *bool   `json:"install_recommends,omitempty"`
-	LockTimeout              *int    `json:"lock_timeout,omitempty"`
-	Name                     any     `json:"name,omitempty"`
-	OnlyUpgrade              *bool   `json:"only_upgrade,omitempty"`
-	PolicyRcD                *int    `json:"policy_rc_d,omitempty"`
-	Purge                    *bool   `json:"purge,omitempty"`
-	State                    *string `json:"state,omitempty"`
-	UpdateCache              *bool   `json:"update_cache,omitempty"`
-	UpdateCacheRetries       *int    `json:"update_cache_retries,omitempty"`
-	UpdateCacheRetryMaxDelay *int    `json:"update_cache_retry_max_delay,omitempty"`
-	Upgrade                  *string `json:"upgrade,omitempty"`
+	AllowChangeHeldPackages  *bool     `json:"allow_change_held_packages,omitempty"`
+	AllowDowngrade           *bool     `json:"allow_downgrade,omitempty"`
+	AllowUnauthenticated     *bool     `json:"allow_unauthenticated,omitempty"`
+	Autoclean                *bool     `json:"autoclean,omitempty"`
+	Autoremove               *bool     `json:"autoremove,omitempty"`
+	CacheValidTime           *int      `json:"cache_valid_time,omitempty"`
+	Clean                    *bool     `json:"clean,omitempty"`
+	Deb                      *string   `json:"deb,omitempty"`
+	DefaultRelease           *string   `json:"default_release,omitempty"`
+	DpkgOptions              *string   `json:"dpkg_options,omitempty"`
+	FailOnAutoremove         *bool     `json:"fail_on_autoremove,omitempty"`
+	Force                    *bool     `json:"force,omitempty"`
+	ForceAptGet              *bool     `json:"force_apt_get,omitempty"`
+	InstallRecommends        *bool     `json:"install_recommends,omitempty"`
+	LockTimeout              *int      `json:"lock_timeout,omitempty"`
+	Name                     *[]string `json:"name,omitempty"`
+	OnlyUpgrade              *bool     `json:"only_upgrade,omitempty"`
+	PolicyRcD                *int      `json:"policy_rc_d,omitempty"`
+	Purge                    *bool     `json:"purge,omitempty"`
+	State                    *string   `json:"state,omitempty"`
+	UpdateCache              *bool     `json:"update_cache,omitempty"`
+	UpdateCacheRetries       *int      `json:"update_cache_retries,omitempty"`
+	UpdateCacheRetryMaxDelay *int      `json:"update_cache_retry_max_delay,omitempty"`
+	Upgrade                  *string   `json:"upgrade,omitempty"`
 }
 
 type aptTaskResult struct {
@@ -87,6 +87,29 @@ func (result *aptTaskResult) IsChanged() bool {
 	changed := result.Changed != nil && *result.Changed
 	hasDiff := result.Diff != nil
 	return changed || hasDiff
+}
+
+func (r Apt) taskParametersNeedsName(input AptArgs) bool {
+	return !anyNonNils(
+		input.Autoclean,
+		input.Autoremove,
+		input.Clean,
+		input.Deb,
+		input.UpdateCache,
+		input.Upgrade,
+	)
+}
+
+func (r Apt) canAssumeEnsure(input AptArgs) bool {
+	if anyNonNils(
+		input.Name,
+		input.Names,
+		input.Deb,
+	) {
+		return true
+	}
+
+	return r.taskParametersNeedsName(input)
 }
 
 func (r Apt) argsToTaskParameters(input AptArgs) (aptTaskParameters, error) {
@@ -106,6 +129,7 @@ func (r Apt) argsToTaskParameters(input AptArgs) (aptTaskParameters, error) {
 		ForceAptGet:              input.ForceAptGet,
 		InstallRecommends:        input.InstallRecommends,
 		LockTimeout:              input.LockTimeout,
+		Name:                     input.Names,
 		OnlyUpgrade:              input.OnlyUpgrade,
 		PolicyRcD:                input.PolicyRcD,
 		Purge:                    input.Purge,
@@ -116,28 +140,17 @@ func (r Apt) argsToTaskParameters(input AptArgs) (aptTaskParameters, error) {
 		Upgrade:                  input.Upgrade,
 	}
 
-	if input.Names == nil && input.Name != nil {
-		parameters.Name = *input.Name
-	} else if input.Names != nil && len(*input.Names) == 1 {
-		parameters.Name = (*input.Names)[0]
-	} else if input.Names != nil {
-		parameters.Name = *input.Names
+	if input.Name != nil && parameters.Name == nil {
+		parameters.Name = ptr.Of([]string{*input.Name})
 	}
-	if parameters.State == nil && parameters.Name != nil && parameters.Upgrade == nil && parameters.UpdateCache == nil {
-		parameters.State = ptr.String("present")
-	}
+
 	return parameters, nil
 }
 
 func (r Apt) updateState(olds AptState, news AptArgs, changed bool) AptState {
-	if news.Name != nil || news.Names != nil {
-		olds.Name = news.Name
-		olds.Names = news.Names
-	}
-	if news.Ensure != nil {
-		olds.Ensure = news.Ensure
-	} else if news.Upgrade == nil && news.UpdateCache == nil {
-		olds.Ensure = ptr.String("present")
+	olds.AptArgs = news
+	if olds.Ensure == nil && r.canAssumeEnsure(news) {
+		olds.Ensure = ptr.Of("present")
 	}
 	if news.Triggers != nil {
 		olds.Triggers.Replace = news.Triggers.Replace
@@ -199,8 +212,7 @@ func (r Apt) Diff(
 		}
 	}
 
-	diff = types.MergeDiffResponses(diff, types.DiffAttributes(olds, news, []string{
-		"ensure",
+	attrs := []string{
 		"allowChangeHeldPackages",
 		"allowDowngrade",
 		"allowUnauthenticated",
@@ -223,9 +235,24 @@ func (r Apt) Diff(
 		"updateCacheRetries",
 		"updateCacheRetryMaxDelay",
 		"upgrade",
-	}))
+	}
+	if news.Ensure == nil && r.canAssumeEnsure(news) && olds.Ensure != nil {
+		// special diff for "ensure" since we compute it dynamically sometimes
+		pdiff := types.DiffAttribute(olds.Ensure, news.Ensure)
+		if pdiff != nil {
+			diff.HasChanges = true
+			diff.DetailedDiff["ensure"] = *pdiff
+		}
+	} else {
+		// just do standard diffing
+		attrs = append(attrs, "ensure")
+	}
 
-	diff = types.MergeDiffResponses(diff, types.DiffTriggers(olds, news))
+	diff = types.MergeDiffResponses(
+		diff,
+		types.DiffAttributes(olds, news, attrs),
+		types.DiffTriggers(olds, news),
+	)
 
 	return diff, nil
 }
@@ -238,8 +265,8 @@ func (r Apt) Create(
 ) (string, AptState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if input.Upgrade == nil && input.UpdateCache == nil && input.Name == nil && input.Names == nil {
-		input.Name = ptr.String(name)
+	if r.taskParametersNeedsName(input) && input.Name == nil && input.Names == nil {
+		input.Name = ptr.Of(name)
 	}
 
 	state := r.updateState(AptState{}, input, true)
@@ -279,7 +306,7 @@ func (r Apt) Read(
 ) (string, AptArgs, AptState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if inputs.Name == nil && inputs.Names == nil && state.Name != nil {
+	if r.taskParametersNeedsName(inputs) && inputs.Name == nil && inputs.Names == nil && state.Name != nil {
 		inputs.Name = state.Name
 	}
 
@@ -309,11 +336,10 @@ func (r Apt) Read(
 
 	state = r.updateState(state, inputs, result.IsChanged())
 
-	if result.IsChanged() && inputs.Upgrade == nil && inputs.UpdateCache == nil {
+	if result.IsChanged() && r.canAssumeEnsure(inputs) {
 		if inputs.Ensure != nil && *inputs.Ensure == "absent" {
-			// we're going from present? to absent
-			if *state.Ensure == "absent" {
-				state.Ensure = ptr.String("present")
+			if state.Ensure == nil || *state.Ensure == "absent" {
+				state.Ensure = ptr.Of("present")
 			}
 		}
 	}
@@ -330,11 +356,11 @@ func (r Apt) Update(
 ) (AptState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	if news.Upgrade == nil && news.UpdateCache == nil && news.Name == nil && news.Names == nil && olds.Name != nil {
+	if r.taskParametersNeedsName(news) && news.Name == nil && news.Names == nil && olds.Name != nil {
 		news.Name = olds.Name
 	}
 
-	if news.Upgrade != nil || (news.UpdateCache != nil && news.Name == nil && news.Names == nil) || (news.Ensure != nil && *news.Ensure == "absent") {
+	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
 		parameters, err := r.argsToTaskParameters(news)
 		if err != nil {
 			return olds, err
@@ -417,15 +443,15 @@ func (r Apt) Update(
 
 	if len(absents) > 0 {
 		taskParameterSets = append(taskParameterSets, aptTaskParameters{
-			Name:  absents,
-			State: ptr.String("absent"),
+			Name:  ptr.Of(absents),
+			State: ptr.Of("absent"),
 		})
 	}
 
 	if len(presents) > 0 {
 		taskParameterSets = append(taskParameterSets, aptTaskParameters{
-			Name:  presents,
-			State: ptr.String(newState),
+			Name:  ptr.Of(presents),
+			State: ptr.Of(newState),
 		})
 	}
 
@@ -466,14 +492,18 @@ func (r Apt) Update(
 }
 
 func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
-	if *props.Ensure == "absent" {
+	if !r.taskParametersNeedsName(props.AptArgs) {
+		return nil
+	}
+
+	if props.Ensure != nil && *props.Ensure == "absent" {
 		return nil
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToTaskParameters(props.AptArgs)
-	parameters.State = ptr.String("absent")
+	parameters.State = ptr.Of("absent")
 	if err != nil {
 		return err
 	}
