@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/blang/semver"
 	"github.com/ory/dockertest/v3"
@@ -60,16 +61,25 @@ func NewProviderTestHarness(t *testing.T) *ProviderTestHarness {
 		port,
 	)
 
-	t.Logf("connecting to container at address %s over SSH", addr)
-	harness.Client, err = ssh.Dial(
-		"tcp",
-		addr,
-		&ssh.ClientConfig{
-			User:            "root",
-			Auth:            []ssh.AuthMethod{ssh.Password("hunter2")},
-			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		},
-	)
+	for attempt := 1; attempt <= 10; attempt++ {
+		t.Logf("(attempt %d/10) connecting to container at address %s over SSH", attempt, addr)
+		harness.Client, err = ssh.Dial(
+			"tcp",
+			addr,
+			&ssh.ClientConfig{
+				User:            "root",
+				Auth:            []ssh.AuthMethod{ssh.Password("hunter2")},
+				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+			},
+		)
+		if attempt == 10 || err == nil {
+			break
+		}
+		wait := time.Duration(attempt) * 5 * time.Second
+		t.Logf("(attempt %d/10) error connecting to container: %v", attempt, err)
+		t.Logf("(attempt %d/10) trying again in %s", attempt, wait)
+		time.Sleep(wait)
+	}
 	require.NoError(t, err)
 
 	t.Log("creating and configuring provider")
