@@ -40,10 +40,13 @@ type commandTaskParameters struct {
 }
 
 type commandTaskResult struct {
-	// TODO: pluck stdout and stderr from here
+	Stdout string `json:"stdout"`
+	Stderr string `json:"stderr"`
 }
 
-func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTaskParameters, error) {
+func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTaskParameters, map[string]string, error) {
+	environment := map[string]string{}
+
 	var execCommand types.ExecCommand
 	switch lifecycle {
 	case "create":
@@ -56,7 +59,7 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTas
 		}
 	case "delete":
 		if input.Delete == nil {
-			return commandTaskParameters{}, nil
+			return commandTaskParameters{}, environment, nil
 		}
 		execCommand = *input.Delete
 	default:
@@ -72,17 +75,52 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTas
 		expandArgumentVars = *input.ExpandArgumentVars
 	}
 
+	if input.Environment != nil {
+		for key, value := range *input.Environment {
+			environment[key] = value
+		}
+	}
+	if execCommand.Environment != nil {
+		for key, value := range *execCommand.Environment {
+			environment[key] = value
+		}
+	}
+
 	return commandTaskParameters{
 		Argv:               execCommand.Command,
 		Chdir:              chdir,
 		Stdin:              execCommand.Stdin,
 		ExpandArgumentVars: expandArgumentVars,
-	}, nil
+	}, environment, nil
 }
 
 func (r Exec) updateState(olds ExecState, news ExecArgs, changed bool) ExecState {
 	olds.ExecArgs = news
 	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
+	return olds
+}
+
+func (r Exec) updateStateFromOutput(olds ExecState, news ExecArgs, output commandTaskResult) ExecState {
+	logging := types.ExecLoggingStdoutAndStderr
+	if news.Logging != nil {
+		logging = *news.Logging
+	}
+	switch logging {
+	case types.ExecLoggingNone:
+		olds.Stderr = ""
+		olds.Stdout = ""
+	case types.ExecLoggingStderr:
+		olds.Stderr = output.Stderr
+		olds.Stdout = ""
+	case types.ExecLoggingStdout:
+		olds.Stderr = ""
+		olds.Stdout = output.Stdout
+	case types.ExecLoggingStdoutAndStderr:
+		olds.Stderr = output.Stderr
+		olds.Stdout = output.Stdout
+	default:
+		panic("unknown logging: " + logging)
+	}
 	return olds
 }
 
@@ -134,26 +172,31 @@ func (r Exec) Create(
 		return "", state, err
 	}
 
-	parameters, err := r.argsToTaskParameters(input, "create")
+	parameters, environment, err := r.argsToTaskParameters(input, "create")
 	if err != nil {
 		return id, state, err
 	}
 
 	if !preview {
-		// TODO: slurp out stdout and stderr
-		_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
+		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 			GatherFacts: false,
 			Become:      true,
 			Check:       false,
 			Tasks: []any{
 				map[string]any{
 					"ansible.builtin.command": parameters,
+					"environment":             environment,
 				},
 			},
 		})
 		if err != nil {
 			return id, state, err
 		}
+		result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
+		if err != nil {
+			return id, state, err
+		}
+		state = r.updateStateFromOutput(state, input, result)
 	}
 
 	return id, state, nil
@@ -177,28 +220,30 @@ func (r Exec) Update(
 ) (ExecState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(news, "create")
+	parameters, environment, err := r.argsToTaskParameters(news, "update")
 	if err != nil {
 		return olds, err
 	}
 
 	if !preview {
-		// TODO: slurp out stdout and stderr
-		_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
+		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 			GatherFacts: false,
 			Become:      true,
 			Check:       false,
 			Tasks: []any{
 				map[string]any{
 					"ansible.builtin.command": parameters,
+					"environment":             environment,
 				},
 			},
 		})
+		result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
+		if err != nil {
+			return olds, err
+		}
+		olds = r.updateStateFromOutput(olds, news, result)
 	}
 	state := r.updateState(olds, news, true)
-	if err != nil {
-		return state, err
-	}
 
 	return state, nil
 }
@@ -209,7 +254,7 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
-	parameters, err := r.argsToTaskParameters(props.ExecArgs, "delete")
+	parameters, environment, err := r.argsToTaskParameters(props.ExecArgs, "delete")
 	if err != nil {
 		return err
 	}
@@ -221,6 +266,7 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 		Tasks: []any{
 			map[string]any{
 				"ansible.builtin.command": parameters,
+				"environment":             environment,
 			},
 		},
 	})

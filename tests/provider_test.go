@@ -27,17 +27,8 @@ func NewProvider() integration.Server {
 	return integration.NewServer(mid.Name, semver.MustParse("1.0.0"), mid.Provider())
 }
 
-var DockertestPool *dockertest.Pool
-
-func init() {
-	var err error
-	DockertestPool, err = dockertest.NewPool("")
-	if err != nil {
-		panic(err)
-	}
-}
-
 type ProviderTestHarness struct {
+	Pool      *dockertest.Pool
 	Container *dockertest.Resource
 	Client    *ssh.Client
 	Provider  integration.Server
@@ -49,20 +40,36 @@ func NewProviderTestHarness(t *testing.T) *ProviderTestHarness {
 	var err error
 	harness := &ProviderTestHarness{}
 
+	t.Log("starting new dockertest pool")
+	harness.Pool, err = dockertest.NewPool("")
+	require.NoError(t, err)
+
 	name := "mid-" + strings.ToLower(t.Name())
 	t.Logf("running '%s' container", name)
-	harness.Container, err = DockertestPool.BuildAndRun(name, "../docker/smoketest/Dockerfile", []string{})
+	harness.Container, err = harness.Pool.BuildAndRun(name, "../docker/smoketest/Dockerfile", []string{})
 	require.NoError(t, err)
+
+	t.Logf("bound ip: %s", harness.Container.GetBoundIP("22/tcp"))
 
 	port, err := strconv.Atoi(harness.Container.GetPort("22/tcp"))
 	require.NoError(t, err)
 
-	t.Log("connecting to container over SSH")
-	harness.Client, err = ssh.Dial("tcp", "localhost:"+fmt.Sprint(port), &ssh.ClientConfig{
-		User:            "root",
-		Auth:            []ssh.AuthMethod{ssh.Password("hunter2")},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	})
+	addr := fmt.Sprintf(
+		"%s:%d",
+		harness.Container.GetBoundIP("22/tcp"),
+		port,
+	)
+
+	t.Logf("connecting to container at address %s over SSH", addr)
+	harness.Client, err = ssh.Dial(
+		"tcp",
+		addr,
+		&ssh.ClientConfig{
+			User:            "root",
+			Auth:            []ssh.AuthMethod{ssh.Password("hunter2")},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		},
+	)
 	require.NoError(t, err)
 
 	t.Log("creating and configuring provider")
@@ -72,7 +79,7 @@ func NewProviderTestHarness(t *testing.T) *ProviderTestHarness {
 			"connection": resource.NewObjectProperty(resource.PropertyMap{
 				"user":     resource.NewStringProperty("root"),
 				"password": resource.NewStringProperty("hunter2"),
-				"host":     resource.NewStringProperty("localhost"),
+				"host":     resource.NewStringProperty(harness.Container.GetBoundIP("22/tcp")),
 				"port":     resource.NewNumberProperty(float64(port)),
 			}),
 		},
@@ -87,7 +94,7 @@ func (harness *ProviderTestHarness) Close() {
 		harness.Client.Close()
 	}
 	if harness.Container != nil {
-		DockertestPool.Purge(harness.Container)
+		harness.Pool.Purge(harness.Container)
 	}
 }
 
