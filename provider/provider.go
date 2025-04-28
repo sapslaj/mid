@@ -57,9 +57,11 @@ func Provider() p.Provider {
 			infer.Resource[resource.Exec, resource.ExecArgs, resource.ExecState](),
 			infer.Resource[resource.File, resource.FileArgs, resource.FileState](),
 			infer.Resource[resource.FileLine, resource.FileLineArgs, resource.FileLineState](),
+			infer.Resource[resource.Group, resource.GroupArgs, resource.GroupState](),
 			infer.Resource[resource.Package, resource.PackageArgs, resource.PackageState](),
 			infer.Resource[resource.Service, resource.ServiceArgs, resource.ServiceState](),
 			infer.Resource[resource.SystemdService, resource.SystemdServiceArgs, resource.SystemdServiceState](),
+			infer.Resource[resource.User, resource.UserArgs, resource.UserState](),
 		},
 		Config: infer.Config[types.Config](),
 		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{
