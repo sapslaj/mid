@@ -29,12 +29,16 @@ func (m *module) Construct(ctx *pulumi.Context, name, typ, urn string) (r pulumi
 		r = &File{}
 	case "mid:resource:FileLine":
 		r = &FileLine{}
+	case "mid:resource:Group":
+		r = &Group{}
 	case "mid:resource:Package":
 		r = &Package{}
 	case "mid:resource:Service":
 		r = &Service{}
 	case "mid:resource:SystemdService":
 		r = &SystemdService{}
+	case "mid:resource:User":
+		r = &User{}
 	default:
 		return nil, fmt.Errorf("unknown resource type: %s", typ)
 	}

@@ -25,6 +25,11 @@ export type FileLine = import("./fileLine").FileLine;
 export const FileLine: typeof import("./fileLine").FileLine = null as any;
 utilities.lazyLoad(exports, ["FileLine"], () => require("./fileLine"));
 
+export { GroupArgs } from "./group";
+export type Group = import("./group").Group;
+export const Group: typeof import("./group").Group = null as any;
+utilities.lazyLoad(exports, ["Group"], () => require("./group"));
+
 export { PackageArgs } from "./package";
 export type Package = import("./package").Package;
 export const Package: typeof import("./package").Package = null as any;
@@ -40,6 +45,11 @@ export type SystemdService = import("./systemdService").SystemdService;
 export const SystemdService: typeof import("./systemdService").SystemdService = null as any;
 utilities.lazyLoad(exports, ["SystemdService"], () => require("./systemdService"));
 
+export { UserArgs } from "./user";
+export type User = import("./user").User;
+export const User: typeof import("./user").User = null as any;
+utilities.lazyLoad(exports, ["User"], () => require("./user"));
+
 const _module = {
   version: utilities.getVersion(),
   construct: (name: string, type: string, urn: string): pulumi.Resource => {
@@ -52,12 +62,16 @@ const _module = {
         return new File(name, <any> undefined, { urn });
       case "mid:resource:FileLine":
         return new FileLine(name, <any> undefined, { urn });
+      case "mid:resource:Group":
+        return new Group(name, <any> undefined, { urn });
       case "mid:resource:Package":
         return new Package(name, <any> undefined, { urn });
       case "mid:resource:Service":
         return new Service(name, <any> undefined, { urn });
       case "mid:resource:SystemdService":
         return new SystemdService(name, <any> undefined, { urn });
+      case "mid:resource:User":
+        return new User(name, <any> undefined, { urn });
       default:
         throw new Error(`unknown resource type ${type}`);
     }
