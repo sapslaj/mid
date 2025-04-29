@@ -28,6 +28,13 @@ func NewProvider() integration.Server {
 	return integration.NewServer(mid.Name, semver.MustParse("1.0.0"), mid.Provider())
 }
 
+func Must1[A any](a A, err error) A {
+	if err != nil {
+		panic(err)
+	}
+	return a
+}
+
 type ProviderTestHarness struct {
 	Pool      *dockertest.Pool
 	Container *dockertest.Resource
