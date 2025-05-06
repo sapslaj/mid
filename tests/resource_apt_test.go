@@ -58,6 +58,16 @@ func TestResourceApt(t *testing.T) {
 	}
 
 	for name, tc := range tests {
+		t.Logf("%s: sending preview create request", name)
+		_, err := harness.Provider.Create(p.CreateRequest{
+			Urn:        MakeURN("mid:resource:Apt"),
+			Properties: tc.props,
+			Preview:    true,
+		})
+		if !assert.NoError(t, err) {
+			continue
+		}
+
 		t.Logf("%s: sending create request", name)
 		createResponse, err := harness.Provider.Create(p.CreateRequest{
 			Urn:        MakeURN("mid:resource:Apt"),
@@ -69,6 +79,17 @@ func TestResourceApt(t *testing.T) {
 
 		t.Logf("%s: checking create status", name)
 		if !harness.AssertCommand(t, tc.create) {
+			continue
+		}
+
+		t.Logf("%s: sending preview update request", name)
+		_, err = harness.Provider.Update(p.UpdateRequest{
+			Urn:     MakeURN("mid:resource:Apt"),
+			Olds:    createResponse.Properties,
+			News:    tc.props,
+			Preview: true,
+		})
+		if !assert.NoError(t, err) {
 			continue
 		}
 

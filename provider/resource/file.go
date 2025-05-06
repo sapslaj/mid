@@ -434,7 +434,7 @@ func (r File) runCreateUpdatePlay(
 		fileTaskIndex = len(tasks)
 		tasks = append(tasks, map[string]any{
 			"ansible.builtin.file": params,
-			"ignore_errors":        copyNeeded && preview,
+			"ignore_errors":        copyNeeded || preview,
 		})
 	}
 

@@ -91,6 +91,16 @@ func TestResourceFile(t *testing.T) {
 			}
 		}
 
+		t.Logf("%s: sending preview create request", name)
+		_, err := harness.Provider.Create(p.CreateRequest{
+			Urn:        MakeURN("mid:resource:File"),
+			Properties: tc.props,
+			Preview:    true,
+		})
+		if !assert.NoError(t, err) {
+			continue
+		}
+
 		t.Logf("%s: sending create request", name)
 		createResponse, err := harness.Provider.Create(p.CreateRequest{
 			Urn:        MakeURN("mid:resource:File"),
@@ -102,6 +112,17 @@ func TestResourceFile(t *testing.T) {
 
 		t.Logf("%s: checking create status", name)
 		if !harness.AssertCommand(t, tc.create) {
+			continue
+		}
+
+		t.Logf("%s: sending update request", name)
+		_, err = harness.Provider.Update(p.UpdateRequest{
+			Urn:     MakeURN("mid:resource:File"),
+			Olds:    createResponse.Properties,
+			News:    tc.props,
+			Preview: true,
+		})
+		if !assert.NoError(t, err) {
 			continue
 		}
 
