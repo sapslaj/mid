@@ -156,6 +156,7 @@ func (r FileLine) Create(
 		Tasks: []any{
 			map[string]any{
 				"ansible.builtin.lineinfile": parameters,
+				"ignore_errors":              preview,
 			},
 		},
 	})

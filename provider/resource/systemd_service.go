@@ -142,6 +142,7 @@ func (r SystemdService) Create(
 		Tasks: []any{
 			map[string]any{
 				"ansible.builtin.systemd_service": parameters,
+				"ignore_errors":                   preview,
 			},
 		},
 	})
@@ -232,6 +233,7 @@ func (r SystemdService) Update(
 		Tasks: []any{
 			map[string]any{
 				"ansible.builtin.systemd_service": parameters,
+				"ignore_errors":                   preview,
 			},
 		},
 	})

@@ -150,6 +150,7 @@ func (r Service) Create(
 		Tasks: []any{
 			map[string]any{
 				"ansible.builtin.service": parameters,
+				"ignore_errors":           preview,
 			},
 		},
 	})
@@ -226,6 +227,7 @@ func (r Service) Update(
 		Tasks: []any{
 			map[string]any{
 				"ansible.builtin.service": parameters,
+				"ignore_errors":           preview,
 			},
 		},
 	})

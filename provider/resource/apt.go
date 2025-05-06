@@ -281,6 +281,7 @@ func (r Apt) Create(
 		Tasks: []any{
 			map[string]any{
 				"ansible.builtin.apt": parameters,
+				"ignore_errors":       preview,
 			},
 		},
 	})
@@ -366,6 +367,7 @@ func (r Apt) Update(
 			Tasks: []any{
 				map[string]any{
 					"ansible.builtin.apt": parameters,
+					"ignore_errors":       preview,
 				},
 			},
 		})
@@ -456,6 +458,7 @@ func (r Apt) Update(
 	for _, parameters := range taskParameterSets {
 		tasks = append(tasks, map[string]any{
 			"ansible.builtin.apt": parameters,
+			"ignore_errors":       preview,
 		})
 	}
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
