@@ -38,13 +38,22 @@ tidy: tidy-examples tidy-provider tidy-sdk
 set-version:
   ./hack/set-version.sh '{{ provider_version }}'
 
-[group('provider')]
-provider:
-  go build -o ./bin/pulumi-resource-mid -ldflags "-X github.com/sapslaj/mid/provider.Version={{ provider_version }}" "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
+[group('agent')]
+agent-codegen:
+  ./hack/generate-agent-binaries.py
+
+[group('agent')]
+agent-gogenerate: agent-codegen
+  rm -f agent/mid-agent-*
+  go generate ./agent/...
 
 [group('provider')]
-provider-debug:
-  go build -o ./bin/pulumi-resource-mid -gcflags="all=-N -l" -ldflags "-X github.com/sapslaj/mid/provider.Version={{ provider_version }}" "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
+provider: set-version agent-gogenerate
+  go build -o ./bin/pulumi-resource-mid "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
+
+[group('provider')]
+provider-debug: set-version agent-gogenerate
+  go build -o ./bin/pulumi-resource-mid -gcflags="all=-N -l" "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
 
 [group('provider')]
 [group('test')]

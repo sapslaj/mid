@@ -7,6 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/aws/smithy-go v1.20.2
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/bramvdbogaerde/go-scp v1.5.0
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pulumi/pulumi-go-provider v0.26.0
 	github.com/pulumi/pulumi/sdk v1.14.1
