@@ -250,8 +250,8 @@ func TestResourceExec_logging(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, "this is create stdout", createResponse.Properties["stdout"].StringValue())
-	assert.Equal(t, "this is create stderr", createResponse.Properties["stderr"].StringValue())
+	assert.Equal(t, "this is create stdout\n", createResponse.Properties["stdout"].StringValue())
+	assert.Equal(t, "this is create stderr\n", createResponse.Properties["stderr"].StringValue())
 
 	updateResponse, err := harness.Provider.Update(p.UpdateRequest{
 		Urn:  MakeURN("mid:resource:Exec"),
@@ -260,6 +260,6 @@ func TestResourceExec_logging(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, "this is update stdout", updateResponse.Properties["stdout"].StringValue())
-	assert.Equal(t, "this is update stderr", updateResponse.Properties["stderr"].StringValue())
+	assert.Equal(t, "this is update stdout\n", updateResponse.Properties["stdout"].StringValue())
+	assert.Equal(t, "this is update stderr\n", updateResponse.Properties["stderr"].StringValue())
 }

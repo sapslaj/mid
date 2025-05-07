@@ -37,6 +37,7 @@ type commandTaskParameters struct {
 	Chdir              *string  `json:"chdir,omitempty"`
 	ExpandArgumentVars bool     `json:"expand_argument_vars"`
 	Stdin              *string  `json:"stdin,omitempty"`
+	StripEmptyEnds     *bool    `json:"strip_empty_ends,omitempty"`
 }
 
 type commandTaskResult struct {
@@ -91,6 +92,7 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTas
 		Chdir:              chdir,
 		Stdin:              execCommand.Stdin,
 		ExpandArgumentVars: expandArgumentVars,
+		StripEmptyEnds:     ptr.Of(false),
 	}, environment, nil
 }
 
