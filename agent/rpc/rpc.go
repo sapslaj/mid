@@ -10,9 +10,10 @@ import (
 type RPCFunction string
 
 const (
-	RPCExec      RPCFunction = "Exec"
 	RPCAgentPing RPCFunction = "AgentPing"
 	RPCClose     RPCFunction = "Close"
+	RPCExec      RPCFunction = "Exec"
+	RPCFileStat  RPCFunction = "FileStat"
 )
 
 type Server struct {
@@ -55,13 +56,6 @@ func ServerRoute(s *Server, rpcFunction RPCFunction, args any) (any, error) {
 	switch rpcFunction {
 	case RPCClose:
 		os.Exit(0)
-	case RPCExec:
-		var targs ExecArgs
-		targs, err := ToArgs[ExecArgs](args)
-		if err != nil {
-			return nil, err
-		}
-		return Exec(targs)
 	case RPCAgentPing:
 		var targs AgentPingArgs
 		targs, err := ToArgs[AgentPingArgs](args)
@@ -69,6 +63,20 @@ func ServerRoute(s *Server, rpcFunction RPCFunction, args any) (any, error) {
 			return nil, err
 		}
 		return AgentPing(targs)
+	case RPCExec:
+		var targs ExecArgs
+		targs, err := ToArgs[ExecArgs](args)
+		if err != nil {
+			return nil, err
+		}
+		return Exec(targs)
+	case RPCFileStat:
+		var targs FileStatArgs
+		targs, err := ToArgs[FileStatArgs](args)
+		if err != nil {
+			return nil, err
+		}
+		return FileStat(targs)
 	}
 
 	return nil, fmt.Errorf("unsupported RPCFunction: %s", rpcFunction)
