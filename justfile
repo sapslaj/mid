@@ -35,6 +35,9 @@ tidy-sdk:
 [group('tidy')]
 tidy: tidy-examples tidy-provider tidy-sdk
 
+set-version:
+  ./hack/set-version.sh '{{ provider_version }}'
+
 [group('provider')]
 provider:
   go build -o ./bin/pulumi-resource-mid -ldflags "-X github.com/sapslaj/mid/provider.Version={{ provider_version }}" "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"

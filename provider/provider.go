@@ -24,9 +24,6 @@ import (
 	"github.com/sapslaj/mid/provider/types"
 )
 
-// Version is initialized by the Go linker to contain the semver of this build.
-var Version string
-
 const Name string = "mid"
 
 func Provider() p.Provider {

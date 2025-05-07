@@ -18,9 +18,10 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 
 	mid "github.com/sapslaj/mid/provider"
+	"github.com/sapslaj/mid/version"
 )
 
 // Serve the provider against Pulumi's Provider protocol.
 func main() {
-	p.RunProvider(mid.Name, mid.Version, mid.Provider())
+	p.RunProvider(mid.Name, version.Version, mid.Provider())
 }
