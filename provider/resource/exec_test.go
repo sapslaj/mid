@@ -27,6 +27,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"touch", "/grass"},
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
@@ -40,6 +41,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"touch", "/grass"},
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
@@ -56,6 +58,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"touch", "/cat"},
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
@@ -72,6 +75,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"rm", "-f", "/grass"},
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
@@ -88,6 +92,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"touch", "/grass"},
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{
 				"FOO": "BAR",
@@ -106,6 +111,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"touch", "/grass"},
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{
 				"FOO": "BAR",
@@ -129,6 +135,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"touch", "/grass"},
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{
 				"A": "1",
@@ -148,6 +155,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				Argv:               []string{"touch", "grass"},
 				Chdir:              ptr.Of("/tmp"),
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
@@ -163,6 +171,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				Argv:               []string{"touch", "grass"},
 				Chdir:              ptr.Of("/tmp/create"),
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
@@ -179,6 +188,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				Argv:               []string{"touch", "grass"},
 				Chdir:              ptr.Of("/tmp/create"),
 				ExpandArgumentVars: false,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
@@ -193,6 +203,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			expectedParameters: commandTaskParameters{
 				Argv:               []string{"mkdir", "-p", "$HOME"},
 				ExpandArgumentVars: true,
+				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
 		},
