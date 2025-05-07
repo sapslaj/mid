@@ -50,7 +50,8 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: go
+          tools: just, go
+      - run: just agent-gogenerate
       - run: go test -timeout=1h -v -race ./provider/...
 
   test-integration:
@@ -65,5 +66,6 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: go
+          tools: just, go
+      - run: just agent-gogenerate
       - run: go test -timeout=1h -v -race ./tests/...
