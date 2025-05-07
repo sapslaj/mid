@@ -126,8 +126,26 @@ func Connect(agent *Agent) error {
 	agent.Decoder = json.NewDecoder(stdout)
 
 	slog.Info("starting agent")
+
+	// for some reason Ansible doesn't like Docker containers with sudo installed
+	// so have to jump through some hoops to not use sudo if we don't have to.
+	idOutput, err := RunRemoteCommand(agent, "id")
+	if err != nil {
+		return fmt.Errorf("error getting UID: %w", err)
+	}
+	useSudo := true
+	if strings.Contains(string(idOutput), "uid=0(") {
+		useSudo = false
+	}
+
+	sessionStartCmd := ""
+	if useSudo {
+		sessionStartCmd += "sudo "
+	}
+	sessionStartCmd += ".mid/mid-agent"
+
 	// TODO: more extensible sudo configuration
-	err = agent.Session.Start("sudo .mid/mid-agent")
+	err = agent.Session.Start(sessionStartCmd)
 	if err != nil {
 		return fmt.Errorf("error starting agent session: %w", err)
 	}
