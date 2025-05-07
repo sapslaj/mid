@@ -7,8 +7,10 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/ptr"
 )
 
 type Exec struct{}
@@ -43,6 +45,72 @@ type commandTaskParameters struct {
 type commandTaskResult struct {
 	Stdout string `json:"stdout"`
 	Stderr string `json:"stderr"`
+}
+
+func (r Exec) canUseRPC(input ExecArgs) bool {
+	if input.ExpandArgumentVars != nil {
+		if *input.ExpandArgumentVars {
+			return false
+		}
+	}
+	return true
+}
+
+func (r Exec) argsToRPCCall(input ExecArgs, lifecycle string) (rpc.RPCCall[rpc.ExecArgs], error) {
+	environment := map[string]string{}
+
+	var execCommand types.ExecCommand
+	switch lifecycle {
+	case "create":
+		execCommand = input.Create
+	case "update":
+		if input.Update != nil {
+			execCommand = *input.Update
+		} else {
+			execCommand = input.Create
+		}
+	case "delete":
+		if input.Delete == nil {
+			return rpc.RPCCall[rpc.ExecArgs]{}, nil
+		}
+		execCommand = *input.Delete
+	default:
+		panic("unknown lifecycle: " + lifecycle)
+	}
+
+	chdir := ""
+	if input.Dir != nil {
+		chdir = *input.Dir
+	}
+	if execCommand.Dir != nil {
+		chdir = *execCommand.Dir
+	}
+
+	if input.Environment != nil {
+		for key, value := range *input.Environment {
+			environment[key] = value
+		}
+	}
+	if execCommand.Environment != nil {
+		for key, value := range *execCommand.Environment {
+			environment[key] = value
+		}
+	}
+
+	stdin := []byte{}
+	if execCommand.Stdin != nil {
+		stdin = []byte(*execCommand.Stdin)
+	}
+
+	return rpc.RPCCall[rpc.ExecArgs]{
+		RPCFunction: rpc.RPCExec,
+		Args: rpc.ExecArgs{
+			Command:     execCommand.Command,
+			Dir:         chdir,
+			Environment: environment,
+			Stdin:       stdin,
+		},
+	}, nil
 }
 
 func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTaskParameters, map[string]string, error) {
@@ -99,6 +167,30 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTas
 func (r Exec) updateState(olds ExecState, news ExecArgs, changed bool) ExecState {
 	olds.ExecArgs = news
 	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
+	return olds
+}
+
+func (r Exec) updateStateFromRPCResult(olds ExecState, news ExecArgs, result rpc.RPCResult[rpc.ExecResult]) ExecState {
+	logging := types.ExecLoggingStdoutAndStderr
+	if news.Logging != nil {
+		logging = *news.Logging
+	}
+	switch logging {
+	case types.ExecLoggingNone:
+		olds.Stderr = ""
+		olds.Stdout = ""
+	case types.ExecLoggingStderr:
+		olds.Stderr = string(result.Result.Stderr)
+		olds.Stdout = ""
+	case types.ExecLoggingStdout:
+		olds.Stderr = ""
+		olds.Stdout = string(result.Result.Stdout)
+	case types.ExecLoggingStdoutAndStderr:
+		olds.Stderr = string(result.Result.Stderr)
+		olds.Stdout = string(result.Result.Stdout)
+	default:
+		panic("unknown logging: " + logging)
+	}
 	return olds
 }
 
@@ -174,31 +266,52 @@ func (r Exec) Create(
 		return "", state, err
 	}
 
-	parameters, environment, err := r.argsToTaskParameters(input, "create")
-	if err != nil {
-		return id, state, err
-	}
+	if r.canUseRPC(input) {
+		agent, err := executor.StartAgent(ctx, config.Connection)
+		if err != nil {
+			return id, state, err
+		}
+		defer agent.Disconnect()
 
-	if !preview {
-		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-			GatherFacts: false,
-			Become:      true,
-			Check:       false,
-			Tasks: []any{
-				map[string]any{
-					"ansible.builtin.command": parameters,
-					"environment":             environment,
+		call, err := r.argsToRPCCall(input, "create")
+		if err != nil {
+			return id, state, err
+		}
+
+		if !preview {
+			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](agent, call)
+			if err != nil {
+				return id, state, err
+			}
+			state = r.updateStateFromRPCResult(state, input, result)
+		}
+	} else {
+		parameters, environment, err := r.argsToTaskParameters(input, "create")
+		if err != nil {
+			return id, state, err
+		}
+
+		if !preview {
+			output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
+				GatherFacts: false,
+				Become:      true,
+				Check:       false,
+				Tasks: []any{
+					map[string]any{
+						"ansible.builtin.command": parameters,
+						"environment":             environment,
+					},
 				},
-			},
-		})
-		if err != nil {
-			return id, state, err
+			})
+			if err != nil {
+				return id, state, err
+			}
+			result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
+			if err != nil {
+				return id, state, err
+			}
+			state = r.updateStateFromOutput(state, input, result)
 		}
-		result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
-		if err != nil {
-			return id, state, err
-		}
-		state = r.updateStateFromOutput(state, input, result)
 	}
 
 	return id, state, nil
@@ -222,28 +335,49 @@ func (r Exec) Update(
 ) (ExecState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, environment, err := r.argsToTaskParameters(news, "update")
-	if err != nil {
-		return olds, err
-	}
-
-	if !preview {
-		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-			GatherFacts: false,
-			Become:      true,
-			Check:       false,
-			Tasks: []any{
-				map[string]any{
-					"ansible.builtin.command": parameters,
-					"environment":             environment,
-				},
-			},
-		})
-		result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
+	if r.canUseRPC(news) {
+		agent, err := executor.StartAgent(ctx, config.Connection)
 		if err != nil {
 			return olds, err
 		}
-		olds = r.updateStateFromOutput(olds, news, result)
+		defer agent.Disconnect()
+
+		call, err := r.argsToRPCCall(news, "update")
+		if err != nil {
+			return olds, err
+		}
+
+		if !preview {
+			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](agent, call)
+			if err != nil {
+				return olds, err
+			}
+			olds = r.updateStateFromRPCResult(olds, news, result)
+		}
+	} else {
+		parameters, environment, err := r.argsToTaskParameters(news, "update")
+		if err != nil {
+			return olds, err
+		}
+
+		if !preview {
+			output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
+				GatherFacts: false,
+				Become:      true,
+				Check:       false,
+				Tasks: []any{
+					map[string]any{
+						"ansible.builtin.command": parameters,
+						"environment":             environment,
+					},
+				},
+			})
+			result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
+			if err != nil {
+				return olds, err
+			}
+			olds = r.updateStateFromOutput(olds, news, result)
+		}
 	}
 	state := r.updateState(olds, news, true)
 
@@ -256,22 +390,44 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
-	parameters, environment, err := r.argsToTaskParameters(props.ExecArgs, "delete")
-	if err != nil {
-		return err
+
+	if r.canUseRPC(props.ExecArgs) {
+		agent, err := executor.StartAgent(ctx, config.Connection)
+		if err != nil {
+			return err
+		}
+		defer agent.Disconnect()
+
+		call, err := r.argsToRPCCall(props.ExecArgs, "delete")
+		if err != nil {
+			return err
+		}
+
+		_, err = executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](agent, call)
+		if err != nil {
+			return err
+		}
+	} else {
+		parameters, environment, err := r.argsToTaskParameters(props.ExecArgs, "delete")
+		if err != nil {
+			return err
+		}
+
+		_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
+			GatherFacts: false,
+			Become:      true,
+			Check:       false,
+			Tasks: []any{
+				map[string]any{
+					"ansible.builtin.command": parameters,
+					"environment":             environment,
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       false,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.command": parameters,
-				"environment":             environment,
-			},
-		},
-	})
-
-	return err
+	return nil
 }
