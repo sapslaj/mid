@@ -94,8 +94,7 @@ func Connect(agent *Agent) error {
 	agentNotInstalled := strings.Contains(string(initOutput), "No such file or directory")
 	agentVersionMismatch := !strings.Contains(string(initOutput), fmt.Sprintf("mid-agent version %s", version.Version))
 
-	// FIXME: don't do this unconditionally (`if true ||` ...)
-	if true || agentNotInstalled || agentVersionMismatch {
+	if agentNotInstalled || agentVersionMismatch {
 		slog.Info("copying agent")
 		err = InstallAgent(agent)
 		if err != nil {
