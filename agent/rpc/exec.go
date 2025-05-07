@@ -3,6 +3,7 @@ package rpc
 import (
 	"bytes"
 	"errors"
+	"os"
 	"os/exec"
 )
 
@@ -28,9 +29,14 @@ func Exec(args ExecArgs) (ExecResult, error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 	cmd := exec.Command(args.Command[0], args.Command[1:]...)
+	cmd.Dir = args.Dir
 	cmd.Stdin = stdin
 	cmd.Stderr = &stderr
 	cmd.Stdout = &stdout
+	cmd.Env = os.Environ()
+	for key, value := range args.Environment {
+		cmd.Env = append(cmd.Env, key+"="+value)
+	}
 	err := cmd.Run()
 	if err != nil {
 		_, isExitError := err.(*exec.ExitError)
