@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 
@@ -21,10 +22,18 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	logger := slog.New(slog.NewTextHandler(logfile, &slog.HandlerOptions{
-		AddSource: true,
-		Level:     slog.LevelDebug,
-	}))
+	logger := slog.New(
+		slog.NewTextHandler(
+			io.MultiWriter(
+				logfile,
+				os.Stderr,
+			),
+			&slog.HandlerOptions{
+				AddSource: true,
+				Level:     slog.LevelDebug,
+			},
+		),
+	)
 
 	defer logfile.Close()
 	logger.Info("starting RPC server")

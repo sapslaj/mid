@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -106,6 +108,12 @@ func Connect(agent *Agent) error {
 	if err != nil {
 		return fmt.Errorf("error creating agent session: %w", err)
 	}
+
+	stderr, err := agent.Session.StderrPipe()
+	if err != nil {
+		return fmt.Errorf("error creating agent stderr pipe: %w", err)
+	}
+	go io.Copy(os.Stdout, stderr)
 
 	stdin, err := agent.Session.StdinPipe()
 	if err != nil {

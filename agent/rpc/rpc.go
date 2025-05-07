@@ -30,6 +30,14 @@ type RPCResult[T any] struct {
 	Error       string
 }
 
+func SlogJSON(key string, value any) slog.Attr {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return slog.String(key, "err!"+err.Error())
+	}
+	return slog.String(key, string(data))
+}
+
 func ToArgs[T any](input any) (T, error) {
 	var result T
 	data, err := json.Marshal(input)
@@ -90,7 +98,7 @@ func ServerStart(s *Server) error {
 
 		logger = logger.With(
 			slog.Any("name", call.RPCFunction),
-			slog.Any("args", call.Args),
+			SlogJSON("args", call.Args),
 		)
 
 		logger.Info("routing call")
@@ -108,7 +116,7 @@ func ServerStart(s *Server) error {
 		}
 
 		logger = logger.With(
-			slog.Any("result", res),
+			SlogJSON("result", res),
 		)
 
 		logger.Info("sending result")
