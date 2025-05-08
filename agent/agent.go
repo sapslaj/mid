@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
@@ -28,7 +29,7 @@ type Agent struct {
 	Session   *ssh.Session
 	Encoder   *json.Encoder
 	Decoder   *json.Decoder
-	Running   bool
+	Running   *atomic.Bool
 	WaitGroup *sync.WaitGroup
 	InFlight  *syncmap.Map[string, chan rpc.RPCResult[any]]
 	Logger    *slog.Logger
@@ -173,7 +174,8 @@ func Connect(agent *Agent) error {
 		return fmt.Errorf("error starting agent session: %w", err)
 	}
 
-	agent.Running = true
+	agent.Running = &atomic.Bool{}
+	agent.Running.Store(true)
 	agent.WaitGroup = &sync.WaitGroup{}
 	agent.WaitGroup.Add(1)
 	agent.InFlight = &syncmap.Map[string, chan rpc.RPCResult[any]]{}
@@ -181,7 +183,7 @@ func Connect(agent *Agent) error {
 	go func() {
 		defer agent.WaitGroup.Done()
 		defer logger.Info("shutting down decoder loop")
-		for agent.Running {
+		for agent.Running.Load() {
 			logger.Info("waiting for next result")
 			var res rpc.RPCResult[any]
 			err = agent.Decoder.Decode(&res)
@@ -189,7 +191,7 @@ func Connect(agent *Agent) error {
 				if res.Error == "" {
 					res.Error = err.Error()
 				}
-				if errors.Is(err, io.EOF) && !agent.Running {
+				if errors.Is(err, io.EOF) && !agent.Running.Load() {
 					// we're supposed to be shutting down, don't log an error
 					return
 				}
@@ -292,7 +294,7 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 }
 
 func Disconnect(agent *Agent) error {
-	agent.Running = false
+	agent.Running.Store(false)
 
 	_, err := Call[any, any](agent, rpc.RPCCall[any]{RPCFunction: rpc.RPCClose})
 
