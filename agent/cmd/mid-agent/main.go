@@ -33,7 +33,7 @@ func main() {
 				Level:     slog.LevelDebug,
 			},
 		),
-	)
+	).With(slog.String("side", "remote"))
 
 	defer logfile.Close()
 	logger.Info("starting RPC server")

@@ -14,18 +14,40 @@ import (
 	"time"
 
 	"github.com/bramvdbogaerde/go-scp"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/syncmap"
 	"github.com/sapslaj/mid/version"
 )
 
 type Agent struct {
-	Mutex   sync.Mutex
-	Client  *ssh.Client
-	Session *ssh.Session
-	Encoder *json.Encoder
-	Decoder *json.Decoder
+	Mutex     sync.Mutex
+	Client    *ssh.Client
+	Session   *ssh.Session
+	Encoder   *json.Encoder
+	Decoder   *json.Decoder
+	Running   bool
+	WaitGroup *sync.WaitGroup
+	InFlight  *syncmap.Map[string, chan rpc.RPCResult[any]]
+	Logger    *slog.Logger
+}
+
+func AddLogger(agent *Agent) *slog.Logger {
+	if agent.Logger == nil {
+		agent.Logger = slog.New(
+			slog.NewTextHandler(
+				os.Stdout,
+				&slog.HandlerOptions{
+					AddSource: true,
+					Level:     slog.LevelDebug,
+				},
+			),
+		).With(slog.String("side", "local"))
+	}
+
+	return agent.Logger
 }
 
 func RunRemoteCommand(agent *Agent, cmd string) ([]byte, error) {
@@ -71,7 +93,8 @@ func InstallAgent(agent *Agent) error {
 }
 
 func Connect(agent *Agent) error {
-	slog.Info("checking if agent is cached")
+	logger := AddLogger(agent)
+	logger.Info("checking if agent is cached")
 	_, err := RunRemoteCommand(agent, "mkdir -p .mid")
 	if err != nil {
 		return err
@@ -95,14 +118,14 @@ func Connect(agent *Agent) error {
 	agentVersionMismatch := !strings.Contains(string(initOutput), fmt.Sprintf("mid-agent version %s", version.Version))
 
 	if agentNotInstalled || agentVersionMismatch {
-		slog.Info("copying agent")
+		logger.Info("copying agent")
 		err = InstallAgent(agent)
 		if err != nil {
 			return fmt.Errorf("error installing agent: %w", err)
 		}
 	}
 
-	slog.Info("starting SSH session")
+	logger.Info("starting SSH session")
 	agent.Session, err = agent.Client.NewSession()
 	if err != nil {
 		return fmt.Errorf("error creating agent session: %w", err)
@@ -125,7 +148,7 @@ func Connect(agent *Agent) error {
 	agent.Encoder = json.NewEncoder(stdin)
 	agent.Decoder = json.NewDecoder(stdout)
 
-	slog.Info("starting agent")
+	logger.Info("starting agent")
 
 	// for some reason Ansible doesn't like Docker containers with sudo installed
 	// so have to jump through some hoops to not use sudo if we don't have to.
@@ -150,7 +173,65 @@ func Connect(agent *Agent) error {
 		return fmt.Errorf("error starting agent session: %w", err)
 	}
 
-	slog.Info("pinging agent")
+	agent.Running = true
+	agent.WaitGroup = &sync.WaitGroup{}
+	agent.WaitGroup.Add(1)
+	agent.InFlight = &syncmap.Map[string, chan rpc.RPCResult[any]]{}
+
+	go func() {
+		defer agent.WaitGroup.Done()
+		defer logger.Info("shutting down decoder loop")
+		for agent.Running {
+			logger.Info("waiting for next result")
+			var res rpc.RPCResult[any]
+			err = agent.Decoder.Decode(&res)
+			if err != nil {
+				if res.Error == "" {
+					res.Error = err.Error()
+				}
+				if errors.Is(err, io.EOF) && !agent.Running {
+					// we're supposed to be shutting down, don't log an error
+					return
+				}
+				logger.Error("error decoding", slog.String("error", res.Error))
+				if errors.Is(err, io.EOF) {
+					// not supposed to be shutting down so probably an error (hence the
+					// logging above)
+					return
+				}
+				if res.UUID == "" {
+					continue
+				}
+			}
+
+			decoderLogger := logger.With(
+				slog.Any("name", res.RPCFunction),
+				rpc.SlogJSON("result", res.Result),
+				slog.String("error", res.Error),
+			)
+
+			if res.UUID == "" {
+				decoderLogger.Error("UUID is empty")
+				continue
+			}
+
+			decoderLogger.Info("got result")
+
+			ch, loaded := agent.InFlight.LoadAndDelete(res.UUID)
+			if !loaded {
+				decoderLogger.Warn("UUID not found in InFlight map")
+			}
+			if ch == nil {
+				decoderLogger.Error("result channel is nil, cannot send result")
+				continue
+			}
+
+			decoderLogger.Info("channeling result")
+			ch <- res
+		}
+	}()
+
+	logger.Info("pinging agent")
 	pingResult, err := Call[rpc.AgentPingArgs, rpc.AgentPingResult](agent, rpc.RPCCall[rpc.AgentPingArgs]{
 		RPCFunction: rpc.RPCAgentPing,
 		Args: rpc.AgentPingArgs{
@@ -168,10 +249,18 @@ func Connect(agent *Agent) error {
 }
 
 func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
-	agent.Mutex.Lock()
-	defer agent.Mutex.Unlock()
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		return rpc.RPCResult[O]{
+			RPCFunction: call.RPCFunction,
+			Error:       err.Error(),
+		}, err
+	}
+	call.UUID = uuid.String()
 
-	err := agent.Encoder.Encode(call)
+	agent.Mutex.Lock()
+	err = agent.Encoder.Encode(call)
+	agent.Mutex.Unlock()
 	if err != nil {
 		return rpc.RPCResult[O]{
 			RPCFunction: call.RPCFunction,
@@ -179,8 +268,19 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 		}, err
 	}
 
-	var res rpc.RPCResult[O]
-	err = agent.Decoder.Decode(&res)
+	// special case for "Close" since no response is expected
+	if call.RPCFunction == rpc.RPCClose {
+		return rpc.RPCResult[O]{
+			UUID:        call.UUID,
+			RPCFunction: call.RPCFunction,
+		}, nil
+	}
+
+	ch := make(chan rpc.RPCResult[any])
+	agent.InFlight.Store(call.UUID, ch)
+
+	rawResult := <-ch
+	res, err := rpc.AnyToJSONT[rpc.RPCResult[O]](rawResult)
 	if err != nil {
 		if res.Error == "" {
 			res.Error = err.Error()
@@ -192,6 +292,8 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 }
 
 func Disconnect(agent *Agent) error {
+	agent.Running = false
+
 	_, err := Call[any, any](agent, rpc.RPCCall[any]{RPCFunction: rpc.RPCClose})
 
 	err = errors.Join(
@@ -203,6 +305,8 @@ func Disconnect(agent *Agent) error {
 		err,
 		agent.Client.Close(),
 	)
+
+	agent.WaitGroup.Wait()
 
 	return err
 }

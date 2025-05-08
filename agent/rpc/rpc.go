@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sync"
 )
 
 type RPCFunction string
@@ -21,11 +22,13 @@ type Server struct {
 }
 
 type RPCCall[T any] struct {
+	UUID        string
 	RPCFunction RPCFunction
 	Args        T
 }
 
 type RPCResult[T any] struct {
+	UUID        string
 	RPCFunction RPCFunction
 	Result      T
 	Error       string
@@ -39,7 +42,7 @@ func SlogJSON(key string, value any) slog.Attr {
 	return slog.String(key, string(data))
 }
 
-func ToArgs[T any](input any) (T, error) {
+func AnyToJSONT[T any](input any) (T, error) {
 	var result T
 	data, err := json.Marshal(input)
 	if err != nil {
@@ -58,21 +61,21 @@ func ServerRoute(s *Server, rpcFunction RPCFunction, args any) (any, error) {
 		os.Exit(0)
 	case RPCAgentPing:
 		var targs AgentPingArgs
-		targs, err := ToArgs[AgentPingArgs](args)
+		targs, err := AnyToJSONT[AgentPingArgs](args)
 		if err != nil {
 			return nil, err
 		}
 		return AgentPing(targs)
 	case RPCExec:
 		var targs ExecArgs
-		targs, err := ToArgs[ExecArgs](args)
+		targs, err := AnyToJSONT[ExecArgs](args)
 		if err != nil {
 			return nil, err
 		}
 		return Exec(targs)
 	case RPCFileStat:
 		var targs FileStatArgs
-		targs, err := ToArgs[FileStatArgs](args)
+		targs, err := AnyToJSONT[FileStatArgs](args)
 		if err != nil {
 			return nil, err
 		}
@@ -85,11 +88,12 @@ func ServerRoute(s *Server, rpcFunction RPCFunction, args any) (any, error) {
 func ServerStart(s *Server) error {
 	encoder := json.NewEncoder(os.Stdout)
 	decoder := json.NewDecoder(os.Stdin)
+	mutex := sync.Mutex{}
 
 	for {
 		logger := s.Logger.With()
 
-		logger.Info("waiting for next call")
+		s.Logger.Info("waiting for next call")
 
 		var err error
 		var call RPCCall[any]
@@ -97,44 +101,66 @@ func ServerStart(s *Server) error {
 		err = decoder.Decode(&call)
 
 		if err != nil {
-			logger.Error("error while decoding call", slog.Any("error", err))
+			s.Logger.Error("error while decoding call", slog.Any("error", err))
+			mutex.Lock()
 			encoder.Encode(RPCResult[any]{
+				UUID:  call.UUID,
 				Error: err.Error(),
 			})
+			mutex.Unlock()
 			continue
 		}
 
-		logger = logger.With(
-			slog.Any("name", call.RPCFunction),
-			SlogJSON("args", call.Args),
-		)
-
-		logger.Info("routing call")
-
-		res, err := ServerRoute(s, call.RPCFunction, call.Args)
-
-		if err != nil {
-			s.Logger.Error("error while routing call", slog.Any("error", err))
+		if call.UUID == "" {
+			s.Logger.Error("UUID is empty", slog.Any("name", call.RPCFunction), SlogJSON("args", call.Args))
+			mutex.Lock()
 			encoder.Encode(RPCResult[any]{
+				UUID:  call.UUID,
+				Error: "UUID is empty",
+			})
+			mutex.Unlock()
+			continue
+		}
+
+		go func(call RPCCall[any]) {
+			logger = logger.With(
+				slog.String("uuid", call.UUID),
+				slog.Any("name", call.RPCFunction),
+				SlogJSON("args", call.Args),
+			)
+
+			logger.Info("routing call")
+
+			res, err := ServerRoute(s, call.RPCFunction, call.Args)
+
+			mutex.Lock()
+			defer mutex.Unlock()
+
+			if err != nil {
+				logger.Error("error while routing call", slog.Any("error", err))
+				encoder.Encode(RPCResult[any]{
+					UUID:        call.UUID,
+					RPCFunction: call.RPCFunction,
+					Result:      res,
+					Error:       err.Error(),
+				})
+				return
+			}
+
+			logger = logger.With(
+				SlogJSON("result", res),
+			)
+
+			logger.Info("sending result")
+			err = encoder.Encode(RPCResult[any]{
+				UUID:        call.UUID,
 				RPCFunction: call.RPCFunction,
 				Result:      res,
-				Error:       err.Error(),
 			})
-			continue
-		}
 
-		logger = logger.With(
-			SlogJSON("result", res),
-		)
-
-		logger.Info("sending result")
-		err = encoder.Encode(RPCResult[any]{
-			RPCFunction: call.RPCFunction,
-			Result:      res,
-		})
-
-		if err != nil {
-			s.Logger.Error("error while encoding result", slog.Any("error", err))
-		}
+			if err != nil {
+				logger.Error("error while encoding result", slog.Any("error", err))
+			}
+		}(call)
 	}
 }
