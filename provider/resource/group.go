@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -147,6 +148,20 @@ func (r Group) Create(
 		return id, state, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return id, state, nil
+		}
+
+		if err == nil {
+			return id, state, fmt.Errorf("cannot connect to host")
+		} else {
+			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: true,
 		Become:      true,
@@ -179,6 +194,14 @@ func (r Group) Read(
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		return id, inputs, state, err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		return id, inputs, GroupState{
+			GroupArgs: inputs,
+		}, nil
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -223,6 +246,20 @@ func (r Group) Update(
 		return olds, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return olds, nil
+		}
+
+		if err == nil {
+			return olds, fmt.Errorf("cannot connect to host")
+		} else {
+			return olds, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: true,
 		Become:      true,
@@ -262,6 +299,20 @@ func (r Group) Delete(
 		return err
 	}
 	parameters.State = ptr.Of("absent")
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if config.GetDeleteUnreachable() {
+			return nil
+		}
+
+		if err == nil {
+			return fmt.Errorf("cannot connect to host")
+		} else {
+			return fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: true,

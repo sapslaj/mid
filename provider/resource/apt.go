@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	p "github.com/pulumi/pulumi-go-provider"
@@ -274,6 +275,20 @@ func (r Apt) Create(
 		return id, state, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return id, state, nil
+		}
+
+		if err == nil {
+			return id, state, fmt.Errorf("cannot connect to host")
+		} else {
+			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
@@ -307,6 +322,14 @@ func (r Apt) Read(
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		return id, inputs, state, err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		return id, inputs, AptState{
+			AptArgs: inputs,
+		}, nil
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -352,6 +375,20 @@ func (r Apt) Update(
 
 	if r.taskParametersNeedsName(news) && news.Name == nil && news.Names == nil && olds.Name != nil {
 		news.Name = olds.Name
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return olds, nil
+		}
+
+		if err == nil {
+			return olds, fmt.Errorf("cannot connect to host")
+		} else {
+			return olds, fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
@@ -502,6 +539,20 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 	parameters.State = ptr.Of("absent")
 	if err != nil {
 		return err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if config.GetDeleteUnreachable() {
+			return nil
+		}
+
+		if err == nil {
+			return fmt.Errorf("cannot connect to host")
+		} else {
+			return fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{

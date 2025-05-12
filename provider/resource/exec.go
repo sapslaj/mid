@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -266,6 +267,20 @@ func (r Exec) Create(
 		return "", state, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return id, state, nil
+		}
+
+		if err == nil {
+			return id, state, fmt.Errorf("cannot connect to host")
+		} else {
+			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	if r.canUseRPC(input) {
 		agent, err := executor.StartAgent(ctx, config.Connection)
 		if err != nil {
@@ -335,6 +350,20 @@ func (r Exec) Update(
 ) (ExecState, error) {
 	config := infer.GetConfig[types.Config](ctx)
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return olds, nil
+		}
+
+		if err == nil {
+			return olds, fmt.Errorf("cannot connect to host")
+		} else {
+			return olds, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	if r.canUseRPC(news) {
 		agent, err := executor.StartAgent(ctx, config.Connection)
 		if err != nil {
@@ -390,6 +419,20 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if config.GetDeleteUnreachable() {
+			return nil
+		}
+
+		if err == nil {
+			return fmt.Errorf("cannot connect to host")
+		} else {
+			return fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
 
 	if r.canUseRPC(props.ExecArgs) {
 		agent, err := executor.StartAgent(ctx, config.Connection)

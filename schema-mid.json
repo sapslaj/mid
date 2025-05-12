@@ -1,7 +1,7 @@
 {
   "name": "mid",
   "displayName": "mid",
-  "version": "v0.0.3-alpha.0+dev",
+  "version": "v0.0.4-alpha.0+dev",
   "description": "Pulumi-native configuration management",
   "homepage": "https://github.com/sapslaj/mid",
   "license": "MIT",
@@ -16,7 +16,10 @@
     "nodejs": { "packageName": "@sapslaj/pulumi-mid", "respectSchemaVersion": true }
   },
   "config": {
-    "variables": { "connection": { "$ref": "#/types/mid:types:Connection", "secret": true } },
+    "variables": {
+      "connection": { "$ref": "#/types/mid:types:Connection", "secret": true },
+      "deleteUnreachable": { "type": "boolean" }
+    },
     "defaults": ["connection"]
   },
   "types": {
@@ -150,9 +153,15 @@
     }
   },
   "provider": {
-    "properties": { "connection": { "$ref": "#/types/mid:types:Connection", "secret": true } },
+    "properties": {
+      "connection": { "$ref": "#/types/mid:types:Connection", "secret": true },
+      "deleteUnreachable": { "type": "boolean" }
+    },
     "required": ["connection"],
-    "inputProperties": { "connection": { "$ref": "#/types/mid:types:Connection", "secret": true } },
+    "inputProperties": {
+      "connection": { "$ref": "#/types/mid:types:Connection", "secret": true },
+      "deleteUnreachable": { "type": "boolean" }
+    },
     "requiredInputs": ["connection"]
   },
   "resources": {

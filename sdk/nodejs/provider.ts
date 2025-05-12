@@ -38,6 +38,9 @@ export class Provider extends pulumi.ProviderResource {
       resourceInputs["connection"] = pulumi.output(args?.connection ? pulumi.secret(args.connection) : undefined).apply(
         JSON.stringify,
       );
+      resourceInputs["deleteUnreachable"] = pulumi.output(args ? args.deleteUnreachable : undefined).apply(
+        JSON.stringify,
+      );
     }
     opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
     super(Provider.__pulumiType, name, resourceInputs, opts);
@@ -49,4 +52,5 @@ export class Provider extends pulumi.ProviderResource {
  */
 export interface ProviderArgs {
   connection: pulumi.Input<inputs.types.ConnectionArgs>;
+  deleteUnreachable?: pulumi.Input<boolean>;
 }

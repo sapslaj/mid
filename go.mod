@@ -8,6 +8,7 @@ require (
 	github.com/aws/smithy-go v1.20.2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bramvdbogaerde/go-scp v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pulumi/pulumi-go-provider v0.26.0
 	github.com/pulumi/pulumi/sdk v1.14.1
@@ -54,7 +55,6 @@ require (
 	github.com/golang/glog v1.2.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-opentracing v0.0.0-20180507213350-8e809c8a8645 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

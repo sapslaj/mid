@@ -3,7 +3,7 @@
 Pulumi-native configuration management
 
 > [!CAUTION]
-> This provider is PRE-ALPHA software and *NOT* fit for production use!
+> This provider is PRE-ALPHA software and _NOT_ fit for production use!
 
 mid combines the simplicity of Ansible, the declarativeness of Nix, and the
 power of Pulumi to make server configuration management simple, easy, and fast.
@@ -19,8 +19,7 @@ with as minimal overhead as possible.
   parallelization).
 - Declarative and determinate (e.g. deleting the Pulumi resource should delete
   the associated thing on the server)
-- Mostly drop-in replacement for the remote module of the [Pulumi Command
-  Provider](https://www.pulumi.com/registry/packages/command/)
+- Mostly drop-in replacement for the remote module of the [Pulumi Command Provider](https://www.pulumi.com/registry/packages/command/)
 
 ### Non-goals
 

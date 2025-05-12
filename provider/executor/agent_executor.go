@@ -16,6 +16,80 @@ import (
 	"github.com/sapslaj/mid/provider/types"
 )
 
+func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfig, string, error) {
+	username := "root"
+	if connection.User == nil {
+		current, err := user.Current()
+		if err == nil {
+			username = current.Username
+		}
+	}
+	sshConfig := &ssh.ClientConfig{
+		User:            username,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         15 * time.Second, // TODO: make this configurable
+	}
+	if connection.PrivateKey != nil {
+		var signer ssh.Signer
+		var err error
+		signer, err = ssh.ParsePrivateKey([]byte(*connection.PrivateKey))
+		if err != nil {
+			return nil, "", err
+		}
+		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signer))
+	}
+	if connection.Password != nil {
+		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(*connection.Password))
+		sshConfig.Auth = append(sshConfig.Auth, ssh.KeyboardInteractive(
+			func(user, instruction string, questions []string, echos []bool) ([]string, error) {
+				answers := make([]string, len(questions))
+				for i := range questions {
+					answers[i] = *connection.Password
+				}
+				return answers, nil
+			},
+		))
+	}
+
+	port := 22
+	if connection.Port != nil {
+		port = int(*connection.Port)
+	}
+	endpoint := net.JoinHostPort(*connection.Host, fmt.Sprintf("%d", port))
+	return sshConfig, endpoint, nil
+}
+
+func CanConnect(ctx context.Context, connection *types.Connection) (bool, error) {
+	if connection.Host == nil {
+		return false, nil
+	}
+	if *connection.Host == "" {
+		return false, nil
+	}
+	sshConfig, endpoint, err := ConnectionToSSHClientConfig(connection)
+	if err != nil {
+		return false, err
+	}
+	// TODO: adjustable maxAttempts
+	sshClient, err := DialWithRetry(ctx, "Dial", 10, func() (*ssh.Client, error) {
+		return ssh.Dial("tcp", endpoint, sshConfig)
+	})
+	if err != nil {
+		return false, err
+	}
+	defer sshClient.Close()
+	session, err := sshClient.NewSession()
+	if err != nil {
+		return false, err
+	}
+	defer session.Close()
+	// _, err = session.Output("echo")
+	// if err != nil {
+	// 	return false, err
+	// }
+	return true, nil
+}
+
 func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f func() (T, error)) (T, error) {
 	var userError error
 	ok, data, err := retry.Until(ctx, retry.Acceptor{
@@ -60,45 +134,10 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 }
 
 func StartAgent(ctx context.Context, connection *types.Connection) (*agent.Agent, error) {
-	username := "root"
-	if connection.User == nil {
-		current, err := user.Current()
-		if err == nil {
-			username = current.Username
-		}
+	sshConfig, endpoint, err := ConnectionToSSHClientConfig(connection)
+	if err != nil {
+		return nil, err
 	}
-	sshConfig := &ssh.ClientConfig{
-		User:            username,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         15 * time.Second, // TODO: make this configurable
-	}
-	if connection.PrivateKey != nil {
-		var signer ssh.Signer
-		var err error
-		signer, err = ssh.ParsePrivateKey([]byte(*connection.PrivateKey))
-		if err != nil {
-			return nil, err
-		}
-		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signer))
-	}
-	if connection.Password != nil {
-		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(*connection.Password))
-		sshConfig.Auth = append(sshConfig.Auth, ssh.KeyboardInteractive(
-			func(user, instruction string, questions []string, echos []bool) ([]string, error) {
-				answers := make([]string, len(questions))
-				for i := range questions {
-					answers[i] = *connection.Password
-				}
-				return answers, nil
-			},
-		))
-	}
-
-	port := 22
-	if connection.Port != nil {
-		port = int(*connection.Port)
-	}
-	endpoint := net.JoinHostPort(*connection.Host, fmt.Sprintf("%d", port))
 
 	sshClient, err := DialWithRetry(ctx, "Dial", 10, func() (*ssh.Client, error) {
 		return ssh.Dial("tcp", endpoint, sshConfig)

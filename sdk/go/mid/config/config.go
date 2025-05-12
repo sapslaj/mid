@@ -14,3 +14,6 @@ var _ = internal.GetEnvOrDefault
 func GetConnection(ctx *pulumi.Context) string {
 	return config.Get(ctx, "mid:connection")
 }
+func GetDeleteUnreachable(ctx *pulumi.Context) bool {
+	return config.GetBool(ctx, "mid:deleteUnreachable")
+}

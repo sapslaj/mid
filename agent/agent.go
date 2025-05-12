@@ -101,22 +101,35 @@ func Connect(agent *Agent) error {
 		return err
 	}
 
-	timeout := time.Now().Add(time.Minute)
-	for timeout.Sub(time.Now()) > 0 {
-		lockCheck, err := RunRemoteCommand(agent, "/bin/sh -c 'test ! -f .mid/install.lock ; echo $?'")
-		if err != nil {
-			return err
+	var initOutput []byte
+	agentNotInstalled := true
+	agentVersionMismatch := true
+
+	for i := 0; i <= 10; i++ {
+		if i == 10 {
+			logger.Error(fmt.Sprintf("agent installation still in progress but should be finished by now; bailing"))
+			return fmt.Errorf("another agent installation is in progress")
 		}
-		lockCheckExit := strings.TrimSpace(string(lockCheck))
-		if lockCheckExit == "0" {
+
+		// check for lock file
+		installLockOutput, err := RunRemoteCommand(agent, "/bin/sh -c 'test ! -f .mid/install.lock ; echo $?'")
+		if strings.TrimSpace(string(installLockOutput)) == "0" {
 			break
 		}
+
+		// try it and see what happens
+		initOutput, err = RunRemoteCommand(agent, "file .mid/mid-agent && .mid/mid-agent --version")
+		if err == nil {
+			break
+		}
+
+		// nope, installation is still going
+		logger.Info(fmt.Sprintf("agent installation in progress, waiting %d seconds", i*10))
+		time.Sleep(time.Duration(i) * 10 * time.Second)
 	}
 
-	initOutput, _ := RunRemoteCommand(agent, "file .mid/mid-agent && .mid/mid-agent --version")
-
-	agentNotInstalled := strings.Contains(string(initOutput), "No such file or directory")
-	agentVersionMismatch := !strings.Contains(string(initOutput), fmt.Sprintf("mid-agent version %s", version.Version))
+	agentNotInstalled = strings.Contains(string(initOutput), "No such file or directory")
+	agentVersionMismatch = !strings.Contains(string(initOutput), fmt.Sprintf("mid-agent version %s", version.Version))
 
 	if agentNotInstalled || agentVersionMismatch {
 		logger.Info("copying agent")

@@ -16,3 +16,11 @@ Object.defineProperty(exports, "connection", {
   },
   enumerable: true,
 });
+
+export declare const deleteUnreachable: boolean | undefined;
+Object.defineProperty(exports, "deleteUnreachable", {
+  get() {
+    return __config.getObject<boolean>("deleteUnreachable");
+  },
+  enumerable: true,
+});

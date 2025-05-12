@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"reflect"
 
@@ -448,6 +449,20 @@ func (r File) runCreateUpdatePlay(
 		"ignore_errors":        preview,
 	})
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return state, nil
+		}
+
+		if err == nil {
+			return state, fmt.Errorf("cannot connect to host")
+		} else {
+			return state, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
@@ -583,6 +598,20 @@ func (r File) Delete(
 	})
 	if err != nil {
 		return err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if config.GetDeleteUnreachable() {
+			return nil
+		}
+
+		if err == nil {
+			return fmt.Errorf("cannot connect to host")
+		} else {
+			return fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{

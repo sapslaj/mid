@@ -40,12 +40,14 @@ func NewProvider(ctx *pulumi.Context,
 }
 
 type providerArgs struct {
-	Connection types.Connection `pulumi:"connection"`
+	Connection        types.Connection `pulumi:"connection"`
+	DeleteUnreachable *bool            `pulumi:"deleteUnreachable"`
 }
 
 // The set of arguments for constructing a Provider resource.
 type ProviderArgs struct {
-	Connection types.ConnectionInput
+	Connection        types.ConnectionInput
+	DeleteUnreachable pulumi.BoolPtrInput
 }
 
 func (ProviderArgs) ElementType() reflect.Type {

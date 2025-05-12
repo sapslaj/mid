@@ -2,11 +2,11 @@ module provider-mid
 
 go 1.23.0
 
-toolchain go1.24.2
+toolchain go1.24.3
 
 require (
 	github.com/pulumi/pulumi/sdk/v3 v3.165.0
-	github.com/sapslaj/mid/sdk v0.0.0-20250429040147-f099db836931
+	github.com/sapslaj/mid/sdk v0.0.0-20250508015321-d4d530971647
 )
 
 require (

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/aws/smithy-go/ptr"
@@ -135,6 +136,20 @@ func (r SystemdService) Create(
 		return id, state, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return id, state, nil
+		}
+
+		if err == nil {
+			return id, state, fmt.Errorf("cannot connect to host")
+		} else {
+			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	playOutput, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
@@ -177,6 +192,14 @@ func (r SystemdService) Read(
 		return id, inputs, state, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		return id, inputs, SystemdServiceState{
+			SystemdServiceArgs: inputs,
+		}, nil
+	}
+
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
@@ -217,6 +240,20 @@ func (r SystemdService) Update(
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
 		return olds, err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return olds, nil
+		}
+
+		if err == nil {
+			return olds, fmt.Errorf("cannot connect to host")
+		} else {
+			return olds, fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
@@ -284,6 +321,20 @@ func (r SystemdService) Delete(
 	parameters, err := r.argsToTaskParameters(args)
 	if err != nil {
 		return err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if config.GetDeleteUnreachable() {
+			return nil
+		}
+
+		if err == nil {
+			return fmt.Errorf("cannot connect to host")
+		} else {
+			return fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{

@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/aws/smithy-go/ptr"
@@ -167,6 +168,20 @@ func (r Package) Create(
 		return id, state, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return id, state, nil
+		}
+
+		if err == nil {
+			return id, state, fmt.Errorf("cannot connect to host")
+		} else {
+			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: true,
 		Become:      true,
@@ -200,6 +215,12 @@ func (r Package) Read(
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		return id, inputs, state, err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		return id, inputs, state, nil
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -246,6 +267,20 @@ func (r Package) Update(
 
 	if news.Name == nil && news.Names == nil && olds.Name != nil {
 		news.Name = olds.Name
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return olds, nil
+		}
+
+		if err == nil {
+			return olds, fmt.Errorf("cannot connect to host")
+		} else {
+			return olds, fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	if news.Ensure != nil && *news.Ensure == "absent" {
@@ -392,6 +427,20 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 	})
 	if err != nil {
 		return err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if config.GetDeleteUnreachable() {
+			return nil
+		}
+
+		if err == nil {
+			return fmt.Errorf("cannot connect to host")
+		} else {
+			return fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{

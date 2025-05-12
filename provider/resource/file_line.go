@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -149,6 +150,20 @@ func (r FileLine) Create(
 		return id, state, err
 	}
 
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return id, state, nil
+		}
+
+		if err == nil {
+			return id, state, fmt.Errorf("cannot connect to host")
+		} else {
+			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+		}
+	}
+
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
@@ -178,6 +193,14 @@ func (r FileLine) Read(
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		return id, inputs, state, err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		return id, inputs, FileLineState{
+			FileLineArgs: inputs,
+		}, nil
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -216,6 +239,20 @@ func (r FileLine) Update(
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
 		return olds, err
+	}
+
+	canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+	if !canConnect {
+		if preview {
+			return olds, nil
+		}
+
+		if err == nil {
+			return olds, fmt.Errorf("cannot connect to host")
+		} else {
+			return olds, fmt.Errorf("cannot connect to host: %w", err)
+		}
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
