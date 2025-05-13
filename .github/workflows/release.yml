@@ -35,14 +35,17 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: go
+          tools: just, go
       - name: Build
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: "0"
         run: |
-          go build -o ./pulumi-resource-mid -ldflags "-X github.com/sapslaj/mid/provider.Version=${{ inputs.version }}" ./provider/cmd/pulumi-resource-mid
+          set -eux
+          just provider_version=${{ inputs.version }} provider
+          cp ./bin/pulumi-resource-mid ./
+          file ./pulumi-resource-mid
           tar zcf pulumi-resource-mid-${{ inputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz pulumi-resource-mid README.md LICENSE
       - name: Upload build
         uses: actions/upload-artifact@v4
