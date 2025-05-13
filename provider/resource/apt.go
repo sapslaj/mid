@@ -232,6 +232,7 @@ func (r Apt) Diff(
 	}
 	if news.Ensure == nil && r.canAssumeEnsure(news) && olds.Ensure != nil {
 		// special diff for "ensure" since we compute it dynamically sometimes
+		news.Ensure = ptr.Of("present")
 		pdiff := types.DiffAttribute(olds.Ensure, news.Ensure)
 		if pdiff != nil {
 			diff.HasChanges = true
