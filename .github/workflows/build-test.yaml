@@ -8,7 +8,41 @@ env:
   GOPRIVATE: github.com/sapslaj
 
 jobs:
-  build:
+  build-provider:
+    name: build-provider
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goarch:
+          - amd64
+          - arm64
+        goos:
+          - linux
+          - windows
+          - darwin
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        id: git
+        with:
+          submodules: "recursive"
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Setup tools
+        uses: ./.github/actions/setup-tools
+        with:
+          tools: just, go
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          set -eux
+          just provider
+          file ./bin/pulumi-resource-mid
+
+  smoketest:
     runs-on: ubuntu-latest
     permissions:
       contents: read
