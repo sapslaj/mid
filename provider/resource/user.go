@@ -219,7 +219,11 @@ func (r User) Create(
 		return id, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	connectAttempts := 10
+	if preview {
+		connectAttempts = 4
+	}
+	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
 
 	if !canConnect {
 		if preview {
@@ -267,7 +271,7 @@ func (r User) Read(
 		return id, inputs, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
 		return id, inputs, UserState{
@@ -317,7 +321,11 @@ func (r User) Update(
 		return olds, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	connectAttempts := 10
+	if preview {
+		connectAttempts = 4
+	}
+	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
 
 	if !canConnect {
 		if preview {
@@ -371,7 +379,7 @@ func (r User) Delete(
 	}
 	parameters.State = ptr.Of("absent")
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
 		if config.GetDeleteUnreachable() {

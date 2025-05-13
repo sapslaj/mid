@@ -296,7 +296,11 @@ func (r Apt) Create(
 		return id, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	connectAttempts := 10
+	if preview {
+		connectAttempts = 4
+	}
+	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
 
 	if !canConnect {
 		if preview {
@@ -356,7 +360,7 @@ func (r Apt) Read(
 		return id, inputs, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
 		span.SetStatus(codes.Ok, "")
@@ -418,7 +422,7 @@ func (r Apt) Update(
 		news.Name = olds.Name
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
 		if preview {
@@ -606,7 +610,7 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 		return err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
 		if config.GetDeleteUnreachable() {

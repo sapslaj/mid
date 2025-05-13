@@ -313,7 +313,7 @@ func (r Exec) Create(
 		}
 
 		if !preview {
-			canConnect, err := executor.CanConnect(ctx, config.Connection)
+			canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 			if !canConnect {
 				if err == nil {
@@ -410,7 +410,7 @@ func (r Exec) Update(
 		}
 
 		if !preview {
-			canConnect, err := executor.CanConnect(ctx, config.Connection)
+			canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 			if !canConnect {
 				if err == nil {
@@ -462,7 +462,7 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
 		if config.GetDeleteUnreachable() {

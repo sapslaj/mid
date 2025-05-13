@@ -449,7 +449,11 @@ func (r File) runCreateUpdatePlay(
 		"ignore_errors":        preview,
 	})
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	connectAttempts := 10
+	if preview {
+		connectAttempts = 4
+	}
+	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
 
 	if !canConnect {
 		if preview {
@@ -600,7 +604,7 @@ func (r File) Delete(
 		return err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
+	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
 		if config.GetDeleteUnreachable() {

@@ -64,7 +64,7 @@ func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfi
 	return sshConfig, endpoint, nil
 }
 
-func CanConnect(ctx context.Context, connection *types.Connection) (bool, error) {
+func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts int) (bool, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CanConnect", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
 		attribute.String("connection.host", *connection.Host),
@@ -82,7 +82,7 @@ func CanConnect(ctx context.Context, connection *types.Connection) (bool, error)
 		return false, err
 	}
 	// TODO: adjustable maxAttempts
-	sshClient, err := DialWithRetry(ctx, "Dial", 10, func() (*ssh.Client, error) {
+	sshClient, err := DialWithRetry(ctx, "Dial", maxAttempts, func() (*ssh.Client, error) {
 		return ssh.Dial("tcp", endpoint, sshConfig)
 	})
 	if err != nil {
