@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
+	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -163,6 +165,66 @@ func (r Apt) updateState(olds AptState, news AptArgs, changed bool) AptState {
 	return olds
 }
 
+func (r Apt) runPlay(
+	ctx context.Context,
+	connection *types.Connection,
+	plays ...executor.Play,
+) (executor.PlayOutput, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.runPlay", trace.WithAttributes(
+		attribute.String("connection.host", *connection.Host),
+	))
+	defer span.End()
+
+	var output executor.PlayOutput
+	var err error
+	for attempt := 1; attempt <= 10; attempt++ {
+		if attempt == 10 {
+			break
+		}
+
+		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid:resource:Apt.runPlay:Attempt", trace.WithAttributes(
+			attribute.Int("retry.attempt", attempt),
+		))
+
+		output, err = executor.RunPlay(attemptCtx, connection, plays...)
+
+		attemptSpan.End()
+
+		if err == nil {
+			break
+		}
+
+		shouldRetry := false
+
+		for _, result := range output.Results {
+			for _, tr := range result.Tasks {
+				for _, task := range tr.Hosts {
+					task, ok := task.(map[string]any)
+					if !ok {
+						continue
+					}
+					if task["action"] == "ansible.builtin.apt" && task["failed"] == true {
+						stderr, ok := task["stderr"].(string)
+						if !ok {
+							continue
+						}
+						if strings.Contains(stderr, "Unable to acquire the dpkg frontend lock") {
+							shouldRetry = true
+						}
+					}
+				}
+			}
+		}
+
+		if !shouldRetry {
+			break
+		}
+
+		time.Sleep(time.Duration(attempt) * 10 * time.Second)
+	}
+	return output, err
+}
+
 func (r Apt) Diff(
 	ctx context.Context,
 	id string,
@@ -318,7 +380,7 @@ func (r Apt) Create(
 		}
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
+	_, err = r.runPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
 		Check:       preview,
@@ -369,7 +431,7 @@ func (r Apt) Read(
 		}, nil
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
+	output, err := r.runPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
 		Check:       true,
@@ -448,7 +510,7 @@ func (r Apt) Update(
 			return olds, err
 		}
 
-		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
+		output, err := r.runPlay(ctx, config.Connection, executor.Play{
 			GatherFacts: false,
 			Become:      true,
 			Check:       preview,
@@ -556,7 +618,7 @@ func (r Apt) Update(
 			"ignore_errors":       preview,
 		})
 	}
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
+	output, err := r.runPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
 		Check:       preview,
@@ -628,7 +690,7 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 		}
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
+	_, err = r.runPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
 		Check:       false,
