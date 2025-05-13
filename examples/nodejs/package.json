@@ -1,11 +1,11 @@
 {
   "name": "provider-mid",
   "devDependencies": {
-    "@types/node": "^14"
+    "@types/node": "^18"
   },
   "dependencies": {
     "typescript": "^4.0.0",
     "@pulumi/pulumi": "^3.0.0",
-    "@sapslaj/pulumi-mid": "0.0.4-alpha.0+dev"
+    "@sapslaj/pulumi-mid": "0.0.5"
   }
 }
