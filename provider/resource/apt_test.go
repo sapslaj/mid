@@ -22,7 +22,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Name: ptr.Of("vim"),
 			},
 			expected: aptTaskParameters{
-				Name: ptr.Of([]string{"vim"}),
+				Name:        ptr.Of([]string{"vim"}),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -32,7 +33,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Names: ptr.Of([]string{"vim"}),
 			},
 			expected: aptTaskParameters{
-				Name: ptr.Of([]string{"vim"}),
+				Name:        ptr.Of([]string{"vim"}),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -42,7 +44,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Names: ptr.Of([]string{"vim", "emacs"}),
 			},
 			expected: aptTaskParameters{
-				Name: ptr.Of([]string{"vim", "emacs"}),
+				Name:        ptr.Of([]string{"vim", "emacs"}),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -55,6 +58,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			expected: aptTaskParameters{
 				Name:        ptr.Of([]string{"vim"}),
 				UpdateCache: ptr.Of(true),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         true,
@@ -65,8 +69,9 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Ensure: ptr.Of("absent"),
 			},
 			expected: aptTaskParameters{
-				Name:  ptr.Of([]string{"emacs"}),
-				State: ptr.Of("absent"),
+				Name:        ptr.Of([]string{"emacs"}),
+				State:       ptr.Of("absent"),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -79,6 +84,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			expected: aptTaskParameters{
 				Name:           ptr.Of([]string{"emacs"}),
 				AllowDowngrade: ptr.Of(true),
+				LockTimeout:    ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -91,6 +97,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			expected: aptTaskParameters{
 				Name:             ptr.Of([]string{"vim"}),
 				FailOnAutoremove: ptr.Of(true),
+				LockTimeout:      ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -103,6 +110,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			expected: aptTaskParameters{
 				Name:              ptr.Of([]string{"vim"}),
 				InstallRecommends: ptr.Of(false),
+				LockTimeout:       ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -113,8 +121,9 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Ensure: ptr.Of("latest"),
 			},
 			expected: aptTaskParameters{
-				Name:  ptr.Of([]string{"*"}),
-				State: ptr.Of("latest"),
+				Name:        ptr.Of([]string{"*"}),
+				State:       ptr.Of("latest"),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
 			canAssumeEnsure:         true,
@@ -124,7 +133,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Upgrade: ptr.Of("dist"),
 			},
 			expected: aptTaskParameters{
-				Upgrade: ptr.Of("dist"),
+				Upgrade:     ptr.Of("dist"),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
@@ -135,6 +145,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			expected: aptTaskParameters{
 				UpdateCache: ptr.Of(true),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
@@ -147,6 +158,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			expected: aptTaskParameters{
 				UpdateCache:    ptr.Of(true),
 				CacheValidTime: ptr.Of(3600),
+				LockTimeout:    ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
@@ -161,6 +173,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Upgrade:     ptr.Of("dist"),
 				UpdateCache: ptr.Of(true),
 				DpkgOptions: ptr.Of("force-confold,force-confdef"),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
@@ -170,7 +183,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Deb: ptr.Of("https://ubuntu.pkgs.org/24.04/ubuntu-universe-amd64/neovim_0.9.5-6ubuntu2_amd64.deb.html"),
 			},
 			expected: aptTaskParameters{
-				Deb: ptr.Of("https://ubuntu.pkgs.org/24.04/ubuntu-universe-amd64/neovim_0.9.5-6ubuntu2_amd64.deb.html"),
+				Deb:         ptr.Of("https://ubuntu.pkgs.org/24.04/ubuntu-universe-amd64/neovim_0.9.5-6ubuntu2_amd64.deb.html"),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         true,
@@ -180,7 +194,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Autoclean: ptr.Of(true),
 			},
 			expected: aptTaskParameters{
-				Autoclean: ptr.Of(true),
+				Autoclean:   ptr.Of(true),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
@@ -190,7 +205,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Autoremove: ptr.Of(true),
 			},
 			expected: aptTaskParameters{
-				Autoremove: ptr.Of(true),
+				Autoremove:  ptr.Of(true),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
@@ -201,8 +217,9 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Purge:      ptr.Of(true),
 			},
 			expected: aptTaskParameters{
-				Autoremove: ptr.Of(true),
-				Purge:      ptr.Of(true),
+				Autoremove:  ptr.Of(true),
+				Purge:       ptr.Of(true),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
@@ -212,7 +229,8 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Clean: ptr.Of(true),
 			},
 			expected: aptTaskParameters{
-				Clean: ptr.Of(true),
+				Clean:       ptr.Of(true),
+				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
 			canAssumeEnsure:         false,
