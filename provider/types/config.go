@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/sapslaj/mid/env"
+	"github.com/sapslaj/mid/pkg/env"
 )
 
 type Config struct {

@@ -27,7 +27,7 @@ func TAssertEqual(t *testing.T, expected any, actual any) {
 func TAssertPanics(t *testing.T, f func()) {
 	didPanic := func(f func()) (did bool) {
 		did = true
-		defer recover()
+		defer func() { recover() }()
 		f()
 		did = false
 		return
@@ -269,7 +269,7 @@ func TestIsErrUnsupportedType(t *testing.T) {
 		t.Error("should be false")
 	}
 
-	if IsErrUnsupportedType(NewErrUnsupportedType("TEST")) {
+	if !IsErrUnsupportedType(NewErrUnsupportedType("TEST")) {
 		t.Error("should be true")
 	}
 }

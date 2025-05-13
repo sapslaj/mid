@@ -15,9 +15,9 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
-	"github.com/sapslaj/mid/ptr"
 )
 
 type Apt struct{}

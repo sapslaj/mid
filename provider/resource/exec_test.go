@@ -3,8 +3,8 @@ package resource
 import (
 	"testing"
 
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/types"
-	"github.com/sapslaj/mid/ptr"
 	"github.com/stretchr/testify/assert"
 )
 

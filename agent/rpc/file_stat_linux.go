@@ -1,4 +1,5 @@
 //go:build linux
+
 package rpc
 
 import (

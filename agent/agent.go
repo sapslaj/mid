@@ -19,7 +19,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"github.com/sapslaj/mid/agent/rpc"
-	"github.com/sapslaj/mid/syncmap"
+	"github.com/sapslaj/mid/pkg/syncmap"
 	"github.com/sapslaj/mid/version"
 )
 

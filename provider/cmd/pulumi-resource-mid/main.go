@@ -27,7 +27,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
-	"github.com/sapslaj/mid/env"
+	"github.com/sapslaj/mid/pkg/env"
 	mid "github.com/sapslaj/mid/provider"
 	"github.com/sapslaj/mid/version"
 )

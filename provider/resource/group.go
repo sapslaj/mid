@@ -9,9 +9,9 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
-	"github.com/sapslaj/mid/ptr"
 )
 
 type Group struct{}

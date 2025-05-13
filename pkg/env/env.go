@@ -19,7 +19,7 @@ func Get[T any](name string) (T, error) {
 	reflectValue := reflect.ValueOf(&value)
 	elem := reflectValue.Elem()
 
-	switch interface{}(value).(type) {
+	switch any(value).(type) {
 	case string:
 		elem.SetString(raw)
 	case int:

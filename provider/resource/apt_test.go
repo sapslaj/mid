@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sapslaj/mid/ptr"
+	"github.com/sapslaj/mid/pkg/ptr"
 )
 
 func TestApt_argsToTaskParameters(t *testing.T) {

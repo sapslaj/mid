@@ -13,9 +13,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
-	"github.com/sapslaj/mid/ptr"
 )
 
 type Exec struct{}
