@@ -147,6 +147,10 @@ func (r Apt) argsToTaskParameters(input AptArgs) (aptTaskParameters, error) {
 		parameters.Name = ptr.Of([]string{*input.Name})
 	}
 
+	if parameters.LockTimeout == nil {
+		parameters.LockTimeout = ptr.Of(120)
+	}
+
 	return parameters, nil
 }
 
