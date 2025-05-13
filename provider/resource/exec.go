@@ -7,6 +7,10 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/provider/executor"
@@ -225,6 +229,11 @@ func (r Exec) Diff(
 	olds ExecState,
 	news ExecArgs,
 ) (p.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Diff", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
@@ -249,6 +258,7 @@ func (r Exec) Diff(
 		types.DiffTriggers(olds, news),
 	)
 
+	span.SetStatus(codes.Ok, "")
 	return diff, nil
 }
 
@@ -258,55 +268,65 @@ func (r Exec) Create(
 	input ExecArgs,
 	preview bool,
 ) (string, ExecState, error) {
+	ctx, span := otel.Tracer("mid/provider/resource").Start(ctx, "mid:resource:Exec.Create", trace.WithAttributes())
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(ExecState{}, input, true)
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
-
-	if !canConnect {
-		if preview {
-			return id, state, nil
-		}
-
-		if err == nil {
-			return id, state, fmt.Errorf("cannot connect to host")
-		} else {
-			return id, state, fmt.Errorf("cannot connect to host: %w", err)
-		}
-	}
-
 	if r.canUseRPC(input) {
-		agent, err := executor.StartAgent(ctx, config.Connection)
-		if err != nil {
-			return id, state, err
-		}
-		defer agent.Disconnect()
-
+		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
 		call, err := r.argsToRPCCall(input, "create")
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return id, state, err
 		}
 
 		if !preview {
-			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](agent, call)
+			agent, err := executor.StartAgent(ctx, config.Connection)
 			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
+				return id, state, err
+			}
+			defer agent.Disconnect()
+
+			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
+			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
 				return id, state, err
 			}
 			state = r.updateStateFromRPCResult(state, input, result)
 		}
 	} else {
+		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
 		parameters, environment, err := r.argsToTaskParameters(input, "create")
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return id, state, err
 		}
 
 		if !preview {
+			canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+			if !canConnect {
+				if err == nil {
+					err = fmt.Errorf("cannot connect to host")
+				} else {
+					err = fmt.Errorf("cannot connect to host: %w", err)
+				}
+				if err != nil {
+					span.SetStatus(codes.Error, err.Error())
+					return id, state, err
+				}
+			}
+
 			output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 				GatherFacts: false,
 				Become:      true,
@@ -319,16 +339,19 @@ func (r Exec) Create(
 				},
 			})
 			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
 				return id, state, err
 			}
 			result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
 			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
 				return id, state, err
 			}
 			state = r.updateStateFromOutput(state, input, result)
 		}
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -348,48 +371,59 @@ func (r Exec) Update(
 	news ExecArgs,
 	preview bool,
 ) (ExecState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Update", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection)
-
-	if !canConnect {
-		if preview {
-			return olds, nil
-		}
-
-		if err == nil {
-			return olds, fmt.Errorf("cannot connect to host")
-		} else {
-			return olds, fmt.Errorf("cannot connect to host: %w", err)
-		}
-	}
-
 	if r.canUseRPC(news) {
-		agent, err := executor.StartAgent(ctx, config.Connection)
-		if err != nil {
-			return olds, err
-		}
-		defer agent.Disconnect()
-
+		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
 		call, err := r.argsToRPCCall(news, "update")
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 
 		if !preview {
-			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](agent, call)
+			agent, err := executor.StartAgent(ctx, config.Connection)
 			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
+				return olds, err
+			}
+			defer agent.Disconnect()
+
+			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
+			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
 				return olds, err
 			}
 			olds = r.updateStateFromRPCResult(olds, news, result)
 		}
 	} else {
+		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
 		parameters, environment, err := r.argsToTaskParameters(news, "update")
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 
 		if !preview {
+			canConnect, err := executor.CanConnect(ctx, config.Connection)
+
+			if !canConnect {
+				if err == nil {
+					err = fmt.Errorf("cannot connect to host")
+				} else {
+					err = fmt.Errorf("cannot connect to host: %w", err)
+				}
+				if err != nil {
+					span.SetStatus(codes.Error, err.Error())
+					return olds, err
+				}
+			}
+
 			output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 				GatherFacts: false,
 				Become:      true,
@@ -403,6 +437,7 @@ func (r Exec) Update(
 			})
 			result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
 			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
 				return olds, err
 			}
 			olds = r.updateStateFromOutput(olds, news, result)
@@ -410,11 +445,18 @@ func (r Exec) Update(
 	}
 	state := r.updateState(olds, news, true)
 
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
 func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Delete", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	if props.Delete == nil {
+		span.SetStatus(codes.Ok, "")
 		return nil
 	}
 
@@ -424,35 +466,46 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 
 	if !canConnect {
 		if config.GetDeleteUnreachable() {
+			span.SetStatus(codes.Ok, "")
 			return nil
 		}
 
 		if err == nil {
-			return fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
+		}
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return err
 		}
 	}
 
 	if r.canUseRPC(props.ExecArgs) {
+		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
 		agent, err := executor.StartAgent(ctx, config.Connection)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 		defer agent.Disconnect()
 
 		call, err := r.argsToRPCCall(props.ExecArgs, "delete")
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
-		_, err = executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](agent, call)
+		_, err = executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 	} else {
+		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
 		parameters, environment, err := r.argsToTaskParameters(props.ExecArgs, "delete")
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
@@ -468,9 +521,11 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 			},
 		})
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return nil
 }

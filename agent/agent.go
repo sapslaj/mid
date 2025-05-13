@@ -95,13 +95,17 @@ func InstallAgent(agent *Agent) error {
 
 func Connect(agent *Agent) error {
 	logger := AddLogger(agent)
-	logger.Info("checking if agent is cached")
-	_, err := RunRemoteCommand(agent, "mkdir -p .mid")
+	logger.Info("connecting agent")
+	initOutput, err := RunRemoteCommand(agent, "mkdir -p .mid")
 	if err != nil {
+		logger.Error(
+			"error creating .mid directory on remote",
+			slog.Any("error", err),
+			slog.String("stdout", string(initOutput)),
+		)
 		return err
 	}
 
-	var initOutput []byte
 	agentNotInstalled := true
 	agentVersionMismatch := true
 

@@ -15,13 +15,80 @@
 package main
 
 import (
-	p "github.com/pulumi/pulumi-go-provider"
+	"context"
+	"log/slog"
+	"time"
 
+	p "github.com/pulumi/pulumi-go-provider"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+
+	"github.com/sapslaj/mid/env"
 	mid "github.com/sapslaj/mid/provider"
 	"github.com/sapslaj/mid/version"
 )
 
+func StartTelemetry() func() {
+	// NOTE: Telemetry is _ONLY_ set up if `PULUMI_MID_OTLP_ENDPOINT` is set.
+	// There is _NO_ default value for this. This means that this telemetry is
+	// *OPT-IN* and only if you have an OTLP endpoint to send things to.
+	// I (@sapslaj) vow to never do opt-out telemetry of my own will.
+
+	endpoint, err := env.GetDefault("PULUMI_MID_OTLP_ENDPOINT", "")
+	if err != nil {
+		slog.Error("error getting otel OTLP endpoint", slog.Any("error", err))
+		return func() {}
+	}
+	if endpoint == "" {
+		return func() {}
+	}
+
+	ctx := context.Background()
+	exporter, err := otlptrace.New(
+		ctx,
+		otlptracegrpc.NewClient(
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint(endpoint),
+		),
+	)
+	if err != nil {
+		slog.Error("error setting up otlptrace", slog.Any("error", err))
+		return func() {}
+	}
+
+	res, err := resource.New(
+		context.Background(),
+		resource.WithAttributes(
+			attribute.String("service.name", "pulumi-resource-mid"),
+			attribute.String("library.language", "go"),
+		),
+	)
+	if err != nil {
+		slog.Error("error setting up otel resource", slog.Any("error", err))
+		return func() {}
+	}
+
+	otel.SetTracerProvider(
+		sdktrace.NewTracerProvider(
+			sdktrace.WithSampler(sdktrace.AlwaysSample()),
+			sdktrace.WithBatcher(exporter),
+			sdktrace.WithResource(res),
+		),
+	)
+
+	return func() {
+		time.Sleep(time.Second)
+		exporter.Shutdown(ctx)
+	}
+}
+
 // Serve the provider against Pulumi's Provider protocol.
 func main() {
+	shutdownTelemetry := StartTelemetry()
+	defer shutdownTelemetry()
 	p.RunProvider(mid.Name, version.Version, mid.Provider())
 }

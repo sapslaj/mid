@@ -9,6 +9,9 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -162,6 +165,11 @@ func (r Apt) Diff(
 	olds AptState,
 	news AptArgs,
 ) (p.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Diff", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
@@ -249,6 +257,7 @@ func (r Apt) Diff(
 		types.DiffTriggers(olds, news),
 	)
 
+	span.SetStatus(codes.Ok, "")
 	return diff, nil
 }
 
@@ -258,6 +267,9 @@ func (r Apt) Create(
 	input AptArgs,
 	preview bool,
 ) (string, AptState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Create")
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if r.taskParametersNeedsName(input) && input.Name == nil && input.Names == nil {
@@ -268,11 +280,15 @@ func (r Apt) Create(
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
 
+	span.SetAttributes(attribute.String("id", id))
+
 	parameters, err := r.argsToTaskParameters(input)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
@@ -284,9 +300,13 @@ func (r Apt) Create(
 		}
 
 		if err == nil {
-			return id, state, fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
+		}
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return id, state, err
 		}
 	}
 
@@ -305,6 +325,7 @@ func (r Apt) Create(
 		return id, state, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -314,6 +335,11 @@ func (r Apt) Read(
 	inputs AptArgs,
 	state AptState,
 ) (string, AptArgs, AptState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Read", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if r.taskParametersNeedsName(inputs) && inputs.Name == nil && inputs.Names == nil && state.Name != nil {
@@ -322,12 +348,14 @@ func (r Apt) Read(
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	canConnect, err := executor.CanConnect(ctx, config.Connection)
 
 	if !canConnect {
+		span.SetStatus(codes.Ok, "")
 		return id, inputs, AptState{
 			AptArgs: inputs,
 		}, nil
@@ -344,11 +372,13 @@ func (r Apt) Read(
 		},
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	result, err := executor.GetTaskResult[*aptTaskResult](output, 0, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
@@ -362,6 +392,7 @@ func (r Apt) Read(
 		}
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
 }
 
@@ -372,6 +403,11 @@ func (r Apt) Update(
 	news AptArgs,
 	preview bool,
 ) (AptState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Update", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if r.taskParametersNeedsName(news) && news.Name == nil && news.Names == nil && olds.Name != nil {
@@ -382,19 +418,25 @@ func (r Apt) Update(
 
 	if !canConnect {
 		if preview {
+			span.SetStatus(codes.Ok, "")
 			return olds, nil
 		}
 
 		if err == nil {
-			return olds, fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return olds, fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
+		}
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return olds, err
 		}
 	}
 
 	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
 		parameters, err := r.argsToTaskParameters(news)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 
@@ -410,16 +452,19 @@ func (r Apt) Update(
 			},
 		})
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 
 		result, err := executor.GetTaskResult[*aptTaskResult](output, 0, 0)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 
 		state := r.updateState(olds, news, result.IsChanged())
 
+		span.SetStatus(codes.Ok, "")
 		return state, nil
 	}
 
@@ -446,7 +491,9 @@ func (r Apt) Update(
 			aptStateMap[name] = newState
 		}
 	} else {
-		return AptState{}, errors.New("we somehow forgot the apt name, oops")
+		err = errors.New("we somehow forgot the apt name, oops")
+		span.SetStatus(codes.Error, err.Error())
+		return AptState{}, err
 	}
 
 	if olds.Name != nil {
@@ -489,7 +536,9 @@ func (r Apt) Update(
 	}
 
 	if len(taskParameterSets) == 0 {
-		return olds, errors.New("could not figure out how to update this thing")
+		err = errors.New("could not figure out how to update this thing")
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
 	}
 
 	tasks := []any{}
@@ -506,6 +555,7 @@ func (r Apt) Update(
 		Tasks:       tasks,
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
@@ -513,6 +563,7 @@ func (r Apt) Update(
 	for i := range output.Results[0].Tasks {
 		r, err := executor.GetTaskResult[*aptTaskResult](output, 0, i)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 		if r.IsChanged() {
@@ -522,15 +573,23 @@ func (r Apt) Update(
 	}
 
 	state := r.updateState(olds, news, changed)
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
 func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Delete", trace.WithAttributes(
+		attribute.String("id", id),
+	))
+	defer span.End()
+
 	if !r.taskParametersNeedsName(props.AptArgs) {
+		span.SetStatus(codes.Ok, "")
 		return nil
 	}
 
 	if props.Ensure != nil && *props.Ensure == "absent" {
+		span.SetStatus(codes.Ok, "")
 		return nil
 	}
 
@@ -539,6 +598,7 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 	parameters, err := r.argsToTaskParameters(props.AptArgs)
 	parameters.State = ptr.Of("absent")
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -550,9 +610,13 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 		}
 
 		if err == nil {
-			return fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
+		}
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return err
 		}
 	}
 
@@ -566,6 +630,11 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 			},
 		},
 	})
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
 
-	return err
+	span.SetStatus(codes.Ok, "")
+	return nil
 }

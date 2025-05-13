@@ -12,11 +12,21 @@ import (
 	"time"
 
 	"github.com/sapslaj/mid/provider/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []byte) ([]byte, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.RunPlaybook", trace.WithAttributes(
+		attribute.String("exec.strategy", "ansible"),
+		attribute.String("connection.host", *connection.Host),
+	))
+	defer span.End()
+
 	dir, err := os.MkdirTemp("", "pulumi-mid")
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	defer os.RemoveAll(dir)
@@ -24,6 +34,7 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	playbookPath := filepath.Join(dir, "play.yaml")
 	err = os.WriteFile(playbookPath, playbook, 0600)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -67,6 +78,7 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	inventoryPath := filepath.Join(dir, "inventory.yaml")
 	err = os.WriteFile(inventoryPath, inventoryData, 0600)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 
@@ -84,14 +96,18 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 
 	err = cmd.Run()
 	if err != nil {
-		return stdoutBuffer.Bytes(), fmt.Errorf(
+		err = fmt.Errorf(
 			"command exited with non success code: %d stderr=%s stdout=%s err=%w",
 			cmd.ProcessState.ExitCode(),
 			stderrBuffer.String(),
 			stdoutBuffer.String(),
 			err,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return stdoutBuffer.Bytes(), err
 	}
+
+	span.SetStatus(codes.Ok, "")
 	return stdoutBuffer.Bytes(), nil
 }
 
@@ -172,6 +188,12 @@ type Play struct {
 }
 
 func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (PlayOutput, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.RunPlay", trace.WithAttributes(
+		attribute.String("exec.strategy", "ansible"),
+		attribute.String("connection.host", *connection.Host),
+	))
+	defer span.End()
+
 	playbook := []map[string]any{}
 	for _, play := range plays {
 		playbook = append(playbook, map[string]any{
@@ -188,6 +210,7 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 
 	playbookData, err := json.Marshal(playbook)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return playOutput, err
 	}
 
@@ -196,6 +219,11 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 	playOutputErr := json.Unmarshal(resultData, &playOutput)
 	if playOutputErr != nil {
 		err = errors.Join(err, playOutputErr)
+	}
+	if err == nil {
+		span.SetStatus(codes.Ok, "")
+	} else {
+		span.SetStatus(codes.Error, err.Error())
 	}
 	return playOutput, err
 }
