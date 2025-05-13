@@ -86,6 +86,7 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	cmd.Env = append(os.Environ(),
 		"ANSIBLE_CALLBACK_WHITELIST=json",
 		"ANSIBLE_STDOUT_CALLBACK=json",
+		"ANSIBLE_SSH_RETRIES=10",
 	)
 	cmd.Dir = dir
 
