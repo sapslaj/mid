@@ -58,6 +58,7 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 			return nil, err
 		}
 		inventoryVars["ansible_ssh_private_key_file"] = privateKeyPath
+		inventoryVars["ansible_ssh_common_args"] = inventoryVars["ansible_ssh_common_args"].(string) + " -o IdentitiesOnly=yes"
 	}
 
 	// TODO: proxy support
