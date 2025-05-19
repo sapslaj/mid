@@ -41,7 +41,11 @@ func Exec(args ExecArgs) (ExecResult, error) {
 	if err != nil {
 		_, isExitError := err.(*exec.ExitError)
 		if !isExitError {
-			return ExecResult{}, err
+			return ExecResult{
+				Stdout:   stdout.Bytes(),
+				Stderr:   stderr.Bytes(),
+				ExitCode: -1,
+			}, err
 		}
 	}
 	return ExecResult{
