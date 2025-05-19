@@ -17,9 +17,6 @@
 
 from __future__ import annotations
 
-# make vendored top-level modules accessible EARLY
-import ansible._vendor
-
 # Note: Do not add any code to this file.  The ansible module may be
 # a namespace package when using Ansible-2.1+ Anything in this file may not be
 # available if one of the other packages in the namespace is loaded first.

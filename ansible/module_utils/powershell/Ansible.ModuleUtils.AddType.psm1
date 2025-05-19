@@ -443,4 +443,3 @@ Function Add-CSharpType {
 }
 
 Export-ModuleMember -Function Add-CSharpType
-
