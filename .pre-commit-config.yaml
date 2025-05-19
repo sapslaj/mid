@@ -3,4 +3,6 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: .gitignore
       - id: end-of-file-fixer
+        exclude: .gitignore
