@@ -40,6 +40,8 @@ set-version:
 
 [group('agent')]
 agent-codegen:
+  python -m ansible.generate
+  go fmt ./...
   ./hack/generate-agent-binaries.py
 
 [group('agent')]
