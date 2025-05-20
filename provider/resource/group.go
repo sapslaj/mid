@@ -9,6 +9,8 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -35,34 +37,11 @@ type GroupState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-type groupTaskParameters struct {
-	Force     *bool   `json:"force,omitempty"`
-	Gid       *int    `json:"gid,omitempty"`
-	GidMax    *int    `json:"gid_max,omitempty"`
-	GidMin    *int    `json:"gid_min,omitempty"`
-	Local     *bool   `json:"local,omitempty"`
-	Name      string  `json:"name"`
-	NonUnique *bool   `json:"non_unique,omitempty"`
-	State     *string `json:"state,omitempty"`
-	System    *bool   `json:"system,omitempty"`
-}
-
-type groupTaskResult struct {
-	Changed *bool `json:"changed,omitempty"`
-	Diff    *any  `json:"diff,omitempty"`
-}
-
-func (result *groupTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
-func (r Group) argsToTaskParameters(input GroupArgs) (groupTaskParameters, error) {
+func (r Group) argsToTaskParameters(input GroupArgs) (ansible.GroupParameters, error) {
 	if input.Name == nil {
-		return groupTaskParameters{}, errors.New("someone forgot to set the auto-named input.Name")
+		return ansible.GroupParameters{}, errors.New("someone forgot to set the auto-named input.Name")
 	}
-	return groupTaskParameters{
+	return ansible.GroupParameters{
 		Force:     input.Force,
 		Gid:       input.Gid,
 		GidMax:    input.GidMax,
@@ -148,36 +127,33 @@ func (r Group) Create(
 		return id, state, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return id, state, nil
-		}
-
-		if err == nil {
-			return id, state, fmt.Errorf("cannot connect to host")
-		} else {
-			return id, state, fmt.Errorf("cannot connect to host: %w", err)
-		}
-	}
-
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.group": parameters,
-			},
-		},
-	})
+	call, err := parameters.ToRPCCall()
 	if err != nil {
 		return id, state, err
+	}
+	call.Args.Check = preview
+
+	if preview {
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
+			return id, state, nil
+		}
+	}
+
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		return id, state, err
+	}
+	defer agent.Disconnect()
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return id, state, fmt.Errorf(
+			"creating group failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
 	}
 
 	return id, state, nil
@@ -200,6 +176,12 @@ func (r Group) Read(
 		return id, inputs, state, err
 	}
 
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		return id, inputs, state, err
+	}
+	call.Args.Check = true
+
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
@@ -208,21 +190,23 @@ func (r Group) Read(
 		}, nil
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       true,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.group": parameters,
-			},
-		},
-	})
+	agent, err := executor.StartAgent(ctx, config.Connection)
 	if err != nil {
 		return id, inputs, state, err
 	}
+	defer agent.Disconnect()
 
-	result, err := executor.GetTaskResult[*groupTaskResult](output, 0, 0)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return id, inputs, state, fmt.Errorf(
+			"reading group failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+	}
+
+	result, err := ansible.GroupReturnFromRPCResult(callResult)
 	if err != nil {
 		return id, inputs, state, err
 	}
@@ -250,41 +234,43 @@ func (r Group) Update(
 		return olds, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		return olds, err
 	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
+	call.Args.Check = preview
 
-	if !canConnect {
-		if preview {
+	if preview {
+		call.Args.Check = true
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
 			return olds, nil
 		}
-
-		if err == nil {
-			return olds, fmt.Errorf("cannot connect to host")
-		} else {
-			return olds, fmt.Errorf("cannot connect to host: %w", err)
-		}
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.group": parameters,
-			},
-		},
-	})
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		return olds, err
+	}
+	defer agent.Disconnect()
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return olds, fmt.Errorf(
+			"updating group failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+	}
+
+	result, err := ansible.GroupReturnFromRPCResult(callResult)
 	if err != nil {
 		return olds, err
 	}
 
-	result, err := executor.GetTaskResult[*groupTaskResult](output, 0, 0)
-
 	state := r.updateState(olds, news, result.IsChanged())
+
 	return state, nil
 }
 
@@ -308,6 +294,11 @@ func (r Group) Delete(
 	}
 	parameters.State = ptr.Of("absent")
 
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		return err
+	}
+
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
@@ -322,15 +313,21 @@ func (r Group) Delete(
 		}
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       false,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.group": parameters,
-			},
-		},
-	})
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		return err
+	}
+	defer agent.Disconnect()
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return fmt.Errorf(
+			"deleting group failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+	}
+
 	return err
 }
