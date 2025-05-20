@@ -16,6 +16,7 @@ import (
 
 	"github.com/sapslaj/mid/agent"
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/types"
 )
 
@@ -68,6 +69,7 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CanConnect", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
 		attribute.String("connection.host", *connection.Host),
+		attribute.Int("retry.max_attempts", maxAttempts),
 	))
 	defer span.End()
 
@@ -203,6 +205,8 @@ func StartAgent(ctx context.Context, connection *types.Connection) (*agent.Agent
 func CallAgent[I any, O any](ctx context.Context, a *agent.Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CallAgent", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
+		attribute.String("rpc.function", string(call.RPCFunction)),
+		telemetry.OtelJSON("rpc.args", call.Args),
 	))
 	defer span.End()
 
@@ -212,5 +216,15 @@ func CallAgent[I any, O any](ctx context.Context, a *agent.Agent, call rpc.RPCCa
 	} else {
 		span.SetStatus(codes.Error, err.Error())
 	}
+
+	span.SetAttributes(
+		attribute.String("rpc.uuid", res.UUID),
+		telemetry.OtelJSON("rpc.result", res.Result),
+	)
+
+	if res.Error != "" {
+		span.SetAttributes(attribute.String("rpc.error", res.Error))
+	}
+
 	return res, err
 }

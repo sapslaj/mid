@@ -21,6 +21,7 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.RunPlaybook", trace.WithAttributes(
 		attribute.String("exec.strategy", "ansible"),
 		attribute.String("connection.host", *connection.Host),
+		attribute.String("ansible.playbook", string(playbook)),
 	))
 	defer span.End()
 
@@ -75,6 +76,10 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 			"vars": inventoryVars,
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
+	span.SetAttributes(attribute.String("ansible.inventory", string(inventoryData)))
 
 	inventoryPath := filepath.Join(dir, "inventory.yaml")
 	err = os.WriteFile(inventoryPath, inventoryData, 0600)
@@ -97,12 +102,23 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	cmd.Stdout = stdoutBuffer
 
 	err = cmd.Run()
+
+	stderr := stderrBuffer.String()
+	stdout := stdoutBuffer.String()
+	exitCode := cmd.ProcessState.ExitCode()
+
+	span.SetAttributes(
+		attribute.Int("ansible.exit_code", exitCode),
+		attribute.String("ansible.stderr", stderr),
+		attribute.String("ansible.stdout", stdout),
+	)
+
 	if err != nil {
 		err = fmt.Errorf(
 			"command exited with non success code: %d stderr=%s stdout=%s err=%w",
-			cmd.ProcessState.ExitCode(),
-			stderrBuffer.String(),
-			stdoutBuffer.String(),
+			exitCode,
+			stderr,
+			stdout,
 			err,
 		)
 		span.SetStatus(codes.Error, err.Error())
