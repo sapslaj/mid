@@ -15,6 +15,9 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	midagent "github.com/sapslaj/mid/agent"
+	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -56,44 +59,6 @@ type AptState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-type aptTaskParameters struct {
-	AllowChangeHeldPackages  *bool     `json:"allow_change_held_packages,omitempty"`
-	AllowDowngrade           *bool     `json:"allow_downgrade,omitempty"`
-	AllowUnauthenticated     *bool     `json:"allow_unauthenticated,omitempty"`
-	Autoclean                *bool     `json:"autoclean,omitempty"`
-	Autoremove               *bool     `json:"autoremove,omitempty"`
-	CacheValidTime           *int      `json:"cache_valid_time,omitempty"`
-	Clean                    *bool     `json:"clean,omitempty"`
-	Deb                      *string   `json:"deb,omitempty"`
-	DefaultRelease           *string   `json:"default_release,omitempty"`
-	DpkgOptions              *string   `json:"dpkg_options,omitempty"`
-	FailOnAutoremove         *bool     `json:"fail_on_autoremove,omitempty"`
-	Force                    *bool     `json:"force,omitempty"`
-	ForceAptGet              *bool     `json:"force_apt_get,omitempty"`
-	InstallRecommends        *bool     `json:"install_recommends,omitempty"`
-	LockTimeout              *int      `json:"lock_timeout,omitempty"`
-	Name                     *[]string `json:"name,omitempty"`
-	OnlyUpgrade              *bool     `json:"only_upgrade,omitempty"`
-	PolicyRcD                *int      `json:"policy_rc_d,omitempty"`
-	Purge                    *bool     `json:"purge,omitempty"`
-	State                    *string   `json:"state,omitempty"`
-	UpdateCache              *bool     `json:"update_cache,omitempty"`
-	UpdateCacheRetries       *int      `json:"update_cache_retries,omitempty"`
-	UpdateCacheRetryMaxDelay *int      `json:"update_cache_retry_max_delay,omitempty"`
-	Upgrade                  *string   `json:"upgrade,omitempty"`
-}
-
-type aptTaskResult struct {
-	Changed *bool `json:"changed,omitempty"`
-	Diff    *any  `json:"diff,omitempty"`
-}
-
-func (result *aptTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
 func (r Apt) taskParametersNeedsName(input AptArgs) bool {
 	return !anyNonNils(
 		input.Autoclean,
@@ -117,8 +82,8 @@ func (r Apt) canAssumeEnsure(input AptArgs) bool {
 	return r.taskParametersNeedsName(input)
 }
 
-func (r Apt) argsToTaskParameters(input AptArgs) (aptTaskParameters, error) {
-	parameters := aptTaskParameters{
+func (r Apt) argsToTaskParameters(input AptArgs) (ansible.AptParameters, error) {
+	parameters := ansible.AptParameters{
 		AllowChangeHeldPackages:  input.AllowChangeHeldPackages,
 		AllowDowngrade:           input.AllowDowngrade,
 		AllowUnauthenticated:     input.AllowUnauthenticated,
@@ -165,55 +130,79 @@ func (r Apt) updateState(olds AptState, news AptArgs, changed bool) AptState {
 	return olds
 }
 
-func (r Apt) runPlay(
+func (r Apt) runApt(
 	ctx context.Context,
-	connection *types.Connection,
-	plays ...executor.Play,
-) (executor.PlayOutput, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.runPlay", trace.WithAttributes(
-		attribute.String("connection.host", *connection.Host),
+	agent *midagent.Agent,
+	parameters ansible.AptParameters,
+	preview bool,
+) (ansible.AptReturn, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.runApt", trace.WithAttributes(
+		attribute.String("connection.host", agent.Client.RemoteAddr().String()),
 	))
 	defer span.End()
 
-	var output executor.PlayOutput
 	var err error
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return ansible.AptReturn{}, err
+	}
+	call.Args.Check = preview
+
+	var callResult rpc.RPCResult[rpc.AnsibleExecuteResult]
+	var result ansible.AptReturn
 	for attempt := 1; attempt <= 10; attempt++ {
 		if attempt == 10 {
 			break
 		}
 
-		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid:resource:Apt.runPlay:Attempt", trace.WithAttributes(
+		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid:resource:Apt.runApt:Attempt", trace.WithAttributes(
 			attribute.Int("retry.attempt", attempt),
 		))
 
-		output, err = executor.RunPlay(attemptCtx, connection, plays...)
+		callResult, err = executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](attemptCtx, agent, call)
+		if err != nil {
+			attemptSpan.SetStatus(codes.Error, err.Error())
+			span.SetStatus(codes.Error, err.Error())
+			attemptSpan.End()
+			return ansible.AptReturn{}, err
+		}
 
-		attemptSpan.End()
-
-		if err == nil {
-			break
+		result, err = ansible.AptReturnFromRPCResult(callResult)
+		if err != nil {
+			attemptSpan.SetStatus(codes.Error, err.Error())
+			span.SetStatus(codes.Error, err.Error())
+			attemptSpan.End()
+			return ansible.AptReturn{}, err
 		}
 
 		shouldRetry := false
 
-		for _, result := range output.Results {
-			for _, tr := range result.Tasks {
-				for _, task := range tr.Hosts {
-					task, ok := task.(map[string]any)
-					if !ok {
-						continue
-					}
-					if task["action"] == "ansible.builtin.apt" && task["failed"] == true {
-						stderr, ok := task["stderr"].(string)
-						if !ok {
-							continue
-						}
-						if strings.Contains(stderr, "Unable to acquire the dpkg frontend lock") {
-							shouldRetry = true
-						}
-					}
-				}
-			}
+		if callResult.Result.Success {
+			attemptSpan.SetStatus(codes.Ok, "")
+			span.SetStatus(codes.Ok, "")
+			attemptSpan.End()
+			break
+		}
+
+		errorStr := "running apt failed:"
+		errorStr += fmt.Sprintf(" call_exitcode=%d", callResult.Result.ExitCode)
+		errorStr += fmt.Sprintf(" call_stderr=%s", string(callResult.Result.Stderr))
+		errorStr += fmt.Sprintf(" call_stdout=%s", string(callResult.Result.Stdout))
+		if result.Stderr != nil {
+			errorStr += fmt.Sprintf(" apt_stderr=%s", string(*result.Stderr))
+		}
+		if result.Stdout != nil {
+			errorStr += fmt.Sprintf(" apt_stdout=%s", string(*result.Stdout))
+		}
+		attemptSpan.SetStatus(codes.Error, errorStr)
+		span.SetStatus(codes.Error, errorStr)
+		err = errors.New(errorStr)
+
+		attemptSpan.End()
+
+		if result.Stderr != nil && strings.Contains(string(*result.Stderr), "Unable to acquire the dpkg frontend lock") {
+			shouldRetry = true
 		}
 
 		if !shouldRetry {
@@ -222,7 +211,8 @@ func (r Apt) runPlay(
 
 		time.Sleep(time.Duration(attempt) * 10 * time.Second)
 	}
-	return output, err
+
+	return result, err
 }
 
 func (r Apt) Diff(
@@ -358,44 +348,25 @@ func (r Apt) Create(
 		return id, state, err
 	}
 
-	connectAttempts := 10
 	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
 			return id, state, nil
 		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return id, state, err
-		}
 	}
 
-	_, err = r.runPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.apt": parameters,
-				"ignore_errors":       preview,
-			},
-		},
-	})
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return id, state, err
+	}
+	defer agent.Disconnect()
+
+	_, err = r.runApt(ctx, agent, parameters, preview)
 	if err != nil {
 		return id, state, err
 	}
 
-	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -431,24 +402,14 @@ func (r Apt) Read(
 		}, nil
 	}
 
-	output, err := r.runPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       true,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.apt": parameters,
-			},
-		},
-	})
+	agent, err := executor.StartAgent(ctx, config.Connection)
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
+	defer agent.Disconnect()
 
-	result, err := executor.GetTaskResult[*aptTaskResult](output, 0, 0)
+	result, err := r.runApt(ctx, agent, parameters, true)
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
@@ -484,24 +445,19 @@ func (r Apt) Update(
 		news.Name = olds.Name
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
-
-	if !canConnect {
-		if preview {
-			span.SetStatus(codes.Ok, "")
+	if preview {
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
 			return olds, nil
 		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return olds, err
-		}
 	}
+
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
+	}
+	defer agent.Disconnect()
 
 	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
 		parameters, err := r.argsToTaskParameters(news)
@@ -510,30 +466,12 @@ func (r Apt) Update(
 			return olds, err
 		}
 
-		output, err := r.runPlay(ctx, config.Connection, executor.Play{
-			GatherFacts: false,
-			Become:      true,
-			Check:       preview,
-			Tasks: []any{
-				map[string]any{
-					"ansible.builtin.apt": parameters,
-					"ignore_errors":       preview,
-				},
-			},
-		})
+		result, err := r.runApt(ctx, agent, parameters, preview)
 		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return olds, err
-		}
-
-		result, err := executor.GetTaskResult[*aptTaskResult](output, 0, 0)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 
 		state := r.updateState(olds, news, result.IsChanged())
-
 		span.SetStatus(codes.Ok, "")
 		return state, nil
 	}
@@ -578,8 +516,6 @@ func (r Apt) Update(
 		}
 	}
 
-	taskParameterSets := []aptTaskParameters{}
-
 	absents := []string{}
 	presents := []string{}
 
@@ -591,54 +527,39 @@ func (r Apt) Update(
 		}
 	}
 
+	changed := false
+
 	if len(absents) > 0 {
-		taskParameterSets = append(taskParameterSets, aptTaskParameters{
-			Name:  ptr.Of(absents),
-			State: ptr.Of("absent"),
-		})
+		parameters, err := r.argsToTaskParameters(news)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return AptState{}, err
+		}
+		parameters.State = ptr.Of("absent")
+		result, err := r.runApt(ctx, agent, parameters, preview)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return AptState{}, err
+		}
+		if result.IsChanged() {
+			changed = true
+		}
 	}
 
 	if len(presents) > 0 {
-		taskParameterSets = append(taskParameterSets, aptTaskParameters{
-			Name:  ptr.Of(presents),
-			State: ptr.Of(newState),
-		})
-	}
-
-	if len(taskParameterSets) == 0 {
-		err = errors.New("could not figure out how to update this thing")
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
-	tasks := []any{}
-	for _, parameters := range taskParameterSets {
-		tasks = append(tasks, map[string]any{
-			"ansible.builtin.apt": parameters,
-			"ignore_errors":       preview,
-		})
-	}
-	output, err := r.runPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       preview,
-		Tasks:       tasks,
-	})
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
-	changed := false
-	for i := range output.Results[0].Tasks {
-		r, err := executor.GetTaskResult[*aptTaskResult](output, 0, i)
+		parameters, err := r.argsToTaskParameters(news)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return AptState{}, err
 		}
-		if r.IsChanged() {
+		parameters.State = ptr.Of(newState)
+		result, err := r.runApt(ctx, agent, parameters, preview)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return AptState{}, err
+		}
+		if result.IsChanged() {
 			changed = true
-			break
 		}
 	}
 
@@ -690,16 +611,13 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 		}
 	}
 
-	_, err = r.runPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       false,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.apt": parameters,
-			},
-		},
-	})
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		return err
+	}
+	defer agent.Disconnect()
+
+	_, err = r.runApt(ctx, agent, parameters, false)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err
