@@ -144,15 +144,15 @@ func ServerStart(s *Server) error {
 			mutex.Lock()
 			defer mutex.Unlock()
 
+			result := RPCResult[any]{
+				UUID:        call.UUID,
+				RPCFunction: call.RPCFunction,
+				Result:      res,
+			}
+
 			if err != nil {
-				logger.Error("error while routing call", slog.Any("error", err))
-				encoder.Encode(RPCResult[any]{
-					UUID:        call.UUID,
-					RPCFunction: call.RPCFunction,
-					Result:      res,
-					Error:       err.Error(),
-				})
-				return
+				logger.Error("error while handling call", slog.Any("error", err))
+				result.Error = err.Error()
 			}
 
 			logger = logger.With(
@@ -160,11 +160,7 @@ func ServerStart(s *Server) error {
 			)
 
 			logger.Info("sending result")
-			err = encoder.Encode(RPCResult[any]{
-				UUID:        call.UUID,
-				RPCFunction: call.RPCFunction,
-				Result:      res,
-			})
+			err = encoder.Encode(result)
 
 			if err != nil {
 				logger.Error("error while encoding result", slog.Any("error", err))
