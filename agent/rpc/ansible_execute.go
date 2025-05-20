@@ -1,26 +1,21 @@
 package rpc
 
 import (
-	"archive/zip"
-	"bytes"
 	"crypto/rand"
 	"encoding/json"
-	"fmt"
-	"io"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 )
 
-type AnsiballZExecuteArgs struct {
-	Zip                []byte
+type AnsibleExecuteArgs struct {
 	Name               string
 	Args               map[string]any
 	Check              bool
 	DebugKeepTempFiles bool
 }
 
-type AnsiballZExecuteResult struct {
+type AnsibleExecuteResult struct {
 	Stderr       []byte
 	Stdout       []byte
 	ExitCode     int
@@ -29,10 +24,10 @@ type AnsiballZExecuteResult struct {
 	DebugTempDir string
 }
 
-func AnsiballZExecute(args AnsiballZExecuteArgs) (AnsiballZExecuteResult, error) {
-	result := AnsiballZExecuteResult{}
+func AnsibleExecute(args AnsibleExecuteArgs) (AnsibleExecuteResult, error) {
+	result := AnsibleExecuteResult{}
 
-	tmpdir, err := os.MkdirTemp(os.TempDir(), strings.ToLower(rand.Text()))
+	tmpdir, err := os.MkdirTemp(os.TempDir(), "mid-ansible-"+args.Name+"-"+strings.ToLower(rand.Text()))
 	result.DebugTempDir = tmpdir
 	if err != nil {
 		return result, err
@@ -69,55 +64,6 @@ func AnsiballZExecute(args AnsiballZExecuteArgs) (AnsiballZExecuteResult, error)
 		return result, err
 	}
 
-	reader, err := zip.NewReader(bytes.NewReader(args.Zip), int64(len(args.Zip)))
-	if err != nil {
-		return result, err
-	}
-
-	for _, f := range reader.File {
-		err := func() error {
-			filePath := filepath.Join(tmpdir, f.Name)
-			if !strings.HasPrefix(filePath, filepath.Clean(tmpdir)+string(os.PathSeparator)) {
-				return fmt.Errorf("invalid file path: %s", filePath)
-			}
-
-			if f.FileInfo().IsDir() {
-				err := os.MkdirAll(filePath, os.ModePerm)
-				if err != nil {
-					return err
-				}
-				return nil
-			}
-
-			err := os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
-			if err != nil {
-				return err
-			}
-
-			destinationFile, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			if err != nil {
-				return err
-			}
-			defer destinationFile.Close()
-
-			zippedFile, err := f.Open()
-			if err != nil {
-				return err
-			}
-			defer zippedFile.Close()
-
-			_, err = io.Copy(destinationFile, zippedFile)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}()
-		if err != nil {
-			return result, err
-		}
-	}
-
 	// TODO: support supplying Python3 location
 	execResult, err := Exec(ExecArgs{
 		Command: []string{
@@ -126,7 +72,7 @@ func AnsiballZExecute(args AnsiballZExecuteArgs) (AnsiballZExecuteResult, error)
 			"ansible.modules." + args.Name,
 			string(dataEncoded),
 		},
-		Dir: tmpdir,
+		Dir: path.Join(".mid", "ansible"),
 	})
 	result.Stderr = execResult.Stderr
 	result.Stdout = execResult.Stdout

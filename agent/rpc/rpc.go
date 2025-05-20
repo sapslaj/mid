@@ -11,11 +11,11 @@ import (
 type RPCFunction string
 
 const (
-	RPCAgentPing        RPCFunction = "AgentPing"
-	RPCAnsiballZExecute RPCFunction = "AnsiballZExecute"
-	RPCClose            RPCFunction = "Close"
-	RPCExec             RPCFunction = "Exec"
-	RPCFileStat         RPCFunction = "FileStat"
+	RPCAgentPing      RPCFunction = "AgentPing"
+	RPCAnsibleExecute RPCFunction = "AnsibleExecute"
+	RPCClose          RPCFunction = "Close"
+	RPCExec           RPCFunction = "Exec"
+	RPCFileStat       RPCFunction = "FileStat"
 )
 
 type Server struct {
@@ -67,13 +67,13 @@ func ServerRoute(s *Server, rpcFunction RPCFunction, args any) (any, error) {
 			return nil, err
 		}
 		return AgentPing(targs)
-	case RPCAnsiballZExecute:
-		var targs AnsiballZExecuteArgs
-		targs, err := AnyToJSONT[AnsiballZExecuteArgs](args)
+	case RPCAnsibleExecute:
+		var targs AnsibleExecuteArgs
+		targs, err := AnyToJSONT[AnsibleExecuteArgs](args)
 		if err != nil {
 			return nil, err
 		}
-		return AnsiballZExecute(targs)
+		return AnsibleExecute(targs)
 	case RPCExec:
 		var targs ExecArgs
 		targs, err := AnyToJSONT[ExecArgs](args)

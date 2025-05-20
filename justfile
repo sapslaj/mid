@@ -39,22 +39,32 @@ set-version:
   ./hack/set-version.sh '{{ provider_version }}'
 
 [group('agent')]
-agent-codegen:
-  python -m ansible.generate
-  go fmt ./...
-  ./hack/generate-agent-binaries.py
+agent-ansible-bundle:
+  tar \
+    --create \
+    --numeric-owner \
+    --owner 0 \
+    --group 0 \
+    --no-same-owner \
+    --no-same-permissions \
+    --gzip \
+    --file ./agent/cmd/mid-agent/ansible.tar.gz \
+    --exclude-ignore=./.gitignore \
+    ./ansible
 
 [group('agent')]
-agent-gogenerate: agent-codegen
+agent-codegen:
   rm -f agent/mid-agent-*
-  go generate ./agent/...
+  ./hack/generate-ansible-types.py
+  ./hack/generate-agent-binaries.py
+  go fmt ./...
 
 [group('provider')]
-provider: set-version agent-gogenerate
+provider: set-version agent-codegen
   go build -o ./bin/pulumi-resource-mid "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
 
 [group('provider')]
-provider-debug: set-version agent-gogenerate
+provider-debug: set-version agent-codegen
   go build -o ./bin/pulumi-resource-mid -gcflags="all=-N -l" "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
 
 [group('provider')]

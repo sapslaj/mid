@@ -34,8 +34,14 @@ func main() {
 			},
 		),
 	).With(slog.String("side", "remote"))
-
 	defer logfile.Close()
+
+	logger.Info("installing Ansible package")
+	err = InstallAnsible()
+	if err != nil {
+		panic(err)
+	}
+
 	logger.Info("starting RPC server")
 	defer logger.Info("stopping RPC server")
 	server := &rpc.Server{

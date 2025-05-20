@@ -185,7 +185,7 @@ func (r User) Create(
 	}
 	defer agent.Disconnect()
 
-	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
 	if err != nil || !callResult.Result.Success {
 		return id, state, fmt.Errorf(
 			"creating user failed: stderr=%s stdout=%s, err=%w",
@@ -236,7 +236,7 @@ func (r User) Read(
 
 	call.Args.Check = true
 
-	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
 	if err != nil || !callResult.Result.Success {
 		return id, inputs, state, fmt.Errorf(
 			"reading user failed: stderr=%s stdout=%s, err=%w",
@@ -293,7 +293,7 @@ func (r User) Update(
 	}
 	defer agent.Disconnect()
 
-	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
 	if err != nil || !callResult.Result.Success {
 		return olds, fmt.Errorf(
 			"updating user failed: stderr=%s stdout=%s, err=%w",
@@ -358,7 +358,7 @@ func (r User) Delete(
 	}
 	defer agent.Disconnect()
 
-	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
 	if err != nil || !callResult.Result.Success {
 		return fmt.Errorf(
 			"deleting user failed: stderr=%s stdout=%s, err=%w",
