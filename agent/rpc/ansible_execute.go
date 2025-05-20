@@ -11,6 +11,7 @@ import (
 type AnsibleExecuteArgs struct {
 	Name               string
 	Args               map[string]any
+	Environment        map[string]string
 	Check              bool
 	DebugKeepTempFiles bool
 }
@@ -72,7 +73,8 @@ func AnsibleExecute(args AnsibleExecuteArgs) (AnsibleExecuteResult, error) {
 			"ansible.modules." + args.Name,
 			string(dataEncoded),
 		},
-		Dir: path.Join(".mid", "ansible"),
+		Environment: args.Environment,
+		Dir:         path.Join(".mid", "ansible"),
 	})
 	result.Stderr = execResult.Stderr
 	result.Stdout = execResult.Stdout
