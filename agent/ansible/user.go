@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const UserName = "user"
 
 //go:embed user.zip
 var UserZipfile []byte
@@ -51,6 +55,21 @@ type UserParameters struct {
 	UidMax                       *int      `json:"uid_max,omitempty"`
 }
 
+func (p *UserParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  UserZipfile,
+			Name: UserName,
+			Args: args,
+		},
+	}, nil
+}
+
 type UserReturn struct {
 	AnsibleCommonReturns
 	Append         *bool   `json:"append,omitempty"`
@@ -72,4 +91,8 @@ type UserReturn struct {
 	Stdout         *string `json:"stdout,omitempty"`
 	System         *bool   `json:"system,omitempty"`
 	Uid            *int    `json:"uid,omitempty"`
+}
+
+func UserReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (UserReturn, error) {
+	return rpc.AnyToJSONT[UserReturn](r.Result.Result)
 }

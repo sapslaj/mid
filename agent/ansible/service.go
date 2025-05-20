@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const ServiceName = "service"
 
 //go:embed service.zip
 var ServiceZipfile []byte
@@ -19,6 +23,25 @@ type ServiceParameters struct {
 	Use       *string `json:"use,omitempty"`
 }
 
+func (p *ServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  ServiceZipfile,
+			Name: ServiceName,
+			Args: args,
+		},
+	}, nil
+}
+
 type ServiceReturn struct {
 	AnsibleCommonReturns
+}
+
+func ServiceReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (ServiceReturn, error) {
+	return rpc.AnyToJSONT[ServiceReturn](r.Result.Result)
 }

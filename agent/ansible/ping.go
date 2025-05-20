@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const PingName = "ping"
 
 //go:embed ping.zip
 var PingZipfile []byte
@@ -12,7 +16,26 @@ type PingParameters struct {
 	Data *string `json:"data,omitempty"`
 }
 
+func (p *PingParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  PingZipfile,
+			Name: PingName,
+			Args: args,
+		},
+	}, nil
+}
+
 type PingReturn struct {
 	AnsibleCommonReturns
 	Ping *string `json:"ping,omitempty"`
+}
+
+func PingReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (PingReturn, error) {
+	return rpc.AnyToJSONT[PingReturn](r.Result.Result)
 }

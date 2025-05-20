@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const MountFactsName = "mount_facts"
 
 //go:embed mount_facts.zip
 var MountFactsZipfile []byte
@@ -18,7 +22,26 @@ type MountFactsParameters struct {
 	IncludeAggregateMounts *bool     `json:"include_aggregate_mounts,omitempty"`
 }
 
+func (p *MountFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  MountFactsZipfile,
+			Name: MountFactsName,
+			Args: args,
+		},
+	}, nil
+}
+
 type MountFactsReturn struct {
 	AnsibleCommonReturns
 	AnsibleFacts *map[string]any `json:"ansible_facts,omitempty"`
+}
+
+func MountFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (MountFactsReturn, error) {
+	return rpc.AnyToJSONT[MountFactsReturn](r.Result.Result)
 }

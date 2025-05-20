@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const SystemdName = "systemd"
 
 //go:embed systemd.zip
 var SystemdZipfile []byte
@@ -20,7 +24,26 @@ type SystemdParameters struct {
 	NoBlock      *bool   `json:"no_block,omitempty"`
 }
 
+func (p *SystemdParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  SystemdZipfile,
+			Name: SystemdName,
+			Args: args,
+		},
+	}, nil
+}
+
 type SystemdReturn struct {
 	AnsibleCommonReturns
 	Status *map[string]any `json:"status,omitempty"`
+}
+
+func SystemdReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (SystemdReturn, error) {
+	return rpc.AnyToJSONT[SystemdReturn](r.Result.Result)
 }

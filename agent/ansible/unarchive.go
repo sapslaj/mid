@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const UnarchiveName = "unarchive"
 
 //go:embed unarchive.zip
 var UnarchiveZipfile []byte
@@ -23,6 +27,21 @@ type UnarchiveParameters struct {
 	ValidateCerts *bool     `json:"validate_certs,omitempty"`
 }
 
+func (p *UnarchiveParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  UnarchiveZipfile,
+			Name: UnarchiveName,
+			Args: args,
+		},
+	}, nil
+}
+
 type UnarchiveReturn struct {
 	AnsibleCommonReturns
 	Dest    *string `json:"dest,omitempty"`
@@ -36,4 +55,8 @@ type UnarchiveReturn struct {
 	Src     *string `json:"src,omitempty"`
 	State   *string `json:"state,omitempty"`
 	Uid     *int    `json:"uid,omitempty"`
+}
+
+func UnarchiveReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (UnarchiveReturn, error) {
+	return rpc.AnyToJSONT[UnarchiveReturn](r.Result.Result)
 }

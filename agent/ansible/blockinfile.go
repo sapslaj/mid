@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const BlockinfileName = "blockinfile"
 
 //go:embed blockinfile.zip
 var BlockinfileZipfile []byte
@@ -23,6 +27,25 @@ type BlockinfileParameters struct {
 	PrependNewline *bool   `json:"prepend_newline,omitempty"`
 }
 
+func (p *BlockinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  BlockinfileZipfile,
+			Name: BlockinfileName,
+			Args: args,
+		},
+	}, nil
+}
+
 type BlockinfileReturn struct {
 	AnsibleCommonReturns
+}
+
+func BlockinfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (BlockinfileReturn, error) {
+	return rpc.AnyToJSONT[BlockinfileReturn](r.Result.Result)
 }

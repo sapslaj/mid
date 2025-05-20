@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const RpmKeyName = "rpm_key"
 
 //go:embed rpm_key.zip
 var RpmKeyZipfile []byte
@@ -15,6 +19,25 @@ type RpmKeyParameters struct {
 	Fingerprint   *[]string `json:"fingerprint,omitempty"`
 }
 
+func (p *RpmKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  RpmKeyZipfile,
+			Name: RpmKeyName,
+			Args: args,
+		},
+	}, nil
+}
+
 type RpmKeyReturn struct {
 	AnsibleCommonReturns
+}
+
+func RpmKeyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (RpmKeyReturn, error) {
+	return rpc.AnyToJSONT[RpmKeyReturn](r.Result.Result)
 }

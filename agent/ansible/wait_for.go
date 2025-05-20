@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const WaitForName = "wait_for"
 
 //go:embed wait_for.zip
 var WaitForZipfile []byte
@@ -23,9 +27,28 @@ type WaitForParameters struct {
 	Msg                    *string   `json:"msg,omitempty"`
 }
 
+func (p *WaitForParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  WaitForZipfile,
+			Name: WaitForName,
+			Args: args,
+		},
+	}, nil
+}
+
 type WaitForReturn struct {
 	AnsibleCommonReturns
 	Elapsed        *int            `json:"elapsed,omitempty"`
 	MatchGroups    *[]any          `json:"match_groups,omitempty"`
 	MatchGroupdict *map[string]any `json:"match_groupdict,omitempty"`
+}
+
+func WaitForReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (WaitForReturn, error) {
+	return rpc.AnyToJSONT[WaitForReturn](r.Result.Result)
 }

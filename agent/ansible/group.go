@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const GroupName = "group"
 
 //go:embed group.zip
 var GroupZipfile []byte
@@ -20,10 +24,29 @@ type GroupParameters struct {
 	GidMax    *int    `json:"gid_max,omitempty"`
 }
 
+func (p *GroupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  GroupZipfile,
+			Name: GroupName,
+			Args: args,
+		},
+	}, nil
+}
+
 type GroupReturn struct {
 	AnsibleCommonReturns
 	Gid    *int    `json:"gid,omitempty"`
 	Name   *string `json:"name,omitempty"`
 	State  *string `json:"state,omitempty"`
 	System *bool   `json:"system,omitempty"`
+}
+
+func GroupReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (GroupReturn, error) {
+	return rpc.AnyToJSONT[GroupReturn](r.Result.Result)
 }

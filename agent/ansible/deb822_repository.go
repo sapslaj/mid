@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const Deb822RepositoryName = "deb822_repository"
 
 //go:embed deb822_repository.zip
 var Deb822RepositoryZipfile []byte
@@ -33,9 +37,28 @@ type Deb822RepositoryParameters struct {
 	State                    *string   `json:"state,omitempty"`
 }
 
+func (p *Deb822RepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  Deb822RepositoryZipfile,
+			Name: Deb822RepositoryName,
+			Args: args,
+		},
+	}, nil
+}
+
 type Deb822RepositoryReturn struct {
 	AnsibleCommonReturns
 	Repo        *string `json:"repo,omitempty"`
 	Dest        *string `json:"dest,omitempty"`
 	KeyFilename *string `json:"key_filename,omitempty"`
+}
+
+func Deb822RepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (Deb822RepositoryReturn, error) {
+	return rpc.AnyToJSONT[Deb822RepositoryReturn](r.Result.Result)
 }

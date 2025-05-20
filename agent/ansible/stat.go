@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const StatName = "stat"
 
 //go:embed stat.zip
 var StatZipfile []byte
@@ -17,7 +21,26 @@ type StatParameters struct {
 	GetAttributes     *bool   `json:"get_attributes,omitempty"`
 }
 
+func (p *StatParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  StatZipfile,
+			Name: StatName,
+			Args: args,
+		},
+	}, nil
+}
+
 type StatReturn struct {
 	AnsibleCommonReturns
 	Stat *map[string]any `json:"stat,omitempty"`
+}
+
+func StatReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (StatReturn, error) {
+	return rpc.AnyToJSONT[StatReturn](r.Result.Result)
 }

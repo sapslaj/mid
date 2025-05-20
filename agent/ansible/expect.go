@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const ExpectName = "expect"
 
 //go:embed expect.zip
 var ExpectZipfile []byte
@@ -18,6 +22,25 @@ type ExpectParameters struct {
 	Echo      *bool          `json:"echo,omitempty"`
 }
 
+func (p *ExpectParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  ExpectZipfile,
+			Name: ExpectName,
+			Args: args,
+		},
+	}, nil
+}
+
 type ExpectReturn struct {
 	AnsibleCommonReturns
+}
+
+func ExpectReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (ExpectReturn, error) {
+	return rpc.AnyToJSONT[ExpectReturn](r.Result.Result)
 }

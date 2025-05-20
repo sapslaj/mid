@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const SlurpName = "slurp"
 
 //go:embed slurp.zip
 var SlurpZipfile []byte
@@ -12,9 +16,28 @@ type SlurpParameters struct {
 	Src string `json:"src"`
 }
 
+func (p *SlurpParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  SlurpZipfile,
+			Name: SlurpName,
+			Args: args,
+		},
+	}, nil
+}
+
 type SlurpReturn struct {
 	AnsibleCommonReturns
 	Content  *string `json:"content,omitempty"`
 	Encoding *string `json:"encoding,omitempty"`
 	Source   *string `json:"source,omitempty"`
+}
+
+func SlurpReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (SlurpReturn, error) {
+	return rpc.AnyToJSONT[SlurpReturn](r.Result.Result)
 }

@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const CommandName = "command"
 
 //go:embed command.zip
 var CommandZipfile []byte
@@ -21,6 +25,21 @@ type CommandParameters struct {
 	StripEmptyEnds     *bool     `json:"strip_empty_ends,omitempty"`
 }
 
+func (p *CommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  CommandZipfile,
+			Name: CommandName,
+			Args: args,
+		},
+	}, nil
+}
+
 type CommandReturn struct {
 	AnsibleCommonReturns
 	Msg         *bool   `json:"msg,omitempty"`
@@ -33,4 +52,8 @@ type CommandReturn struct {
 	Rc          *int    `json:"rc,omitempty"`
 	StdoutLines *[]any  `json:"stdout_lines,omitempty"`
 	StderrLines *[]any  `json:"stderr_lines,omitempty"`
+}
+
+func CommandReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (CommandReturn, error) {
+	return rpc.AnyToJSONT[CommandReturn](r.Result.Result)
 }

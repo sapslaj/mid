@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const AptKeyName = "apt_key"
 
 //go:embed apt_key.zip
 var AptKeyZipfile []byte
@@ -19,6 +23,21 @@ type AptKeyParameters struct {
 	ValidateCerts *bool   `json:"validate_certs,omitempty"`
 }
 
+func (p *AptKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  AptKeyZipfile,
+			Name: AptKeyName,
+			Args: args,
+		},
+	}, nil
+}
+
 type AptKeyReturn struct {
 	AnsibleCommonReturns
 	After   *[]any  `json:"after,omitempty"`
@@ -27,4 +46,8 @@ type AptKeyReturn struct {
 	Id      *string `json:"id,omitempty"`
 	KeyId   *string `json:"key_id,omitempty"`
 	ShortId *string `json:"short_id,omitempty"`
+}
+
+func AptKeyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (AptKeyReturn, error) {
+	return rpc.AnyToJSONT[AptKeyReturn](r.Result.Result)
 }

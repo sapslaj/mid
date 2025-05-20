@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const CopyName = "copy"
 
 //go:embed copy.zip
 var CopyZipfile []byte
@@ -22,6 +26,21 @@ type CopyParameters struct {
 	Checksum      *string `json:"checksum,omitempty"`
 }
 
+func (p *CopyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  CopyZipfile,
+			Name: CopyName,
+			Args: args,
+		},
+	}, nil
+}
+
 type CopyReturn struct {
 	AnsibleCommonReturns
 	Dest       *string `json:"dest,omitempty"`
@@ -36,4 +55,8 @@ type CopyReturn struct {
 	Mode       *string `json:"mode,omitempty"`
 	Size       *int    `json:"size,omitempty"`
 	State      *string `json:"state,omitempty"`
+}
+
+func CopyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (CopyReturn, error) {
+	return rpc.AnyToJSONT[CopyReturn](r.Result.Result)
 }

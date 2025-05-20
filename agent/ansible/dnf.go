@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const DnfName = "dnf"
 
 //go:embed dnf.zip
 var DnfZipfile []byte
@@ -43,6 +47,25 @@ type DnfParameters struct {
 	Cacheonly        *bool     `json:"cacheonly,omitempty"`
 }
 
+func (p *DnfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  DnfZipfile,
+			Name: DnfName,
+			Args: args,
+		},
+	}, nil
+}
+
 type DnfReturn struct {
 	AnsibleCommonReturns
+}
+
+func DnfReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (DnfReturn, error) {
+	return rpc.AnyToJSONT[DnfReturn](r.Result.Result)
 }

@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const TempfileName = "tempfile"
 
 //go:embed tempfile.zip
 var TempfileZipfile []byte
@@ -15,7 +19,26 @@ type TempfileParameters struct {
 	Suffix *string `json:"suffix,omitempty"`
 }
 
+func (p *TempfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  TempfileZipfile,
+			Name: TempfileName,
+			Args: args,
+		},
+	}, nil
+}
+
 type TempfileReturn struct {
 	AnsibleCommonReturns
 	Path *string `json:"path,omitempty"`
+}
+
+func TempfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (TempfileReturn, error) {
+	return rpc.AnyToJSONT[TempfileReturn](r.Result.Result)
 }

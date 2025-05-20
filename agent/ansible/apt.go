@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const AptName = "apt"
 
 //go:embed apt.zip
 var AptZipfile []byte
@@ -35,10 +39,29 @@ type AptParameters struct {
 	LockTimeout              *int      `json:"lock_timeout,omitempty"`
 }
 
+func (p *AptParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  AptZipfile,
+			Name: AptName,
+			Args: args,
+		},
+	}, nil
+}
+
 type AptReturn struct {
 	AnsibleCommonReturns
 	CacheUpdated    *bool   `json:"cache_updated,omitempty"`
 	CacheUpdateTime *int    `json:"cache_update_time,omitempty"`
 	Stdout          *string `json:"stdout,omitempty"`
 	Stderr          *string `json:"stderr,omitempty"`
+}
+
+func AptReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (AptReturn, error) {
+	return rpc.AnyToJSONT[AptReturn](r.Result.Result)
 }

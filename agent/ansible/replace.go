@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const ReplaceName = "replace"
 
 //go:embed replace.zip
 var ReplaceZipfile []byte
@@ -18,6 +22,25 @@ type ReplaceParameters struct {
 	Encoding *string `json:"encoding,omitempty"`
 }
 
+func (p *ReplaceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  ReplaceZipfile,
+			Name: ReplaceName,
+			Args: args,
+		},
+	}, nil
+}
+
 type ReplaceReturn struct {
 	AnsibleCommonReturns
+}
+
+func ReplaceReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (ReplaceReturn, error) {
+	return rpc.AnyToJSONT[ReplaceReturn](r.Result.Result)
 }

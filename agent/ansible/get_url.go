@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const GetUrlName = "get_url"
 
 //go:embed get_url.zip
 var GetUrlZipfile []byte
@@ -32,6 +36,21 @@ type GetUrlParameters struct {
 	UseNetrc            *bool           `json:"use_netrc,omitempty"`
 }
 
+func (p *GetUrlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  GetUrlZipfile,
+			Name: GetUrlName,
+			Args: args,
+		},
+	}, nil
+}
+
 type GetUrlReturn struct {
 	AnsibleCommonReturns
 	BackupFile   *string `json:"backup_file,omitempty"`
@@ -52,4 +71,8 @@ type GetUrlReturn struct {
 	StatusCode   *int    `json:"status_code,omitempty"`
 	Uid          *int    `json:"uid,omitempty"`
 	Url          *string `json:"url,omitempty"`
+}
+
+func GetUrlReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (GetUrlReturn, error) {
+	return rpc.AnyToJSONT[GetUrlReturn](r.Result.Result)
 }

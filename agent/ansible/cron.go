@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const CronName = "cron"
 
 //go:embed cron.zip
 var CronZipfile []byte
@@ -27,6 +31,25 @@ type CronParameters struct {
 	Insertbefore *string `json:"insertbefore,omitempty"`
 }
 
+func (p *CronParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  CronZipfile,
+			Name: CronName,
+			Args: args,
+		},
+	}, nil
+}
+
 type CronReturn struct {
 	AnsibleCommonReturns
+}
+
+func CronReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (CronReturn, error) {
+	return rpc.AnyToJSONT[CronReturn](r.Result.Result)
 }

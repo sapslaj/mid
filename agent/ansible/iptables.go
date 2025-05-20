@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const IptablesName = "iptables"
 
 //go:embed iptables.zip
 var IptablesZipfile []byte
@@ -60,6 +64,25 @@ type IptablesParameters struct {
 	Numeric          *bool     `json:"numeric,omitempty"`
 }
 
+func (p *IptablesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  IptablesZipfile,
+			Name: IptablesName,
+			Args: args,
+		},
+	}, nil
+}
+
 type IptablesReturn struct {
 	AnsibleCommonReturns
+}
+
+func IptablesReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (IptablesReturn, error) {
+	return rpc.AnyToJSONT[IptablesReturn](r.Result.Result)
 }

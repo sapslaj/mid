@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const AssembleName = "assemble"
 
 //go:embed assemble.zip
 var AssembleZipfile []byte
@@ -19,6 +23,25 @@ type AssembleParameters struct {
 	Validate     *string `json:"validate,omitempty"`
 }
 
+func (p *AssembleParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  AssembleZipfile,
+			Name: AssembleName,
+			Args: args,
+		},
+	}, nil
+}
+
 type AssembleReturn struct {
 	AnsibleCommonReturns
+}
+
+func AssembleReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (AssembleReturn, error) {
+	return rpc.AnyToJSONT[AssembleReturn](r.Result.Result)
 }

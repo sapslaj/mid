@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const GetentName = "getent"
 
 //go:embed getent.zip
 var GetentZipfile []byte
@@ -16,7 +20,26 @@ type GetentParameters struct {
 	FailKey  *bool   `json:"fail_key,omitempty"`
 }
 
+func (p *GetentParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  GetentZipfile,
+			Name: GetentName,
+			Args: args,
+		},
+	}, nil
+}
+
 type GetentReturn struct {
 	AnsibleCommonReturns
 	AnsibleFacts *map[string]any `json:"ansible_facts,omitempty"`
+}
+
+func GetentReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (GetentReturn, error) {
+	return rpc.AnyToJSONT[GetentReturn](r.Result.Result)
 }

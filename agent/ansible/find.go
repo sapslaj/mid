@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const FindName = "find"
 
 //go:embed find.zip
 var FindZipfile []byte
@@ -30,10 +34,29 @@ type FindParameters struct {
 	Limit         *int      `json:"limit,omitempty"`
 }
 
+func (p *FindParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  FindZipfile,
+			Name: FindName,
+			Args: args,
+		},
+	}, nil
+}
+
 type FindReturn struct {
 	AnsibleCommonReturns
 	Files        *[]any          `json:"files,omitempty"`
 	Matched      *int            `json:"matched,omitempty"`
 	Examined     *int            `json:"examined,omitempty"`
 	SkippedPaths *map[string]any `json:"skipped_paths,omitempty"`
+}
+
+func FindReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (FindReturn, error) {
+	return rpc.AnyToJSONT[FindReturn](r.Result.Result)
 }

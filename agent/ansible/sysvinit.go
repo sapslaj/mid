@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const SysvinitName = "sysvinit"
 
 //go:embed sysvinit.zip
 var SysvinitZipfile []byte
@@ -19,7 +23,26 @@ type SysvinitParameters struct {
 	Daemonize *bool     `json:"daemonize,omitempty"`
 }
 
+func (p *SysvinitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  SysvinitZipfile,
+			Name: SysvinitName,
+			Args: args,
+		},
+	}, nil
+}
+
 type SysvinitReturn struct {
 	AnsibleCommonReturns
 	Results *any `json:"results,omitempty"`
+}
+
+func SysvinitReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (SysvinitReturn, error) {
+	return rpc.AnyToJSONT[SysvinitReturn](r.Result.Result)
 }

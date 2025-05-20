@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const GitName = "git"
 
 //go:embed git.zip
 var GitZipfile []byte
@@ -36,6 +40,21 @@ type GitParameters struct {
 	GpgAllowlist     *[]string `json:"gpg_allowlist,omitempty"`
 }
 
+func (p *GitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  GitZipfile,
+			Name: GitName,
+			Args: args,
+		},
+	}, nil
+}
+
 type GitReturn struct {
 	AnsibleCommonReturns
 	After            *string `json:"after,omitempty"`
@@ -44,4 +63,8 @@ type GitReturn struct {
 	Warnings         *string `json:"warnings,omitempty"`
 	GitDirNow        *string `json:"git_dir_now,omitempty"`
 	GitDirBefore     *string `json:"git_dir_before,omitempty"`
+}
+
+func GitReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (GitReturn, error) {
+	return rpc.AnyToJSONT[GitReturn](r.Result.Result)
 }

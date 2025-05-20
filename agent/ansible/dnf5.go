@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const Dnf5Name = "dnf5"
 
 //go:embed dnf5.zip
 var Dnf5Zipfile []byte
@@ -42,10 +46,29 @@ type Dnf5Parameters struct {
 	Cacheonly        *bool     `json:"cacheonly,omitempty"`
 }
 
+func (p *Dnf5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  Dnf5Zipfile,
+			Name: Dnf5Name,
+			Args: args,
+		},
+	}, nil
+}
+
 type Dnf5Return struct {
 	AnsibleCommonReturns
 	Msg      *string `json:"msg,omitempty"`
 	Results  *[]any  `json:"results,omitempty"`
 	Failures *[]any  `json:"failures,omitempty"`
 	Rc       *int    `json:"rc,omitempty"`
+}
+
+func Dnf5ReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (Dnf5Return, error) {
+	return rpc.AnyToJSONT[Dnf5Return](r.Result.Result)
 }

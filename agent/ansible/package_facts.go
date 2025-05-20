@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const PackageFactsName = "package_facts"
 
 //go:embed package_facts.zip
 var PackageFactsZipfile []byte
@@ -13,7 +17,26 @@ type PackageFactsParameters struct {
 	Strategy *string   `json:"strategy,omitempty"`
 }
 
+func (p *PackageFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  PackageFactsZipfile,
+			Name: PackageFactsName,
+			Args: args,
+		},
+	}, nil
+}
+
 type PackageFactsReturn struct {
 	AnsibleCommonReturns
 	AnsibleFacts *any `json:"ansible_facts,omitempty"`
+}
+
+func PackageFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (PackageFactsReturn, error) {
+	return rpc.AnyToJSONT[PackageFactsReturn](r.Result.Result)
 }

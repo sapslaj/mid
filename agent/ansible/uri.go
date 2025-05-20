@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const UriName = "uri"
 
 //go:embed uri.zip
 var UriZipfile []byte
@@ -41,6 +45,21 @@ type UriParameters struct {
 	UseNetrc            *bool           `json:"use_netrc,omitempty"`
 }
 
+func (p *UriParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  UriZipfile,
+			Name: UriName,
+			Args: args,
+		},
+	}, nil
+}
+
 type UriReturn struct {
 	AnsibleCommonReturns
 	Content       *string         `json:"content,omitempty"`
@@ -52,4 +71,8 @@ type UriReturn struct {
 	Redirected    *bool           `json:"redirected,omitempty"`
 	Status        *int            `json:"status,omitempty"`
 	Url           *string         `json:"url,omitempty"`
+}
+
+func UriReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (UriReturn, error) {
+	return rpc.AnyToJSONT[UriReturn](r.Result.Result)
 }

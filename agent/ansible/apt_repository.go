@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const AptRepositoryName = "apt_repository"
 
 //go:embed apt_repository.zip
 var AptRepositoryZipfile []byte
@@ -21,9 +25,28 @@ type AptRepositoryParameters struct {
 	InstallPythonApt         *bool   `json:"install_python_apt,omitempty"`
 }
 
+func (p *AptRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  AptRepositoryZipfile,
+			Name: AptRepositoryName,
+			Args: args,
+		},
+	}, nil
+}
+
 type AptRepositoryReturn struct {
 	AnsibleCommonReturns
 	Repo           *string `json:"repo,omitempty"`
 	SourcesAdded   *[]any  `json:"sources_added,omitempty"`
 	SourcesRemoved *[]any  `json:"sources_removed,omitempty"`
+}
+
+func AptRepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (AptRepositoryReturn, error) {
+	return rpc.AnyToJSONT[AptRepositoryReturn](r.Result.Result)
 }

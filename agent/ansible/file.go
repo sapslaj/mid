@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const FileName = "file"
 
 //go:embed file.zip
 var FileZipfile []byte
@@ -21,8 +25,27 @@ type FileParameters struct {
 	AccessTimeFormat       *string `json:"access_time_format,omitempty"`
 }
 
+func (p *FileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  FileZipfile,
+			Name: FileName,
+			Args: args,
+		},
+	}, nil
+}
+
 type FileReturn struct {
 	AnsibleCommonReturns
 	Dest *string `json:"dest,omitempty"`
 	Path *string `json:"path,omitempty"`
+}
+
+func FileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (FileReturn, error) {
+	return rpc.AnyToJSONT[FileReturn](r.Result.Result)
 }

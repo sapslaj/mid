@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const HostnameName = "hostname"
 
 //go:embed hostname.zip
 var HostnameZipfile []byte
@@ -13,6 +17,25 @@ type HostnameParameters struct {
 	Use  *string `json:"use,omitempty"`
 }
 
+func (p *HostnameParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  HostnameZipfile,
+			Name: HostnameName,
+			Args: args,
+		},
+	}, nil
+}
+
 type HostnameReturn struct {
 	AnsibleCommonReturns
+}
+
+func HostnameReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (HostnameReturn, error) {
+	return rpc.AnyToJSONT[HostnameReturn](r.Result.Result)
 }

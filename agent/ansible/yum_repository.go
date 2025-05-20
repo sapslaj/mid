@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const YumRepositoryName = "yum_repository"
 
 //go:embed yum_repository.zip
 var YumRepositoryZipfile []byte
@@ -61,8 +65,27 @@ type YumRepositoryParameters struct {
 	Username                   *string   `json:"username,omitempty"`
 }
 
+func (p *YumRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  YumRepositoryZipfile,
+			Name: YumRepositoryName,
+			Args: args,
+		},
+	}, nil
+}
+
 type YumRepositoryReturn struct {
 	AnsibleCommonReturns
 	Repo  *string `json:"repo,omitempty"`
 	State *string `json:"state,omitempty"`
+}
+
+func YumRepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (YumRepositoryReturn, error) {
+	return rpc.AnyToJSONT[YumRepositoryReturn](r.Result.Result)
 }

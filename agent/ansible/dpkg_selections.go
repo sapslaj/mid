@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const DpkgSelectionsName = "dpkg_selections"
 
 //go:embed dpkg_selections.zip
 var DpkgSelectionsZipfile []byte
@@ -13,6 +17,25 @@ type DpkgSelectionsParameters struct {
 	Selection string `json:"selection"`
 }
 
+func (p *DpkgSelectionsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  DpkgSelectionsZipfile,
+			Name: DpkgSelectionsName,
+			Args: args,
+		},
+	}, nil
+}
+
 type DpkgSelectionsReturn struct {
 	AnsibleCommonReturns
+}
+
+func DpkgSelectionsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (DpkgSelectionsReturn, error) {
+	return rpc.AnyToJSONT[DpkgSelectionsReturn](r.Result.Result)
 }

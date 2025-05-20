@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const PipName = "pip"
 
 //go:embed pip.zip
 var PipZipfile []byte
@@ -25,6 +29,21 @@ type PipParameters struct {
 	BreakSystemPackages    *bool     `json:"break_system_packages,omitempty"`
 }
 
+func (p *PipParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  PipZipfile,
+			Name: PipName,
+			Args: args,
+		},
+	}, nil
+}
+
 type PipReturn struct {
 	AnsibleCommonReturns
 	Cmd          *string `json:"cmd,omitempty"`
@@ -32,4 +51,8 @@ type PipReturn struct {
 	Requirements *string `json:"requirements,omitempty"`
 	Version      *string `json:"version,omitempty"`
 	Virtualenv   *string `json:"virtualenv,omitempty"`
+}
+
+func PipReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (PipReturn, error) {
+	return rpc.AnyToJSONT[PipReturn](r.Result.Result)
 }

@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const SubversionName = "subversion"
 
 //go:embed subversion.zip
 var SubversionZipfile []byte
@@ -24,6 +28,25 @@ type SubversionParameters struct {
 	ValidateCerts *bool   `json:"validate_certs,omitempty"`
 }
 
+func (p *SubversionParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  SubversionZipfile,
+			Name: SubversionName,
+			Args: args,
+		},
+	}, nil
+}
+
 type SubversionReturn struct {
 	AnsibleCommonReturns
+}
+
+func SubversionReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (SubversionReturn, error) {
+	return rpc.AnyToJSONT[SubversionReturn](r.Result.Result)
 }

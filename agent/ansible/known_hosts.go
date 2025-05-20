@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const KnownHostsName = "known_hosts"
 
 //go:embed known_hosts.zip
 var KnownHostsZipfile []byte
@@ -16,6 +20,25 @@ type KnownHostsParameters struct {
 	State    *string `json:"state,omitempty"`
 }
 
+func (p *KnownHostsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  KnownHostsZipfile,
+			Name: KnownHostsName,
+			Args: args,
+		},
+	}, nil
+}
+
 type KnownHostsReturn struct {
 	AnsibleCommonReturns
+}
+
+func KnownHostsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (KnownHostsReturn, error) {
+	return rpc.AnyToJSONT[KnownHostsReturn](r.Result.Result)
 }

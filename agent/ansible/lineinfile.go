@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const LineinfileName = "lineinfile"
 
 //go:embed lineinfile.zip
 var LineinfileZipfile []byte
@@ -22,6 +26,25 @@ type LineinfileParameters struct {
 	Firstmatch   *bool   `json:"firstmatch,omitempty"`
 }
 
+func (p *LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  LineinfileZipfile,
+			Name: LineinfileName,
+			Args: args,
+		},
+	}, nil
+}
+
 type LineinfileReturn struct {
 	AnsibleCommonReturns
+}
+
+func LineinfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (LineinfileReturn, error) {
+	return rpc.AnyToJSONT[LineinfileReturn](r.Result.Result)
 }

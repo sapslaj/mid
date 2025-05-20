@@ -3,7 +3,11 @@ package ansible
 
 import (
 	_ "embed"
+
+	"github.com/sapslaj/mid/agent/rpc"
 )
+
+const DebconfName = "debconf"
 
 //go:embed debconf.zip
 var DebconfZipfile []byte
@@ -16,6 +20,25 @@ type DebconfParameters struct {
 	Unseen   *bool   `json:"unseen,omitempty"`
 }
 
+func (p *DebconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsiballZExecuteArgs], error) {
+	args, err := rpc.AnyToJSONT[map[string]any](p)
+	if err != nil {
+		return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{}, err
+	}
+	return rpc.RPCCall[rpc.AnsiballZExecuteArgs]{
+		RPCFunction: rpc.RPCAnsiballZExecute,
+		Args: rpc.AnsiballZExecuteArgs{
+			Zip:  DebconfZipfile,
+			Name: DebconfName,
+			Args: args,
+		},
+	}, nil
+}
+
 type DebconfReturn struct {
 	AnsibleCommonReturns
+}
+
+func DebconfReturnFromRPCResult(r rpc.RPCResult[rpc.AnsiballZExecuteResult]) (DebconfReturn, error) {
+	return rpc.AnyToJSONT[DebconfReturn](r.Result.Result)
 }
