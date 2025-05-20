@@ -12,6 +12,7 @@ inputs:
         pre-commit
         pulumicli
         pulumictl
+        python
         schema-tools
     default: all
 
@@ -46,11 +47,24 @@ runs:
         node-version: 20.x
         registry-url: https://registry.npmjs.org
 
-    - name: Setup Python
-      if: inputs.tools == 'all' || contains(inputs.tools, 'pre-commit')
-      uses: actions/setup-python@v5
+    - name: Install uv
+      if: inputs.tools == 'all' || contains(inputs.tools, 'python')
+      uses: astral-sh/setup-uv@v5
+      with:
+        version: "0.7.6"
 
     - name: Setup Python
+      if: inputs.tools == 'all' || contains(inputs.tools, 'python') || contains(inputs.tools, 'pre-commit')
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: pyproject.toml
+
+    - name: uv sync
+      if: inputs.tools == 'all' || contains(inputs.tools, 'python')
+      shell: bash
+      run: uv sync --locked --all-extras --dev
+
+    - name: Setup pre-commit
       if: inputs.tools == 'all' || contains(inputs.tools, 'pre-commit')
       shell: bash
       run: pip install pre-commit

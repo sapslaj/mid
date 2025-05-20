@@ -59,7 +59,7 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: just, go, pulumicli, pulumictl, nodejs, python, dotnet
+          tools: all
       - name: Run smoketest container
         run: |
           docker build -t mid-smoketest docker/smoketest/
@@ -84,7 +84,7 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: just, go
+          tools: just, go, python
       - run: just provider_version=v0.0.0-ci agent-gogenerate
       - run: go test -timeout=1h -v -race ./provider/...
 
@@ -100,6 +100,6 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: just, go
+          tools: just, go, python
       - run: just provider_version=v0.0.0-ci agent-gogenerate
       - run: go test -timeout=1h -v -race ./tests/...
