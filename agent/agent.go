@@ -199,6 +199,15 @@ func Connect(agent *Agent) error {
 
 	go func() {
 		defer agent.WaitGroup.Done()
+		defer func() {
+			for uuid, ch := range agent.InFlight.Items() {
+				ch <- rpc.RPCResult[any]{
+					UUID:  uuid,
+					Error: "agent shut down",
+				}
+				close(ch)
+			}
+		}()
 		defer logger.Info("shutting down decoder loop")
 		for agent.Running.Load() {
 			logger.Info("waiting for next result")
