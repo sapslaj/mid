@@ -56,14 +56,6 @@ func InstallAnsible() error {
 				return err
 			}
 			f.Close()
-		case tar.TypeLink:
-			fallthrough
-		case tar.TypeSymlink:
-			fallthrough
-		case tar.TypeChar:
-			fallthrough
-		case tar.TypeBlock:
-			fallthrough
 		case tar.TypeDir:
 			fileinfo, err := os.Stat(targetFilepath)
 			if err == nil && !fileinfo.IsDir() {
@@ -79,6 +71,14 @@ func InstallAnsible() error {
 			if err != nil {
 				return err
 			}
+		case tar.TypeLink:
+			fallthrough
+		case tar.TypeSymlink:
+			fallthrough
+		case tar.TypeChar:
+			fallthrough
+		case tar.TypeBlock:
+			fallthrough
 		case tar.TypeFifo:
 			fallthrough
 		case tar.TypeCont:
