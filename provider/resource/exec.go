@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"maps"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -12,6 +13,8 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	midagent "github.com/sapslaj/mid/agent"
+	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
@@ -37,19 +40,6 @@ type ExecState struct {
 	Stdout   string               `pulumi:"stdout"`
 	Stderr   string               `pulumi:"stderr"`
 	Triggers types.TriggersOutput `pulumi:"triggers"`
-}
-
-type commandTaskParameters struct {
-	Argv               []string `json:"argv"`
-	Chdir              *string  `json:"chdir,omitempty"`
-	ExpandArgumentVars bool     `json:"expand_argument_vars"`
-	Stdin              *string  `json:"stdin,omitempty"`
-	StripEmptyEnds     *bool    `json:"strip_empty_ends,omitempty"`
-}
-
-type commandTaskResult struct {
-	Stdout string `json:"stdout"`
-	Stderr string `json:"stderr"`
 }
 
 func (r Exec) canUseRPC(input ExecArgs) bool {
@@ -92,14 +82,10 @@ func (r Exec) argsToRPCCall(input ExecArgs, lifecycle string) (rpc.RPCCall[rpc.E
 	}
 
 	if input.Environment != nil {
-		for key, value := range *input.Environment {
-			environment[key] = value
-		}
+		maps.Copy(environment, *input.Environment)
 	}
 	if execCommand.Environment != nil {
-		for key, value := range *execCommand.Environment {
-			environment[key] = value
-		}
+		maps.Copy(environment, *execCommand.Environment)
 	}
 
 	stdin := []byte{}
@@ -118,7 +104,7 @@ func (r Exec) argsToRPCCall(input ExecArgs, lifecycle string) (rpc.RPCCall[rpc.E
 	}, nil
 }
 
-func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTaskParameters, map[string]string, error) {
+func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (ansible.CommandParameters, map[string]string, error) {
 	environment := map[string]string{}
 
 	var execCommand types.ExecCommand
@@ -133,7 +119,7 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTas
 		}
 	case "delete":
 		if input.Delete == nil {
-			return commandTaskParameters{}, environment, nil
+			return ansible.CommandParameters{}, environment, nil
 		}
 		execCommand = *input.Delete
 	default:
@@ -150,21 +136,17 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (commandTas
 	}
 
 	if input.Environment != nil {
-		for key, value := range *input.Environment {
-			environment[key] = value
-		}
+		maps.Copy(environment, *input.Environment)
 	}
 	if execCommand.Environment != nil {
-		for key, value := range *execCommand.Environment {
-			environment[key] = value
-		}
+		maps.Copy(environment, *execCommand.Environment)
 	}
 
-	return commandTaskParameters{
-		Argv:               execCommand.Command,
+	return ansible.CommandParameters{
+		Argv:               ptr.Of(execCommand.Command),
 		Chdir:              chdir,
 		Stdin:              execCommand.Stdin,
-		ExpandArgumentVars: expandArgumentVars,
+		ExpandArgumentVars: ptr.Of(expandArgumentVars),
 		StripEmptyEnds:     ptr.Of(false),
 	}, environment, nil
 }
@@ -199,7 +181,7 @@ func (r Exec) updateStateFromRPCResult(olds ExecState, news ExecArgs, result rpc
 	return olds
 }
 
-func (r Exec) updateStateFromOutput(olds ExecState, news ExecArgs, output commandTaskResult) ExecState {
+func (r Exec) updateStateFromOutput(olds ExecState, news ExecArgs, output ansible.CommandReturn) ExecState {
 	logging := types.ExecLoggingStdoutAndStderr
 	if news.Logging != nil {
 		logging = *news.Logging
@@ -209,18 +191,133 @@ func (r Exec) updateStateFromOutput(olds ExecState, news ExecArgs, output comman
 		olds.Stderr = ""
 		olds.Stdout = ""
 	case types.ExecLoggingStderr:
-		olds.Stderr = output.Stderr
+		if output.Stderr != nil {
+			olds.Stderr = *output.Stderr
+		}
 		olds.Stdout = ""
 	case types.ExecLoggingStdout:
 		olds.Stderr = ""
-		olds.Stdout = output.Stdout
+		if output.Stdout != nil {
+			olds.Stdout = *output.Stdout
+		}
 	case types.ExecLoggingStdoutAndStderr:
-		olds.Stderr = output.Stderr
-		olds.Stdout = output.Stdout
+		if output.Stderr != nil {
+			olds.Stderr = *output.Stderr
+		}
+		if output.Stdout != nil {
+			olds.Stdout = *output.Stdout
+		}
 	default:
 		panic("unknown logging: " + logging)
 	}
 	return olds
+}
+
+func (r Exec) runRPCExec(
+	ctx context.Context,
+	agent *midagent.Agent,
+	state ExecState,
+	input ExecArgs,
+	lifecycle string,
+) (ExecState, error) {
+	call, err := r.argsToRPCCall(input, lifecycle)
+	if err != nil {
+		return state, err
+	}
+
+	result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
+	if err != nil {
+		return state, err
+	}
+
+	if result.Error != "" {
+		return state, fmt.Errorf(
+			"mid encountered an issue running command '%v': %s",
+			call.Args.Command,
+			result.Error,
+		)
+	}
+
+	if result.Result.ExitCode != 0 {
+		return state, fmt.Errorf(
+			"command '%v' exited with status %d: stderr=%s stdout=%s",
+			call.Args.Command,
+			result.Result.ExitCode,
+			result.Result.Stderr,
+			result.Result.Stdout,
+		)
+	}
+
+	state = r.updateStateFromRPCResult(state, input, result)
+	return state, nil
+}
+
+func (r Exec) runRPCAnsibleExecute(
+	ctx context.Context,
+	agent *midagent.Agent,
+	state ExecState,
+	input ExecArgs,
+	lifecycle string,
+) (ExecState, error) {
+	parameters, environment, err := r.argsToTaskParameters(input, lifecycle)
+	if err != nil {
+		return state, err
+	}
+
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		return state, err
+	}
+	call.Args.Environment = environment
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	if err != nil {
+		return state, err
+	}
+
+	result, err := ansible.CommandReturnFromRPCResult(callResult)
+	if err != nil {
+		return state, err
+	}
+
+	if callResult.Error != "" {
+		return state, fmt.Errorf(
+			"mid encountered an issue running command '%v': %s",
+			parameters.Argv,
+			callResult.Error,
+		)
+	}
+
+	if !callResult.Result.Success {
+		if result.Rc == nil {
+			return state, fmt.Errorf(
+				"mid encountered an issue running command '%v': stderr=%s stdout=%s",
+				parameters.Argv,
+				callResult.Result.Stderr,
+				callResult.Result.Stdout,
+			)
+		}
+
+		stdout := "<nil>"
+		if result.Stdout != nil {
+			stdout = *result.Stdout
+		}
+		stderr := "<nil>"
+		if result.Stderr != nil {
+			stderr = *result.Stderr
+		}
+
+		return state, fmt.Errorf(
+			"command '%v' exited with status %d: stderr=%s stdout=%s",
+			parameters.Argv,
+			*result.Rc,
+			stderr,
+			stdout,
+		)
+	}
+
+	state = r.updateStateFromOutput(state, input, result)
+	return state, nil
 }
 
 func (r Exec) Diff(
@@ -283,86 +380,34 @@ func (r Exec) Create(
 
 	if r.canUseRPC(input) {
 		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
-		call, err := r.argsToRPCCall(input, "create")
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return id, state, err
-		}
-
-		if !preview {
-			agent, err := executor.StartAgent(ctx, config.Connection)
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return id, state, err
-			}
-			defer agent.Disconnect()
-
-			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return id, state, err
-			}
-			state = r.updateStateFromRPCResult(state, input, result)
-		}
 	} else {
 		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
-		parameters, environment, err := r.argsToTaskParameters(input, "create")
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return id, state, err
-		}
+	}
 
-		if !preview {
-			canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
+	if preview {
+		return id, state, nil
+	}
 
-			if !canConnect {
-				if err == nil {
-					err = fmt.Errorf("cannot connect to host")
-				} else {
-					err = fmt.Errorf("cannot connect to host: %w", err)
-				}
-				if err != nil {
-					span.SetStatus(codes.Error, err.Error())
-					return id, state, err
-				}
-			}
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return id, state, err
+	}
+	defer agent.Disconnect()
 
-			output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-				GatherFacts: false,
-				Become:      true,
-				Check:       false,
-				Tasks: []any{
-					map[string]any{
-						"ansible.builtin.command": parameters,
-						"environment":             environment,
-					},
-				},
-			})
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return id, state, err
-			}
-			result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return id, state, err
-			}
-			state = r.updateStateFromOutput(state, input, result)
-		}
+	if r.canUseRPC(input) {
+		state, err = r.runRPCExec(ctx, agent, state, input, "create")
+	} else {
+		state, err = r.runRPCAnsibleExecute(ctx, agent, state, input, "create")
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return id, state, err
 	}
 
 	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
-
-// func (r Exec) Read(
-// 	ctx context.Context,
-// 	id string,
-// 	inputs ExecArgs,
-// 	state ExecState,
-// ) (string, ExecArgs, ExecState, error) {
-// 	config := infer.GetConfig[types.Config](ctx)
-// }
 
 func (r Exec) Update(
 	ctx context.Context,
@@ -380,73 +425,33 @@ func (r Exec) Update(
 
 	if r.canUseRPC(news) {
 		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
-		call, err := r.argsToRPCCall(news, "update")
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return olds, err
-		}
-
-		if !preview {
-			agent, err := executor.StartAgent(ctx, config.Connection)
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return olds, err
-			}
-			defer agent.Disconnect()
-
-			result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return olds, err
-			}
-			olds = r.updateStateFromRPCResult(olds, news, result)
-		}
 	} else {
 		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
-		parameters, environment, err := r.argsToTaskParameters(news, "update")
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return olds, err
-		}
-
-		if !preview {
-			canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
-
-			if !canConnect {
-				if err == nil {
-					err = fmt.Errorf("cannot connect to host")
-				} else {
-					err = fmt.Errorf("cannot connect to host: %w", err)
-				}
-				if err != nil {
-					span.SetStatus(codes.Error, err.Error())
-					return olds, err
-				}
-			}
-
-			output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-				GatherFacts: false,
-				Become:      true,
-				Check:       false,
-				Tasks: []any{
-					map[string]any{
-						"ansible.builtin.command": parameters,
-						"environment":             environment,
-					},
-				},
-			})
-			result, err := executor.GetTaskResult[commandTaskResult](output, 0, 0)
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return olds, err
-			}
-			olds = r.updateStateFromOutput(olds, news, result)
-		}
 	}
-	state := r.updateState(olds, news, true)
+
+	if preview {
+		return olds, nil
+	}
+
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return olds, nil
+	}
+	defer agent.Disconnect()
+
+	if r.canUseRPC(news) {
+		olds, err = r.runRPCExec(ctx, agent, olds, news, "update")
+	} else {
+		olds, err = r.runRPCAnsibleExecute(ctx, agent, olds, news, "update")
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
+	}
 
 	span.SetStatus(codes.Ok, "")
-	return state, nil
+	return olds, nil
 }
 
 func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
@@ -461,6 +466,12 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
+
+	if r.canUseRPC(props.ExecArgs) {
+		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
+	} else {
+		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
+	}
 
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
@@ -481,49 +492,21 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 		}
 	}
 
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	defer agent.Disconnect()
+
 	if r.canUseRPC(props.ExecArgs) {
-		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
-		agent, err := executor.StartAgent(ctx, config.Connection)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
-		defer agent.Disconnect()
-
-		call, err := r.argsToRPCCall(props.ExecArgs, "delete")
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
-
-		_, err = executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
+		_, err = r.runRPCExec(ctx, agent, props, props.ExecArgs, "delete")
 	} else {
-		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
-		parameters, environment, err := r.argsToTaskParameters(props.ExecArgs, "delete")
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
-
-		_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-			GatherFacts: false,
-			Become:      true,
-			Check:       false,
-			Tasks: []any{
-				map[string]any{
-					"ansible.builtin.command": parameters,
-					"environment":             environment,
-				},
-			},
-		})
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
+		_, err = r.runRPCAnsibleExecute(ctx, agent, props, props.ExecArgs, "delete")
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	span.SetStatus(codes.Ok, "")

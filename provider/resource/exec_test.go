@@ -3,6 +3,7 @@ package resource
 import (
 	"testing"
 
+	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/types"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +15,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 	tests := map[string]struct {
 		input               ExecArgs
 		lifecycle           string
-		expectedParameters  commandTaskParameters
+		expectedParameters  ansible.CommandParameters
 		expectedEnvironment map[string]string
 	}{
 		"simple create": {
@@ -24,9 +25,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				},
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "/grass"},
-				ExpandArgumentVars: false,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "/grass"}),
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -38,9 +39,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				},
 			},
 			lifecycle: "update",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "/grass"},
-				ExpandArgumentVars: false,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "/grass"}),
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -55,9 +56,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				},
 			},
 			lifecycle: "update",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "/cat"},
-				ExpandArgumentVars: false,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "/cat"}),
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -72,9 +73,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				},
 			},
 			lifecycle: "delete",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"rm", "-f", "/grass"},
-				ExpandArgumentVars: false,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"rm", "-f", "/grass"}),
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -89,9 +90,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				}),
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "/grass"},
-				ExpandArgumentVars: false,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "/grass"}),
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{
@@ -108,9 +109,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				},
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "/grass"},
-				ExpandArgumentVars: false,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "/grass"}),
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{
@@ -132,9 +133,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				}),
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "/grass"},
-				ExpandArgumentVars: false,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "/grass"}),
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{
@@ -151,10 +152,10 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				Dir: ptr.Of("/tmp"),
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "grass"},
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "grass"}),
 				Chdir:              ptr.Of("/tmp"),
-				ExpandArgumentVars: false,
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -167,10 +168,10 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				},
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "grass"},
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "grass"}),
 				Chdir:              ptr.Of("/tmp/create"),
-				ExpandArgumentVars: false,
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -184,10 +185,10 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				Dir: ptr.Of("/tmp"),
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"touch", "grass"},
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"touch", "grass"}),
 				Chdir:              ptr.Of("/tmp/create"),
-				ExpandArgumentVars: false,
+				ExpandArgumentVars: ptr.Of(false),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -200,9 +201,9 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				ExpandArgumentVars: ptr.Of(true),
 			},
 			lifecycle: "create",
-			expectedParameters: commandTaskParameters{
-				Argv:               []string{"mkdir", "-p", "$HOME"},
-				ExpandArgumentVars: true,
+			expectedParameters: ansible.CommandParameters{
+				Argv:               ptr.Of([]string{"mkdir", "-p", "$HOME"}),
+				ExpandArgumentVars: ptr.Of(true),
 				StripEmptyEnds:     ptr.Of(false),
 			},
 			expectedEnvironment: map[string]string{},
@@ -229,42 +230,42 @@ func TestExec_updateStateFromOutput(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		output  commandTaskResult
+		output  ansible.CommandReturn
 		logging types.ExecLogging
 		stderr  string
 		stdout  string
 	}{
 		"none": {
-			output: commandTaskResult{
-				Stdout: "this is stdout",
-				Stderr: "this is stderr",
+			output: ansible.CommandReturn{
+				Stdout: ptr.Of("this is stdout"),
+				Stderr: ptr.Of("this is stderr"),
 			},
 			logging: types.ExecLoggingNone,
 			stdout:  "",
 			stderr:  "",
 		},
 		"stderr": {
-			output: commandTaskResult{
-				Stdout: "this is stdout",
-				Stderr: "this is stderr",
+			output: ansible.CommandReturn{
+				Stdout: ptr.Of("this is stdout"),
+				Stderr: ptr.Of("this is stderr"),
 			},
 			logging: types.ExecLoggingStderr,
 			stdout:  "",
 			stderr:  "this is stderr",
 		},
 		"stdout": {
-			output: commandTaskResult{
-				Stdout: "this is stdout",
-				Stderr: "this is stderr",
+			output: ansible.CommandReturn{
+				Stdout: ptr.Of("this is stdout"),
+				Stderr: ptr.Of("this is stderr"),
 			},
 			logging: types.ExecLoggingStdout,
 			stdout:  "this is stdout",
 			stderr:  "",
 		},
 		"stdoutAndStderr": {
-			output: commandTaskResult{
-				Stdout: "this is stdout",
-				Stderr: "this is stderr",
+			output: ansible.CommandReturn{
+				Stdout: ptr.Of("this is stdout"),
+				Stderr: ptr.Of("this is stderr"),
 			},
 			logging: types.ExecLoggingStdoutAndStderr,
 			stdout:  "this is stdout",
