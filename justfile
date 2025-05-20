@@ -53,7 +53,7 @@ agent-ansible-bundle:
     ./ansible
 
 [group('agent')]
-agent-codegen:
+agent-codegen: agent-ansible-bundle
   rm -f agent/mid-agent-*
   ./hack/generate-ansible-types.py
   ./hack/generate-agent-binaries.py
