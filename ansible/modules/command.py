@@ -179,8 +179,8 @@ RETURN = r"""
 msg:
   description: changed
   returned: always
-  type: bool
-  sample: True
+  type: str
+  sample: ""
 start:
   description: The command execution start time.
   returned: always

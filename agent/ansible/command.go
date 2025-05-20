@@ -36,7 +36,7 @@ func (p *CommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], er
 
 type CommandReturn struct {
 	AnsibleCommonReturns
-	Msg         *bool   `json:"msg,omitempty"`
+	Msg         *string `json:"msg,omitempty"`
 	Start       *string `json:"start,omitempty"`
 	End         *string `json:"end,omitempty"`
 	Delta       *string `json:"delta,omitempty"`
