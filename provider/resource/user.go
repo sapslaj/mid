@@ -171,6 +171,7 @@ func (r User) Create(
 	if err != nil {
 		return id, state, err
 	}
+	call.Args.Check = preview
 
 	if preview {
 		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
@@ -219,6 +220,7 @@ func (r User) Read(
 	if err != nil {
 		return id, inputs, state, err
 	}
+	call.Args.Check = true
 
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
@@ -233,8 +235,6 @@ func (r User) Read(
 		return id, inputs, state, err
 	}
 	defer agent.Disconnect()
-
-	call.Args.Check = true
 
 	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
 	if err != nil || !callResult.Result.Success {
@@ -278,6 +278,7 @@ func (r User) Update(
 	if err != nil {
 		return olds, err
 	}
+	call.Args.Check = preview
 
 	if preview {
 		call.Args.Check = true
