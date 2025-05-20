@@ -81,6 +81,8 @@ def process_module_file(module_file: str):
     if module_file.startswith("_"):
         return
     name = os.path.splitext(module_file)[0]
+    print(name)
+
     module_fqn = f"ansible.modules.{name}"
     with open(
         os.path.join(os.path.dirname(__file__), "modules", module_file), "rb"
@@ -117,8 +119,6 @@ def process_module_file(module_file: str):
         returns = dict()
 
     pascalcase_name = pascalcased(name)
-
-    print(name)
 
     with open(
         os.path.join(os.path.dirname(__file__), "..", "agent", "ansible", f"{name}.go"),
@@ -161,11 +161,9 @@ def process_module_file(module_file: str):
 
 
 def main():
+    module_files = os.listdir(os.path.join(os.path.dirname(__file__), "modules"))
     with multiprocessing.Pool(os.process_cpu_count()) as p:
-        p.map(
-            process_module_file,
-            os.listdir(os.path.join(os.path.dirname(__file__), "modules")),
-        )
+        p.map(process_module_file, module_files)
 
 
 if __name__ == "__main__":
