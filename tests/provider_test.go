@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/ssh"
 
+	"github.com/sapslaj/mid/pkg/telemetry"
 	mid "github.com/sapslaj/mid/provider"
 )
 
@@ -36,10 +37,11 @@ func Must1[A any](a A, err error) A {
 }
 
 type ProviderTestHarness struct {
-	Pool      *dockertest.Pool
-	Container *dockertest.Resource
-	Client    *ssh.Client
-	Provider  integration.Server
+	Pool          *dockertest.Pool
+	Container     *dockertest.Resource
+	Client        *ssh.Client
+	Provider      integration.Server
+	StopTelemetry func()
 }
 
 func NewProviderTestHarness(t *testing.T) *ProviderTestHarness {
@@ -47,6 +49,9 @@ func NewProviderTestHarness(t *testing.T) *ProviderTestHarness {
 
 	var err error
 	harness := &ProviderTestHarness{}
+
+	t.Log("starting telemetry")
+	harness.StopTelemetry = telemetry.StartTelemetry()
 
 	t.Log("starting new dockertest pool")
 	harness.Pool, err = dockertest.NewPool("")
@@ -113,6 +118,7 @@ func (harness *ProviderTestHarness) Close() {
 	if harness.Container != nil {
 		harness.Pool.Purge(harness.Container)
 	}
+	harness.StopTelemetry()
 }
 
 func (harness *ProviderTestHarness) AssertCommand(t *testing.T, cmd string) bool {
