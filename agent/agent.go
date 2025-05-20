@@ -229,7 +229,9 @@ func Connect(agent *Agent) error {
 			err = agent.Decoder.Decode(&res)
 			if err != nil {
 				if res.Error == "" {
-					res.Error = err.Error()
+					res.Error = errors.Join(ErrCallingRPCSystem, err).Error()
+				} else {
+					res.Error = errors.Join(ErrCallingRPCSystem, err, errors.New(res.Error)).Error()
 				}
 				if errors.Is(err, io.EOF) && !agent.Running.Load() {
 					// we're supposed to be shutting down, don't log an error
@@ -332,6 +334,8 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 		err = errors.Join(ErrCallingRPCSystem, err)
 		if res.Error == "" {
 			res.Error = err.Error()
+		} else {
+			res.Error = errors.Join(errors.New(res.Error), err).Error()
 		}
 		return res, err
 	}
