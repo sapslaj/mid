@@ -16,6 +16,7 @@ type AnsiballZExecuteArgs struct {
 	Zip                []byte
 	Name               string
 	Args               map[string]any
+	Check              bool
 	DebugKeepTempFiles bool
 }
 
@@ -23,6 +24,7 @@ type AnsiballZExecuteResult struct {
 	Stderr       []byte
 	Stdout       []byte
 	ExitCode     int
+	Success      bool
 	Result       map[string]any
 	DebugTempDir string
 }
@@ -40,7 +42,29 @@ func AnsiballZExecute(args AnsiballZExecuteArgs) (AnsiballZExecuteResult, error)
 		defer os.RemoveAll(tmpdir)
 	}
 
-	moduleArgs, err := json.Marshal(args.Args)
+	args.Args["_ansible_check_mode"] = args.Check
+	args.Args["_ansible_no_log"] = false
+	args.Args["_ansible_debug"] = false
+	args.Args["_ansible_diff"] = true
+	args.Args["_ansible_verbosity"] = 0
+	args.Args["_ansible_version"] = "2.18.5"
+	args.Args["_ansible_module_name"] = args.Name
+	args.Args["_ansible_syslog_facility"] = "LOG_USER"
+	args.Args["_ansible_selinux_special_fs"] = []string{"fuse", "nfs", "vboxsf", "ramfs", "9p", "vfat"}
+	args.Args["_ansible_string_conversion_action"] = "warn"
+	args.Args["_ansible_socket"] = nil
+	args.Args["_ansible_shell_executable"] = "/bin/sh"
+	args.Args["_ansible_keep_remote_files"] = args.DebugKeepTempFiles
+	args.Args["_ansible_tmpdir"] = tmpdir
+	args.Args["_ansible_remote_tmp"] = tmpdir
+	args.Args["_ansible_ignore_unknown_opts"] = false
+	args.Args["_ansible_target_log_info"] = nil
+
+	data := map[string]any{
+		"ANSIBLE_MODULE_ARGS": args.Args,
+	}
+
+	dataEncoded, err := json.Marshal(data)
 	if err != nil {
 		return result, err
 	}
@@ -100,7 +124,7 @@ func AnsiballZExecute(args AnsiballZExecuteArgs) (AnsiballZExecuteResult, error)
 			"python3",
 			"-m",
 			"ansible.modules." + args.Name,
-			string(moduleArgs),
+			string(dataEncoded),
 		},
 		Dir: tmpdir,
 	})
@@ -109,6 +133,10 @@ func AnsiballZExecute(args AnsiballZExecuteArgs) (AnsiballZExecuteResult, error)
 	result.ExitCode = execResult.ExitCode
 	if err != nil {
 		return result, err
+	}
+
+	if result.ExitCode == 0 {
+		result.Success = true
 	}
 
 	err = json.Unmarshal(result.Stdout, &result.Result)
