@@ -17,12 +17,10 @@ from collections import defaultdict, namedtuple
 from importlib import import_module
 from traceback import format_exc
 
-import ansible.module_utils.compat.typing as t
 
 from .filter import AnsibleJinja2Filter
 from .test import AnsibleJinja2Test
 
-from ansible import __version__ as ansible_version
 from ansible import constants as C
 from ansible.errors import (
     AnsibleError,
@@ -39,14 +37,6 @@ from ansible.plugins import (
     MODULE_CACHE,
     PATH_CACHE,
     PLUGIN_PATH_CACHE,
-)
-from ansible.utils.collection_loader import (
-    AnsibleCollectionConfig,
-    AnsibleCollectionRef,
-)
-from ansible.utils.collection_loader._collection_finder import (
-    _AnsibleCollectionFinder,
-    _get_collection_metadata,
 )
 from ansible.utils.display import Display
 from ansible.utils.plugin_docs import add_fragments
@@ -1547,88 +1537,10 @@ class Jinja2Loader(PluginLoader):
 
         plugin = None
         key, leaf_key = get_fqcr_and_name(name)
-        seen = set()
 
-        # follow the meta!
-        while True:
-            if key in seen:
-                raise AnsibleError(
-                    "recursive collection redirect found for %r" % name, 0
-                )
-            seen.add(key)
-
-            acr = AnsibleCollectionRef.try_parse_fqcr(key, self.type)
-            if not acr:
-                raise KeyError("invalid plugin name: {0}".format(key))
-
-            try:
-                ts = _get_collection_metadata(acr.collection)
-            except ValueError as e:
-                # no collection
-                raise KeyError(
-                    "Invalid plugin FQCN ({0}): {1}".format(key, to_native(e))
-                )
-
-            # TODO: implement cycle detection (unified across collection redir as well)
-            routing_entry = (
-                ts.get("plugin_routing", {}).get(self.type, {}).get(leaf_key, {})
-            )
-
-            # check deprecations
-            deprecation_entry = routing_entry.get("deprecation")
-            if deprecation_entry:
-                warning_text = deprecation_entry.get("warning_text") or ""
-                removal_date = deprecation_entry.get("removal_date")
-                removal_version = deprecation_entry.get("removal_version")
-
-                warning_text = f'{self.type.title()} "{key}" has been deprecated.{" " if warning_text else ""}{warning_text}'
-
-                display.deprecated(
-                    warning_text,
-                    version=removal_version,
-                    date=removal_date,
-                    collection_name=acr.collection,
-                )
-
-            # check removal
-            tombstone_entry = routing_entry.get("tombstone")
-            if tombstone_entry:
-                warning_text = tombstone_entry.get("warning_text") or ""
-                removal_date = tombstone_entry.get("removal_date")
-                removal_version = tombstone_entry.get("removal_version")
-
-                warning_text = f'{self.type.title()} "{key}" has been removed.{" " if warning_text else ""}{warning_text}'
-
-                exc_msg = display.get_deprecation_message(
-                    warning_text,
-                    version=removal_version,
-                    date=removal_date,
-                    collection_name=acr.collection,
-                    removed=True,
-                )
-
-                raise AnsiblePluginRemovedError(exc_msg)
-
-            # check redirects
-            redirect = routing_entry.get("redirect", None)
-            if redirect:
-                if not AnsibleCollectionRef.is_valid_fqcr(redirect):
-                    raise AnsibleError(
-                        f"Collection {acr.collection} contains invalid redirect for {acr.collection}.{acr.resource}: {redirect}. "
-                        "Redirects must use fully qualified collection names."
-                    )
-
-                next_key, leaf_key = get_fqcr_and_name(
-                    redirect, collection=acr.collection
-                )
-                display.vvv(
-                    "redirecting (type: {0}) {1}.{2} to {3}".format(
-                        self.type, acr.collection, acr.resource, next_key
-                    )
-                )
-                key = next_key
-            else:
-                break
+        acr = AnsibleCollectionRef.try_parse_fqcr(key, self.type)
+        if not acr:
+            raise KeyError("invalid plugin name: {0}".format(key))
 
         try:
             pkg = import_module(acr.n_python_package_name)
@@ -1864,40 +1776,6 @@ def _load_plugin_filter():
     return filters
 
 
-# since we don't want the actual collection loader understanding metadata, we'll do it in an event handler
-def _on_collection_load_handler(collection_name, collection_path):
-    display.vvvv(
-        to_text(
-            "Loading collection {0} from {1}".format(collection_name, collection_path)
-        )
-    )
-
-    collection_meta = _get_collection_metadata(collection_name)
-
-    try:
-        if not _does_collection_support_ansible_version(
-            collection_meta.get("requires_ansible", ""), ansible_version
-        ):
-            mismatch_behavior = C.config.get_config_value(
-                "COLLECTIONS_ON_ANSIBLE_VERSION_MISMATCH"
-            )
-            message = "Collection {0} does not support Ansible version {1}".format(
-                collection_name, ansible_version
-            )
-            if mismatch_behavior == "warning":
-                display.warning(message)
-            elif mismatch_behavior == "error":
-                raise AnsibleCollectionUnsupportedVersionError(message)
-    except AnsibleError:
-        raise
-    except Exception as ex:
-        display.warning(
-            "Error parsing collection metadata requires_ansible value from collection {0}: {1}".format(
-                collection_name, ex
-            )
-        )
-
-
 def _does_collection_support_ansible_version(requirement_string, ansible_version):
     if not requirement_string:
         return True
@@ -1914,37 +1792,6 @@ def _does_collection_support_ansible_version(requirement_string, ansible_version
     base_ansible_version = Version(ansible_version).base_version
 
     return ss.contains(base_ansible_version)
-
-
-def _configure_collection_loader(prefix_collections_path=None):
-    if AnsibleCollectionConfig.collection_finder:
-        # this must be a Python warning so that it can be filtered out by the import sanity test
-        warnings.warn("AnsibleCollectionFinder has already been configured")
-        return
-
-    if prefix_collections_path is None:
-        prefix_collections_path = []
-
-    paths = list(prefix_collections_path) + C.COLLECTIONS_PATHS
-    finder = _AnsibleCollectionFinder(paths, C.COLLECTIONS_SCAN_SYS_PATH)
-    finder._install()
-
-    # this should succeed now
-    AnsibleCollectionConfig.on_collection_load += _on_collection_load_handler
-
-
-def init_plugin_loader(prefix_collections_path=None):
-    """Initialize the plugin filters and the collection loaders
-
-    This method must be called to configure and insert the collection python loaders
-    into ``sys.meta_path`` and ``sys.path_hooks``.
-
-    This method is only called in ``CLI.run`` after CLI args have been parsed, so that
-    instantiation of the collection finder can utilize parsed CLI args, and to not cause
-    side effects.
-    """
-    _load_plugin_filter()
-    _configure_collection_loader(prefix_collections_path)
 
 
 # TODO: Evaluate making these class instantiations lazy, but keep them in the global scope
