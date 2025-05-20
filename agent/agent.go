@@ -23,6 +23,15 @@ import (
 	"github.com/sapslaj/mid/version"
 )
 
+var (
+	ErrRunningRemoteCommand   = errors.New("error running remote command")
+	ErrInstallingAgent        = errors.New("error installing agent")
+	ErrConnectingToAgent      = errors.New("error connecting to agent")
+	ErrAgentShutDown          = errors.New("agent shut down")
+	ErrDisconnectingFromAgent = errors.New("error disconnecting from agent")
+	ErrCallingRPCSystem       = errors.New("error calling RPC system")
+)
+
 type Agent struct {
 	Mutex     sync.Mutex
 	Client    *ssh.Client
@@ -54,7 +63,7 @@ func AddLogger(agent *Agent) *slog.Logger {
 func RunRemoteCommand(agent *Agent, cmd string) ([]byte, error) {
 	session, err := agent.Client.NewSession()
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(ErrRunningRemoteCommand, err)
 	}
 	defer session.Close()
 	return session.Output(cmd)
@@ -76,21 +85,26 @@ func InstallAgent(agent *Agent) error {
 	case "x86_64":
 		goarch = "amd64"
 	default:
-		return fmt.Errorf("unexpected output while initializing agent: %q", string(initOutput))
+		return fmt.Errorf("%w: unexpected output while initializing agent: %q", ErrInstallingAgent, string(initOutput))
 	}
 
 	agentBinary, err := GetAgentBinary(goos, goarch)
 	if err != nil {
-		return err
+		return errors.Join(ErrInstallingAgent, err)
 	}
 
 	scpClient, err := scp.NewClientBySSH(agent.Client)
 	if err != nil {
-		return err
+		return errors.Join(ErrInstallingAgent, err)
 	}
 	defer scpClient.Close()
 
-	return scpClient.CopyFile(context.Background(), bytes.NewReader(agentBinary), ".mid/mid-agent", "0700")
+	err = scpClient.CopyFile(context.Background(), bytes.NewReader(agentBinary), ".mid/mid-agent", "0700")
+	if err != nil {
+		return errors.Join(ErrInstallingAgent, err)
+	}
+
+	return nil
 }
 
 func Connect(agent *Agent) error {
@@ -103,7 +117,7 @@ func Connect(agent *Agent) error {
 			slog.Any("error", err),
 			slog.String("stdout", string(initOutput)),
 		)
-		return err
+		return errors.Join(ErrConnectingToAgent, err)
 	}
 
 	agentNotInstalled := true
@@ -112,7 +126,7 @@ func Connect(agent *Agent) error {
 	for i := 0; i <= 10; i++ {
 		if i == 10 {
 			logger.Error(fmt.Sprintf("agent installation still in progress but should be finished by now; bailing"))
-			return fmt.Errorf("another agent installation is in progress")
+			return errors.Join(ErrConnectingToAgent, fmt.Errorf("another agent installation is in progress"))
 		}
 
 		// check for lock file
@@ -139,29 +153,29 @@ func Connect(agent *Agent) error {
 		logger.Info("copying agent")
 		err = InstallAgent(agent)
 		if err != nil {
-			return fmt.Errorf("error installing agent: %w", err)
+			return errors.Join(ErrConnectingToAgent, fmt.Errorf("error installing agent: %w", err))
 		}
 	}
 
 	logger.Info("starting SSH session")
 	agent.Session, err = agent.Client.NewSession()
 	if err != nil {
-		return fmt.Errorf("error creating agent session: %w", err)
+		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent session: %w", err))
 	}
 
 	stderr, err := agent.Session.StderrPipe()
 	if err != nil {
-		return fmt.Errorf("error creating agent stderr pipe: %w", err)
+		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stderr pipe: %w", err))
 	}
 	go io.Copy(os.Stdout, stderr)
 
 	stdin, err := agent.Session.StdinPipe()
 	if err != nil {
-		return fmt.Errorf("error creating agent stdin pipe: %w", err)
+		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stdin pipe: %w", err))
 	}
 	stdout, err := agent.Session.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("error creating agent stdout pipe: %w", err)
+		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stdout pipe: %w", err))
 	}
 	agent.Encoder = json.NewEncoder(stdin)
 	agent.Decoder = json.NewDecoder(stdout)
@@ -172,7 +186,7 @@ func Connect(agent *Agent) error {
 	// so have to jump through some hoops to not use sudo if we don't have to.
 	idOutput, err := RunRemoteCommand(agent, "id")
 	if err != nil {
-		return fmt.Errorf("error getting UID: %w", err)
+		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error getting UID: %w", err))
 	}
 	useSudo := true
 	if strings.Contains(string(idOutput), "uid=0(") {
@@ -188,7 +202,7 @@ func Connect(agent *Agent) error {
 	// TODO: more extensible sudo configuration
 	err = agent.Session.Start(sessionStartCmd)
 	if err != nil {
-		return fmt.Errorf("error starting agent session: %w", err)
+		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error starting agent session: %w", err))
 	}
 
 	agent.Running = &atomic.Bool{}
@@ -203,7 +217,7 @@ func Connect(agent *Agent) error {
 			for uuid, ch := range agent.InFlight.Items() {
 				ch <- rpc.RPCResult[any]{
 					UUID:  uuid,
-					Error: "agent shut down",
+					Error: ErrAgentShutDown.Error(),
 				}
 				close(ch)
 			}
@@ -267,10 +281,13 @@ func Connect(agent *Agent) error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("error sending ping RPC: %w", err)
+		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error sending ping RPC: %w", err))
 	}
 	if pingResult.Error != "" {
-		return fmt.Errorf("error received from ping RPC: %w", errors.New(pingResult.Error))
+		return errors.Join(
+			ErrConnectingToAgent,
+			fmt.Errorf("error received from ping RPC: %w", errors.New(pingResult.Error)),
+		)
 	}
 
 	return nil
@@ -279,6 +296,7 @@ func Connect(agent *Agent) error {
 func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
 	uuid, err := uuid.NewRandom()
 	if err != nil {
+		err = errors.Join(ErrCallingRPCSystem, err)
 		return rpc.RPCResult[O]{
 			RPCFunction: call.RPCFunction,
 			Error:       err.Error(),
@@ -290,6 +308,7 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 	err = agent.Encoder.Encode(call)
 	agent.Mutex.Unlock()
 	if err != nil {
+		err = errors.Join(ErrCallingRPCSystem, err)
 		return rpc.RPCResult[O]{
 			RPCFunction: call.RPCFunction,
 			Error:       err.Error(),
@@ -310,6 +329,7 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 	rawResult := <-ch
 	res, err := rpc.AnyToJSONT[rpc.RPCResult[O]](rawResult)
 	if err != nil {
+		err = errors.Join(ErrCallingRPCSystem, err)
 		if res.Error == "" {
 			res.Error = err.Error()
 		}
@@ -335,6 +355,10 @@ func Disconnect(agent *Agent) error {
 	)
 
 	agent.WaitGroup.Wait()
+
+	if err != nil {
+		err = errors.Join(ErrDisconnectingFromAgent, err)
+	}
 
 	return err
 }
