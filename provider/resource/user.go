@@ -9,6 +9,8 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -47,69 +49,15 @@ type UserState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-type userTaskParameters struct {
-	Append                       *bool     `json:"append,omitempty"`
-	Authorization                *string   `json:"authorization,omitempty"`
-	Comment                      *string   `json:"comment,omitempty"`
-	CreateHome                   *bool     `json:"create_home,omitempty"`
-	Expires                      *float64  `json:"expires,omitempty"`
-	Force                        *bool     `json:"force,omitempty"`
-	GenerateSSHKey               *bool     `json:"generate_ssh_key,omitempty"`
-	Group                        *string   `json:"group,omitempty"`
-	Groups                       *[]string `json:"groups,omitempty"`
-	Hidden                       *bool     `json:"hidden,omitempty"`
-	Home                         *string   `json:"home,omitempty"`
-	Local                        *bool     `json:"local,omitempty"`
-	LoginClass                   *string   `json:"login_class,omitempty"`
-	MoveHome                     *bool     `json:"move_home,omitempty"`
-	Name                         string    `json:"name"`
-	NonUnique                    *bool     `json:"non_unique,omitempty"`
-	Password                     *string   `json:"password,omitempty"`
-	PasswordExpireAccountDisable *int      `json:"password_expire_account_disable,omitempty"`
-	PasswordExpireMax            *int      `json:"password_expire_max,omitempty"`
-	PasswordExpireMin            *int      `json:"password_expire_min,omitempty"`
-	PasswordExpireWarn           *int      `json:"password_expire_warn,omitempty"`
-	PasswordLock                 *bool     `json:"password_lock,omitempty"`
-	Profile                      *string   `json:"profile,omitempty"`
-	Remove                       *bool     `json:"remove,omitempty"`
-	Role                         *string   `json:"role,omitempty"`
-	Seuser                       *string   `json:"seuser,omitempty"`
-	Shell                        *string   `json:"shell,omitempty"`
-	Skeleton                     *string   `json:"skeleton,omitempty"`
-	SSHKeyBits                   *int      `json:"ssh_key_bits,omitempty"`
-	SSHKeyComment                *string   `json:"ssh_key_comment,omitempty"`
-	SSHKeyFile                   *string   `json:"ssh_key_file,omitempty"`
-	SSHKeyPassphrase             *string   `json:"ssh_key_passphrase,omitempty"`
-	SSHKeyType                   *string   `json:"ssh_key_type,omitempty"`
-	State                        *string   `json:"state,omitempty"`
-	System                       *bool     `json:"system,omitempty"`
-	Uid                          *int      `json:"uid,omitempty"`
-	UidMax                       *int      `json:"uid_max,omitempty"`
-	UidMin                       *int      `json:"uid_min,omitempty"`
-	Umask                        *string   `json:"umask,omitempty"`
-	UpdatePassword               *string   `json:"update_password,omitempty"`
-}
-
-type userTaskResult struct {
-	Changed *bool `json:"changed,omitempty"`
-	Diff    *any  `json:"diff,omitempty"`
-}
-
-func (result *userTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
-func (r User) argsToTaskParameters(input UserArgs) (userTaskParameters, error) {
+func (r User) argsToTaskParameters(input UserArgs) (ansible.UserParameters, error) {
 	if input.Name == nil {
-		return userTaskParameters{}, errors.New("someone forgot to set the auto-named input.Name")
+		return ansible.UserParameters{}, errors.New("someone forgot to set the auto-named input.Name")
 	}
 	groupsExclusive := false
 	if input.GroupsExclusive != nil {
 		groupsExclusive = *input.GroupsExclusive
 	}
-	return userTaskParameters{
+	return ansible.UserParameters{
 		Name:           *input.Name,
 		State:          input.Ensure,
 		Append:         ptr.Of(!groupsExclusive),
@@ -219,36 +167,32 @@ func (r User) Create(
 		return id, state, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return id, state, nil
-		}
-
-		if err == nil {
-			return id, state, fmt.Errorf("cannot connect to host")
-		} else {
-			return id, state, fmt.Errorf("cannot connect to host: %w", err)
-		}
-	}
-
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.user": parameters,
-			},
-		},
-	})
+	call, err := parameters.ToRPCCall()
 	if err != nil {
 		return id, state, err
+	}
+
+	if preview {
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
+			return id, state, nil
+		}
+	}
+
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		return id, state, err
+	}
+	defer agent.Disconnect()
+
+	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return id, state, fmt.Errorf(
+			"creating user failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
 	}
 
 	return id, state, nil
@@ -271,6 +215,11 @@ func (r User) Read(
 		return id, inputs, state, err
 	}
 
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		return id, inputs, state, err
+	}
+
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
@@ -279,21 +228,25 @@ func (r User) Read(
 		}, nil
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       true,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.user": parameters,
-			},
-		},
-	})
+	agent, err := executor.StartAgent(ctx, config.Connection)
 	if err != nil {
 		return id, inputs, state, err
 	}
+	defer agent.Disconnect()
 
-	result, err := executor.GetTaskResult[*serviceTaskResult](output, 0, 0)
+	call.Args.Check = true
+
+	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return id, inputs, state, fmt.Errorf(
+			"reading user failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+	}
+
+	result, err := ansible.UserReturnFromRPCResult(callResult)
 	if err != nil {
 		return id, inputs, state, err
 	}
@@ -321,41 +274,42 @@ func (r User) Update(
 		return olds, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return olds, nil
-		}
-
-		if err == nil {
-			return olds, fmt.Errorf("cannot connect to host")
-		} else {
-			return olds, fmt.Errorf("cannot connect to host: %w", err)
-		}
-	}
-
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.user": parameters,
-			},
-		},
-	})
+	call, err := parameters.ToRPCCall()
 	if err != nil {
 		return olds, err
 	}
 
-	result, err := executor.GetTaskResult[*serviceTaskResult](output, 0, 0)
+	if preview {
+		call.Args.Check = true
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
+			return olds, nil
+		}
+	}
+
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		return olds, err
+	}
+	defer agent.Disconnect()
+
+	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return olds, fmt.Errorf(
+			"updating user failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+	}
+
+	result, err := ansible.UserReturnFromRPCResult(callResult)
+	if err != nil {
+		return olds, err
+	}
 
 	state := r.updateState(olds, news, result.IsChanged())
+
 	return state, nil
 }
 
@@ -379,6 +333,11 @@ func (r User) Delete(
 	}
 	parameters.State = ptr.Of("absent")
 
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		return err
+	}
+
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
@@ -393,15 +352,21 @@ func (r User) Delete(
 		}
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       false,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.user": parameters,
-			},
-		},
-	})
-	return err
+	agent, err := executor.StartAgent(ctx, config.Connection)
+	if err != nil {
+		return err
+	}
+	defer agent.Disconnect()
+
+	callResult, err := executor.CallAgent[rpc.AnsiballZExecuteArgs, rpc.AnsiballZExecuteResult](ctx, agent, call)
+	if err != nil || !callResult.Result.Success {
+		return fmt.Errorf(
+			"deleting user failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+	}
+
+	return nil
 }
