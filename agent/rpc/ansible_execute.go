@@ -3,6 +3,7 @@ package rpc
 import (
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
 	"strings"
@@ -89,7 +90,13 @@ func AnsibleExecute(args AnsibleExecuteArgs) (AnsibleExecuteResult, error) {
 
 	err = json.Unmarshal(result.Stdout, &result.Result)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf(
+			"failed to decode Ansible module output: %w: exitcode=%d stderr=%s stdout=%s",
+			err,
+			result.ExitCode,
+			string(result.Stderr),
+			string(result.Stdout),
+		)
 	}
 
 	return result, nil
