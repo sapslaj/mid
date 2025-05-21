@@ -7,167 +7,167 @@ import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export class File extends pulumi.CustomResource {
-    /**
-     * Get an existing File resource's state with the given name, ID, and optional extra
-     * properties used to qualify the lookup.
-     *
-     * @param name The _unique_ name of the resulting resource.
-     * @param id The _unique_ provider ID of the resource to lookup.
-     * @param opts Optional settings to control the behavior of the CustomResource.
-     */
-    public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): File {
-        return new File(name, undefined as any, { ...opts, id: id });
+  /**
+   * Get an existing File resource's state with the given name, ID, and optional extra
+   * properties used to qualify the lookup.
+   *
+   * @param name The _unique_ name of the resulting resource.
+   * @param id The _unique_ provider ID of the resource to lookup.
+   * @param opts Optional settings to control the behavior of the CustomResource.
+   */
+  public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): File {
+    return new File(name, undefined as any, { ...opts, id: id });
+  }
+
+  /** @internal */
+  public static readonly __pulumiType = "mid:resource:File";
+
+  /**
+   * Returns true if the given object is an instance of File.  This is designed to work even
+   * when multiple copies of the Pulumi SDK have been loaded into the same process.
+   */
+  public static isInstance(obj: any): obj is File {
+    if (obj === undefined || obj === null) {
+      return false;
     }
+    return obj["__pulumiType"] === File.__pulumiType;
+  }
 
-    /** @internal */
-    public static readonly __pulumiType = 'mid:resource:File';
+  public readonly accessTime!: pulumi.Output<string | undefined>;
+  public readonly accessTimeFormat!: pulumi.Output<string | undefined>;
+  public readonly attributes!: pulumi.Output<string | undefined>;
+  public readonly backup!: pulumi.Output<boolean | undefined>;
+  public readonly /*out*/ backupFile!: pulumi.Output<string | undefined>;
+  public readonly checksum!: pulumi.Output<string | undefined>;
+  public readonly content!: pulumi.Output<string | undefined>;
+  public readonly directoryMode!: pulumi.Output<string | undefined>;
+  public readonly ensure!: pulumi.Output<string | undefined>;
+  public readonly follow!: pulumi.Output<boolean | undefined>;
+  public readonly force!: pulumi.Output<boolean | undefined>;
+  public readonly group!: pulumi.Output<string | undefined>;
+  public readonly localFollow!: pulumi.Output<boolean | undefined>;
+  public readonly mode!: pulumi.Output<string | undefined>;
+  public readonly modificationTime!: pulumi.Output<string | undefined>;
+  public readonly modificationTimeFormat!: pulumi.Output<string | undefined>;
+  public readonly owner!: pulumi.Output<string | undefined>;
+  public readonly path!: pulumi.Output<string>;
+  public readonly recurse!: pulumi.Output<boolean | undefined>;
+  public readonly remoteSource!: pulumi.Output<string | undefined>;
+  public readonly selevel!: pulumi.Output<string | undefined>;
+  public readonly serole!: pulumi.Output<string | undefined>;
+  public readonly setype!: pulumi.Output<string | undefined>;
+  public readonly seuser!: pulumi.Output<string | undefined>;
+  public readonly source!: pulumi.Output<pulumi.asset.Asset | pulumi.asset.Archive | undefined>;
+  public readonly /*out*/ stat!: pulumi.Output<outputs.resource.FileStateStat>;
+  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
+  public readonly validate!: pulumi.Output<string | undefined>;
 
-    /**
-     * Returns true if the given object is an instance of File.  This is designed to work even
-     * when multiple copies of the Pulumi SDK have been loaded into the same process.
-     */
-    public static isInstance(obj: any): obj is File {
-        if (obj === undefined || obj === null) {
-            return false;
-        }
-        return obj['__pulumiType'] === File.__pulumiType;
+  /**
+   * Create a File resource with the given unique name, arguments, and options.
+   *
+   * @param name The _unique_ name of the resource.
+   * @param args The arguments to use to populate this resource's properties.
+   * @param opts A bag of options that control this resource's behavior.
+   */
+  constructor(name: string, args?: FileArgs, opts?: pulumi.CustomResourceOptions) {
+    let resourceInputs: pulumi.Inputs = {};
+    opts = opts || {};
+    if (!opts.id) {
+      resourceInputs["accessTime"] = args ? args.accessTime : undefined;
+      resourceInputs["accessTimeFormat"] = args ? args.accessTimeFormat : undefined;
+      resourceInputs["attributes"] = args ? args.attributes : undefined;
+      resourceInputs["backup"] = args ? args.backup : undefined;
+      resourceInputs["checksum"] = args ? args.checksum : undefined;
+      resourceInputs["content"] = args ? args.content : undefined;
+      resourceInputs["directoryMode"] = args ? args.directoryMode : undefined;
+      resourceInputs["ensure"] = args ? args.ensure : undefined;
+      resourceInputs["follow"] = args ? args.follow : undefined;
+      resourceInputs["force"] = args ? args.force : undefined;
+      resourceInputs["group"] = args ? args.group : undefined;
+      resourceInputs["localFollow"] = args ? args.localFollow : undefined;
+      resourceInputs["mode"] = args ? args.mode : undefined;
+      resourceInputs["modificationTime"] = args ? args.modificationTime : undefined;
+      resourceInputs["modificationTimeFormat"] = args ? args.modificationTimeFormat : undefined;
+      resourceInputs["owner"] = args ? args.owner : undefined;
+      resourceInputs["path"] = args ? args.path : undefined;
+      resourceInputs["recurse"] = args ? args.recurse : undefined;
+      resourceInputs["remoteSource"] = args ? args.remoteSource : undefined;
+      resourceInputs["selevel"] = args ? args.selevel : undefined;
+      resourceInputs["serole"] = args ? args.serole : undefined;
+      resourceInputs["setype"] = args ? args.setype : undefined;
+      resourceInputs["seuser"] = args ? args.seuser : undefined;
+      resourceInputs["source"] = args ? args.source : undefined;
+      resourceInputs["triggers"] = args ? args.triggers : undefined;
+      resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
+      resourceInputs["validate"] = args ? args.validate : undefined;
+      resourceInputs["backupFile"] = undefined /*out*/;
+      resourceInputs["stat"] = undefined /*out*/;
+    } else {
+      resourceInputs["accessTime"] = undefined /*out*/;
+      resourceInputs["accessTimeFormat"] = undefined /*out*/;
+      resourceInputs["attributes"] = undefined /*out*/;
+      resourceInputs["backup"] = undefined /*out*/;
+      resourceInputs["backupFile"] = undefined /*out*/;
+      resourceInputs["checksum"] = undefined /*out*/;
+      resourceInputs["content"] = undefined /*out*/;
+      resourceInputs["directoryMode"] = undefined /*out*/;
+      resourceInputs["ensure"] = undefined /*out*/;
+      resourceInputs["follow"] = undefined /*out*/;
+      resourceInputs["force"] = undefined /*out*/;
+      resourceInputs["group"] = undefined /*out*/;
+      resourceInputs["localFollow"] = undefined /*out*/;
+      resourceInputs["mode"] = undefined /*out*/;
+      resourceInputs["modificationTime"] = undefined /*out*/;
+      resourceInputs["modificationTimeFormat"] = undefined /*out*/;
+      resourceInputs["owner"] = undefined /*out*/;
+      resourceInputs["path"] = undefined /*out*/;
+      resourceInputs["recurse"] = undefined /*out*/;
+      resourceInputs["remoteSource"] = undefined /*out*/;
+      resourceInputs["selevel"] = undefined /*out*/;
+      resourceInputs["serole"] = undefined /*out*/;
+      resourceInputs["setype"] = undefined /*out*/;
+      resourceInputs["seuser"] = undefined /*out*/;
+      resourceInputs["source"] = undefined /*out*/;
+      resourceInputs["stat"] = undefined /*out*/;
+      resourceInputs["triggers"] = undefined /*out*/;
+      resourceInputs["unsafeWrites"] = undefined /*out*/;
+      resourceInputs["validate"] = undefined /*out*/;
     }
-
-    public readonly accessTime!: pulumi.Output<string | undefined>;
-    public readonly accessTimeFormat!: pulumi.Output<string | undefined>;
-    public readonly attributes!: pulumi.Output<string | undefined>;
-    public readonly backup!: pulumi.Output<boolean | undefined>;
-    public /*out*/ readonly backupFile!: pulumi.Output<string | undefined>;
-    public readonly checksum!: pulumi.Output<string | undefined>;
-    public readonly content!: pulumi.Output<string | undefined>;
-    public readonly directoryMode!: pulumi.Output<string | undefined>;
-    public readonly ensure!: pulumi.Output<string | undefined>;
-    public readonly follow!: pulumi.Output<boolean | undefined>;
-    public readonly force!: pulumi.Output<boolean | undefined>;
-    public readonly group!: pulumi.Output<string | undefined>;
-    public readonly localFollow!: pulumi.Output<boolean | undefined>;
-    public readonly mode!: pulumi.Output<string | undefined>;
-    public readonly modificationTime!: pulumi.Output<string | undefined>;
-    public readonly modificationTimeFormat!: pulumi.Output<string | undefined>;
-    public readonly owner!: pulumi.Output<string | undefined>;
-    public readonly path!: pulumi.Output<string>;
-    public readonly recurse!: pulumi.Output<boolean | undefined>;
-    public readonly remoteSource!: pulumi.Output<string | undefined>;
-    public readonly selevel!: pulumi.Output<string | undefined>;
-    public readonly serole!: pulumi.Output<string | undefined>;
-    public readonly setype!: pulumi.Output<string | undefined>;
-    public readonly seuser!: pulumi.Output<string | undefined>;
-    public readonly source!: pulumi.Output<pulumi.asset.Asset | pulumi.asset.Archive | undefined>;
-    public /*out*/ readonly stat!: pulumi.Output<outputs.resource.FileStateStat>;
-    public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
-    public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
-    public readonly validate!: pulumi.Output<string | undefined>;
-
-    /**
-     * Create a File resource with the given unique name, arguments, and options.
-     *
-     * @param name The _unique_ name of the resource.
-     * @param args The arguments to use to populate this resource's properties.
-     * @param opts A bag of options that control this resource's behavior.
-     */
-    constructor(name: string, args?: FileArgs, opts?: pulumi.CustomResourceOptions) {
-        let resourceInputs: pulumi.Inputs = {};
-        opts = opts || {};
-        if (!opts.id) {
-            resourceInputs["accessTime"] = args ? args.accessTime : undefined;
-            resourceInputs["accessTimeFormat"] = args ? args.accessTimeFormat : undefined;
-            resourceInputs["attributes"] = args ? args.attributes : undefined;
-            resourceInputs["backup"] = args ? args.backup : undefined;
-            resourceInputs["checksum"] = args ? args.checksum : undefined;
-            resourceInputs["content"] = args ? args.content : undefined;
-            resourceInputs["directoryMode"] = args ? args.directoryMode : undefined;
-            resourceInputs["ensure"] = args ? args.ensure : undefined;
-            resourceInputs["follow"] = args ? args.follow : undefined;
-            resourceInputs["force"] = args ? args.force : undefined;
-            resourceInputs["group"] = args ? args.group : undefined;
-            resourceInputs["localFollow"] = args ? args.localFollow : undefined;
-            resourceInputs["mode"] = args ? args.mode : undefined;
-            resourceInputs["modificationTime"] = args ? args.modificationTime : undefined;
-            resourceInputs["modificationTimeFormat"] = args ? args.modificationTimeFormat : undefined;
-            resourceInputs["owner"] = args ? args.owner : undefined;
-            resourceInputs["path"] = args ? args.path : undefined;
-            resourceInputs["recurse"] = args ? args.recurse : undefined;
-            resourceInputs["remoteSource"] = args ? args.remoteSource : undefined;
-            resourceInputs["selevel"] = args ? args.selevel : undefined;
-            resourceInputs["serole"] = args ? args.serole : undefined;
-            resourceInputs["setype"] = args ? args.setype : undefined;
-            resourceInputs["seuser"] = args ? args.seuser : undefined;
-            resourceInputs["source"] = args ? args.source : undefined;
-            resourceInputs["triggers"] = args ? args.triggers : undefined;
-            resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
-            resourceInputs["validate"] = args ? args.validate : undefined;
-            resourceInputs["backupFile"] = undefined /*out*/;
-            resourceInputs["stat"] = undefined /*out*/;
-        } else {
-            resourceInputs["accessTime"] = undefined /*out*/;
-            resourceInputs["accessTimeFormat"] = undefined /*out*/;
-            resourceInputs["attributes"] = undefined /*out*/;
-            resourceInputs["backup"] = undefined /*out*/;
-            resourceInputs["backupFile"] = undefined /*out*/;
-            resourceInputs["checksum"] = undefined /*out*/;
-            resourceInputs["content"] = undefined /*out*/;
-            resourceInputs["directoryMode"] = undefined /*out*/;
-            resourceInputs["ensure"] = undefined /*out*/;
-            resourceInputs["follow"] = undefined /*out*/;
-            resourceInputs["force"] = undefined /*out*/;
-            resourceInputs["group"] = undefined /*out*/;
-            resourceInputs["localFollow"] = undefined /*out*/;
-            resourceInputs["mode"] = undefined /*out*/;
-            resourceInputs["modificationTime"] = undefined /*out*/;
-            resourceInputs["modificationTimeFormat"] = undefined /*out*/;
-            resourceInputs["owner"] = undefined /*out*/;
-            resourceInputs["path"] = undefined /*out*/;
-            resourceInputs["recurse"] = undefined /*out*/;
-            resourceInputs["remoteSource"] = undefined /*out*/;
-            resourceInputs["selevel"] = undefined /*out*/;
-            resourceInputs["serole"] = undefined /*out*/;
-            resourceInputs["setype"] = undefined /*out*/;
-            resourceInputs["seuser"] = undefined /*out*/;
-            resourceInputs["source"] = undefined /*out*/;
-            resourceInputs["stat"] = undefined /*out*/;
-            resourceInputs["triggers"] = undefined /*out*/;
-            resourceInputs["unsafeWrites"] = undefined /*out*/;
-            resourceInputs["validate"] = undefined /*out*/;
-        }
-        opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
-        super(File.__pulumiType, name, resourceInputs, opts);
-    }
+    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
+    super(File.__pulumiType, name, resourceInputs, opts);
+  }
 }
 
 /**
  * The set of arguments for constructing a File resource.
  */
 export interface FileArgs {
-    accessTime?: pulumi.Input<string>;
-    accessTimeFormat?: pulumi.Input<string>;
-    attributes?: pulumi.Input<string>;
-    backup?: pulumi.Input<boolean>;
-    checksum?: pulumi.Input<string>;
-    content?: pulumi.Input<string>;
-    directoryMode?: pulumi.Input<string>;
-    ensure?: pulumi.Input<string>;
-    follow?: pulumi.Input<boolean>;
-    force?: pulumi.Input<boolean>;
-    group?: pulumi.Input<string>;
-    localFollow?: pulumi.Input<boolean>;
-    mode?: pulumi.Input<string>;
-    modificationTime?: pulumi.Input<string>;
-    modificationTimeFormat?: pulumi.Input<string>;
-    owner?: pulumi.Input<string>;
-    path?: pulumi.Input<string>;
-    recurse?: pulumi.Input<boolean>;
-    remoteSource?: pulumi.Input<string>;
-    selevel?: pulumi.Input<string>;
-    serole?: pulumi.Input<string>;
-    setype?: pulumi.Input<string>;
-    seuser?: pulumi.Input<string>;
-    source?: pulumi.Input<pulumi.asset.Asset | pulumi.asset.Archive>;
-    triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
-    unsafeWrites?: pulumi.Input<boolean>;
-    validate?: pulumi.Input<string>;
+  accessTime?: pulumi.Input<string>;
+  accessTimeFormat?: pulumi.Input<string>;
+  attributes?: pulumi.Input<string>;
+  backup?: pulumi.Input<boolean>;
+  checksum?: pulumi.Input<string>;
+  content?: pulumi.Input<string>;
+  directoryMode?: pulumi.Input<string>;
+  ensure?: pulumi.Input<string>;
+  follow?: pulumi.Input<boolean>;
+  force?: pulumi.Input<boolean>;
+  group?: pulumi.Input<string>;
+  localFollow?: pulumi.Input<boolean>;
+  mode?: pulumi.Input<string>;
+  modificationTime?: pulumi.Input<string>;
+  modificationTimeFormat?: pulumi.Input<string>;
+  owner?: pulumi.Input<string>;
+  path?: pulumi.Input<string>;
+  recurse?: pulumi.Input<boolean>;
+  remoteSource?: pulumi.Input<string>;
+  selevel?: pulumi.Input<string>;
+  serole?: pulumi.Input<string>;
+  setype?: pulumi.Input<string>;
+  seuser?: pulumi.Input<string>;
+  source?: pulumi.Input<pulumi.asset.Asset | pulumi.asset.Archive>;
+  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  unsafeWrites?: pulumi.Input<boolean>;
+  validate?: pulumi.Input<string>;
 }

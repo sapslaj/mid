@@ -7,51 +7,54 @@ import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export function fileStat(args: FileStatArgs, opts?: pulumi.InvokeOptions): Promise<FileStatResult> {
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
-    return pulumi.runtime.invoke("mid:agent:fileStat", {
-        "calculateChecksum": args.calculateChecksum,
-        "followSymlinks": args.followSymlinks,
-        "path": args.path,
-    }, opts);
+  opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
+  return pulumi.runtime.invoke("mid:agent:fileStat", {
+    "calculateChecksum": args.calculateChecksum,
+    "followSymlinks": args.followSymlinks,
+    "path": args.path,
+  }, opts);
 }
 
 export interface FileStatArgs {
-    calculateChecksum?: boolean;
-    followSymlinks?: boolean;
-    path: string;
+  calculateChecksum?: boolean;
+  followSymlinks?: boolean;
+  path: string;
 }
 
 export interface FileStatResult {
-    readonly accessTime?: string;
-    readonly baseName?: string;
-    readonly calculateChecksum?: boolean;
-    readonly createTime?: string;
-    readonly dev?: number;
-    readonly exists: boolean;
-    readonly fileMode?: outputs.agent.FileStatFileMode;
-    readonly followSymlinks?: boolean;
-    readonly gid?: number;
-    readonly groupName?: string;
-    readonly inode?: number;
-    readonly modifiedTime?: string;
-    readonly nlink?: number;
-    readonly path: string;
-    readonly sha256Checksum?: string;
-    readonly size?: number;
-    readonly uid?: number;
-    readonly userName?: string;
+  readonly accessTime?: string;
+  readonly baseName?: string;
+  readonly calculateChecksum?: boolean;
+  readonly createTime?: string;
+  readonly dev?: number;
+  readonly exists: boolean;
+  readonly fileMode?: outputs.agent.FileStatFileMode;
+  readonly followSymlinks?: boolean;
+  readonly gid?: number;
+  readonly groupName?: string;
+  readonly inode?: number;
+  readonly modifiedTime?: string;
+  readonly nlink?: number;
+  readonly path: string;
+  readonly sha256Checksum?: string;
+  readonly size?: number;
+  readonly uid?: number;
+  readonly userName?: string;
 }
-export function fileStatOutput(args: FileStatOutputArgs, opts?: pulumi.InvokeOutputOptions): pulumi.Output<FileStatResult> {
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
-    return pulumi.runtime.invokeOutput("mid:agent:fileStat", {
-        "calculateChecksum": args.calculateChecksum,
-        "followSymlinks": args.followSymlinks,
-        "path": args.path,
-    }, opts);
+export function fileStatOutput(
+  args: FileStatOutputArgs,
+  opts?: pulumi.InvokeOutputOptions,
+): pulumi.Output<FileStatResult> {
+  opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
+  return pulumi.runtime.invokeOutput("mid:agent:fileStat", {
+    "calculateChecksum": args.calculateChecksum,
+    "followSymlinks": args.followSymlinks,
+    "path": args.path,
+  }, opts);
 }
 
 export interface FileStatOutputArgs {
-    calculateChecksum?: pulumi.Input<boolean>;
-    followSymlinks?: pulumi.Input<boolean>;
-    path: pulumi.Input<string>;
+  calculateChecksum?: pulumi.Input<boolean>;
+  followSymlinks?: pulumi.Input<boolean>;
+  path: pulumi.Input<string>;
 }

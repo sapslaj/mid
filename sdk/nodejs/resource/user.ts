@@ -7,137 +7,137 @@ import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export class User extends pulumi.CustomResource {
-    /**
-     * Get an existing User resource's state with the given name, ID, and optional extra
-     * properties used to qualify the lookup.
-     *
-     * @param name The _unique_ name of the resulting resource.
-     * @param id The _unique_ provider ID of the resource to lookup.
-     * @param opts Optional settings to control the behavior of the CustomResource.
-     */
-    public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): User {
-        return new User(name, undefined as any, { ...opts, id: id });
+  /**
+   * Get an existing User resource's state with the given name, ID, and optional extra
+   * properties used to qualify the lookup.
+   *
+   * @param name The _unique_ name of the resulting resource.
+   * @param id The _unique_ provider ID of the resource to lookup.
+   * @param opts Optional settings to control the behavior of the CustomResource.
+   */
+  public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): User {
+    return new User(name, undefined as any, { ...opts, id: id });
+  }
+
+  /** @internal */
+  public static readonly __pulumiType = "mid:resource:User";
+
+  /**
+   * Returns true if the given object is an instance of User.  This is designed to work even
+   * when multiple copies of the Pulumi SDK have been loaded into the same process.
+   */
+  public static isInstance(obj: any): obj is User {
+    if (obj === undefined || obj === null) {
+      return false;
     }
+    return obj["__pulumiType"] === User.__pulumiType;
+  }
 
-    /** @internal */
-    public static readonly __pulumiType = 'mid:resource:User';
+  public readonly comment!: pulumi.Output<string | undefined>;
+  public readonly ensure!: pulumi.Output<string | undefined>;
+  public readonly force!: pulumi.Output<boolean | undefined>;
+  public readonly group!: pulumi.Output<string | undefined>;
+  public readonly groups!: pulumi.Output<string[] | undefined>;
+  public readonly groupsExclusive!: pulumi.Output<boolean | undefined>;
+  public readonly home!: pulumi.Output<string | undefined>;
+  public readonly local!: pulumi.Output<boolean | undefined>;
+  public readonly manageHome!: pulumi.Output<boolean | undefined>;
+  public readonly name!: pulumi.Output<string>;
+  public readonly nonUnique!: pulumi.Output<boolean | undefined>;
+  public readonly password!: pulumi.Output<string | undefined>;
+  public readonly shell!: pulumi.Output<string | undefined>;
+  public readonly skeleton!: pulumi.Output<string | undefined>;
+  public readonly system!: pulumi.Output<boolean | undefined>;
+  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly uid!: pulumi.Output<number | undefined>;
+  public readonly uidMax!: pulumi.Output<number | undefined>;
+  public readonly uidMin!: pulumi.Output<number | undefined>;
+  public readonly umask!: pulumi.Output<string | undefined>;
+  public readonly updatePassword!: pulumi.Output<string | undefined>;
 
-    /**
-     * Returns true if the given object is an instance of User.  This is designed to work even
-     * when multiple copies of the Pulumi SDK have been loaded into the same process.
-     */
-    public static isInstance(obj: any): obj is User {
-        if (obj === undefined || obj === null) {
-            return false;
-        }
-        return obj['__pulumiType'] === User.__pulumiType;
+  /**
+   * Create a User resource with the given unique name, arguments, and options.
+   *
+   * @param name The _unique_ name of the resource.
+   * @param args The arguments to use to populate this resource's properties.
+   * @param opts A bag of options that control this resource's behavior.
+   */
+  constructor(name: string, args?: UserArgs, opts?: pulumi.CustomResourceOptions) {
+    let resourceInputs: pulumi.Inputs = {};
+    opts = opts || {};
+    if (!opts.id) {
+      resourceInputs["comment"] = args ? args.comment : undefined;
+      resourceInputs["ensure"] = args ? args.ensure : undefined;
+      resourceInputs["force"] = args ? args.force : undefined;
+      resourceInputs["group"] = args ? args.group : undefined;
+      resourceInputs["groups"] = args ? args.groups : undefined;
+      resourceInputs["groupsExclusive"] = args ? args.groupsExclusive : undefined;
+      resourceInputs["home"] = args ? args.home : undefined;
+      resourceInputs["local"] = args ? args.local : undefined;
+      resourceInputs["manageHome"] = args ? args.manageHome : undefined;
+      resourceInputs["name"] = args ? args.name : undefined;
+      resourceInputs["nonUnique"] = args ? args.nonUnique : undefined;
+      resourceInputs["password"] = args ? args.password : undefined;
+      resourceInputs["shell"] = args ? args.shell : undefined;
+      resourceInputs["skeleton"] = args ? args.skeleton : undefined;
+      resourceInputs["system"] = args ? args.system : undefined;
+      resourceInputs["triggers"] = args ? args.triggers : undefined;
+      resourceInputs["uid"] = args ? args.uid : undefined;
+      resourceInputs["uidMax"] = args ? args.uidMax : undefined;
+      resourceInputs["uidMin"] = args ? args.uidMin : undefined;
+      resourceInputs["umask"] = args ? args.umask : undefined;
+      resourceInputs["updatePassword"] = args ? args.updatePassword : undefined;
+    } else {
+      resourceInputs["comment"] = undefined /*out*/;
+      resourceInputs["ensure"] = undefined /*out*/;
+      resourceInputs["force"] = undefined /*out*/;
+      resourceInputs["group"] = undefined /*out*/;
+      resourceInputs["groups"] = undefined /*out*/;
+      resourceInputs["groupsExclusive"] = undefined /*out*/;
+      resourceInputs["home"] = undefined /*out*/;
+      resourceInputs["local"] = undefined /*out*/;
+      resourceInputs["manageHome"] = undefined /*out*/;
+      resourceInputs["name"] = undefined /*out*/;
+      resourceInputs["nonUnique"] = undefined /*out*/;
+      resourceInputs["password"] = undefined /*out*/;
+      resourceInputs["shell"] = undefined /*out*/;
+      resourceInputs["skeleton"] = undefined /*out*/;
+      resourceInputs["system"] = undefined /*out*/;
+      resourceInputs["triggers"] = undefined /*out*/;
+      resourceInputs["uid"] = undefined /*out*/;
+      resourceInputs["uidMax"] = undefined /*out*/;
+      resourceInputs["uidMin"] = undefined /*out*/;
+      resourceInputs["umask"] = undefined /*out*/;
+      resourceInputs["updatePassword"] = undefined /*out*/;
     }
-
-    public readonly comment!: pulumi.Output<string | undefined>;
-    public readonly ensure!: pulumi.Output<string | undefined>;
-    public readonly force!: pulumi.Output<boolean | undefined>;
-    public readonly group!: pulumi.Output<string | undefined>;
-    public readonly groups!: pulumi.Output<string[] | undefined>;
-    public readonly groupsExclusive!: pulumi.Output<boolean | undefined>;
-    public readonly home!: pulumi.Output<string | undefined>;
-    public readonly local!: pulumi.Output<boolean | undefined>;
-    public readonly manageHome!: pulumi.Output<boolean | undefined>;
-    public readonly name!: pulumi.Output<string>;
-    public readonly nonUnique!: pulumi.Output<boolean | undefined>;
-    public readonly password!: pulumi.Output<string | undefined>;
-    public readonly shell!: pulumi.Output<string | undefined>;
-    public readonly skeleton!: pulumi.Output<string | undefined>;
-    public readonly system!: pulumi.Output<boolean | undefined>;
-    public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
-    public readonly uid!: pulumi.Output<number | undefined>;
-    public readonly uidMax!: pulumi.Output<number | undefined>;
-    public readonly uidMin!: pulumi.Output<number | undefined>;
-    public readonly umask!: pulumi.Output<string | undefined>;
-    public readonly updatePassword!: pulumi.Output<string | undefined>;
-
-    /**
-     * Create a User resource with the given unique name, arguments, and options.
-     *
-     * @param name The _unique_ name of the resource.
-     * @param args The arguments to use to populate this resource's properties.
-     * @param opts A bag of options that control this resource's behavior.
-     */
-    constructor(name: string, args?: UserArgs, opts?: pulumi.CustomResourceOptions) {
-        let resourceInputs: pulumi.Inputs = {};
-        opts = opts || {};
-        if (!opts.id) {
-            resourceInputs["comment"] = args ? args.comment : undefined;
-            resourceInputs["ensure"] = args ? args.ensure : undefined;
-            resourceInputs["force"] = args ? args.force : undefined;
-            resourceInputs["group"] = args ? args.group : undefined;
-            resourceInputs["groups"] = args ? args.groups : undefined;
-            resourceInputs["groupsExclusive"] = args ? args.groupsExclusive : undefined;
-            resourceInputs["home"] = args ? args.home : undefined;
-            resourceInputs["local"] = args ? args.local : undefined;
-            resourceInputs["manageHome"] = args ? args.manageHome : undefined;
-            resourceInputs["name"] = args ? args.name : undefined;
-            resourceInputs["nonUnique"] = args ? args.nonUnique : undefined;
-            resourceInputs["password"] = args ? args.password : undefined;
-            resourceInputs["shell"] = args ? args.shell : undefined;
-            resourceInputs["skeleton"] = args ? args.skeleton : undefined;
-            resourceInputs["system"] = args ? args.system : undefined;
-            resourceInputs["triggers"] = args ? args.triggers : undefined;
-            resourceInputs["uid"] = args ? args.uid : undefined;
-            resourceInputs["uidMax"] = args ? args.uidMax : undefined;
-            resourceInputs["uidMin"] = args ? args.uidMin : undefined;
-            resourceInputs["umask"] = args ? args.umask : undefined;
-            resourceInputs["updatePassword"] = args ? args.updatePassword : undefined;
-        } else {
-            resourceInputs["comment"] = undefined /*out*/;
-            resourceInputs["ensure"] = undefined /*out*/;
-            resourceInputs["force"] = undefined /*out*/;
-            resourceInputs["group"] = undefined /*out*/;
-            resourceInputs["groups"] = undefined /*out*/;
-            resourceInputs["groupsExclusive"] = undefined /*out*/;
-            resourceInputs["home"] = undefined /*out*/;
-            resourceInputs["local"] = undefined /*out*/;
-            resourceInputs["manageHome"] = undefined /*out*/;
-            resourceInputs["name"] = undefined /*out*/;
-            resourceInputs["nonUnique"] = undefined /*out*/;
-            resourceInputs["password"] = undefined /*out*/;
-            resourceInputs["shell"] = undefined /*out*/;
-            resourceInputs["skeleton"] = undefined /*out*/;
-            resourceInputs["system"] = undefined /*out*/;
-            resourceInputs["triggers"] = undefined /*out*/;
-            resourceInputs["uid"] = undefined /*out*/;
-            resourceInputs["uidMax"] = undefined /*out*/;
-            resourceInputs["uidMin"] = undefined /*out*/;
-            resourceInputs["umask"] = undefined /*out*/;
-            resourceInputs["updatePassword"] = undefined /*out*/;
-        }
-        opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
-        super(User.__pulumiType, name, resourceInputs, opts);
-    }
+    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
+    super(User.__pulumiType, name, resourceInputs, opts);
+  }
 }
 
 /**
  * The set of arguments for constructing a User resource.
  */
 export interface UserArgs {
-    comment?: pulumi.Input<string>;
-    ensure?: pulumi.Input<string>;
-    force?: pulumi.Input<boolean>;
-    group?: pulumi.Input<string>;
-    groups?: pulumi.Input<pulumi.Input<string>[]>;
-    groupsExclusive?: pulumi.Input<boolean>;
-    home?: pulumi.Input<string>;
-    local?: pulumi.Input<boolean>;
-    manageHome?: pulumi.Input<boolean>;
-    name?: pulumi.Input<string>;
-    nonUnique?: pulumi.Input<boolean>;
-    password?: pulumi.Input<string>;
-    shell?: pulumi.Input<string>;
-    skeleton?: pulumi.Input<string>;
-    system?: pulumi.Input<boolean>;
-    triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
-    uid?: pulumi.Input<number>;
-    uidMax?: pulumi.Input<number>;
-    uidMin?: pulumi.Input<number>;
-    umask?: pulumi.Input<string>;
-    updatePassword?: pulumi.Input<string>;
+  comment?: pulumi.Input<string>;
+  ensure?: pulumi.Input<string>;
+  force?: pulumi.Input<boolean>;
+  group?: pulumi.Input<string>;
+  groups?: pulumi.Input<pulumi.Input<string>[]>;
+  groupsExclusive?: pulumi.Input<boolean>;
+  home?: pulumi.Input<string>;
+  local?: pulumi.Input<boolean>;
+  manageHome?: pulumi.Input<boolean>;
+  name?: pulumi.Input<string>;
+  nonUnique?: pulumi.Input<boolean>;
+  password?: pulumi.Input<string>;
+  shell?: pulumi.Input<string>;
+  skeleton?: pulumi.Input<string>;
+  system?: pulumi.Input<boolean>;
+  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  uid?: pulumi.Input<number>;
+  uidMax?: pulumi.Input<number>;
+  uidMin?: pulumi.Input<number>;
+  umask?: pulumi.Input<string>;
+  updatePassword?: pulumi.Input<string>;
 }

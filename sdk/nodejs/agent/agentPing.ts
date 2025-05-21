@@ -5,29 +5,32 @@ import * as pulumi from "@pulumi/pulumi";
 import * as utilities from "../utilities";
 
 export function agentPing(args?: AgentPingArgs, opts?: pulumi.InvokeOptions): Promise<AgentPingResult> {
-    args = args || {};
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
-    return pulumi.runtime.invoke("mid:agent:agentPing", {
-        "ping": args.ping,
-    }, opts);
+  args = args || {};
+  opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
+  return pulumi.runtime.invoke("mid:agent:agentPing", {
+    "ping": args.ping,
+  }, opts);
 }
 
 export interface AgentPingArgs {
-    ping?: string;
+  ping?: string;
 }
 
 export interface AgentPingResult {
-    readonly ping: string;
-    readonly pong: string;
+  readonly ping: string;
+  readonly pong: string;
 }
-export function agentPingOutput(args?: AgentPingOutputArgs, opts?: pulumi.InvokeOutputOptions): pulumi.Output<AgentPingResult> {
-    args = args || {};
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
-    return pulumi.runtime.invokeOutput("mid:agent:agentPing", {
-        "ping": args.ping,
-    }, opts);
+export function agentPingOutput(
+  args?: AgentPingOutputArgs,
+  opts?: pulumi.InvokeOutputOptions,
+): pulumi.Output<AgentPingResult> {
+  args = args || {};
+  opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
+  return pulumi.runtime.invokeOutput("mid:agent:agentPing", {
+    "ping": args.ping,
+  }, opts);
 }
 
 export interface AgentPingOutputArgs {
-    ping?: pulumi.Input<string>;
+  ping?: pulumi.Input<string>;
 }

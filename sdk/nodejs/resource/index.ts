@@ -50,32 +50,31 @@ export type User = import("./user").User;
 export const User: typeof import("./user").User = null as any;
 utilities.lazyLoad(exports, ["User"], () => require("./user"));
 
-
 const _module = {
-    version: utilities.getVersion(),
-    construct: (name: string, type: string, urn: string): pulumi.Resource => {
-        switch (type) {
-            case "mid:resource:Apt":
-                return new Apt(name, <any>undefined, { urn })
-            case "mid:resource:Exec":
-                return new Exec(name, <any>undefined, { urn })
-            case "mid:resource:File":
-                return new File(name, <any>undefined, { urn })
-            case "mid:resource:FileLine":
-                return new FileLine(name, <any>undefined, { urn })
-            case "mid:resource:Group":
-                return new Group(name, <any>undefined, { urn })
-            case "mid:resource:Package":
-                return new Package(name, <any>undefined, { urn })
-            case "mid:resource:Service":
-                return new Service(name, <any>undefined, { urn })
-            case "mid:resource:SystemdService":
-                return new SystemdService(name, <any>undefined, { urn })
-            case "mid:resource:User":
-                return new User(name, <any>undefined, { urn })
-            default:
-                throw new Error(`unknown resource type ${type}`);
-        }
-    },
+  version: utilities.getVersion(),
+  construct: (name: string, type: string, urn: string): pulumi.Resource => {
+    switch (type) {
+      case "mid:resource:Apt":
+        return new Apt(name, <any> undefined, { urn });
+      case "mid:resource:Exec":
+        return new Exec(name, <any> undefined, { urn });
+      case "mid:resource:File":
+        return new File(name, <any> undefined, { urn });
+      case "mid:resource:FileLine":
+        return new FileLine(name, <any> undefined, { urn });
+      case "mid:resource:Group":
+        return new Group(name, <any> undefined, { urn });
+      case "mid:resource:Package":
+        return new Package(name, <any> undefined, { urn });
+      case "mid:resource:Service":
+        return new Service(name, <any> undefined, { urn });
+      case "mid:resource:SystemdService":
+        return new SystemdService(name, <any> undefined, { urn });
+      case "mid:resource:User":
+        return new User(name, <any> undefined, { urn });
+      default:
+        throw new Error(`unknown resource type ${type}`);
+    }
+  },
 };
-pulumi.runtime.registerResourceModule("mid", "resource", _module)
+pulumi.runtime.registerResourceModule("mid", "resource", _module);

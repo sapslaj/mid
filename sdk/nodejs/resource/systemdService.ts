@@ -7,93 +7,93 @@ import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export class SystemdService extends pulumi.CustomResource {
-    /**
-     * Get an existing SystemdService resource's state with the given name, ID, and optional extra
-     * properties used to qualify the lookup.
-     *
-     * @param name The _unique_ name of the resulting resource.
-     * @param id The _unique_ provider ID of the resource to lookup.
-     * @param opts Optional settings to control the behavior of the CustomResource.
-     */
-    public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): SystemdService {
-        return new SystemdService(name, undefined as any, { ...opts, id: id });
+  /**
+   * Get an existing SystemdService resource's state with the given name, ID, and optional extra
+   * properties used to qualify the lookup.
+   *
+   * @param name The _unique_ name of the resulting resource.
+   * @param id The _unique_ provider ID of the resource to lookup.
+   * @param opts Optional settings to control the behavior of the CustomResource.
+   */
+  public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): SystemdService {
+    return new SystemdService(name, undefined as any, { ...opts, id: id });
+  }
+
+  /** @internal */
+  public static readonly __pulumiType = "mid:resource:SystemdService";
+
+  /**
+   * Returns true if the given object is an instance of SystemdService.  This is designed to work even
+   * when multiple copies of the Pulumi SDK have been loaded into the same process.
+   */
+  public static isInstance(obj: any): obj is SystemdService {
+    if (obj === undefined || obj === null) {
+      return false;
     }
+    return obj["__pulumiType"] === SystemdService.__pulumiType;
+  }
 
-    /** @internal */
-    public static readonly __pulumiType = 'mid:resource:SystemdService';
+  public readonly daemonReexec!: pulumi.Output<boolean | undefined>;
+  public readonly daemonReload!: pulumi.Output<boolean | undefined>;
+  public readonly enabled!: pulumi.Output<boolean | undefined>;
+  public readonly ensure!: pulumi.Output<string | undefined>;
+  public readonly force!: pulumi.Output<boolean | undefined>;
+  public readonly masked!: pulumi.Output<boolean | undefined>;
+  public readonly name!: pulumi.Output<string | undefined>;
+  public readonly noBlock!: pulumi.Output<boolean | undefined>;
+  public readonly scope!: pulumi.Output<string | undefined>;
+  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
 
-    /**
-     * Returns true if the given object is an instance of SystemdService.  This is designed to work even
-     * when multiple copies of the Pulumi SDK have been loaded into the same process.
-     */
-    public static isInstance(obj: any): obj is SystemdService {
-        if (obj === undefined || obj === null) {
-            return false;
-        }
-        return obj['__pulumiType'] === SystemdService.__pulumiType;
+  /**
+   * Create a SystemdService resource with the given unique name, arguments, and options.
+   *
+   * @param name The _unique_ name of the resource.
+   * @param args The arguments to use to populate this resource's properties.
+   * @param opts A bag of options that control this resource's behavior.
+   */
+  constructor(name: string, args?: SystemdServiceArgs, opts?: pulumi.CustomResourceOptions) {
+    let resourceInputs: pulumi.Inputs = {};
+    opts = opts || {};
+    if (!opts.id) {
+      resourceInputs["daemonReexec"] = args ? args.daemonReexec : undefined;
+      resourceInputs["daemonReload"] = args ? args.daemonReload : undefined;
+      resourceInputs["enabled"] = args ? args.enabled : undefined;
+      resourceInputs["ensure"] = args ? args.ensure : undefined;
+      resourceInputs["force"] = args ? args.force : undefined;
+      resourceInputs["masked"] = args ? args.masked : undefined;
+      resourceInputs["name"] = args ? args.name : undefined;
+      resourceInputs["noBlock"] = args ? args.noBlock : undefined;
+      resourceInputs["scope"] = args ? args.scope : undefined;
+      resourceInputs["triggers"] = args ? args.triggers : undefined;
+    } else {
+      resourceInputs["daemonReexec"] = undefined /*out*/;
+      resourceInputs["daemonReload"] = undefined /*out*/;
+      resourceInputs["enabled"] = undefined /*out*/;
+      resourceInputs["ensure"] = undefined /*out*/;
+      resourceInputs["force"] = undefined /*out*/;
+      resourceInputs["masked"] = undefined /*out*/;
+      resourceInputs["name"] = undefined /*out*/;
+      resourceInputs["noBlock"] = undefined /*out*/;
+      resourceInputs["scope"] = undefined /*out*/;
+      resourceInputs["triggers"] = undefined /*out*/;
     }
-
-    public readonly daemonReexec!: pulumi.Output<boolean | undefined>;
-    public readonly daemonReload!: pulumi.Output<boolean | undefined>;
-    public readonly enabled!: pulumi.Output<boolean | undefined>;
-    public readonly ensure!: pulumi.Output<string | undefined>;
-    public readonly force!: pulumi.Output<boolean | undefined>;
-    public readonly masked!: pulumi.Output<boolean | undefined>;
-    public readonly name!: pulumi.Output<string | undefined>;
-    public readonly noBlock!: pulumi.Output<boolean | undefined>;
-    public readonly scope!: pulumi.Output<string | undefined>;
-    public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
-
-    /**
-     * Create a SystemdService resource with the given unique name, arguments, and options.
-     *
-     * @param name The _unique_ name of the resource.
-     * @param args The arguments to use to populate this resource's properties.
-     * @param opts A bag of options that control this resource's behavior.
-     */
-    constructor(name: string, args?: SystemdServiceArgs, opts?: pulumi.CustomResourceOptions) {
-        let resourceInputs: pulumi.Inputs = {};
-        opts = opts || {};
-        if (!opts.id) {
-            resourceInputs["daemonReexec"] = args ? args.daemonReexec : undefined;
-            resourceInputs["daemonReload"] = args ? args.daemonReload : undefined;
-            resourceInputs["enabled"] = args ? args.enabled : undefined;
-            resourceInputs["ensure"] = args ? args.ensure : undefined;
-            resourceInputs["force"] = args ? args.force : undefined;
-            resourceInputs["masked"] = args ? args.masked : undefined;
-            resourceInputs["name"] = args ? args.name : undefined;
-            resourceInputs["noBlock"] = args ? args.noBlock : undefined;
-            resourceInputs["scope"] = args ? args.scope : undefined;
-            resourceInputs["triggers"] = args ? args.triggers : undefined;
-        } else {
-            resourceInputs["daemonReexec"] = undefined /*out*/;
-            resourceInputs["daemonReload"] = undefined /*out*/;
-            resourceInputs["enabled"] = undefined /*out*/;
-            resourceInputs["ensure"] = undefined /*out*/;
-            resourceInputs["force"] = undefined /*out*/;
-            resourceInputs["masked"] = undefined /*out*/;
-            resourceInputs["name"] = undefined /*out*/;
-            resourceInputs["noBlock"] = undefined /*out*/;
-            resourceInputs["scope"] = undefined /*out*/;
-            resourceInputs["triggers"] = undefined /*out*/;
-        }
-        opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
-        super(SystemdService.__pulumiType, name, resourceInputs, opts);
-    }
+    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
+    super(SystemdService.__pulumiType, name, resourceInputs, opts);
+  }
 }
 
 /**
  * The set of arguments for constructing a SystemdService resource.
  */
 export interface SystemdServiceArgs {
-    daemonReexec?: pulumi.Input<boolean>;
-    daemonReload?: pulumi.Input<boolean>;
-    enabled?: pulumi.Input<boolean>;
-    ensure?: pulumi.Input<string>;
-    force?: pulumi.Input<boolean>;
-    masked?: pulumi.Input<boolean>;
-    name?: pulumi.Input<string>;
-    noBlock?: pulumi.Input<boolean>;
-    scope?: pulumi.Input<string>;
-    triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  daemonReexec?: pulumi.Input<boolean>;
+  daemonReload?: pulumi.Input<boolean>;
+  enabled?: pulumi.Input<boolean>;
+  ensure?: pulumi.Input<string>;
+  force?: pulumi.Input<boolean>;
+  masked?: pulumi.Input<boolean>;
+  name?: pulumi.Input<string>;
+  noBlock?: pulumi.Input<boolean>;
+  scope?: pulumi.Input<string>;
+  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
 }

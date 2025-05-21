@@ -5,51 +5,54 @@ import * as pulumi from "@pulumi/pulumi";
 import * as utilities from "../utilities";
 
 export function ansibleExecute(args: AnsibleExecuteArgs, opts?: pulumi.InvokeOptions): Promise<AnsibleExecuteResult> {
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
-    return pulumi.runtime.invoke("mid:agent:ansibleExecute", {
-        "args": args.args,
-        "check": args.check,
-        "debugKeepTempFiles": args.debugKeepTempFiles,
-        "environment": args.environment,
-        "name": args.name,
-    }, opts);
+  opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
+  return pulumi.runtime.invoke("mid:agent:ansibleExecute", {
+    "args": args.args,
+    "check": args.check,
+    "debugKeepTempFiles": args.debugKeepTempFiles,
+    "environment": args.environment,
+    "name": args.name,
+  }, opts);
 }
 
 export interface AnsibleExecuteArgs {
-    args: {[key: string]: any};
-    check?: boolean;
-    debugKeepTempFiles?: boolean;
-    environment?: {[key: string]: string};
-    name: string;
+  args: { [key: string]: any };
+  check?: boolean;
+  debugKeepTempFiles?: boolean;
+  environment?: { [key: string]: string };
+  name: string;
 }
 
 export interface AnsibleExecuteResult {
-    readonly args: {[key: string]: any};
-    readonly check?: boolean;
-    readonly debugKeepTempFiles?: boolean;
-    readonly debugTempDir?: string;
-    readonly environment?: {[key: string]: string};
-    readonly exitCode: number;
-    readonly name: string;
-    readonly result: {[key: string]: any};
-    readonly stderr: string;
-    readonly stdout: string;
+  readonly args: { [key: string]: any };
+  readonly check?: boolean;
+  readonly debugKeepTempFiles?: boolean;
+  readonly debugTempDir?: string;
+  readonly environment?: { [key: string]: string };
+  readonly exitCode: number;
+  readonly name: string;
+  readonly result: { [key: string]: any };
+  readonly stderr: string;
+  readonly stdout: string;
 }
-export function ansibleExecuteOutput(args: AnsibleExecuteOutputArgs, opts?: pulumi.InvokeOutputOptions): pulumi.Output<AnsibleExecuteResult> {
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
-    return pulumi.runtime.invokeOutput("mid:agent:ansibleExecute", {
-        "args": args.args,
-        "check": args.check,
-        "debugKeepTempFiles": args.debugKeepTempFiles,
-        "environment": args.environment,
-        "name": args.name,
-    }, opts);
+export function ansibleExecuteOutput(
+  args: AnsibleExecuteOutputArgs,
+  opts?: pulumi.InvokeOutputOptions,
+): pulumi.Output<AnsibleExecuteResult> {
+  opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
+  return pulumi.runtime.invokeOutput("mid:agent:ansibleExecute", {
+    "args": args.args,
+    "check": args.check,
+    "debugKeepTempFiles": args.debugKeepTempFiles,
+    "environment": args.environment,
+    "name": args.name,
+  }, opts);
 }
 
 export interface AnsibleExecuteOutputArgs {
-    args: pulumi.Input<{[key: string]: any}>;
-    check?: pulumi.Input<boolean>;
-    debugKeepTempFiles?: pulumi.Input<boolean>;
-    environment?: pulumi.Input<{[key: string]: pulumi.Input<string>}>;
-    name: pulumi.Input<string>;
+  args: pulumi.Input<{ [key: string]: any }>;
+  check?: pulumi.Input<boolean>;
+  debugKeepTempFiles?: pulumi.Input<boolean>;
+  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+  name: pulumi.Input<string>;
 }

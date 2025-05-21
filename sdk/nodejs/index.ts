@@ -10,25 +10,19 @@ export type Provider = import("./provider").Provider;
 export const Provider: typeof import("./provider").Provider = null as any;
 utilities.lazyLoad(exports, ["Provider"], () => require("./provider"));
 
-
 // Export sub-modules:
 import * as agent from "./agent";
 import * as config from "./config";
 import * as resource from "./resource";
 import * as types from "./types";
 
-export {
-    agent,
-    config,
-    resource,
-    types,
-};
+export { agent, config, resource, types };
 pulumi.runtime.registerResourcePackage("mid", {
-    version: utilities.getVersion(),
-    constructProvider: (name: string, type: string, urn: string): pulumi.ProviderResource => {
-        if (type !== "pulumi:providers:mid") {
-            throw new Error(`unknown provider type ${type}`);
-        }
-        return new Provider(name, <any>undefined, { urn });
-    },
+  version: utilities.getVersion(),
+  constructProvider: (name: string, type: string, urn: string): pulumi.ProviderResource => {
+    if (type !== "pulumi:providers:mid") {
+      throw new Error(`unknown provider type ${type}`);
+    }
+    return new Provider(name, <any> undefined, { urn });
+  },
 });

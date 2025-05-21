@@ -12,24 +12,23 @@ export namespace resource {
 }
 
 export namespace types {
-    export interface ConnectionArgs {
-        host: pulumi.Input<string>;
-        password?: pulumi.Input<string>;
-        port?: pulumi.Input<number>;
-        privateKey?: pulumi.Input<string>;
-        user?: pulumi.Input<string>;
-    }
+  export interface ConnectionArgs {
+    host: pulumi.Input<string>;
+    password?: pulumi.Input<string>;
+    port?: pulumi.Input<number>;
+    privateKey?: pulumi.Input<string>;
+    user?: pulumi.Input<string>;
+  }
 
-    export interface ExecCommandArgs {
-        command: pulumi.Input<pulumi.Input<string>[]>;
-        dir?: pulumi.Input<string>;
-        environment?: pulumi.Input<{[key: string]: pulumi.Input<string>}>;
-        stdin?: pulumi.Input<string>;
-    }
+  export interface ExecCommandArgs {
+    command: pulumi.Input<pulumi.Input<string>[]>;
+    dir?: pulumi.Input<string>;
+    environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+    stdin?: pulumi.Input<string>;
+  }
 
-    export interface TriggersInputArgs {
-        refresh?: pulumi.Input<any[]>;
-        replace?: pulumi.Input<any[]>;
-    }
-
+  export interface TriggersInputArgs {
+    refresh?: pulumi.Input<any[]>;
+    replace?: pulumi.Input<any[]>;
+  }
 }
