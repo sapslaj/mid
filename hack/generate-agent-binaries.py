@@ -33,8 +33,6 @@ def build_agent(goos: str, goarch: str):
     subprocess.run(
         args=command,
         check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
         env={
             **os.environ,
             "GOOS": goos,
