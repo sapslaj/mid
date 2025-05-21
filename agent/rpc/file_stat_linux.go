@@ -12,6 +12,8 @@ import (
 	"os/user"
 	"syscall"
 	"time"
+
+	"github.com/sapslaj/mid/pkg/ptr"
 )
 
 func FileStat(args FileStatArgs) (FileStatResult, error) {
@@ -28,10 +30,10 @@ func FileStat(args FileStatArgs) (FileStatResult, error) {
 	}
 
 	if fileInfo != nil {
-		result.BaseName = fileInfo.Name()
-		result.FileMode = fileInfo.Mode()
-		result.ModifiedTime = fileInfo.ModTime()
-		result.Size = fileInfo.Size()
+		result.BaseName = ptr.Of(fileInfo.Name())
+		result.FileMode = ptr.Of(fileInfo.Mode())
+		result.ModifiedTime = ptr.Of(fileInfo.ModTime())
+		result.Size = ptr.Of(fileInfo.Size())
 	}
 
 	result.Exists = true
@@ -46,21 +48,21 @@ func FileStat(args FileStatArgs) (FileStatResult, error) {
 	}
 
 	switch stat := fileInfo.Sys().(type) {
-	case syscall.Stat_t:
-		result.AccessTime = time.Unix(stat.Atim.Unix())
-		result.CreateTime = time.Unix(stat.Ctim.Unix())
-		result.Dev = stat.Dev
-		result.Gid = uint64(stat.Gid)
+	case *syscall.Stat_t:
+		result.AccessTime = ptr.Of(time.Unix(stat.Atim.Unix()))
+		result.CreateTime = ptr.Of(time.Unix(stat.Ctim.Unix()))
+		result.Dev = ptr.Of(stat.Dev)
+		result.Gid = ptr.Of(uint64(stat.Gid))
 		grp, err := user.LookupGroupId(fmt.Sprint(stat.Gid))
 		if err == nil && grp != nil {
-			result.GroupName = grp.Name
+			result.GroupName = ptr.Of(grp.Name)
 		}
-		result.Inode = stat.Ino
-		result.Nlink = uint64(stat.Nlink)
-		result.Uid = uint64(stat.Uid)
+		result.Inode = ptr.Of(stat.Ino)
+		result.Nlink = ptr.Of(uint64(stat.Nlink))
+		result.Uid = ptr.Of(uint64(stat.Uid))
 		usr, err := user.LookupId(fmt.Sprint(stat.Uid))
 		if err == nil && usr != nil {
-			result.UserName = usr.Name
+			result.UserName = ptr.Of(usr.Name)
 		}
 	}
 
@@ -75,7 +77,7 @@ func FileStat(args FileStatArgs) (FileStatResult, error) {
 		if err != nil {
 			return result, err
 		}
-		result.SHA256Checksum = fmt.Sprintf("%x", h.Sum(nil))
+		result.SHA256Checksum = ptr.Of(fmt.Sprintf("%x", h.Sum(nil)))
 	}
 
 	return result, nil

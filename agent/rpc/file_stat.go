@@ -17,24 +17,24 @@ type FileStatResult struct {
 	Exists bool
 
 	// usually returned
-	BaseName     string
-	Size         int64
-	FileMode     fs.FileMode
-	ModifiedTime time.Time
+	BaseName     *string      `json:",omitempty"`
+	Size         *int64       `json:",omitempty"`
+	FileMode     *fs.FileMode `json:",omitempty"`
+	ModifiedTime *time.Time   `json:",omitempty"`
 
 	// depends on FileInfo.Sys()
-	AccessTime time.Time
-	CreateTime time.Time
-	Dev        uint64
-	Gid        uint64
-	GroupName  string
-	Inode      uint64
-	Nlink      uint64
-	Uid        uint64
-	UserName   string
+	AccessTime *time.Time `json:",omitempty"`
+	CreateTime *time.Time `json:",omitempty"`
+	Dev        *uint64    `json:",omitempty"`
+	Gid        *uint64    `json:",omitempty"`
+	GroupName  *string    `json:",omitempty"`
+	Inode      *uint64    `json:",omitempty"`
+	Nlink      *uint64    `json:",omitempty"`
+	Uid        *uint64    `json:",omitempty"`
+	UserName   *string    `json:",omitempty"`
 
 	// conditional on CalculateChecksum
-	SHA256Checksum string
+	SHA256Checksum *string `json:",omitempty"`
 }
 
 // NOTE: `FileStat` implementation is in `file_stat_linux.go`. It needed to be
