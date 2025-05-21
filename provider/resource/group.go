@@ -140,13 +140,7 @@ func (r Group) Create(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return id, state, err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return id, state, fmt.Errorf(
 			"creating group failed: stderr=%s stdout=%s, err=%w",
@@ -190,13 +184,7 @@ func (r Group) Read(
 		}, nil
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return id, inputs, state, err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return id, inputs, state, fmt.Errorf(
 			"reading group failed: stderr=%s stdout=%s, err=%w",
@@ -248,13 +236,7 @@ func (r Group) Update(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return olds, err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return olds, fmt.Errorf(
 			"updating group failed: stderr=%s stdout=%s, err=%w",
@@ -313,13 +295,7 @@ func (r Group) Delete(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return fmt.Errorf(
 			"deleting group failed: stderr=%s stdout=%s, err=%w",

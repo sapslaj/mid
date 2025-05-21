@@ -15,7 +15,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
-	midagent "github.com/sapslaj/mid/agent"
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
@@ -132,12 +131,12 @@ func (r Apt) updateState(olds AptState, news AptArgs, changed bool) AptState {
 
 func (r Apt) runApt(
 	ctx context.Context,
-	agent *midagent.Agent,
+	connection *types.Connection,
 	parameters ansible.AptParameters,
 	preview bool,
 ) (ansible.AptReturn, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.runApt", trace.WithAttributes(
-		attribute.String("connection.host", agent.Client.RemoteAddr().String()),
+		attribute.String("connection.host", *connection.Host),
 	))
 	defer span.End()
 
@@ -160,7 +159,7 @@ func (r Apt) runApt(
 			attribute.Int("retry.attempt", attempt),
 		))
 
-		callResult, err = executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](attemptCtx, agent, call)
+		callResult, err = executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](attemptCtx, connection, call)
 		if err != nil {
 			attemptSpan.SetStatus(codes.Error, err.Error())
 			span.SetStatus(codes.Error, err.Error())
@@ -355,14 +354,7 @@ func (r Apt) Create(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
-	}
-	defer agent.Disconnect()
-
-	_, err = r.runApt(ctx, agent, parameters, preview)
+	_, err = r.runApt(ctx, config.Connection, parameters, preview)
 	if err != nil {
 		return id, state, err
 	}
@@ -402,13 +394,7 @@ func (r Apt) Read(
 		}, nil
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return id, inputs, state, err
-	}
-	defer agent.Disconnect()
-
-	result, err := r.runApt(ctx, agent, parameters, true)
+	result, err := r.runApt(ctx, config.Connection, parameters, true)
 	if err != nil {
 		return id, inputs, state, err
 	}
@@ -452,13 +438,6 @@ func (r Apt) Update(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-	defer agent.Disconnect()
-
 	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
 		parameters, err := r.argsToTaskParameters(news)
 		if err != nil {
@@ -466,7 +445,7 @@ func (r Apt) Update(
 			return olds, err
 		}
 
-		result, err := r.runApt(ctx, agent, parameters, preview)
+		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
 			return olds, err
 		}
@@ -499,7 +478,7 @@ func (r Apt) Update(
 			aptStateMap[name] = newState
 		}
 	} else {
-		err = errors.New("we somehow forgot the apt name, oops")
+		err := errors.New("we somehow forgot the apt name, oops")
 		span.SetStatus(codes.Error, err.Error())
 		return AptState{}, err
 	}
@@ -536,7 +515,7 @@ func (r Apt) Update(
 			return AptState{}, err
 		}
 		parameters.State = ptr.Of("absent")
-		result, err := r.runApt(ctx, agent, parameters, preview)
+		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return AptState{}, err
@@ -553,7 +532,7 @@ func (r Apt) Update(
 			return AptState{}, err
 		}
 		parameters.State = ptr.Of(newState)
-		result, err := r.runApt(ctx, agent, parameters, preview)
+		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return AptState{}, err
@@ -611,13 +590,7 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return err
-	}
-	defer agent.Disconnect()
-
-	_, err = r.runApt(ctx, agent, parameters, false)
+	_, err = r.runApt(ctx, config.Connection, parameters, false)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err

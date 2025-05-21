@@ -2,9 +2,11 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os/user"
+	"sync"
 	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
@@ -14,11 +16,214 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/ssh"
 
-	"github.com/sapslaj/mid/agent"
+	midagent "github.com/sapslaj/mid/agent"
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/hashstructure"
+	"github.com/sapslaj/mid/pkg/syncmap"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/types"
 )
+
+var (
+	ErrUnreachable = errors.New("host is unreachable")
+)
+
+type ConnectionState struct {
+	ID         uint64
+	Reachable  bool
+	Mutex      sync.Mutex
+	Agent      *midagent.Agent
+	Connection *types.Connection
+}
+
+var AgentPool = syncmap.Map[uint64, *ConnectionState]{}
+
+func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.ConnectionState.SetupAgent", trace.WithAttributes(
+		attribute.String("exec.strategy", "rpc"),
+		attribute.String("connection.host", *cs.Connection.Host),
+	))
+	defer span.End()
+
+	cs.Mutex.Lock()
+	defer cs.Mutex.Unlock()
+
+	if cs.Agent != nil && cs.Agent.Running.Load() {
+		span.SetAttributes(attribute.Bool("agent.already_running", true))
+		span.SetStatus(codes.Ok, "")
+		return nil
+	}
+
+	span.SetAttributes(
+		attribute.Bool("agent.already_running", false),
+		attribute.Bool("agent.can_connect", cs.Reachable),
+	)
+
+	a, err := StartAgent(ctx, cs.Connection)
+	if err != nil {
+		if errors.Is(err, midagent.ErrConnectingToAgent) {
+			cs.Reachable = false
+			err = errors.Join(ErrUnreachable, err)
+		}
+		span.SetStatus(codes.Error, err.Error())
+		span.SetAttributes(
+			attribute.Bool("agent.running", false),
+			attribute.Bool("agent.can_connect", cs.Reachable),
+		)
+		return err
+	}
+
+	cs.Reachable = true
+	cs.Agent = a
+	span.SetStatus(codes.Ok, "")
+	span.SetAttributes(
+		attribute.Bool("agent.running", true),
+		attribute.Bool("agent.can_connect", cs.Reachable),
+	)
+
+	return nil
+}
+
+func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.Acquire", trace.WithAttributes(
+		attribute.String("exec.strategy", "rpc"),
+		attribute.String("connection.host", *connection.Host),
+	))
+	defer span.End()
+
+	id, err := hashstructure.Hash(connection, hashstructure.FormatV2, nil)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+	span.SetAttributes(attribute.Float64("agent.connection_id", float64(id)))
+
+	cs, loaded := AgentPool.LoadOrStore(id, &ConnectionState{
+		ID:         id,
+		Connection: connection,
+	})
+
+	span.SetAttributes(attribute.Bool("agent.loaded", loaded))
+	span.SetStatus(codes.Ok, "")
+
+	return cs, nil
+}
+
+func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts int) (bool, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CanConnect", trace.WithAttributes(
+		attribute.String("exec.strategy", "rpc"),
+		attribute.String("connection.host", *connection.Host),
+		attribute.Int("retry.max_attempts", maxAttempts),
+	))
+	defer span.End()
+
+	cs, err := Acquire(ctx, connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+
+	if cs.Reachable {
+		span.SetAttributes(attribute.Bool("agent.can_connect", true))
+		span.SetAttributes(attribute.Bool("agent.can_connect.cached", true))
+		return true, nil
+	}
+
+	span.SetAttributes(attribute.Bool("agent.can_connect", false))
+	span.SetAttributes(attribute.Bool("agent.can_connect.cached", false))
+
+	if cs.Connection.Host == nil {
+		return false, nil
+	}
+	if *cs.Connection.Host == "" {
+		return false, nil
+	}
+	sshConfig, endpoint, err := ConnectionToSSHClientConfig(cs.Connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+	sshClient, err := DialWithRetry(ctx, "Dial", maxAttempts, func() (*ssh.Client, error) {
+		return ssh.Dial("tcp", endpoint, sshConfig)
+	})
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+	defer sshClient.Close()
+	session, err := sshClient.NewSession()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+	defer session.Close()
+
+	span.SetStatus(codes.Ok, "")
+	cs.Reachable = true
+	span.SetAttributes(attribute.Bool("agent.can_connect", cs.Reachable))
+	return cs.Reachable, nil
+}
+
+func CallAgent[I any, O any](ctx context.Context, connection *types.Connection, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CallAgent", trace.WithAttributes(
+		attribute.String("exec.strategy", "rpc"),
+		attribute.String("rpc.function", string(call.RPCFunction)),
+		telemetry.OtelJSON("rpc.args", call.Args),
+	))
+	defer span.End()
+
+	var zero rpc.RPCResult[O]
+
+	cs, err := Acquire(ctx, connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return zero, err
+	}
+
+	err = cs.SetupAgent(ctx)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return zero, err
+	}
+
+	res, err := midagent.Call[I, O](cs.Agent, call)
+	if err == nil {
+		span.SetStatus(codes.Ok, "")
+	} else {
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	span.SetAttributes(
+		attribute.String("rpc.uuid", res.UUID),
+		telemetry.OtelJSON("rpc.result", res.Result),
+	)
+
+	if res.Error != "" {
+		span.SetAttributes(attribute.String("rpc.error", res.Error))
+	}
+
+	return res, err
+}
+
+func DisconnectAll(ctx context.Context) error {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.DisconnectAll", trace.WithAttributes(
+		attribute.String("exec.strategy", "rpc"),
+	))
+	defer span.End()
+
+	var err error
+
+	for id, cs := range AgentPool.Items() {
+		cs.Mutex.Lock()
+		err = errors.Join(err, cs.Agent.Disconnect())
+		cs.Agent = nil
+		cs.Reachable = false
+		cs.Mutex.Unlock()
+		AgentPool.Delete(id)
+	}
+
+	return err
+}
 
 func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfig, string, error) {
 	username := "root"
@@ -63,45 +268,6 @@ func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfi
 	}
 	endpoint := net.JoinHostPort(*connection.Host, fmt.Sprintf("%d", port))
 	return sshConfig, endpoint, nil
-}
-
-func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts int) (bool, error) {
-	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CanConnect", trace.WithAttributes(
-		attribute.String("exec.strategy", "rpc"),
-		attribute.String("connection.host", *connection.Host),
-		attribute.Int("retry.max_attempts", maxAttempts),
-	))
-	defer span.End()
-
-	if connection.Host == nil {
-		return false, nil
-	}
-	if *connection.Host == "" {
-		return false, nil
-	}
-	sshConfig, endpoint, err := ConnectionToSSHClientConfig(connection)
-	if err != nil {
-		return false, err
-	}
-	// TODO: adjustable maxAttempts
-	sshClient, err := DialWithRetry(ctx, "Dial", maxAttempts, func() (*ssh.Client, error) {
-		return ssh.Dial("tcp", endpoint, sshConfig)
-	})
-	if err != nil {
-		return false, err
-	}
-	defer sshClient.Close()
-	session, err := sshClient.NewSession()
-	if err != nil {
-		return false, err
-	}
-	defer session.Close()
-	// _, err = session.Output("echo")
-	// if err != nil {
-	// 	return false, err
-	// }
-	span.SetStatus(codes.Ok, "")
-	return true, nil
 }
 
 func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f func() (T, error)) (T, error) {
@@ -167,7 +333,7 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 	return t, nil
 }
 
-func StartAgent(ctx context.Context, connection *types.Connection) (*agent.Agent, error) {
+func StartAgent(ctx context.Context, connection *types.Connection) (*midagent.Agent, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.StartAgent", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
 		attribute.String("connection.host", *connection.Host),
@@ -188,11 +354,11 @@ func StartAgent(ctx context.Context, connection *types.Connection) (*agent.Agent
 		return nil, err
 	}
 
-	a := &agent.Agent{
+	a := &midagent.Agent{
 		Client: sshClient,
 	}
 
-	err = agent.Connect(a)
+	err = midagent.Connect(a)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
@@ -200,31 +366,4 @@ func StartAgent(ctx context.Context, connection *types.Connection) (*agent.Agent
 
 	span.SetStatus(codes.Ok, "")
 	return a, nil
-}
-
-func CallAgent[I any, O any](ctx context.Context, a *agent.Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
-	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CallAgent", trace.WithAttributes(
-		attribute.String("exec.strategy", "rpc"),
-		attribute.String("rpc.function", string(call.RPCFunction)),
-		telemetry.OtelJSON("rpc.args", call.Args),
-	))
-	defer span.End()
-
-	res, err := agent.Call[I, O](a, call)
-	if err == nil {
-		span.SetStatus(codes.Ok, "")
-	} else {
-		span.SetStatus(codes.Error, err.Error())
-	}
-
-	span.SetAttributes(
-		attribute.String("rpc.uuid", res.UUID),
-		telemetry.OtelJSON("rpc.result", res.Result),
-	)
-
-	if res.Error != "" {
-		span.SetAttributes(attribute.String("rpc.error", res.Error))
-	}
-
-	return res, err
 }

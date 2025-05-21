@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
-	midagent "github.com/sapslaj/mid/agent"
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
@@ -215,7 +214,7 @@ func (r Exec) updateStateFromOutput(olds ExecState, news ExecArgs, output ansibl
 
 func (r Exec) runRPCExec(
 	ctx context.Context,
-	agent *midagent.Agent,
+	connection *types.Connection,
 	state ExecState,
 	input ExecArgs,
 	lifecycle string,
@@ -225,7 +224,7 @@ func (r Exec) runRPCExec(
 		return state, err
 	}
 
-	result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, agent, call)
+	result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, connection, call)
 	if err != nil {
 		return state, err
 	}
@@ -254,7 +253,7 @@ func (r Exec) runRPCExec(
 
 func (r Exec) runRPCAnsibleExecute(
 	ctx context.Context,
-	agent *midagent.Agent,
+	connection *types.Connection,
 	state ExecState,
 	input ExecArgs,
 	lifecycle string,
@@ -270,7 +269,7 @@ func (r Exec) runRPCAnsibleExecute(
 	}
 	call.Args.Environment = environment
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, connection, call)
 	if err != nil {
 		return state, err
 	}
@@ -388,17 +387,10 @@ func (r Exec) Create(
 		return id, state, nil
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
-	}
-	defer agent.Disconnect()
-
 	if r.canUseRPC(input) {
-		state, err = r.runRPCExec(ctx, agent, state, input, "create")
+		state, err = r.runRPCExec(ctx, config.Connection, state, input, "create")
 	} else {
-		state, err = r.runRPCAnsibleExecute(ctx, agent, state, input, "create")
+		state, err = r.runRPCAnsibleExecute(ctx, config.Connection, state, input, "create")
 	}
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -433,17 +425,11 @@ func (r Exec) Update(
 		return olds, nil
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return olds, nil
-	}
-	defer agent.Disconnect()
-
+	var err error
 	if r.canUseRPC(news) {
-		olds, err = r.runRPCExec(ctx, agent, olds, news, "update")
+		olds, err = r.runRPCExec(ctx, config.Connection, olds, news, "update")
 	} else {
-		olds, err = r.runRPCAnsibleExecute(ctx, agent, olds, news, "update")
+		olds, err = r.runRPCAnsibleExecute(ctx, config.Connection, olds, news, "update")
 	}
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -492,17 +478,10 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-	defer agent.Disconnect()
-
 	if r.canUseRPC(props.ExecArgs) {
-		_, err = r.runRPCExec(ctx, agent, props, props.ExecArgs, "delete")
+		_, err = r.runRPCExec(ctx, config.Connection, props, props.ExecArgs, "delete")
 	} else {
-		_, err = r.runRPCAnsibleExecute(ctx, agent, props, props.ExecArgs, "delete")
+		_, err = r.runRPCAnsibleExecute(ctx, config.Connection, props, props.ExecArgs, "delete")
 	}
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())

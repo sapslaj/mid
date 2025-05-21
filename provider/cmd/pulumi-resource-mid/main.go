@@ -15,10 +15,13 @@
 package main
 
 import (
+	"context"
+
 	p "github.com/pulumi/pulumi-go-provider"
 
 	"github.com/sapslaj/mid/pkg/telemetry"
 	mid "github.com/sapslaj/mid/provider"
+	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/version"
 )
 
@@ -26,5 +29,6 @@ import (
 func main() {
 	shutdownTelemetry := telemetry.StartTelemetry()
 	defer shutdownTelemetry()
+	defer executor.DisconnectAll(context.Background())
 	p.RunProvider(mid.Name, version.Version, mid.Provider())
 }

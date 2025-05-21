@@ -180,13 +180,7 @@ func (r User) Create(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return id, state, err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return id, state, fmt.Errorf(
 			"creating user failed: stderr=%s stdout=%s, err=%w",
@@ -230,13 +224,7 @@ func (r User) Read(
 		}, nil
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return id, inputs, state, err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return id, inputs, state, fmt.Errorf(
 			"reading user failed: stderr=%s stdout=%s, err=%w",
@@ -288,13 +276,7 @@ func (r User) Update(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return olds, err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return olds, fmt.Errorf(
 			"updating user failed: stderr=%s stdout=%s, err=%w",
@@ -353,13 +335,7 @@ func (r User) Delete(
 		}
 	}
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		return err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, agent, call)
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
 		return fmt.Errorf(
 			"deleting user failed: stderr=%s stdout=%s, err=%w",

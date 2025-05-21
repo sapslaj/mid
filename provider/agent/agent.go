@@ -33,14 +33,7 @@ func CallAgent[I any, O any](ctx context.Context, rpcFunction rpc.RPCFunction, a
 	}
 	var output O
 
-	agent, err := executor.StartAgent(ctx, config.Connection)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return output, err
-	}
-	defer agent.Disconnect()
-
-	callResult, err := executor.CallAgent[I, O](ctx, agent, call)
+	callResult, err := executor.CallAgent[I, O](ctx, config.Connection, call)
 	output = callResult.Result
 	span.SetAttributes(telemetry.OtelJSON("rpc.result", output))
 	if err != nil {
