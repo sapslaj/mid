@@ -20,6 +20,7 @@ import (
 	"github.com/pulumi/pulumi-go-provider/middleware/schema"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 
+	"github.com/sapslaj/mid/provider/agent"
 	"github.com/sapslaj/mid/provider/resource"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -59,6 +60,12 @@ func Provider() p.Provider {
 			infer.Resource[resource.Service, resource.ServiceArgs, resource.ServiceState](),
 			infer.Resource[resource.SystemdService, resource.SystemdServiceArgs, resource.SystemdServiceState](),
 			infer.Resource[resource.User, resource.UserArgs, resource.UserState](),
+		},
+		Functions: []infer.InferredFunction{
+			infer.Function[agent.AgentPing](),
+			infer.Function[agent.AnsibleExecute](),
+			infer.Function[agent.Exec](),
+			infer.Function[agent.FileStat](),
 		},
 		Config: infer.Config[types.Config](),
 		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{
