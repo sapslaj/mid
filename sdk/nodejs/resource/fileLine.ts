@@ -7,112 +7,112 @@ import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export class FileLine extends pulumi.CustomResource {
-  /**
-   * Get an existing FileLine resource's state with the given name, ID, and optional extra
-   * properties used to qualify the lookup.
-   *
-   * @param name The _unique_ name of the resulting resource.
-   * @param id The _unique_ provider ID of the resource to lookup.
-   * @param opts Optional settings to control the behavior of the CustomResource.
-   */
-  public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): FileLine {
-    return new FileLine(name, undefined as any, { ...opts, id: id });
-  }
-
-  /** @internal */
-  public static readonly __pulumiType = "mid:resource:FileLine";
-
-  /**
-   * Returns true if the given object is an instance of FileLine.  This is designed to work even
-   * when multiple copies of the Pulumi SDK have been loaded into the same process.
-   */
-  public static isInstance(obj: any): obj is FileLine {
-    if (obj === undefined || obj === null) {
-      return false;
+    /**
+     * Get an existing FileLine resource's state with the given name, ID, and optional extra
+     * properties used to qualify the lookup.
+     *
+     * @param name The _unique_ name of the resulting resource.
+     * @param id The _unique_ provider ID of the resource to lookup.
+     * @param opts Optional settings to control the behavior of the CustomResource.
+     */
+    public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): FileLine {
+        return new FileLine(name, undefined as any, { ...opts, id: id });
     }
-    return obj["__pulumiType"] === FileLine.__pulumiType;
-  }
 
-  public readonly backrefs!: pulumi.Output<boolean | undefined>;
-  public readonly backup!: pulumi.Output<boolean | undefined>;
-  public readonly create!: pulumi.Output<boolean | undefined>;
-  public readonly ensure!: pulumi.Output<string | undefined>;
-  public readonly firstMatch!: pulumi.Output<boolean | undefined>;
-  public readonly insertAfter!: pulumi.Output<string | undefined>;
-  public readonly insertBefore!: pulumi.Output<string | undefined>;
-  public readonly line!: pulumi.Output<string | undefined>;
-  public readonly path!: pulumi.Output<string>;
-  public readonly regexp!: pulumi.Output<string | undefined>;
-  public readonly searchString!: pulumi.Output<string | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
-  public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
-  public readonly validate!: pulumi.Output<string | undefined>;
+    /** @internal */
+    public static readonly __pulumiType = 'mid:resource:FileLine';
 
-  /**
-   * Create a FileLine resource with the given unique name, arguments, and options.
-   *
-   * @param name The _unique_ name of the resource.
-   * @param args The arguments to use to populate this resource's properties.
-   * @param opts A bag of options that control this resource's behavior.
-   */
-  constructor(name: string, args: FileLineArgs, opts?: pulumi.CustomResourceOptions) {
-    let resourceInputs: pulumi.Inputs = {};
-    opts = opts || {};
-    if (!opts.id) {
-      if ((!args || args.path === undefined) && !opts.urn) {
-        throw new Error("Missing required property 'path'");
-      }
-      resourceInputs["backrefs"] = args ? args.backrefs : undefined;
-      resourceInputs["backup"] = args ? args.backup : undefined;
-      resourceInputs["create"] = args ? args.create : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["firstMatch"] = args ? args.firstMatch : undefined;
-      resourceInputs["insertAfter"] = args ? args.insertAfter : undefined;
-      resourceInputs["insertBefore"] = args ? args.insertBefore : undefined;
-      resourceInputs["line"] = args ? args.line : undefined;
-      resourceInputs["path"] = args ? args.path : undefined;
-      resourceInputs["regexp"] = args ? args.regexp : undefined;
-      resourceInputs["searchString"] = args ? args.searchString : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
-      resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
-      resourceInputs["validate"] = args ? args.validate : undefined;
-    } else {
-      resourceInputs["backrefs"] = undefined /*out*/;
-      resourceInputs["backup"] = undefined /*out*/;
-      resourceInputs["create"] = undefined /*out*/;
-      resourceInputs["ensure"] = undefined /*out*/;
-      resourceInputs["firstMatch"] = undefined /*out*/;
-      resourceInputs["insertAfter"] = undefined /*out*/;
-      resourceInputs["insertBefore"] = undefined /*out*/;
-      resourceInputs["line"] = undefined /*out*/;
-      resourceInputs["path"] = undefined /*out*/;
-      resourceInputs["regexp"] = undefined /*out*/;
-      resourceInputs["searchString"] = undefined /*out*/;
-      resourceInputs["triggers"] = undefined /*out*/;
-      resourceInputs["unsafeWrites"] = undefined /*out*/;
-      resourceInputs["validate"] = undefined /*out*/;
+    /**
+     * Returns true if the given object is an instance of FileLine.  This is designed to work even
+     * when multiple copies of the Pulumi SDK have been loaded into the same process.
+     */
+    public static isInstance(obj: any): obj is FileLine {
+        if (obj === undefined || obj === null) {
+            return false;
+        }
+        return obj['__pulumiType'] === FileLine.__pulumiType;
     }
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
-    super(FileLine.__pulumiType, name, resourceInputs, opts);
-  }
+
+    public readonly backrefs!: pulumi.Output<boolean | undefined>;
+    public readonly backup!: pulumi.Output<boolean | undefined>;
+    public readonly create!: pulumi.Output<boolean | undefined>;
+    public readonly ensure!: pulumi.Output<string | undefined>;
+    public readonly firstMatch!: pulumi.Output<boolean | undefined>;
+    public readonly insertAfter!: pulumi.Output<string | undefined>;
+    public readonly insertBefore!: pulumi.Output<string | undefined>;
+    public readonly line!: pulumi.Output<string | undefined>;
+    public readonly path!: pulumi.Output<string>;
+    public readonly regexp!: pulumi.Output<string | undefined>;
+    public readonly searchString!: pulumi.Output<string | undefined>;
+    public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+    public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
+    public readonly validate!: pulumi.Output<string | undefined>;
+
+    /**
+     * Create a FileLine resource with the given unique name, arguments, and options.
+     *
+     * @param name The _unique_ name of the resource.
+     * @param args The arguments to use to populate this resource's properties.
+     * @param opts A bag of options that control this resource's behavior.
+     */
+    constructor(name: string, args: FileLineArgs, opts?: pulumi.CustomResourceOptions) {
+        let resourceInputs: pulumi.Inputs = {};
+        opts = opts || {};
+        if (!opts.id) {
+            if ((!args || args.path === undefined) && !opts.urn) {
+                throw new Error("Missing required property 'path'");
+            }
+            resourceInputs["backrefs"] = args ? args.backrefs : undefined;
+            resourceInputs["backup"] = args ? args.backup : undefined;
+            resourceInputs["create"] = args ? args.create : undefined;
+            resourceInputs["ensure"] = args ? args.ensure : undefined;
+            resourceInputs["firstMatch"] = args ? args.firstMatch : undefined;
+            resourceInputs["insertAfter"] = args ? args.insertAfter : undefined;
+            resourceInputs["insertBefore"] = args ? args.insertBefore : undefined;
+            resourceInputs["line"] = args ? args.line : undefined;
+            resourceInputs["path"] = args ? args.path : undefined;
+            resourceInputs["regexp"] = args ? args.regexp : undefined;
+            resourceInputs["searchString"] = args ? args.searchString : undefined;
+            resourceInputs["triggers"] = args ? args.triggers : undefined;
+            resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
+            resourceInputs["validate"] = args ? args.validate : undefined;
+        } else {
+            resourceInputs["backrefs"] = undefined /*out*/;
+            resourceInputs["backup"] = undefined /*out*/;
+            resourceInputs["create"] = undefined /*out*/;
+            resourceInputs["ensure"] = undefined /*out*/;
+            resourceInputs["firstMatch"] = undefined /*out*/;
+            resourceInputs["insertAfter"] = undefined /*out*/;
+            resourceInputs["insertBefore"] = undefined /*out*/;
+            resourceInputs["line"] = undefined /*out*/;
+            resourceInputs["path"] = undefined /*out*/;
+            resourceInputs["regexp"] = undefined /*out*/;
+            resourceInputs["searchString"] = undefined /*out*/;
+            resourceInputs["triggers"] = undefined /*out*/;
+            resourceInputs["unsafeWrites"] = undefined /*out*/;
+            resourceInputs["validate"] = undefined /*out*/;
+        }
+        opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
+        super(FileLine.__pulumiType, name, resourceInputs, opts);
+    }
 }
 
 /**
  * The set of arguments for constructing a FileLine resource.
  */
 export interface FileLineArgs {
-  backrefs?: pulumi.Input<boolean>;
-  backup?: pulumi.Input<boolean>;
-  create?: pulumi.Input<boolean>;
-  ensure?: pulumi.Input<string>;
-  firstMatch?: pulumi.Input<boolean>;
-  insertAfter?: pulumi.Input<string>;
-  insertBefore?: pulumi.Input<string>;
-  line?: pulumi.Input<string>;
-  path: pulumi.Input<string>;
-  regexp?: pulumi.Input<string>;
-  searchString?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
-  unsafeWrites?: pulumi.Input<boolean>;
-  validate?: pulumi.Input<string>;
+    backrefs?: pulumi.Input<boolean>;
+    backup?: pulumi.Input<boolean>;
+    create?: pulumi.Input<boolean>;
+    ensure?: pulumi.Input<string>;
+    firstMatch?: pulumi.Input<boolean>;
+    insertAfter?: pulumi.Input<string>;
+    insertBefore?: pulumi.Input<string>;
+    line?: pulumi.Input<string>;
+    path: pulumi.Input<string>;
+    regexp?: pulumi.Input<string>;
+    searchString?: pulumi.Input<string>;
+    triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+    unsafeWrites?: pulumi.Input<boolean>;
+    validate?: pulumi.Input<string>;
 }

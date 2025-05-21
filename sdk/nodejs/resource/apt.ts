@@ -7,157 +7,157 @@ import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export class Apt extends pulumi.CustomResource {
-  /**
-   * Get an existing Apt resource's state with the given name, ID, and optional extra
-   * properties used to qualify the lookup.
-   *
-   * @param name The _unique_ name of the resulting resource.
-   * @param id The _unique_ provider ID of the resource to lookup.
-   * @param opts Optional settings to control the behavior of the CustomResource.
-   */
-  public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): Apt {
-    return new Apt(name, undefined as any, { ...opts, id: id });
-  }
-
-  /** @internal */
-  public static readonly __pulumiType = "mid:resource:Apt";
-
-  /**
-   * Returns true if the given object is an instance of Apt.  This is designed to work even
-   * when multiple copies of the Pulumi SDK have been loaded into the same process.
-   */
-  public static isInstance(obj: any): obj is Apt {
-    if (obj === undefined || obj === null) {
-      return false;
+    /**
+     * Get an existing Apt resource's state with the given name, ID, and optional extra
+     * properties used to qualify the lookup.
+     *
+     * @param name The _unique_ name of the resulting resource.
+     * @param id The _unique_ provider ID of the resource to lookup.
+     * @param opts Optional settings to control the behavior of the CustomResource.
+     */
+    public static get(name: string, id: pulumi.Input<pulumi.ID>, opts?: pulumi.CustomResourceOptions): Apt {
+        return new Apt(name, undefined as any, { ...opts, id: id });
     }
-    return obj["__pulumiType"] === Apt.__pulumiType;
-  }
 
-  public readonly allowChangeHeldPackages!: pulumi.Output<boolean | undefined>;
-  public readonly allowDowngrade!: pulumi.Output<boolean | undefined>;
-  public readonly allowUnauthenticated!: pulumi.Output<boolean | undefined>;
-  public readonly autoclean!: pulumi.Output<boolean | undefined>;
-  public readonly autoremove!: pulumi.Output<boolean | undefined>;
-  public readonly cacheValidTime!: pulumi.Output<number | undefined>;
-  public readonly clean!: pulumi.Output<boolean | undefined>;
-  public readonly deb!: pulumi.Output<string | undefined>;
-  public readonly defaultRelease!: pulumi.Output<string | undefined>;
-  public readonly dpkgOptions!: pulumi.Output<string | undefined>;
-  public readonly ensure!: pulumi.Output<string | undefined>;
-  public readonly failOnAutoremove!: pulumi.Output<boolean | undefined>;
-  public readonly force!: pulumi.Output<boolean | undefined>;
-  public readonly forceAptGet!: pulumi.Output<boolean | undefined>;
-  public readonly installRecommends!: pulumi.Output<boolean | undefined>;
-  public readonly lockTimeout!: pulumi.Output<number | undefined>;
-  public readonly name!: pulumi.Output<string | undefined>;
-  public readonly names!: pulumi.Output<string[] | undefined>;
-  public readonly onlyUpgrade!: pulumi.Output<boolean | undefined>;
-  public readonly policyRcD!: pulumi.Output<number | undefined>;
-  public readonly purge!: pulumi.Output<boolean | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
-  public readonly updateCache!: pulumi.Output<boolean | undefined>;
-  public readonly updateCacheRetries!: pulumi.Output<number | undefined>;
-  public readonly updateCacheRetryMaxDelay!: pulumi.Output<number | undefined>;
-  public readonly upgrade!: pulumi.Output<string | undefined>;
+    /** @internal */
+    public static readonly __pulumiType = 'mid:resource:Apt';
 
-  /**
-   * Create a Apt resource with the given unique name, arguments, and options.
-   *
-   * @param name The _unique_ name of the resource.
-   * @param args The arguments to use to populate this resource's properties.
-   * @param opts A bag of options that control this resource's behavior.
-   */
-  constructor(name: string, args?: AptArgs, opts?: pulumi.CustomResourceOptions) {
-    let resourceInputs: pulumi.Inputs = {};
-    opts = opts || {};
-    if (!opts.id) {
-      resourceInputs["allowChangeHeldPackages"] = args ? args.allowChangeHeldPackages : undefined;
-      resourceInputs["allowDowngrade"] = args ? args.allowDowngrade : undefined;
-      resourceInputs["allowUnauthenticated"] = args ? args.allowUnauthenticated : undefined;
-      resourceInputs["autoclean"] = args ? args.autoclean : undefined;
-      resourceInputs["autoremove"] = args ? args.autoremove : undefined;
-      resourceInputs["cacheValidTime"] = args ? args.cacheValidTime : undefined;
-      resourceInputs["clean"] = args ? args.clean : undefined;
-      resourceInputs["deb"] = args ? args.deb : undefined;
-      resourceInputs["defaultRelease"] = args ? args.defaultRelease : undefined;
-      resourceInputs["dpkgOptions"] = args ? args.dpkgOptions : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["failOnAutoremove"] = args ? args.failOnAutoremove : undefined;
-      resourceInputs["force"] = args ? args.force : undefined;
-      resourceInputs["forceAptGet"] = args ? args.forceAptGet : undefined;
-      resourceInputs["installRecommends"] = args ? args.installRecommends : undefined;
-      resourceInputs["lockTimeout"] = args ? args.lockTimeout : undefined;
-      resourceInputs["name"] = args ? args.name : undefined;
-      resourceInputs["names"] = args ? args.names : undefined;
-      resourceInputs["onlyUpgrade"] = args ? args.onlyUpgrade : undefined;
-      resourceInputs["policyRcD"] = args ? args.policyRcD : undefined;
-      resourceInputs["purge"] = args ? args.purge : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
-      resourceInputs["updateCache"] = args ? args.updateCache : undefined;
-      resourceInputs["updateCacheRetries"] = args ? args.updateCacheRetries : undefined;
-      resourceInputs["updateCacheRetryMaxDelay"] = args ? args.updateCacheRetryMaxDelay : undefined;
-      resourceInputs["upgrade"] = args ? args.upgrade : undefined;
-    } else {
-      resourceInputs["allowChangeHeldPackages"] = undefined /*out*/;
-      resourceInputs["allowDowngrade"] = undefined /*out*/;
-      resourceInputs["allowUnauthenticated"] = undefined /*out*/;
-      resourceInputs["autoclean"] = undefined /*out*/;
-      resourceInputs["autoremove"] = undefined /*out*/;
-      resourceInputs["cacheValidTime"] = undefined /*out*/;
-      resourceInputs["clean"] = undefined /*out*/;
-      resourceInputs["deb"] = undefined /*out*/;
-      resourceInputs["defaultRelease"] = undefined /*out*/;
-      resourceInputs["dpkgOptions"] = undefined /*out*/;
-      resourceInputs["ensure"] = undefined /*out*/;
-      resourceInputs["failOnAutoremove"] = undefined /*out*/;
-      resourceInputs["force"] = undefined /*out*/;
-      resourceInputs["forceAptGet"] = undefined /*out*/;
-      resourceInputs["installRecommends"] = undefined /*out*/;
-      resourceInputs["lockTimeout"] = undefined /*out*/;
-      resourceInputs["name"] = undefined /*out*/;
-      resourceInputs["names"] = undefined /*out*/;
-      resourceInputs["onlyUpgrade"] = undefined /*out*/;
-      resourceInputs["policyRcD"] = undefined /*out*/;
-      resourceInputs["purge"] = undefined /*out*/;
-      resourceInputs["triggers"] = undefined /*out*/;
-      resourceInputs["updateCache"] = undefined /*out*/;
-      resourceInputs["updateCacheRetries"] = undefined /*out*/;
-      resourceInputs["updateCacheRetryMaxDelay"] = undefined /*out*/;
-      resourceInputs["upgrade"] = undefined /*out*/;
+    /**
+     * Returns true if the given object is an instance of Apt.  This is designed to work even
+     * when multiple copies of the Pulumi SDK have been loaded into the same process.
+     */
+    public static isInstance(obj: any): obj is Apt {
+        if (obj === undefined || obj === null) {
+            return false;
+        }
+        return obj['__pulumiType'] === Apt.__pulumiType;
     }
-    opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
-    super(Apt.__pulumiType, name, resourceInputs, opts);
-  }
+
+    public readonly allowChangeHeldPackages!: pulumi.Output<boolean | undefined>;
+    public readonly allowDowngrade!: pulumi.Output<boolean | undefined>;
+    public readonly allowUnauthenticated!: pulumi.Output<boolean | undefined>;
+    public readonly autoclean!: pulumi.Output<boolean | undefined>;
+    public readonly autoremove!: pulumi.Output<boolean | undefined>;
+    public readonly cacheValidTime!: pulumi.Output<number | undefined>;
+    public readonly clean!: pulumi.Output<boolean | undefined>;
+    public readonly deb!: pulumi.Output<string | undefined>;
+    public readonly defaultRelease!: pulumi.Output<string | undefined>;
+    public readonly dpkgOptions!: pulumi.Output<string | undefined>;
+    public readonly ensure!: pulumi.Output<string | undefined>;
+    public readonly failOnAutoremove!: pulumi.Output<boolean | undefined>;
+    public readonly force!: pulumi.Output<boolean | undefined>;
+    public readonly forceAptGet!: pulumi.Output<boolean | undefined>;
+    public readonly installRecommends!: pulumi.Output<boolean | undefined>;
+    public readonly lockTimeout!: pulumi.Output<number | undefined>;
+    public readonly name!: pulumi.Output<string | undefined>;
+    public readonly names!: pulumi.Output<string[] | undefined>;
+    public readonly onlyUpgrade!: pulumi.Output<boolean | undefined>;
+    public readonly policyRcD!: pulumi.Output<number | undefined>;
+    public readonly purge!: pulumi.Output<boolean | undefined>;
+    public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+    public readonly updateCache!: pulumi.Output<boolean | undefined>;
+    public readonly updateCacheRetries!: pulumi.Output<number | undefined>;
+    public readonly updateCacheRetryMaxDelay!: pulumi.Output<number | undefined>;
+    public readonly upgrade!: pulumi.Output<string | undefined>;
+
+    /**
+     * Create a Apt resource with the given unique name, arguments, and options.
+     *
+     * @param name The _unique_ name of the resource.
+     * @param args The arguments to use to populate this resource's properties.
+     * @param opts A bag of options that control this resource's behavior.
+     */
+    constructor(name: string, args?: AptArgs, opts?: pulumi.CustomResourceOptions) {
+        let resourceInputs: pulumi.Inputs = {};
+        opts = opts || {};
+        if (!opts.id) {
+            resourceInputs["allowChangeHeldPackages"] = args ? args.allowChangeHeldPackages : undefined;
+            resourceInputs["allowDowngrade"] = args ? args.allowDowngrade : undefined;
+            resourceInputs["allowUnauthenticated"] = args ? args.allowUnauthenticated : undefined;
+            resourceInputs["autoclean"] = args ? args.autoclean : undefined;
+            resourceInputs["autoremove"] = args ? args.autoremove : undefined;
+            resourceInputs["cacheValidTime"] = args ? args.cacheValidTime : undefined;
+            resourceInputs["clean"] = args ? args.clean : undefined;
+            resourceInputs["deb"] = args ? args.deb : undefined;
+            resourceInputs["defaultRelease"] = args ? args.defaultRelease : undefined;
+            resourceInputs["dpkgOptions"] = args ? args.dpkgOptions : undefined;
+            resourceInputs["ensure"] = args ? args.ensure : undefined;
+            resourceInputs["failOnAutoremove"] = args ? args.failOnAutoremove : undefined;
+            resourceInputs["force"] = args ? args.force : undefined;
+            resourceInputs["forceAptGet"] = args ? args.forceAptGet : undefined;
+            resourceInputs["installRecommends"] = args ? args.installRecommends : undefined;
+            resourceInputs["lockTimeout"] = args ? args.lockTimeout : undefined;
+            resourceInputs["name"] = args ? args.name : undefined;
+            resourceInputs["names"] = args ? args.names : undefined;
+            resourceInputs["onlyUpgrade"] = args ? args.onlyUpgrade : undefined;
+            resourceInputs["policyRcD"] = args ? args.policyRcD : undefined;
+            resourceInputs["purge"] = args ? args.purge : undefined;
+            resourceInputs["triggers"] = args ? args.triggers : undefined;
+            resourceInputs["updateCache"] = args ? args.updateCache : undefined;
+            resourceInputs["updateCacheRetries"] = args ? args.updateCacheRetries : undefined;
+            resourceInputs["updateCacheRetryMaxDelay"] = args ? args.updateCacheRetryMaxDelay : undefined;
+            resourceInputs["upgrade"] = args ? args.upgrade : undefined;
+        } else {
+            resourceInputs["allowChangeHeldPackages"] = undefined /*out*/;
+            resourceInputs["allowDowngrade"] = undefined /*out*/;
+            resourceInputs["allowUnauthenticated"] = undefined /*out*/;
+            resourceInputs["autoclean"] = undefined /*out*/;
+            resourceInputs["autoremove"] = undefined /*out*/;
+            resourceInputs["cacheValidTime"] = undefined /*out*/;
+            resourceInputs["clean"] = undefined /*out*/;
+            resourceInputs["deb"] = undefined /*out*/;
+            resourceInputs["defaultRelease"] = undefined /*out*/;
+            resourceInputs["dpkgOptions"] = undefined /*out*/;
+            resourceInputs["ensure"] = undefined /*out*/;
+            resourceInputs["failOnAutoremove"] = undefined /*out*/;
+            resourceInputs["force"] = undefined /*out*/;
+            resourceInputs["forceAptGet"] = undefined /*out*/;
+            resourceInputs["installRecommends"] = undefined /*out*/;
+            resourceInputs["lockTimeout"] = undefined /*out*/;
+            resourceInputs["name"] = undefined /*out*/;
+            resourceInputs["names"] = undefined /*out*/;
+            resourceInputs["onlyUpgrade"] = undefined /*out*/;
+            resourceInputs["policyRcD"] = undefined /*out*/;
+            resourceInputs["purge"] = undefined /*out*/;
+            resourceInputs["triggers"] = undefined /*out*/;
+            resourceInputs["updateCache"] = undefined /*out*/;
+            resourceInputs["updateCacheRetries"] = undefined /*out*/;
+            resourceInputs["updateCacheRetryMaxDelay"] = undefined /*out*/;
+            resourceInputs["upgrade"] = undefined /*out*/;
+        }
+        opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
+        super(Apt.__pulumiType, name, resourceInputs, opts);
+    }
 }
 
 /**
  * The set of arguments for constructing a Apt resource.
  */
 export interface AptArgs {
-  allowChangeHeldPackages?: pulumi.Input<boolean>;
-  allowDowngrade?: pulumi.Input<boolean>;
-  allowUnauthenticated?: pulumi.Input<boolean>;
-  autoclean?: pulumi.Input<boolean>;
-  autoremove?: pulumi.Input<boolean>;
-  cacheValidTime?: pulumi.Input<number>;
-  clean?: pulumi.Input<boolean>;
-  deb?: pulumi.Input<string>;
-  defaultRelease?: pulumi.Input<string>;
-  dpkgOptions?: pulumi.Input<string>;
-  ensure?: pulumi.Input<string>;
-  failOnAutoremove?: pulumi.Input<boolean>;
-  force?: pulumi.Input<boolean>;
-  forceAptGet?: pulumi.Input<boolean>;
-  installRecommends?: pulumi.Input<boolean>;
-  lockTimeout?: pulumi.Input<number>;
-  name?: pulumi.Input<string>;
-  names?: pulumi.Input<pulumi.Input<string>[]>;
-  onlyUpgrade?: pulumi.Input<boolean>;
-  policyRcD?: pulumi.Input<number>;
-  purge?: pulumi.Input<boolean>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
-  updateCache?: pulumi.Input<boolean>;
-  updateCacheRetries?: pulumi.Input<number>;
-  updateCacheRetryMaxDelay?: pulumi.Input<number>;
-  upgrade?: pulumi.Input<string>;
+    allowChangeHeldPackages?: pulumi.Input<boolean>;
+    allowDowngrade?: pulumi.Input<boolean>;
+    allowUnauthenticated?: pulumi.Input<boolean>;
+    autoclean?: pulumi.Input<boolean>;
+    autoremove?: pulumi.Input<boolean>;
+    cacheValidTime?: pulumi.Input<number>;
+    clean?: pulumi.Input<boolean>;
+    deb?: pulumi.Input<string>;
+    defaultRelease?: pulumi.Input<string>;
+    dpkgOptions?: pulumi.Input<string>;
+    ensure?: pulumi.Input<string>;
+    failOnAutoremove?: pulumi.Input<boolean>;
+    force?: pulumi.Input<boolean>;
+    forceAptGet?: pulumi.Input<boolean>;
+    installRecommends?: pulumi.Input<boolean>;
+    lockTimeout?: pulumi.Input<number>;
+    name?: pulumi.Input<string>;
+    names?: pulumi.Input<pulumi.Input<string>[]>;
+    onlyUpgrade?: pulumi.Input<boolean>;
+    policyRcD?: pulumi.Input<number>;
+    purge?: pulumi.Input<boolean>;
+    triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+    updateCache?: pulumi.Input<boolean>;
+    updateCacheRetries?: pulumi.Input<number>;
+    updateCacheRetryMaxDelay?: pulumi.Input<number>;
+    upgrade?: pulumi.Input<string>;
 }

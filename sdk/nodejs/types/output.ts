@@ -5,72 +5,85 @@ import * as pulumi from "@pulumi/pulumi";
 import * as inputs from "../types/input";
 import * as outputs from "../types/output";
 
+export namespace agent {
+    export interface FileStatFileMode {
+        int: number;
+        isDir: boolean;
+        isRegular: boolean;
+        octal: string;
+        string: string;
+    }
+
+}
+
 export namespace resource {
-  export interface FileStateStat {
-    atime: number;
-    attributes: string[];
-    charset: string;
-    checksum: string;
-    ctime: number;
-    dev: number;
-    executable: boolean;
-    exists: boolean;
-    gid: number;
-    gr_name: string;
-    inode: number;
-    isblk: boolean;
-    ischr: boolean;
-    isdir: boolean;
-    isfifo: boolean;
-    isgid: boolean;
-    islnk: boolean;
-    isreg: boolean;
-    issock: boolean;
-    isuid: boolean;
-    lnkSource: string;
-    lnkTarget: string;
-    mimetype: string;
-    mode: string;
-    mtime: number;
-    nlink: number;
-    path: string;
-    pwName: string;
-    readable: boolean;
-    rgrp: boolean;
-    roth: boolean;
-    rusr: boolean;
-    size: number;
-    uid: number;
-    version: string;
-    wgrp: boolean;
-    woth: boolean;
-    writeable: boolean;
-    wusr: boolean;
-    xgrp: boolean;
-    xoth: boolean;
-    xusr: boolean;
-  }
+    export interface FileStateStat {
+        atime: number;
+        attributes: string[];
+        charset: string;
+        checksum: string;
+        ctime: number;
+        dev: number;
+        executable: boolean;
+        exists: boolean;
+        gid: number;
+        gr_name: string;
+        inode: number;
+        isblk: boolean;
+        ischr: boolean;
+        isdir: boolean;
+        isfifo: boolean;
+        isgid: boolean;
+        islnk: boolean;
+        isreg: boolean;
+        issock: boolean;
+        isuid: boolean;
+        lnkSource: string;
+        lnkTarget: string;
+        mimetype: string;
+        mode: string;
+        mtime: number;
+        nlink: number;
+        path: string;
+        pwName: string;
+        readable: boolean;
+        rgrp: boolean;
+        roth: boolean;
+        rusr: boolean;
+        size: number;
+        uid: number;
+        version: string;
+        wgrp: boolean;
+        woth: boolean;
+        writeable: boolean;
+        wusr: boolean;
+        xgrp: boolean;
+        xoth: boolean;
+        xusr: boolean;
+    }
+
 }
 
 export namespace types {
-  export interface Connection {
-    host: string;
-    password?: string;
-    port?: number;
-    privateKey?: string;
-    user?: string;
-  }
+    export interface Connection {
+        host: string;
+        password?: string;
+        port?: number;
+        privateKey?: string;
+        user?: string;
+    }
 
-  export interface ExecCommand {
-    command: string[];
-    dir?: string;
-    environment?: { [key: string]: string };
-    stdin?: string;
-  }
+    export interface ExecCommand {
+        command: string[];
+        dir?: string;
+        environment?: {[key: string]: string};
+        stdin?: string;
+    }
 
-  export interface TriggersOutput {
-    lastChanged: string;
-    refresh?: any[];
-    replace?: any[];
-  }
+    export interface TriggersOutput {
+        lastChanged: string;
+        refresh?: any[];
+        replace?: any[];
+    }
+
 }
