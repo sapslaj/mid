@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -129,7 +129,7 @@ func (r Service) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	if input.Name == nil {
-		input.Name = ptr.String(name)
+		input.Name = ptr.Of(name)
 	}
 
 	state := r.updateState(ServiceState{}, input, true)
@@ -189,7 +189,7 @@ func (r Service) Read(
 	config := infer.GetConfig[types.Config](ctx)
 
 	if inputs.Name == nil {
-		inputs.Name = ptr.String(state.Name)
+		inputs.Name = ptr.Of(state.Name)
 	}
 
 	parameters, err := r.argsToTaskParameters(inputs)
@@ -239,7 +239,7 @@ func (r Service) Update(
 	config := infer.GetConfig[types.Config](ctx)
 
 	if news.Name == nil {
-		news.Name = ptr.String(olds.Name)
+		news.Name = ptr.Of(olds.Name)
 	}
 
 	parameters, err := r.argsToTaskParameters(news)
@@ -308,11 +308,11 @@ func (r Service) Delete(
 
 	if args.Enabled != nil && *args.Enabled {
 		runPlay = true
-		args.Enabled = ptr.Bool(false)
+		args.Enabled = ptr.Of(false)
 	}
 	if args.State != nil && *args.State != "stopped" {
 		runPlay = true
-		args.State = ptr.String("stopped")
+		args.State = ptr.Of("stopped")
 	}
 
 	if !runPlay {

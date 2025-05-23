@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -153,7 +153,7 @@ func (r Package) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	if input.Name == nil && input.Names == nil {
-		input.Name = ptr.String(name)
+		input.Name = ptr.Of(name)
 	}
 
 	state := r.updateState(PackageState{}, input, true)
@@ -431,7 +431,7 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 	parameters, err := r.argsToTaskParameters(PackageArgs{
 		Name:   props.Name,
 		Names:  props.Names,
-		Ensure: ptr.String("absent"),
+		Ensure: ptr.Of("absent"),
 	})
 	if err != nil {
 		return err

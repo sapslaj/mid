@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -121,7 +121,7 @@ func (r SystemdService) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	if input.Name == nil && (input.Enabled != nil || input.Masked != nil || input.Ensure != nil) {
-		input.Name = ptr.String(name)
+		input.Name = ptr.Of(name)
 	}
 
 	state := r.updateState(SystemdServiceState{}, input, true)
@@ -267,7 +267,7 @@ func (r SystemdService) Update(
 	refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
 	if refreshDiff != nil {
 		if news.Ensure != nil && *news.Ensure == "started" {
-			parameters.State = ptr.String("restarted")
+			parameters.State = ptr.Of("restarted")
 		}
 	}
 
@@ -315,11 +315,11 @@ func (r SystemdService) Delete(
 
 	if args.Enabled != nil && *args.Enabled {
 		runPlay = true
-		args.Enabled = ptr.Bool(false)
+		args.Enabled = ptr.Of(false)
 	}
 	if args.Ensure != nil && *args.Ensure != "stopped" {
 		runPlay = true
-		args.Ensure = ptr.String("stopped")
+		args.Ensure = ptr.Of("stopped")
 	}
 
 	if !runPlay {
