@@ -47,6 +47,7 @@ func (p *LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs],
 
 type LineinfileReturn struct {
 	AnsibleCommonReturns
+	Backup *string `json:"backup,omitempty"`
 }
 
 func LineinfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LineinfileReturn, error) {

@@ -239,7 +239,13 @@ EXAMPLES = r"""
     backrefs: yes
 """
 
-RETURN = r"""#"""
+RETURN = r"""
+backup:
+  description: backup file location
+  returned: success, in some cases
+  type: str
+  sample: "/foo.39.2025-05-23@15:49:56~"
+"""
 
 import os
 import re
