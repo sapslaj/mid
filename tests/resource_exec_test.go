@@ -14,11 +14,6 @@ import (
 func TestResourceExec(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.DockerBackend,
-	})
-	defer harness.Close()
-
 	tests := map[string]struct {
 		props  resource.PropertyMap
 		create string
@@ -155,73 +150,83 @@ func TestResourceExec(t *testing.T) {
 	}
 
 	for name, tc := range tests {
-		t.Logf("%s: sending preview create request", name)
-		_, err := harness.Provider.Create(p.CreateRequest{
-			Urn:        MakeURN("mid:resource:Exec"),
-			Properties: tc.props,
-			Preview:    true,
+		tc := tc
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			harness := NewProviderTestHarness(t, testmachine.Config{
+				Backend: testmachine.DockerBackend,
+			})
+			defer harness.Close()
+
+			t.Logf("%s: sending preview create request", name)
+			_, err := harness.Provider.Create(p.CreateRequest{
+				Urn:        MakeURN("mid:resource:Exec"),
+				Properties: tc.props,
+				Preview:    true,
+			})
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			t.Logf("%s: sending create request", name)
+			createResponse, err := harness.Provider.Create(p.CreateRequest{
+				Urn:        MakeURN("mid:resource:Exec"),
+				Properties: tc.props,
+			})
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			t.Logf("%s: checking create status", name)
+			if !harness.AssertCommand(t, tc.create) {
+				return
+			}
+
+			t.Logf("%s: sending preview update request", name)
+			_, err = harness.Provider.Update(p.UpdateRequest{
+				Urn:     MakeURN("mid:resource:Exec"),
+				Olds:    createResponse.Properties,
+				News:    tc.props,
+				Preview: true,
+			})
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			t.Logf("%s: sending update request", name)
+			updateResponse, err := harness.Provider.Update(p.UpdateRequest{
+				Urn:  MakeURN("mid:resource:Exec"),
+				Olds: createResponse.Properties,
+				News: tc.props,
+			})
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			if tc.update == "" {
+				t.Logf("%s: update check is same as create", name)
+				tc.update = tc.create
+			}
+			t.Logf("%s: checking update status", name)
+			if !harness.AssertCommand(t, tc.update) {
+				return
+			}
+
+			t.Logf("%s: sending delete request", name)
+			err = harness.Provider.Delete(p.DeleteRequest{
+				Urn:        MakeURN("mid:resource:Exec"),
+				Properties: updateResponse.Properties,
+			})
+			if !assert.NoError(t, err) {
+				return
+			}
+
+			t.Logf("%s: checking delete status", name)
+			if !harness.AssertCommand(t, tc.delete) {
+				return
+			}
 		})
-		if !assert.NoError(t, err) {
-			continue
-		}
-
-		t.Logf("%s: sending create request", name)
-		createResponse, err := harness.Provider.Create(p.CreateRequest{
-			Urn:        MakeURN("mid:resource:Exec"),
-			Properties: tc.props,
-		})
-		if !assert.NoError(t, err) {
-			continue
-		}
-
-		t.Logf("%s: checking create status", name)
-		if !harness.AssertCommand(t, tc.create) {
-			continue
-		}
-
-		t.Logf("%s: sending preview update request", name)
-		_, err = harness.Provider.Update(p.UpdateRequest{
-			Urn:     MakeURN("mid:resource:Exec"),
-			Olds:    createResponse.Properties,
-			News:    tc.props,
-			Preview: true,
-		})
-		if !assert.NoError(t, err) {
-			continue
-		}
-
-		t.Logf("%s: sending update request", name)
-		updateResponse, err := harness.Provider.Update(p.UpdateRequest{
-			Urn:  MakeURN("mid:resource:Exec"),
-			Olds: createResponse.Properties,
-			News: tc.props,
-		})
-		if !assert.NoError(t, err) {
-			continue
-		}
-
-		if tc.update == "" {
-			t.Logf("%s: update check is same as create", name)
-			tc.update = tc.create
-		}
-		t.Logf("%s: checking update status", name)
-		if !harness.AssertCommand(t, tc.update) {
-			continue
-		}
-
-		t.Logf("%s: sending delete request", name)
-		err = harness.Provider.Delete(p.DeleteRequest{
-			Urn:        MakeURN("mid:resource:Exec"),
-			Properties: updateResponse.Properties,
-		})
-		if !assert.NoError(t, err) {
-			continue
-		}
-
-		t.Logf("%s: checking delete status", name)
-		if !harness.AssertCommand(t, tc.delete) {
-			continue
-		}
 	}
 }
 
