@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -63,21 +64,29 @@ func (tm *TestMachine) Close() error {
 	return nil
 }
 
+func SafeName(s string) string {
+	re := regexp.MustCompile(`['\"!@#$%^&\*\(\)\[\]\{\};:\,\./<>\?\|` + "`" + `~=_+ ]`)
+	return re.ReplaceAllString(strings.ToLower(s), "-")
+}
+
 func New(t *testing.T, config Config) (*TestMachine, error) {
 	t.Helper()
 
 	if config.Name == "" {
-		config.Name = "mid-" + strings.ToLower(t.Name())
+		config.Name = "mid-" + SafeName(t.Name())
 	}
 	t.Logf("testmachine: using name %q", config.Name)
+
 	if config.Backend == "" {
 		config.Backend = DockerBackend
 	}
 	t.Logf("testmachine: using backend %q", config.Backend)
+
 	if config.SSHUsername == "" {
 		config.SSHUsername = "ubuntu"
 	}
 	t.Logf("testmachine: using ssh username %q", config.SSHUsername)
+
 	if config.DataPath == "" {
 		// HACK: gotta do some nasty stuff to get the path to where all of the data
 		// files are
@@ -224,6 +233,7 @@ func DownloadQEMUImage(t *testing.T, url string, dest string) error {
 
 	QEMUDownloadMutex.Lock()
 	defer QEMUDownloadMutex.Unlock()
+
 	_, err := os.Stat(dest)
 	if err == nil {
 		t.Logf("%s already downloaded", dest)
