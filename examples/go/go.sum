@@ -160,8 +160,8 @@ github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 h1:OkMGxebDj
 github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06/go.mod h1:+ePHsJ1keEjQtpvf9HHw0f4ZeJ0TLRsxhunSI2hYJSs=
 github.com/santhosh-tekuri/jsonschema/v5 v5.0.0 h1:TToq11gyfNlrMFZiYujSekIsPd9AmsA2Bj/iv+s4JHE=
 github.com/santhosh-tekuri/jsonschema/v5 v5.0.0/go.mod h1:FKdcjfQW6rpZSnxxUvEA5H/cDPdvJ/SZJQLWWXWGrZ0=
-github.com/sapslaj/mid/sdk v0.0.0-20250513161442-2886a99d3ea8 h1:apQhNCrdNG/IIsmpQt01qb9tusMouTzyJ34K+9K9kEs=
-github.com/sapslaj/mid/sdk v0.0.0-20250513161442-2886a99d3ea8/go.mod h1:BzYRMDilVr8vjbldXY7Pi/u99os72oIgSrOC7GCOOCk=
+github.com/sapslaj/mid/sdk v0.0.0-20250521045229-0bf6b707d509 h1:J0YlxZBiF6SBgFpbjMHtwLzJv+pOJa5oz7H/OjGBwok=
+github.com/sapslaj/mid/sdk v0.0.0-20250521045229-0bf6b707d509/go.mod h1:BzYRMDilVr8vjbldXY7Pi/u99os72oIgSrOC7GCOOCk=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 h1:n661drycOFuPLCN3Uc8sB6B/s6Z4t2xvBgU1htSHuq8=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
