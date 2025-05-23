@@ -13,12 +13,22 @@ type CopyParameters struct {
 	Dest          string  `json:"dest"`
 	Backup        *bool   `json:"backup,omitempty"`
 	Force         *bool   `json:"force,omitempty"`
-	Mode          *string `json:"mode,omitempty"`
+	Mode          *any    `json:"mode,omitempty"`
 	DirectoryMode *any    `json:"directory_mode,omitempty"`
 	RemoteSrc     *bool   `json:"remote_src,omitempty"`
 	Follow        *bool   `json:"follow,omitempty"`
 	LocalFollow   *bool   `json:"local_follow,omitempty"`
 	Checksum      *string `json:"checksum,omitempty"`
+	Decrypt       *bool   `json:"decrypt,omitempty"`
+	Owner         *string `json:"owner,omitempty"`
+	Group         *string `json:"group,omitempty"`
+	Seuser        *string `json:"seuser,omitempty"`
+	Serole        *string `json:"serole,omitempty"`
+	Setype        *string `json:"setype,omitempty"`
+	Selevel       *string `json:"selevel,omitempty"`
+	UnsafeWrites  *bool   `json:"unsafe_writes,omitempty"`
+	Attributes    *string `json:"attributes,omitempty"`
+	Validate      *string `json:"validate,omitempty"`
 }
 
 func (p *CopyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {

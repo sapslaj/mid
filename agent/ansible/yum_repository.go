@@ -58,6 +58,15 @@ type YumRepositoryParameters struct {
 	Timeout                    *string   `json:"timeout,omitempty"`
 	UiRepoidVars               *string   `json:"ui_repoid_vars,omitempty"`
 	Username                   *string   `json:"username,omitempty"`
+	Mode                       *any      `json:"mode,omitempty"`
+	Owner                      *string   `json:"owner,omitempty"`
+	Group                      *string   `json:"group,omitempty"`
+	Seuser                     *string   `json:"seuser,omitempty"`
+	Serole                     *string   `json:"serole,omitempty"`
+	Setype                     *string   `json:"setype,omitempty"`
+	Selevel                    *string   `json:"selevel,omitempty"`
+	UnsafeWrites               *bool     `json:"unsafe_writes,omitempty"`
+	Attributes                 *string   `json:"attributes,omitempty"`
 }
 
 func (p *YumRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {

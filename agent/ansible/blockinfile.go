@@ -20,6 +20,16 @@ type BlockinfileParameters struct {
 	MarkerEnd      *string `json:"marker_end,omitempty"`
 	AppendNewline  *bool   `json:"append_newline,omitempty"`
 	PrependNewline *bool   `json:"prepend_newline,omitempty"`
+	Mode           *any    `json:"mode,omitempty"`
+	Owner          *string `json:"owner,omitempty"`
+	Group          *string `json:"group,omitempty"`
+	Seuser         *string `json:"seuser,omitempty"`
+	Serole         *string `json:"serole,omitempty"`
+	Setype         *string `json:"setype,omitempty"`
+	Selevel        *string `json:"selevel,omitempty"`
+	UnsafeWrites   *bool   `json:"unsafe_writes,omitempty"`
+	Attributes     *string `json:"attributes,omitempty"`
+	Validate       *string `json:"validate,omitempty"`
 }
 
 func (p *BlockinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {

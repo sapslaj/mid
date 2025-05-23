@@ -19,6 +19,16 @@ type LineinfileParameters struct {
 	Create       *bool   `json:"create,omitempty"`
 	Backup       *bool   `json:"backup,omitempty"`
 	Firstmatch   *bool   `json:"firstmatch,omitempty"`
+	Mode         *any    `json:"mode,omitempty"`
+	Owner        *string `json:"owner,omitempty"`
+	Group        *string `json:"group,omitempty"`
+	Seuser       *string `json:"seuser,omitempty"`
+	Serole       *string `json:"serole,omitempty"`
+	Setype       *string `json:"setype,omitempty"`
+	Selevel      *string `json:"selevel,omitempty"`
+	UnsafeWrites *bool   `json:"unsafe_writes,omitempty"`
+	Attributes   *string `json:"attributes,omitempty"`
+	Validate     *string `json:"validate,omitempty"`
 }
 
 func (p *LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {

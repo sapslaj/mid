@@ -7,6 +7,7 @@ import sys
 from typing import Any
 from importlib import import_module
 
+import deepmerge
 import yaml
 
 agent_dir = pathlib.Path(__file__).parent / ".." / "agent"
@@ -94,6 +95,22 @@ def process_module_file(module_file: str):
     returns = yaml.safe_load(StringIO(getattr(module, "RETURN", "{}")))
     if returns is None:
         returns = dict()
+    extends_documentation_fragments = documentation.get(
+        "extends_documentation_fragment", []
+    )
+    if isinstance(extends_documentation_fragments, str):
+        extends_documentation_fragments = [extends_documentation_fragments]
+    for extends_documentation_fragment in extends_documentation_fragments:
+        doc_fragment_module = import_module(
+            f"ansible.plugins.doc_fragments.{extends_documentation_fragment}"
+        )
+        doc_fragment_class = getattr(doc_fragment_module, "ModuleDocFragment", None)
+        if doc_fragment_class is None:
+            continue
+        doc_fragment = yaml.safe_load(
+            StringIO(getattr(doc_fragment_class, "DOCUMENTATION"))
+        )
+        documentation = deepmerge.always_merger.merge(documentation, doc_fragment)
 
     pascalcase_name = pascalcased(name)
 

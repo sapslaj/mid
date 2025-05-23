@@ -8,13 +8,23 @@ import (
 const ReplaceName = "replace"
 
 type ReplaceParameters struct {
-	Path     string  `json:"path"`
-	Regexp   string  `json:"regexp"`
-	Replace  *string `json:"replace,omitempty"`
-	After    *string `json:"after,omitempty"`
-	Before   *string `json:"before,omitempty"`
-	Backup   *bool   `json:"backup,omitempty"`
-	Encoding *string `json:"encoding,omitempty"`
+	Path         string  `json:"path"`
+	Regexp       string  `json:"regexp"`
+	Replace      *string `json:"replace,omitempty"`
+	After        *string `json:"after,omitempty"`
+	Before       *string `json:"before,omitempty"`
+	Backup       *bool   `json:"backup,omitempty"`
+	Encoding     *string `json:"encoding,omitempty"`
+	Mode         *any    `json:"mode,omitempty"`
+	Owner        *string `json:"owner,omitempty"`
+	Group        *string `json:"group,omitempty"`
+	Seuser       *string `json:"seuser,omitempty"`
+	Serole       *string `json:"serole,omitempty"`
+	Setype       *string `json:"setype,omitempty"`
+	Selevel      *string `json:"selevel,omitempty"`
+	UnsafeWrites *bool   `json:"unsafe_writes,omitempty"`
+	Attributes   *string `json:"attributes,omitempty"`
+	Validate     *string `json:"validate,omitempty"`
 }
 
 func (p *ReplaceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
