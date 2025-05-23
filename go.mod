@@ -5,6 +5,7 @@ go 1.24
 toolchain go1.24.1
 
 require (
+	github.com/anatol/vmtest v0.0.0-20250318022921-2f32244e2f0f
 	github.com/aws/smithy-go v1.20.2
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/bramvdbogaerde/go-scp v1.5.0

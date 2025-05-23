@@ -7,12 +7,16 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sapslaj/mid/tests/testmachine"
 )
 
 func TestResourceExec(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	tests := map[string]struct {
@@ -224,7 +228,9 @@ func TestResourceExec(t *testing.T) {
 func TestResourceExec_logging(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	props := resource.PropertyMap{

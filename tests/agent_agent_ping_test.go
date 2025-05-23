@@ -7,12 +7,16 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sapslaj/mid/tests/testmachine"
 )
 
 func TestAgentAgentPing(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{

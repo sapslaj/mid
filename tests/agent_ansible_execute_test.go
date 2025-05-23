@@ -8,12 +8,16 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sapslaj/mid/tests/testmachine"
 )
 
 func TestAgentAnsibleExecute_happypath(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -85,7 +89,9 @@ func TestAgentAnsibleExecute_happypath(t *testing.T) {
 func TestAgentAnsibleExecute_invalidModuleName(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -106,7 +112,9 @@ func TestAgentAnsibleExecute_invalidModuleName(t *testing.T) {
 func TestAgentAnsibleExecute_invalidArguments(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -157,7 +165,9 @@ func TestAgentAnsibleExecute_invalidArguments(t *testing.T) {
 func TestAgentAnsibleExecute_failed(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{

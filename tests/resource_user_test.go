@@ -6,12 +6,16 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sapslaj/mid/tests/testmachine"
 )
 
 func TestResourceUser(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	tests := map[string]struct {

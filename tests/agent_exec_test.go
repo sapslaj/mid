@@ -8,12 +8,16 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/sapslaj/mid/tests/testmachine"
 )
 
 func TestAgentExec_success(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -45,7 +49,9 @@ func TestAgentExec_success(t *testing.T) {
 func TestAgentExec_failure(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -77,7 +83,9 @@ func TestAgentExec_failure(t *testing.T) {
 func TestAgentExec_dir(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -119,7 +127,9 @@ func TestAgentExec_dir(t *testing.T) {
 func TestAgentExec_environment(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -169,7 +179,9 @@ func TestAgentExec_environment(t *testing.T) {
 func TestAgentExec_stderrstdout(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
@@ -215,7 +227,9 @@ func TestAgentExec_stderrstdout(t *testing.T) {
 func TestAgentExec_stdin(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{

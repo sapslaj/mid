@@ -8,12 +8,16 @@ import (
 	// "github.com/pulumi/pulumi/sdk/v3/go/common/resource/archive"
 	// "github.com/pulumi/pulumi/sdk/v3/go/common/resource/asset"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/sapslaj/mid/tests/testmachine"
 )
 
 func TestResourceFile(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t)
+	harness := NewProviderTestHarness(t, testmachine.Config{
+		Backend: testmachine.DockerBackend,
+	})
 	defer harness.Close()
 
 	tests := map[string]struct {
@@ -58,7 +62,7 @@ func TestResourceFile(t *testing.T) {
 				"mode":   resource.NewStringProperty("a=rwx"),
 				"owner":  resource.NewStringProperty("games"),
 			},
-			before: "touch /foo",
+			before: "sudo touch /foo",
 			create: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777'",
 			delete: "true",
 		},

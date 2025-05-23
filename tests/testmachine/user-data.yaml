@@ -1,0 +1,13 @@
+#cloud-config
+password: hunter2
+chpasswd:
+  expire: false
+  users:
+    - name: root
+      password: hunter2
+      type: text
+    - name: ubuntu
+      password: hunter2
+      type: text
+ssh_pwauth: true
+disable_root: false
