@@ -1,5 +1,7 @@
 package types
 
+import "github.com/pulumi/pulumi-go-provider/infer"
+
 type ConnectionBase struct {
 	User       *string  `pulumi:"user,optional"`
 	Password   *string  `pulumi:"password,optional" provider:"secret"`
@@ -21,4 +23,16 @@ type Connection struct {
 	ConnectionBase
 	// TODO: add support for below
 	// Proxy *ProxyConnection `pulumi:"proxy,optional"`
+}
+
+func (i *Connection) Annotate(a infer.Annotator) {
+	a.Describe(&i, "Instructions for how to connect to a remote endpoint.")
+	a.Describe(&i.User, "The user that we should use for the connection.")
+	a.SetDefault(&i.User, "root")
+	a.Describe(&i.Password, "The password we should use for the connection.")
+	a.Describe(&i.Host, "The address of the resource to connect to.")
+	a.Describe(&i.Port, "The port to connect to. Defaults to 22.")
+	a.SetDefault(&i.Port, 22)
+	a.Describe(&i.PrivateKey, `The contents of an SSH key to use for the
+connection. This takes preference over the password if provided.`)
 }

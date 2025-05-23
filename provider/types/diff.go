@@ -1,6 +1,7 @@
 package types
 
 import (
+	"maps"
 	"reflect"
 	"strings"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 )
 
+// DiffAttribute performs deep equality on two values and returns an Update
+// PropertyDiff if they are different, but nil if they are equal.
 func DiffAttribute(o any, n any) *p.PropertyDiff {
 	if !resource.NewPropertyValue(o).DeepEquals(resource.NewPropertyValue(n)) {
 		return &p.PropertyDiff{
@@ -19,6 +22,8 @@ func DiffAttribute(o any, n any) *p.PropertyDiff {
 	return nil
 }
 
+// DiffAttributes performs deep equality on two structs only for the attributes
+// provided and returns a DiffResponse
 func DiffAttributes(olds any, news any, attributes []string) p.DiffResponse {
 	diff := p.DiffResponse{
 		HasChanges:   false,
@@ -28,7 +33,7 @@ func DiffAttributes(olds any, news any, attributes []string) p.DiffResponse {
 	oldVal := reflect.ValueOf(olds)
 	newVal := reflect.ValueOf(news)
 	for _, attribute := range attributes {
-		for i := 0; i < oldVal.NumField(); i++ {
+		for i := range oldVal.NumField() {
 			field := oldVal.Type().Field(i)
 			parts := strings.Split(field.Tag.Get("pulumi"), ",")
 			if len(parts) == 0 {
@@ -52,6 +57,9 @@ func DiffAttributes(olds any, news any, attributes []string) p.DiffResponse {
 	return diff
 }
 
+// DiffTriggers extracts the `Triggers` field from two structs and performs a
+// diff on them, returning a DiffResponse with Update and/or UpdateReplace
+// PropertyDiffs as needed.
 func DiffTriggers(olds any, news any) p.DiffResponse {
 	diff := p.DiffResponse{
 		HasChanges:   false,
@@ -84,6 +92,10 @@ func DiffTriggers(olds any, news any) p.DiffResponse {
 	return diff
 }
 
+// MergeDiffResponses will merge an arbitrary number of DiffResponses together
+// with the last taking the highest precedence. Any DiffResponse that has
+// `HasChanges` or `DeleteBeforeReplace` set will result in the returned
+// DiffResponse to have those set as well.
 func MergeDiffResponses(drs ...p.DiffResponse) p.DiffResponse {
 	diff := p.DiffResponse{
 		HasChanges:   false,
@@ -96,13 +108,13 @@ func MergeDiffResponses(drs ...p.DiffResponse) p.DiffResponse {
 		if dr.DeleteBeforeReplace {
 			diff.DeleteBeforeReplace = true
 		}
-		for key, pd := range dr.DetailedDiff {
-			diff.DetailedDiff[key] = pd
-		}
+		maps.Copy(diff.DetailedDiff, dr.DetailedDiff)
 	}
 	return diff
 }
 
+// UpdateTriggerState copies the replace and refresh triggers from `ins` to
+// `outs` and updates `LastChanged` if `changed` is true.
 func UpdateTriggerState(outs TriggersOutput, ins *TriggersInput, changed bool) TriggersOutput {
 	if ins != nil {
 		outs.Replace = ins.Replace
