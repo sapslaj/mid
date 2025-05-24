@@ -9,6 +9,7 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -34,40 +35,18 @@ type ServiceState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-type serviceTaskParameters struct {
-	Arguments *string `json:"arguments,omitempty"`
-	Enabled   *bool   `json:"enabled,omitempty"`
-	Name      string  `json:"name"`
-	Pattern   *string `json:"pattern,omitempty"`
-	Runlevel  *string `json:"runlevel,omitempty"`
-	Sleep     *int    `json:"sleep,omitempty"`
-	State     *string `json:"state,omitempty"` // TODO: enum for this?
-	Use       *string `json:"use,omitempty"`
-}
-
-type serviceTaskResult struct {
-	Changed *bool `json:"changed,omitempty"`
-	Diff    *any  `json:"diff,omitempty"`
-}
-
-func (result *serviceTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
-func (r Service) argsToTaskParameters(input ServiceArgs) (serviceTaskParameters, error) {
+func (r Service) argsToTaskParameters(input ServiceArgs) (ansible.ServiceParameters, error) {
 	if input.Name == nil {
-		return serviceTaskParameters{}, errors.New("someone forgot to set the auto-named input.Name")
+		return ansible.ServiceParameters{}, errors.New("someone forgot to set the auto-named input.Name")
 	}
-	return serviceTaskParameters{
+	return ansible.ServiceParameters{
 		Arguments: input.Arguments,
 		Enabled:   input.Enabled,
 		Name:      *input.Name,
 		Pattern:   input.Pattern,
 		Runlevel:  input.Runlevel,
 		Sleep:     input.Sleep,
-		State:     input.State,
+		State:     ansible.OptionalServiceState(input.State),
 		Use:       input.Use,
 	}, nil
 }
@@ -219,7 +198,7 @@ func (r Service) Read(
 		return id, inputs, state, err
 	}
 
-	result, err := executor.GetTaskResult[*serviceTaskResult](output, 0, 0)
+	result, err := executor.GetTaskResult[*ansible.ServiceReturn](output, 0, 0)
 	if err != nil {
 		return id, inputs, state, err
 	}
@@ -280,7 +259,7 @@ func (r Service) Update(
 		return olds, err
 	}
 
-	result, err := executor.GetTaskResult[*serviceTaskResult](output, 0, 0)
+	result, err := executor.GetTaskResult[*ansible.ServiceReturn](output, 0, 0)
 
 	state := r.updateState(olds, news, result.IsChanged())
 	return state, nil
