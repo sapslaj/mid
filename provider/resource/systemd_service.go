@@ -9,6 +9,7 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -34,32 +35,8 @@ type SystemdServiceState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-type systemdServiceTaskParameters struct {
-	DaemonReexec *bool   `json:"daemon_reexec,omitempty"`
-	DaemonReload *bool   `json:"daemon_reload,omitempty"`
-	Enabled      *bool   `json:"enabled,omitempty"`
-	Force        *bool   `json:"force,omitempty"`
-	Masked       *bool   `json:"masked,omitempty"`
-	Name         *string `json:"name,omitempty"`
-	NoBlock      *bool   `json:"no_block,omitempty"`
-	Scope        *string `json:"scope,omitempty"`
-	State        *string `json:"state,omitempty"` // TODO: enum for this?
-}
-
-type systemdServiceTaskResult struct {
-	Changed *bool   `json:"changed,omitempty"`
-	Diff    *any    `json:"diff,omitempty"`
-	Msg     *string `json:"msg,omitempty"`
-}
-
-func (result *systemdServiceTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
-func (r SystemdService) argsToTaskParameters(input SystemdServiceArgs) (systemdServiceTaskParameters, error) {
-	return systemdServiceTaskParameters{
+func (r SystemdService) argsToTaskParameters(input SystemdServiceArgs) (ansible.SystemdServiceParameters, error) {
+	return ansible.SystemdServiceParameters{
 		DaemonReexec: input.DaemonReexec,
 		DaemonReload: input.DaemonReload,
 		Enabled:      input.Enabled,
@@ -67,8 +44,8 @@ func (r SystemdService) argsToTaskParameters(input SystemdServiceArgs) (systemdS
 		Masked:       input.Masked,
 		Name:         input.Name,
 		NoBlock:      input.NoBlock,
-		Scope:        input.Scope,
-		State:        input.Ensure,
+		Scope:        ansible.OptionalSystemdServiceScope(input.Scope),
+		State:        ansible.OptionalSystemdServiceState(input.Ensure),
 	}, nil
 }
 
@@ -167,7 +144,7 @@ func (r SystemdService) Create(
 	})
 	if err != nil {
 		if preview {
-			taskResult, err := executor.GetTaskResult[*systemdServiceTaskResult](playOutput, 0, 0)
+			taskResult, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](playOutput, 0, 0)
 			if err == nil && taskResult.Msg != nil && strings.Contains(*taskResult.Msg, "Could not find the requested service") {
 				// the service not being available yet might be expected during a preview!
 				return id, state, nil
@@ -218,7 +195,7 @@ func (r SystemdService) Read(
 		return id, inputs, state, err
 	}
 
-	result, err := executor.GetTaskResult[*systemdServiceTaskResult](output, 0, 0)
+	result, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](output, 0, 0)
 	if err != nil {
 		return id, inputs, state, err
 	}
@@ -267,7 +244,7 @@ func (r SystemdService) Update(
 	refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
 	if refreshDiff != nil {
 		if news.Ensure != nil && *news.Ensure == "started" {
-			parameters.State = ptr.Of("restarted")
+			parameters.State = ansible.OptionalSystemdServiceState("restarted")
 		}
 	}
 
@@ -286,7 +263,7 @@ func (r SystemdService) Update(
 		return olds, err
 	}
 
-	result, err := executor.GetTaskResult[*systemdServiceTaskResult](output, 0, 0)
+	result, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](output, 0, 0)
 
 	state := r.updateState(olds, news, result.IsChanged())
 	return state, nil
