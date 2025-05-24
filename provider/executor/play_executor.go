@@ -212,6 +212,26 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 	))
 	defer span.End()
 
+	var playOutput PlayOutput
+
+	connectAttempts := 4
+	for _, play := range plays {
+		if !play.Check {
+			connectAttempts = 10
+		}
+	}
+
+	canConnect, err := CanConnect(ctx, connection, connectAttempts)
+	if !canConnect || err != nil {
+		if err == nil {
+			err = errors.Join(ErrUnreachable, fmt.Errorf("cannot connect to host"))
+		} else {
+			err = errors.Join(ErrUnreachable, fmt.Errorf("cannot connect to host: %w", err))
+		}
+		span.SetStatus(codes.Error, err.Error())
+		return playOutput, err
+	}
+
 	playbook := []map[string]any{}
 	for _, play := range plays {
 		playbook = append(playbook, map[string]any{
@@ -223,8 +243,6 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 			"tasks":        play.Tasks,
 		})
 	}
-
-	var playOutput PlayOutput
 
 	playbookData, err := json.Marshal(playbook)
 	if err != nil {
