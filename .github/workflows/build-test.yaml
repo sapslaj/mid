@@ -100,6 +100,6 @@ jobs:
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
-          tools: just, go, python
+          tools: just, go, python, qemu
       - run: just provider_version=v0.0.0-ci agent-codegen
       - run: go test -timeout=1h -v -race ./tests/...
