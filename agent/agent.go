@@ -30,6 +30,7 @@ var (
 	ErrAgentShutDown          = errors.New("agent shut down")
 	ErrDisconnectingFromAgent = errors.New("error disconnecting from agent")
 	ErrCallingRPCSystem       = errors.New("error calling RPC system")
+	ErrStagingFile            = errors.New("error staging file")
 )
 
 type Agent struct {
@@ -341,6 +342,42 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 	}
 
 	return res, nil
+}
+
+func StageFile(agent *Agent, f io.Reader) (string, error) {
+	_, err := RunRemoteCommand(agent, "mkdir -p .mid/staging")
+	if err != nil {
+		return "", errors.Join(ErrStagingFile, err)
+	}
+
+	scpClient, err := scp.NewClientBySSH(agent.Client)
+	if err != nil {
+		return "", errors.Join(ErrStagingFile, err)
+	}
+	defer scpClient.Close()
+
+	uid, err := uuid.NewRandom()
+	if err != nil {
+		err = errors.Join(ErrStagingFile, err)
+		return "", err
+	}
+	remotePath := "mid/staging/" + strings.ToLower(uid.String())
+
+	realPathOutput, err := RunRemoteCommand(agent, "realpath "+remotePath)
+	if err != nil {
+		err = errors.Join(ErrStagingFile, err)
+		return remotePath, err
+	}
+
+	remotePath = strings.TrimSpace(string(realPathOutput))
+
+	err = scpClient.CopyFile(context.Background(), f, remotePath, "0400")
+	if err != nil {
+		err = errors.Join(ErrStagingFile, err)
+		return remotePath, err
+	}
+
+	return remotePath, nil
 }
 
 func Disconnect(agent *Agent) error {

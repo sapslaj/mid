@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os/user"
 	"sync"
@@ -164,7 +165,11 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 	return cs.Reachable, nil
 }
 
-func CallAgent[I any, O any](ctx context.Context, connection *types.Connection, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
+func CallAgent[I any, O any](
+	ctx context.Context,
+	connection *types.Connection,
+	call rpc.RPCCall[I],
+) (rpc.RPCResult[O], error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CallAgent", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
 		attribute.String("rpc.function", string(call.RPCFunction)),
@@ -223,6 +228,33 @@ func DisconnectAll(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (string, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.StageFile")
+	defer span.End()
+
+	cs, err := Acquire(ctx, connection)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
+	}
+
+	err = cs.SetupAgent(ctx)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
+	}
+
+	remotePath, err := midagent.StageFile(cs.Agent, f)
+	span.SetAttributes(attribute.String("remote_path", remotePath))
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return remotePath, err
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return remotePath, nil
 }
 
 func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfig, string, error) {
