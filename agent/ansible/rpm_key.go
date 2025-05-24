@@ -8,6 +8,14 @@ import (
 // Adds or removes `rpm --import` a gpg key to your rpm database.
 const RpmKeyName = "rpm_key"
 
+// If the key will be imported or removed from the rpm db.
+type RpmKeyState string
+
+const (
+	RpmKeyStateAbsent  RpmKeyState = "absent"
+	RpmKeyStatePresent RpmKeyState = "present"
+)
+
 // Parameters for the `rpm_key` Ansible module.
 type RpmKeyParameters struct {
 	// Key that will be modified. Can be a url, a file on the managed node, or a
@@ -15,12 +23,14 @@ type RpmKeyParameters struct {
 	Key string `json:"key"`
 
 	// If the key will be imported or removed from the rpm db.
-	State *string `json:"state,omitempty"`
+	// default: RpmKeyStatePresent
+	State *RpmKeyState `json:"state,omitempty"`
 
 	// If `false` and the `key` is a url starting with `https`, SSL certificates
 	// will not be validated.
 	// This should only be used on personally controlled sites using self-signed
 	// certificates.
+	// default: "yes"
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 
 	// The long-form fingerprint of the key being imported.

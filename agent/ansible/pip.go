@@ -9,6 +9,17 @@ import (
 // keys is required: `name` or `requirements`.
 const PipName = "pip"
 
+// The state of module.
+// The `forcereinstall` option is only available in Ansible 2.1 and above.
+type PipState string
+
+const (
+	PipStateAbsent         PipState = "absent"
+	PipStateForcereinstall PipState = "forcereinstall"
+	PipStateLatest         PipState = "latest"
+	PipStatePresent        PipState = "present"
+)
+
 // Parameters for the `pip` Ansible module.
 type PipParameters struct {
 	// The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of
@@ -36,11 +47,13 @@ type PipParameters struct {
 	// packages` directory. Note that if this setting is changed on an already
 	// existing virtual environment it will not have any effect, the environment
 	// must be deleted and newly created.
+	// default: "no"
 	VirtualenvSitePackages *bool `json:"virtualenv_site_packages,omitempty"`
 
 	// The command or a pathname to the command to create the virtual environment
 	// with. For example `pyvenv`, `virtualenv`, `virtualenv2`, `~/bin/virtualenv`,
 	// `/usr/local/bin/virtualenv`.
+	// default: "virtualenv"
 	VirtualenvCommand *string `json:"virtualenv_command,omitempty"`
 
 	// The Python executable used for creating the virtual environment. For example
@@ -51,12 +64,14 @@ type PipParameters struct {
 
 	// The state of module.
 	// The `forcereinstall` option is only available in Ansible 2.1 and above.
-	State *string `json:"state,omitempty"`
+	// default: PipStatePresent
+	State *PipState `json:"state,omitempty"`
 
 	// Extra arguments passed to `pip`.
 	ExtraArgs *string `json:"extra_args,omitempty"`
 
 	// Pass the editable flag.
+	// default: "no"
 	Editable *bool `json:"editable,omitempty"`
 
 	// cd into this directory before running the command.
@@ -83,6 +98,7 @@ type PipParameters struct {
 	// by PEP 668.
 	// This is typically required when installing packages outside a virtual
 	// environment on modern systems.
+	// default: false
 	BreakSystemPackages *bool `json:"break_system_packages,omitempty"`
 }
 

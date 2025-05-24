@@ -23,6 +23,7 @@ type GitParameters struct {
 	// `HEAD`, a branch name, a tag name. It can also be a `SHA-1` hash, in which
 	// case `refspec` needs to be specified if the given revision is not already
 	// available.
+	// default: "HEAD"
 	Version *string `json:"version,omitempty"`
 
 	// Will ensure or not that `-o StrictHostKeyChecking=no` is present as an ssh
@@ -31,12 +32,14 @@ type GitParameters struct {
 	// Those using OpenSSH >= 7.5 might want to use `accept_newhostkey` or set
 	// `ssh_opts` to `StrictHostKeyChecking=accept-new` instead, it does not remove
 	// the MITM issue but it does restrict it to the first attempt.
+	// default: "no"
 	AcceptHostkey *bool `json:"accept_hostkey,omitempty"`
 
 	// As of OpenSSH 7.5, `-o StrictHostKeyChecking=accept-new` can be used which
 	// is safer and will only accepts host keys which are not present or are the
 	// same. If `true`, ensure that `-o StrictHostKeyChecking=accept-new` is
 	// present as an ssh option.
+	// default: "no"
 	AcceptNewhostkey *bool `json:"accept_newhostkey,omitempty"`
 
 	// Options git will pass to ssh when used as protocol, it works via `git`'s
@@ -58,6 +61,7 @@ type GitParameters struct {
 	Reference *string `json:"reference,omitempty"`
 
 	// Name of the remote.
+	// default: "origin"
 	Remote *string `json:"remote,omitempty"`
 
 	// Add an additional refspec to be fetched. If version is set to a `SHA-1` not
@@ -69,6 +73,7 @@ type GitParameters struct {
 	// If `true`, any modified files in the working repository will be discarded.
 	// Prior to 0.7, this was always `true` and could not be disabled.  Prior to
 	// 1.9, the default was `true`.
+	// default: "no"
 	Force *bool `json:"force,omitempty"`
 
 	// Create a shallow clone with a history truncated to the specified number or
@@ -77,11 +82,13 @@ type GitParameters struct {
 	Depth *int `json:"depth,omitempty"`
 
 	// If `false`, do not clone the repository even if it does not exist locally.
+	// default: "yes"
 	Clone *bool `json:"clone,omitempty"`
 
 	// If `false`, do not retrieve new revisions from the origin repository.
 	// Operations like archive will work on the existing (old) repository and might
 	// not respond to changes to the options version or remote.
+	// default: "yes"
 	Update *bool `json:"update,omitempty"`
 
 	// Path to git executable to use. If not supplied, the normal mechanism for
@@ -90,6 +97,7 @@ type GitParameters struct {
 
 	// If `true`, repository will be created as a bare repo, otherwise it will be a
 	// standard repo with a workspace.
+	// default: "no"
 	Bare *bool `json:"bare,omitempty"`
 
 	// The umask to set before doing any checkouts, or any other repository
@@ -98,20 +106,24 @@ type GitParameters struct {
 
 	// If `false`, repository will be cloned without the `--recursive` option,
 	// skipping sub-modules.
+	// default: "yes"
 	Recursive *bool `json:"recursive,omitempty"`
 
 	// Clone only the history leading to the tip of the specified revision.
+	// default: "no"
 	SingleBranch *bool `json:"single_branch,omitempty"`
 
 	// If `true`, submodules will track the latest commit on their master branch
 	// (or other branch specified in `.gitmodules`).  If `false`, submodules will
 	// be kept at the revision specified by the main project. This is equivalent to
 	// specifying the `--remote` flag to git submodule update.
+	// default: "no"
 	TrackSubmodules *bool `json:"track_submodules,omitempty"`
 
 	// If `true`, when cloning or checking out a `version` verify the signature of
 	// a GPG signed commit. This requires git version>=2.1.0 to be installed. The
 	// commit MUST be signed and the public key MUST be present in the GPG keyring.
+	// default: "no"
 	VerifyCommit *bool `json:"verify_commit,omitempty"`
 
 	// Specify archive file path with extension. If specified, creates an archive
@@ -136,6 +148,7 @@ type GitParameters struct {
 	// flag to `verify-commit` and `verify-tag`.
 	// Alias `gpg_allowlist` is added in version 2.17.
 	// Alias `gpg_whitelist` is deprecated and will be removed in version 2.21.
+	// default: []
 	GpgAllowlist *[]string `json:"gpg_allowlist,omitempty"`
 }
 

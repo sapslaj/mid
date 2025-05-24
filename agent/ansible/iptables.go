@@ -13,6 +13,111 @@ import (
 // module uses internally.
 const IptablesName = "iptables"
 
+// This option specifies the packet matching table on which the command should
+// operate.
+// If the kernel is configured with automatic module loading, an attempt will be
+// made to load the appropriate module for that table if it is not already
+// there.
+type IptablesTable string
+
+const (
+	IptablesTableFilter   IptablesTable = "filter"
+	IptablesTableNat      IptablesTable = "nat"
+	IptablesTableMangle   IptablesTable = "mangle"
+	IptablesTableRaw      IptablesTable = "raw"
+	IptablesTableSecurity IptablesTable = "security"
+)
+
+// Whether the rule should be absent or present.
+type IptablesState string
+
+const (
+	IptablesStateAbsent  IptablesState = "absent"
+	IptablesStatePresent IptablesState = "present"
+)
+
+// Whether the rule should be appended at the bottom or inserted at the top.
+// If the rule already exists the chain will not be modified.
+type IptablesAction string
+
+const (
+	IptablesActionAppend IptablesAction = "append"
+	IptablesActionInsert IptablesAction = "insert"
+)
+
+// Which version of the IP protocol this rule should apply to.
+type IptablesIpVersion string
+
+const (
+	IptablesIpVersionIpv4 IptablesIpVersion = "ipv4"
+	IptablesIpVersionIpv6 IptablesIpVersion = "ipv6"
+)
+
+// Logging level according to the syslogd-defined priorities.
+// The value can be strings or numbers from 1-8.
+// This parameter is only applicable if `jump=LOG`.
+type IptablesLogLevel string
+
+const (
+	IptablesLogLevel0       IptablesLogLevel = "0"
+	IptablesLogLevel1       IptablesLogLevel = "1"
+	IptablesLogLevel2       IptablesLogLevel = "2"
+	IptablesLogLevel3       IptablesLogLevel = "3"
+	IptablesLogLevel4       IptablesLogLevel = "4"
+	IptablesLogLevel5       IptablesLogLevel = "5"
+	IptablesLogLevel6       IptablesLogLevel = "6"
+	IptablesLogLevel7       IptablesLogLevel = "7"
+	IptablesLogLevelEmerg   IptablesLogLevel = "emerg"
+	IptablesLogLevelAlert   IptablesLogLevel = "alert"
+	IptablesLogLevelCrit    IptablesLogLevel = "crit"
+	IptablesLogLevelError   IptablesLogLevel = "error"
+	IptablesLogLevelWarning IptablesLogLevel = "warning"
+	IptablesLogLevelNotice  IptablesLogLevel = "notice"
+	IptablesLogLevelInfo    IptablesLogLevel = "info"
+	IptablesLogLevelDebug   IptablesLogLevel = "debug"
+)
+
+// This allows matching packets that have the SYN bit set and the ACK and RST
+// bits unset.
+// When negated, this matches all packets with the RST or the ACK bits set.
+type IptablesSyn string
+
+const (
+	IptablesSynIgnore IptablesSyn = "ignore"
+	IptablesSynMatch  IptablesSyn = "match"
+	IptablesSynNegate IptablesSyn = "negate"
+)
+
+// Specifies the necessary flags for the match_set parameter.
+// Must be used together with the `match_set` parameter.
+// Uses the iptables set extension.
+// Choices `dst,dst` and `src,src` added in version 2.17.
+type IptablesMatchSetFlags string
+
+const (
+	IptablesMatchSetFlagsSrc    IptablesMatchSetFlags = "src"
+	IptablesMatchSetFlagsDst    IptablesMatchSetFlags = "dst"
+	IptablesMatchSetFlagsSrcDst IptablesMatchSetFlags = "src,dst"
+	IptablesMatchSetFlagsDstSrc IptablesMatchSetFlags = "dst,src"
+	IptablesMatchSetFlagsDstDst IptablesMatchSetFlags = "dst,dst"
+	IptablesMatchSetFlagsSrcSrc IptablesMatchSetFlags = "src,src"
+)
+
+// Set the policy for the chain to the given target.
+// Only built-in chains can have policies.
+// This parameter requires the `chain` parameter.
+// If you specify this parameter, all other parameters will be ignored.
+// This parameter is used to set the default policy for the given `chain`. Do
+// not confuse this with `jump` parameter.
+type IptablesPolicy string
+
+const (
+	IptablesPolicyAccept IptablesPolicy = "ACCEPT"
+	IptablesPolicyDrop   IptablesPolicy = "DROP"
+	IptablesPolicyQueue  IptablesPolicy = "QUEUE"
+	IptablesPolicyReturn IptablesPolicy = "RETURN"
+)
+
 // Parameters for the `iptables` Ansible module.
 type IptablesParameters struct {
 	// This option specifies the packet matching table on which the command should
@@ -20,21 +125,25 @@ type IptablesParameters struct {
 	// If the kernel is configured with automatic module loading, an attempt will
 	// be made to load the appropriate module for that table if it is not already
 	// there.
-	Table *string `json:"table,omitempty"`
+	// default: IptablesTableFilter
+	Table *IptablesTable `json:"table,omitempty"`
 
 	// Whether the rule should be absent or present.
-	State *string `json:"state,omitempty"`
+	// default: IptablesStatePresent
+	State *IptablesState `json:"state,omitempty"`
 
 	// Whether the rule should be appended at the bottom or inserted at the top.
 	// If the rule already exists the chain will not be modified.
-	Action *string `json:"action,omitempty"`
+	// default: IptablesActionAppend
+	Action *IptablesAction `json:"action,omitempty"`
 
 	// Insert the rule as the given rule number.
 	// This works only with `action=insert`.
 	RuleNum *string `json:"rule_num,omitempty"`
 
 	// Which version of the IP protocol this rule should apply to.
-	IpVersion *string `json:"ip_version,omitempty"`
+	// default: IptablesIpVersionIpv4
+	IpVersion *IptablesIpVersion `json:"ip_version,omitempty"`
 
 	// Specify the iptables chain to modify.
 	// This could be a user-defined chain or one of the standard iptables chains,
@@ -91,6 +200,7 @@ type IptablesParameters struct {
 	// Matches are evaluated first to last if specified as an array and work in
 	// short-circuit fashion, in other words if one extension yields false, the
 	// evaluation will stop.
+	// default: []
 	Match *[]string `json:"match,omitempty"`
 
 	// This specifies the target of the rule; i.e., what to do if the packet
@@ -113,7 +223,7 @@ type IptablesParameters struct {
 	// Logging level according to the syslogd-defined priorities.
 	// The value can be strings or numbers from 1-8.
 	// This parameter is only applicable if `jump=LOG`.
-	LogLevel *string `json:"log_level,omitempty"`
+	LogLevel *IptablesLogLevel `json:"log_level,omitempty"`
 
 	// This specifies that the processing should continue in a user-specified
 	// chain.
@@ -172,6 +282,7 @@ type IptablesParameters struct {
 	// the multiport module.
 	// It can only be used in conjunction with the protocols tcp, udp, udplite,
 	// dccp and sctp.
+	// default: []
 	DestinationPorts *[]string `json:"destination_ports,omitempty"`
 
 	// This specifies a destination port or range of ports to use, without this,
@@ -191,7 +302,8 @@ type IptablesParameters struct {
 	// This allows matching packets that have the SYN bit set and the ACK and RST
 	// bits unset.
 	// When negated, this matches all packets with the RST or the ACK bits set.
-	Syn *string `json:"syn,omitempty"`
+	// default: IptablesSynIgnore
+	Syn *IptablesSyn `json:"syn,omitempty"`
 
 	// This allows specifying a DSCP mark to be added to packets. It takes either
 	// an integer or hex value.
@@ -211,6 +323,7 @@ type IptablesParameters struct {
 	// A list of the connection states to match in the conntrack module.
 	// Possible values are `INVALID`, `NEW`, `ESTABLISHED`, `RELATED`, `UNTRACKED`,
 	// `SNAT`, `DNAT`.
+	// default: []
 	Ctstate *[]string `json:"ctstate,omitempty"`
 
 	// Specifies the source IP range to match the iprange module.
@@ -229,7 +342,7 @@ type IptablesParameters struct {
 	// Must be used together with the `match_set` parameter.
 	// Uses the iptables set extension.
 	// Choices `dst,dst` and `src,src` added in version 2.17.
-	MatchSetFlags *string `json:"match_set_flags,omitempty"`
+	MatchSetFlags *IptablesMatchSetFlags `json:"match_set_flags,omitempty"`
 
 	// Specifies the maximum average number of matches to allow per second.
 	// The number can specify units explicitly, using `/second`, `/minute`, `/hour`
@@ -259,6 +372,7 @@ type IptablesParameters struct {
 	// Flushes the specified table and chain of all rules.
 	// If no chain is specified then the entire table is purged.
 	// Ignores all other parameters.
+	// default: false
 	Flush *bool `json:"flush,omitempty"`
 
 	// Set the policy for the chain to the given target.
@@ -267,7 +381,7 @@ type IptablesParameters struct {
 	// If you specify this parameter, all other parameters will be ignored.
 	// This parameter is used to set the default policy for the given `chain`. Do
 	// not confuse this with `jump` parameter.
-	Policy *string `json:"policy,omitempty"`
+	Policy *IptablesPolicy `json:"policy,omitempty"`
 
 	// Wait N seconds for the xtables lock to prevent multiple instances of the
 	// program from running concurrently.
@@ -276,6 +390,7 @@ type IptablesParameters struct {
 	// If `true` and `state` is `present`, the chain will be created if needed.
 	// If `true` and `state` is `absent`, the chain will be deleted if the only
 	// other parameter passed are `chain` and optionally `table`.
+	// default: false
 	ChainManagement *bool `json:"chain_management,omitempty"`
 
 	// This parameter controls the running of the list -action of iptables, which
@@ -286,6 +401,7 @@ type IptablesParameters struct {
 	// when it uses the list -action.
 	// Listing is used internally for example when setting a policy or creating a
 	// chain.
+	// default: false
 	Numeric *bool `json:"numeric,omitempty"`
 }
 

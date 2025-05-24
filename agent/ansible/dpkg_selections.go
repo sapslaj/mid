@@ -9,13 +9,23 @@ import (
 // selections`.
 const DpkgSelectionsName = "dpkg_selections"
 
+// The selection state to set the package to.
+type DpkgSelectionsSelection string
+
+const (
+	DpkgSelectionsSelectionInstall   DpkgSelectionsSelection = "install"
+	DpkgSelectionsSelectionHold      DpkgSelectionsSelection = "hold"
+	DpkgSelectionsSelectionDeinstall DpkgSelectionsSelection = "deinstall"
+	DpkgSelectionsSelectionPurge     DpkgSelectionsSelection = "purge"
+)
+
 // Parameters for the `dpkg_selections` Ansible module.
 type DpkgSelectionsParameters struct {
 	// Name of the package.
 	Name string `json:"name"`
 
 	// The selection state to set the package to.
-	Selection string `json:"selection"`
+	Selection DpkgSelectionsSelection `json:"selection"`
 }
 
 // Wrap the `DpkgSelectionsParameters into an `rpc.RPCCall`.

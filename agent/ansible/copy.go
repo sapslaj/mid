@@ -50,6 +50,7 @@ type CopyParameters struct {
 
 	// Create a backup file including the timestamp information so you can get the
 	// original file back if you somehow clobbered it incorrectly.
+	// default: false
 	Backup *bool `json:"backup,omitempty"`
 
 	// Influence whether the remote file must always be replaced.
@@ -57,6 +58,7 @@ type CopyParameters struct {
 	// the source.
 	// If `false`, the file will only be transferred if the destination does not
 	// exist.
+	// default: true
 	Force *bool `json:"force,omitempty"`
 
 	// The permissions of the destination file or directory.
@@ -114,14 +116,17 @@ type CopyParameters struct {
 	// `remote_src` supports recursive copying as of version 2.8.
 	// `remote_src` only works with `mode=preserve` as of version 2.6.
 	// Auto-decryption of files does not work when `remote_src=yes`.
+	// default: false
 	RemoteSrc *bool `json:"remote_src,omitempty"`
 
 	// This flag indicates that filesystem links in the destination, if they exist,
 	// should be followed.
+	// default: false
 	Follow *bool `json:"follow,omitempty"`
 
 	// This flag indicates that filesystem links in the source tree, if they exist,
 	// should be followed.
+	// default: true
 	LocalFollow *bool `json:"local_follow,omitempty"`
 
 	// SHA1 checksum of the file being transferred.
@@ -131,6 +136,7 @@ type CopyParameters struct {
 	Checksum *string `json:"checksum,omitempty"`
 
 	// This option controls the auto-decryption of source files using vault.
+	// default: true
 	Decrypt *bool `json:"decrypt,omitempty"`
 
 	// Name of the user that should own the filesystem object, as would be fed to
@@ -181,6 +187,7 @@ type CopyParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

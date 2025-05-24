@@ -9,13 +9,24 @@ import (
 // results based on the filesystem type and device.
 const MountFactsName = "mount_facts"
 
+// The action to take when gathering mount information exceeds `timeout`.
+type MountFactsOnTimeout string
+
+const (
+	MountFactsOnTimeoutError  MountFactsOnTimeout = "error"
+	MountFactsOnTimeoutWarn   MountFactsOnTimeout = "warn"
+	MountFactsOnTimeoutIgnore MountFactsOnTimeout = "ignore"
+)
+
 // Parameters for the `mount_facts` Ansible module.
 type MountFactsParameters struct {
 	// A list of fnmatch patterns to filter mounts by the special device or remote
 	// file system.
+	// default: nil
 	Devices *[]string `json:"devices,omitempty"`
 
 	// A list of fnmatch patterns to filter mounts by the type of the file system.
+	// default: nil
 	Fstypes *[]string `json:"fstypes,omitempty"`
 
 	// A list of sources used to determine the mounts. Missing file sources (or
@@ -39,12 +50,14 @@ type MountFactsParameters struct {
 	// it to always execute. Depending on the other sources configured, this could
 	// be inefficient/redundant. For example, if `/proc/mounts` and `mount` are
 	// listed as `sources`, Linux hosts will retrieve the same mounts twice.
+	// default: nil
 	Sources *[]string `json:"sources,omitempty"`
 
 	// The `mount_binary` is used if `sources` contain the value "mount", or if
 	// `sources` contains a dynamic source, and none were found (as can be expected
 	// on BSD or AIX hosts).
 	// Set to `null` to stop after no dynamic file source is found instead.
+	// default: "mount"
 	MountBinary *any `json:"mount_binary,omitempty"`
 
 	// This is the maximum number of seconds to wait for each mount to complete.
@@ -56,12 +69,14 @@ type MountFactsParameters struct {
 	Timeout *float64 `json:"timeout,omitempty"`
 
 	// The action to take when gathering mount information exceeds `timeout`.
-	OnTimeout *string `json:"on_timeout,omitempty"`
+	// default: MountFactsOnTimeoutError
+	OnTimeout *MountFactsOnTimeout `json:"on_timeout,omitempty"`
 
 	// Whether or not the module should return the `aggregate_mounts` list in
 	// `ansible_facts`.
 	// When this is `null`, a warning will be emitted if multiple mounts for the
 	// same mount point are found.
+	// default: nil
 	IncludeAggregateMounts *bool `json:"include_aggregate_mounts,omitempty"`
 }
 

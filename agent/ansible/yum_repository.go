@@ -10,6 +10,91 @@ import (
 // `community.general.ini_file` instead.
 const YumRepositoryName = "yum_repository"
 
+// `roundrobin` randomly selects a URL out of the list of URLs to start with and
+// proceeds through each of them as it encounters a failure contacting the host.
+// `priority` starts from the first `baseurl` listed and reads through them
+// sequentially.
+type YumRepositoryFailovermethod string
+
+const (
+	YumRepositoryFailovermethodRoundrobin YumRepositoryFailovermethod = "roundrobin"
+	YumRepositoryFailovermethodPriority   YumRepositoryFailovermethod = "priority"
+)
+
+// Determines how upstream HTTP caches are instructed to handle any HTTP
+// downloads that Yum does.
+// `all` means that all HTTP downloads should be cached.
+// `packages` means that only RPM package downloads should be cached (but not
+// repository metadata downloads).
+// `none` means that no HTTP downloads should be cached.
+// This parameter is deprecated as it has no effect with dnf as an underlying
+// package manager and will be removed in ansible-core 2.22.
+type YumRepositoryHttpCaching string
+
+const (
+	YumRepositoryHttpCachingAll      YumRepositoryHttpCaching = "all"
+	YumRepositoryHttpCachingPackages YumRepositoryHttpCaching = "packages"
+	YumRepositoryHttpCachingNone     YumRepositoryHttpCaching = "none"
+)
+
+// Determines how yum resolves host names.
+// `4` or `IPv4` - resolve to IPv4 addresses only.
+// `6` or `IPv6` - resolve to IPv6 addresses only.
+type YumRepositoryIpResolve string
+
+const (
+	YumRepositoryIpResolve4        YumRepositoryIpResolve = "4"
+	YumRepositoryIpResolve6        YumRepositoryIpResolve = "6"
+	YumRepositoryIpResolveIpv4     YumRepositoryIpResolve = "IPv4"
+	YumRepositoryIpResolveIpv6     YumRepositoryIpResolve = "IPv6"
+	YumRepositoryIpResolveWhatever YumRepositoryIpResolve = "whatever"
+)
+
+// Either `1` or `0`. Determines whether or not yum keeps the cache of headers
+// and packages after successful installation.
+// This parameter is deprecated as it is only valid in the main configuration
+// and will be removed in ansible-core 2.20.
+type YumRepositoryKeepcache string
+
+const (
+	YumRepositoryKeepcache0 YumRepositoryKeepcache = "0"
+	YumRepositoryKeepcache1 YumRepositoryKeepcache = "1"
+)
+
+// Filter the `metadata_expire` time, allowing a trade of speed for accuracy if
+// a command doesn't require it. Each yum command can specify that it requires a
+// certain level of timeliness quality from the remote repos. from "I'm about to
+// install/upgrade, so this better be current" to "Anything that's available is
+// good enough".
+// `never` - Nothing is filtered, always obey `metadata_expire`.
+// `read-only:past` - Commands that only care about past information are
+// filtered from metadata expiring. Eg. `yum history` info (if history needs to
+// lookup anything about a previous transaction, then by definition the remote
+// package was available in the past).
+// `read-only:present` - Commands that are balanced between past and future. Eg.
+// `yum list yum`.
+// `read-only:future` - Commands that are likely to result in running other
+// commands which will require the latest metadata. Eg. `yum check-update`.
+// Note that this option does not override `yum clean expire-cache`.
+// This parameter is deprecated as it has no effect with dnf as an underlying
+// package manager and will be removed in ansible-core 2.22.
+type YumRepositoryMetadataExpireFilter string
+
+const (
+	YumRepositoryMetadataExpireFilterNever           YumRepositoryMetadataExpireFilter = "never"
+	YumRepositoryMetadataExpireFilterReadOnlyPast    YumRepositoryMetadataExpireFilter = "read-only:past"
+	YumRepositoryMetadataExpireFilterReadOnlyPresent YumRepositoryMetadataExpireFilter = "read-only:present"
+	YumRepositoryMetadataExpireFilterReadOnlyFuture  YumRepositoryMetadataExpireFilter = "read-only:future"
+)
+
+// State of the repo file.
+type YumRepositoryState string
+
+const (
+	YumRepositoryStateAbsent  YumRepositoryState = "absent"
+	YumRepositoryStatePresent YumRepositoryState = "present"
+)
+
 // Parameters for the `yum_repository` Ansible module.
 type YumRepositoryParameters struct {
 	// If set to `true` Yum will download packages and metadata from this repo in
@@ -42,6 +127,7 @@ type YumRepositoryParameters struct {
 	// Whether a special flag should be added to a randomly chosen
 	// metalink/mirrorlist query each week. This allows the repository owner to
 	// estimate the number of systems consuming it.
+	// default: nil
 	Countme *bool `json:"countme,omitempty"`
 
 	// When the relative size of deltarpm metadata vs pkgs is larger than this,
@@ -84,7 +170,7 @@ type YumRepositoryParameters struct {
 	// host.
 	// `priority` starts from the first `baseurl` listed and reads through them
 	// sequentially.
-	Failovermethod *string `json:"failovermethod,omitempty"`
+	Failovermethod *YumRepositoryFailovermethod `json:"failovermethod,omitempty"`
 
 	// File name without the `.repo` extension to save the repo in. Defaults to the
 	// value of `name`.
@@ -117,7 +203,7 @@ type YumRepositoryParameters struct {
 	// `none` means that no HTTP downloads should be cached.
 	// This parameter is deprecated as it has no effect with dnf as an underlying
 	// package manager and will be removed in ansible-core 2.22.
-	HttpCaching *string `json:"http_caching,omitempty"`
+	HttpCaching *YumRepositoryHttpCaching `json:"http_caching,omitempty"`
 
 	// Include external configuration file. Both, local path and URL is supported.
 	// Configuration file will be inserted at the position of the `include=` line.
@@ -135,7 +221,7 @@ type YumRepositoryParameters struct {
 	// Determines how yum resolves host names.
 	// `4` or `IPv4` - resolve to IPv4 addresses only.
 	// `6` or `IPv6` - resolve to IPv6 addresses only.
-	IpResolve *string `json:"ip_resolve,omitempty"`
+	IpResolve *YumRepositoryIpResolve `json:"ip_resolve,omitempty"`
 
 	// This tells yum whether or not HTTP/1.1 keepalive should be used with this
 	// repository. This can improve transfer speeds by using one connection when
@@ -148,7 +234,7 @@ type YumRepositoryParameters struct {
 	// and packages after successful installation.
 	// This parameter is deprecated as it is only valid in the main configuration
 	// and will be removed in ansible-core 2.20.
-	Keepcache *string `json:"keepcache,omitempty"`
+	Keepcache *YumRepositoryKeepcache `json:"keepcache,omitempty"`
 
 	// Time (in seconds) after which the metadata will expire.
 	// Default value is 6 hours.
@@ -171,7 +257,7 @@ type YumRepositoryParameters struct {
 	// Note that this option does not override `yum clean expire-cache`.
 	// This parameter is deprecated as it has no effect with dnf as an underlying
 	// package manager and will be removed in ansible-core 2.22.
-	MetadataExpireFilter *string `json:"metadata_expire_filter,omitempty"`
+	MetadataExpireFilter *YumRepositoryMetadataExpireFilter `json:"metadata_expire_filter,omitempty"`
 
 	// Specifies a URL to a metalink file for the repomd.xml, a list of mirrors for
 	// the entire repository are generated by converting the mirrors for the
@@ -224,6 +310,7 @@ type YumRepositoryParameters struct {
 	RepoGpgcheck *bool `json:"repo_gpgcheck,omitempty"`
 
 	// Directory where the `.repo` files will be stored.
+	// default: "/etc/yum.repos.d"
 	Reposdir *string `json:"reposdir,omitempty"`
 
 	// Set the number of times any attempt to retrieve a file should retry before
@@ -263,7 +350,8 @@ type YumRepositoryParameters struct {
 	Sslverify *bool `json:"sslverify,omitempty"`
 
 	// State of the repo file.
-	State *string `json:"state,omitempty"`
+	// default: YumRepositoryStatePresent
+	State *YumRepositoryState `json:"state,omitempty"`
 
 	// Enable bandwidth throttling for downloads.
 	// This option can be expressed as a absolute data rate in bytes/sec. An SI
@@ -351,6 +439,7 @@ type YumRepositoryParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

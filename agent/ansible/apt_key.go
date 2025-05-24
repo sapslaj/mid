@@ -8,6 +8,14 @@ import (
 // Add or remove an `apt` key, optionally downloading it.
 const AptKeyName = "apt_key"
 
+// Ensures that the key is present (added) or absent (revoked).
+type AptKeyState string
+
+const (
+	AptKeyStateAbsent  AptKeyState = "absent"
+	AptKeyStatePresent AptKeyState = "present"
+)
+
 // Parameters for the `apt_key` Ansible module.
 type AptKeyParameters struct {
 	// The identifier of the key.
@@ -33,11 +41,13 @@ type AptKeyParameters struct {
 	Keyserver *string `json:"keyserver,omitempty"`
 
 	// Ensures that the key is present (added) or absent (revoked).
-	State *string `json:"state,omitempty"`
+	// default: AptKeyStatePresent
+	State *AptKeyState `json:"state,omitempty"`
 
 	// If `false`, SSL certificates for the target url will not be validated. This
 	// should only be used on personally controlled sites using self-signed
 	// certificates.
+	// default: "yes"
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 }
 

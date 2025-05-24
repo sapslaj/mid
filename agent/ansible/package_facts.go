@@ -8,6 +8,65 @@ import (
 // Return information about installed packages as facts.
 const PackageFactsName = "package_facts"
 
+// The package manager(s) used by the system so we can query the package
+// information. This is a list and can support multiple package managers per
+// system, since version 2.8.
+// The `portage` and `pkg` options were added in version 2.8.
+// The `apk` option was added in version 2.11.
+// The `pkg_info`' option was added in version 2.13.
+// Aliases were added in 2.18, to support using
+// `manager={{ansible_facts['pkg_mgr']}}`
+type PackageFactsManager string
+
+const (
+	// Depending on `strategy`, will match the first or all package managers
+	// provided, in order
+	PackageFactsManagerAuto PackageFactsManager = "auto"
+	// For RPM based distros, requires RPM Python bindings, not installed by
+	// default on Suse (python3-rpm)
+	PackageFactsManagerRpm PackageFactsManager = "rpm"
+	// Alias to rpm
+	PackageFactsManagerYum PackageFactsManager = "yum"
+	// Alias to rpm
+	PackageFactsManagerDnf PackageFactsManager = "dnf"
+	// Alias to rpm
+	PackageFactsManagerDnf5 PackageFactsManager = "dnf5"
+	// Alias to rpm
+	PackageFactsManagerZypper PackageFactsManager = "zypper"
+	// For DEB based distros, `python-apt` package must be installed on targeted
+	// hosts
+	PackageFactsManagerApt PackageFactsManager = "apt"
+	// Handles ebuild packages, it requires the `qlist` utility, which is part of
+	// 'app-portage/portage-utils'
+	PackageFactsManagerPortage PackageFactsManager = "portage"
+	// libpkg front end (FreeBSD)
+	PackageFactsManagerPkg PackageFactsManager = "pkg"
+	// Alias to pkg
+	PackageFactsManagerPkg5 PackageFactsManager = "pkg5"
+	// Alias to pkg
+	PackageFactsManagerPkgng PackageFactsManager = "pkgng"
+	// Archlinux package manager/builder
+	PackageFactsManagerPacman PackageFactsManager = "pacman"
+	// Alpine Linux package manager
+	PackageFactsManagerApk PackageFactsManager = "apk"
+	// OpenBSD package manager
+	PackageFactsManagerPkgInfo PackageFactsManager = "pkg_info"
+	// Alias to pkg_info
+	PackageFactsManagerOpenbsdPkg PackageFactsManager = "openbsd_pkg"
+)
+
+// This option controls how the module queries the package managers on the
+// system.
+type PackageFactsStrategy string
+
+const (
+	// returns only information for the first supported package manager available.
+	PackageFactsStrategyFirst PackageFactsStrategy = "first"
+	// returns information for all supported and available package managers on the
+	// system.
+	PackageFactsStrategyAll PackageFactsStrategy = "all"
+)
+
 // Parameters for the `package_facts` Ansible module.
 type PackageFactsParameters struct {
 	// The package manager(s) used by the system so we can query the package
@@ -18,11 +77,13 @@ type PackageFactsParameters struct {
 	// The `pkg_info`' option was added in version 2.13.
 	// Aliases were added in 2.18, to support using
 	// `manager={{ansible_facts['pkg_mgr']}}`
-	Manager *[]string `json:"manager,omitempty"`
+	// default: []PackageFactsManager{PackageFactsManagerAuto}
+	Manager *PackageFactsManager `json:"manager,omitempty"`
 
 	// This option controls how the module queries the package managers on the
 	// system.
-	Strategy *string `json:"strategy,omitempty"`
+	// default: PackageFactsStrategyFirst
+	Strategy *PackageFactsStrategy `json:"strategy,omitempty"`
 }
 
 // Wrap the `PackageFactsParameters into an `rpc.RPCCall`.

@@ -8,6 +8,35 @@ import (
 // Manages `apt` packages (such as for Debian/Ubuntu).
 const AptName = "apt"
 
+// Indicates the desired package state. `latest` ensures that the latest version
+// is installed. `build-dep` ensures the package build dependencies are
+// installed. `fixed` attempt to correct a system with broken dependencies in
+// place.
+type AptState string
+
+const (
+	AptStateAbsent   AptState = "absent"
+	AptStateBuildDep AptState = "build-dep"
+	AptStateLatest   AptState = "latest"
+	AptStatePresent  AptState = "present"
+	AptStateFixed    AptState = "fixed"
+)
+
+// If yes or safe, performs an aptitude safe-upgrade.
+// If full, performs an aptitude full-upgrade.
+// If dist, performs an apt-get dist-upgrade.
+// Note: This does not upgrade a specific package, use state=latest for that.
+// Note: Since 2.4, apt-get is used as a fall-back if aptitude is not present.
+type AptUpgrade string
+
+const (
+	AptUpgradeDist AptUpgrade = "dist"
+	AptUpgradeFull AptUpgrade = "full"
+	AptUpgradeNo   AptUpgrade = "no"
+	AptUpgradeSafe AptUpgrade = "safe"
+	AptUpgradeYes  AptUpgrade = "yes"
+)
+
 // Parameters for the `apt` Ansible module.
 type AptParameters struct {
 	// A list of package names, like `foo`, or package specifier with version, like
@@ -21,7 +50,8 @@ type AptParameters struct {
 	// version is installed. `build-dep` ensures the package build dependencies are
 	// installed. `fixed` attempt to correct a system with broken dependencies in
 	// place.
-	State *string `json:"state,omitempty"`
+	// default: AptStatePresent
+	State *AptState `json:"state,omitempty"`
 
 	// Run the equivalent of `apt-get update` before the operation. Can be run as
 	// part of the package installation or as a separate step.
@@ -30,19 +60,23 @@ type AptParameters struct {
 
 	// Amount of retries if the cache update fails. Also see
 	// `update_cache_retry_max_delay`.
+	// default: 5
 	UpdateCacheRetries *int `json:"update_cache_retries,omitempty"`
 
 	// Use an exponential backoff delay for each retry (see `update_cache_retries`)
 	// up to this max delay in seconds.
+	// default: 12
 	UpdateCacheRetryMaxDelay *int `json:"update_cache_retry_max_delay,omitempty"`
 
 	// Update the apt cache if it is older than the `cache_valid_time`. This option
 	// is set in seconds.
 	// As of Ansible 2.4, if explicitly set, this sets `update_cache=yes`.
+	// default: 0
 	CacheValidTime *int `json:"cache_valid_time,omitempty"`
 
 	// Will force purging of configuration files if `state=absent` or
 	// `autoremove=yes`.
+	// default: "no"
 	Purge *bool `json:"purge,omitempty"`
 
 	// Corresponds to the `-t` option for `apt` and sets pin priorities.
@@ -63,6 +97,7 @@ type AptParameters struct {
 	// **This is a destructive operation with the potential to destroy your system,
 	// and it should almost never be used.** Please also see `man apt-get` for more
 	// information.
+	// default: "no"
 	Force *bool `json:"force,omitempty"`
 
 	// Run the equivalent of `apt-get clean` to clear out the local repository of
@@ -70,11 +105,13 @@ type AptParameters struct {
 	// `/var/cache/apt/archives/` and `/var/cache/apt/archives/partial/`.
 	// Can be run as part of the package installation (clean runs before install)
 	// or as a separate step.
+	// default: "no"
 	Clean *bool `json:"clean,omitempty"`
 
 	// Ignore if packages cannot be authenticated. This is useful for bootstrapping
 	// environments that manage their own apt-key setup.
 	// `allow_unauthenticated` is only supported with `state`: `install`/`present`.
+	// default: "no"
 	AllowUnauthenticated *bool `json:"allow_unauthenticated,omitempty"`
 
 	// Corresponds to the `--allow-downgrades` option for `apt`.
@@ -86,9 +123,11 @@ type AptParameters struct {
 	// complete list of specified packages to install).
 	// `allow_downgrade` is only supported by `apt` and will be ignored if
 	// `aptitude` is detected or specified.
+	// default: "no"
 	AllowDowngrade *bool `json:"allow_downgrade,omitempty"`
 
 	// Allows changing the version of a package which is on the apt hold list.
+	// default: "no"
 	AllowChangeHeldPackages *bool `json:"allow_change_held_packages,omitempty"`
 
 	// If yes or safe, performs an aptitude safe-upgrade.
@@ -96,11 +135,13 @@ type AptParameters struct {
 	// If dist, performs an apt-get dist-upgrade.
 	// Note: This does not upgrade a specific package, use state=latest for that.
 	// Note: Since 2.4, apt-get is used as a fall-back if aptitude is not present.
-	Upgrade *string `json:"upgrade,omitempty"`
+	// default: AptUpgradeNo
+	Upgrade *AptUpgrade `json:"upgrade,omitempty"`
 
 	// Add `dpkg` options to `apt` command. Defaults to `-o
 	// "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"`.
 	// Options should be supplied as comma separated list.
+	// default: "force-confdef,force-confold"
 	DpkgOptions *string `json:"dpkg_options,omitempty"`
 
 	// Path to a .deb package on the remote machine.
@@ -114,10 +155,12 @@ type AptParameters struct {
 	// `build-dep`. It can also be used as the only option.
 	// Previous to version 2.4, `autoclean` was also an alias for `autoremove`, now
 	// it is its own separate command. See documentation for further information.
+	// default: "no"
 	Autoremove *bool `json:"autoremove,omitempty"`
 
 	// If `true`, cleans the local repository of retrieved package files that can
 	// no longer be downloaded.
+	// default: "no"
 	Autoclean *bool `json:"autoclean,omitempty"`
 
 	// Force the exit code of `/usr/sbin/policy-rc.d`.
@@ -126,9 +169,11 @@ type AptParameters struct {
 	// If `/usr/sbin/policy-rc.d` already exists, it is backed up and restored
 	// after the package installation.
 	// If `null`, the `/usr/sbin/policy-rc.d` is not created/changed.
+	// default: nil
 	PolicyRcD *int `json:"policy_rc_d,omitempty"`
 
 	// Only upgrade a package if it is already installed.
+	// default: "no"
 	OnlyUpgrade *bool `json:"only_upgrade,omitempty"`
 
 	// Corresponds to the `--no-remove` option for `apt`.
@@ -137,14 +182,17 @@ type AptParameters struct {
 	// `fail_on_autoremove` is only supported with `state` except `absent`.
 	// `fail_on_autoremove` is only supported by `apt` and will be ignored if
 	// `aptitude` is detected or specified.
+	// default: "no"
 	FailOnAutoremove *bool `json:"fail_on_autoremove,omitempty"`
 
 	// Force usage of apt-get instead of aptitude.
+	// default: "no"
 	ForceAptGet *bool `json:"force_apt_get,omitempty"`
 
 	// How many seconds will this action wait to acquire a lock on the apt db.
 	// Sometimes there is a transitory lock and this will retry at least until
 	// timeout is hit.
+	// default: 60
 	LockTimeout *int `json:"lock_timeout,omitempty"`
 }
 

@@ -20,6 +20,27 @@ import (
 // When using symbols such as `%`, they must be properly escaped.
 const CronName = "cron"
 
+// Whether to ensure the job or environment variable is present or absent.
+type CronState string
+
+const (
+	CronStateAbsent  CronState = "absent"
+	CronStatePresent CronState = "present"
+)
+
+// Special time specification nickname.
+type CronSpecialTime string
+
+const (
+	CronSpecialTimeAnnually CronSpecialTime = "annually"
+	CronSpecialTimeDaily    CronSpecialTime = "daily"
+	CronSpecialTimeHourly   CronSpecialTime = "hourly"
+	CronSpecialTimeMonthly  CronSpecialTime = "monthly"
+	CronSpecialTimeReboot   CronSpecialTime = "reboot"
+	CronSpecialTimeWeekly   CronSpecialTime = "weekly"
+	CronSpecialTimeYearly   CronSpecialTime = "yearly"
+)
+
 // Parameters for the `cron` Ansible module.
 type CronParameters struct {
 	// Description of a crontab entry or, if `env` is set, the name of environment
@@ -38,7 +59,8 @@ type CronParameters struct {
 	Job *string `json:"job,omitempty"`
 
 	// Whether to ensure the job or environment variable is present or absent.
-	State *string `json:"state,omitempty"`
+	// default: CronStatePresent
+	State *CronState `json:"state,omitempty"`
 
 	// If specified, uses this file instead of an individual user's crontab. The
 	// assumption is that this file is exclusively managed by the module, do not
@@ -54,35 +76,43 @@ type CronParameters struct {
 	// If set, create a backup of the crontab before it is modified. The location
 	// of the backup is returned in the R`ignore:backup_file` variable by this
 	// module.
+	// default: false
 	Backup *bool `json:"backup,omitempty"`
 
 	// Minute when the job should run (`0-59`, `*`, `*/2`, and so on).
+	// default: "*"
 	Minute *string `json:"minute,omitempty"`
 
 	// Hour when the job should run (`0-23`, `*`, `*/2`, and so on).
+	// default: "*"
 	Hour *string `json:"hour,omitempty"`
 
 	// Day of the month the job should run (`1-31`, `*`, `*/2`, and so on).
+	// default: "*"
 	Day *string `json:"day,omitempty"`
 
 	// Month of the year the job should run (`1-12`, `*`, `*/2`, and so on).
+	// default: "*"
 	Month *string `json:"month,omitempty"`
 
 	// Day of the week that the job should run (`0-6` for Sunday-Saturday, `*`, and
 	// so on).
+	// default: "*"
 	Weekday *string `json:"weekday,omitempty"`
 
 	// Special time specification nickname.
-	SpecialTime *string `json:"special_time,omitempty"`
+	SpecialTime *CronSpecialTime `json:"special_time,omitempty"`
 
 	// If the job should be disabled (commented out) in the crontab.
 	// Only has effect if `state=present`.
+	// default: false
 	Disabled *bool `json:"disabled,omitempty"`
 
 	// If set, manages a crontab's environment variable.
 	// New variables are added on top of crontab.
 	// `name` and `value` parameters are the name and the value of environment
 	// variable.
+	// default: false
 	Env *bool `json:"env,omitempty"`
 
 	// Used with `state=present` and `env`.

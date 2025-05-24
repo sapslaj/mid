@@ -13,6 +13,38 @@ import (
 // For Windows targets, use the `ansible.windows.win_file` module instead.
 const FileName = "file"
 
+// If `absent`, directories will be recursively deleted, and files or symlinks
+// will be unlinked. In the case of a directory, if `diff` is declared, you will
+// see the files and folders deleted listed under `path_contents`. Note that
+// `absent` will not cause `ansible.builtin.file` to fail if the `path` does not
+// exist as the state did not change.
+// If `directory`, all intermediate subdirectories will be created if they do
+// not exist. Since Ansible 1.7 they will be created with the supplied
+// permissions.
+// If `file`, with no other options, returns the current state of `path`.
+// If `file`, even with other options (such as `mode`), the file will be
+// modified if it exists but will NOT be created if it does not exist. Set to
+// `touch` or use the `ansible.builtin.copy` or `ansible.builtin.template`
+// module if you want to create the file if it does not exist.
+// If `hard`, the hard link will be created or changed.
+// If `link`, the symbolic link will be created or changed.
+// If `touch` (new in 1.4), an empty file will be created if the file does not
+// exist, while an existing file or directory will receive updated file access
+// and modification times (similar to the way `touch` works from the command
+// line).
+// Default is the current state of the file if it exists, `directory` if
+// `recurse=yes`, or `file` otherwise.
+type FileState string
+
+const (
+	FileStateAbsent    FileState = "absent"
+	FileStateDirectory FileState = "directory"
+	FileStateFile      FileState = "file"
+	FileStateHard      FileState = "hard"
+	FileStateLink      FileState = "link"
+	FileStateTouch     FileState = "touch"
+)
+
 // Parameters for the `file` Ansible module.
 type FileParameters struct {
 	// Path to the file being managed.
@@ -39,7 +71,7 @@ type FileParameters struct {
 	// line).
 	// Default is the current state of the file if it exists, `directory` if
 	// `recurse=yes`, or `file` otherwise.
-	State *string `json:"state,omitempty"`
+	State *FileState `json:"state,omitempty"`
 
 	// Path of the file to link to.
 	// This applies only to `state=link` and `state=hard`.
@@ -50,12 +82,14 @@ type FileParameters struct {
 
 	// Recursively set the specified file attributes on directory contents.
 	// This applies only when `state` is set to `directory`.
+	// default: false
 	Recurse *bool `json:"recurse,omitempty"`
 
 	// Force the creation of the links in two cases: if the link type is symbolic
 	// and the source file does not exist (but will appear later); the destination
 	// exists and is a file (so, we need to unlink the `path` file and create a
 	// link to the `src` file in place of it).
+	// default: false
 	Force *bool `json:"force,omitempty"`
 
 	// This flag indicates that filesystem links, if they exist, should be
@@ -67,6 +101,7 @@ type FileParameters struct {
 	// to avoid a warning message related to permission issues. The warning message
 	// is added to notify the user that we can not set permissions to the non-
 	// existent destination.
+	// default: true
 	Follow *bool `json:"follow,omitempty"`
 
 	// This parameter indicates the time the file's modification time should be set
@@ -80,6 +115,7 @@ type FileParameters struct {
 	// When used with `modification_time`, indicates the time format that must be
 	// used.
 	// Based on default Python format (see time.strftime doc).
+	// default: "%Y%m%d%H%M.%S"
 	ModificationTimeFormat *string `json:"modification_time_format,omitempty"`
 
 	// This parameter indicates the time the file's access time should be set to.
@@ -91,6 +127,7 @@ type FileParameters struct {
 
 	// When used with `access_time`, indicates the time format that must be used.
 	// Based on default Python format (see time.strftime doc).
+	// default: "%Y%m%d%H%M.%S"
 	AccessTimeFormat *string `json:"access_time_format,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -161,6 +198,7 @@ type FileParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

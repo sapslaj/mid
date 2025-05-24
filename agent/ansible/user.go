@@ -9,6 +9,27 @@ import (
 // For Windows targets, use the `ansible.windows.win_user` module instead.
 const UserName = "user"
 
+// Whether the account should exist or not, taking action if the state is
+// different from what is stated.
+// See this `FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendi
+// ces/faq.html#running-on-macos-as-a-target` for additional requirements when
+// removing users on macOS systems.
+type UserState string
+
+const (
+	UserStateAbsent  UserState = "absent"
+	UserStatePresent UserState = "present"
+)
+
+// `always` will update passwords if they differ.
+// `on_create` will only set the password for newly created users.
+type UserUpdatePassword string
+
+const (
+	UserUpdatePasswordAlways   UserUpdatePassword = "always"
+	UserUpdatePasswordOnCreate UserUpdatePassword = "on_create"
+)
+
 // Parameters for the `user` Ansible module.
 type UserParameters struct {
 	// Name of the user to create, remove or modify.
@@ -28,6 +49,7 @@ type UserParameters struct {
 
 	// Optionally when used with the `-u` option, this option allows to change the
 	// user ID to a non-unique value.
+	// default: false
 	NonUnique *bool `json:"non_unique,omitempty"`
 
 	// Optionally sets the `seuser` type `user_u` on SELinux enabled systems.
@@ -49,6 +71,7 @@ type UserParameters struct {
 	// If `true`, add the user to the groups specified in `groups`.
 	// If `false`, user will only be added to the groups specified in `groups`,
 	// removing them from all other groups.
+	// default: false
 	Append *bool `json:"append,omitempty"`
 
 	// Optionally set the user's shell.
@@ -92,21 +115,25 @@ type UserParameters struct {
 	// See this `FAQ entry,https://docs.ansible.com/ansible/latest/reference_append
 	// ices/faq.html#running-on-macos-as-a-target` for additional requirements when
 	// removing users on macOS systems.
-	State *string `json:"state,omitempty"`
+	// default: UserStatePresent
+	State *UserState `json:"state,omitempty"`
 
 	// Unless set to `false`, a home directory will be made for the user when the
 	// account is created or if the home directory does not exist.
 	// Changed from `createhome` to `create_home` in Ansible 2.5.
+	// default: true
 	CreateHome *bool `json:"create_home,omitempty"`
 
 	// If set to `true` when used with `home`, attempt to move the user's old home
 	// directory to the specified directory if it isn't there already and the old
 	// home exists.
+	// default: false
 	MoveHome *bool `json:"move_home,omitempty"`
 
 	// When creating an account `state=present`, setting this to `true` makes the
 	// user a system account.
 	// This setting cannot be changed on existing users.
+	// default: false
 	System *bool `json:"system,omitempty"`
 
 	// This only affects `state=absent`, it forces removal of the user and
@@ -115,12 +142,14 @@ type UserParameters struct {
 	// `userdel` on your system for details and support.
 	// When used with `generate_ssh_key=yes` this forces an existing key to be
 	// overwritten.
+	// default: false
 	Force *bool `json:"force,omitempty"`
 
 	// This only affects `state=absent`, it attempts to remove directories
 	// associated with the user.
 	// The behavior is the same as `userdel --remove`, check the man page for
 	// details and support.
+	// default: false
 	Remove *bool `json:"remove,omitempty"`
 
 	// Optionally sets the user's login class, a feature of most BSD OSs.
@@ -128,6 +157,7 @@ type UserParameters struct {
 
 	// Whether to generate a SSH key for the user in question.
 	// This will `not` overwrite an existing SSH key unless used with `force=yes`.
+	// default: false
 	GenerateSshKey *bool `json:"generate_ssh_key,omitempty"`
 
 	// Optionally specify number of bits in SSH key to create.
@@ -137,6 +167,7 @@ type UserParameters struct {
 	// Optionally specify the type of SSH key to generate.
 	// Available SSH key types will depend on implementation present on target
 	// host.
+	// default: "rsa"
 	SshKeyType *string `json:"ssh_key_type,omitempty"`
 
 	// Optionally specify the SSH key filename.
@@ -146,6 +177,7 @@ type UserParameters struct {
 	SshKeyFile *string `json:"ssh_key_file,omitempty"`
 
 	// Optionally define the comment for the SSH key.
+	// default: "ansible-generated on $HOSTNAME"
 	SshKeyComment *string `json:"ssh_key_comment,omitempty"`
 
 	// Set a passphrase for the SSH key.
@@ -155,7 +187,8 @@ type UserParameters struct {
 
 	// `always` will update passwords if they differ.
 	// `on_create` will only set the password for newly created users.
-	UpdatePassword *string `json:"update_password,omitempty"`
+	// default: UserUpdatePasswordAlways
+	UpdatePassword *UserUpdatePassword `json:"update_password,omitempty"`
 
 	// An expiry time for the user in epoch, it will be ignored on platforms that
 	// do not support this.
@@ -183,6 +216,7 @@ type UserParameters struct {
 	// `/etc/passwd`, this setting will not work properly.
 	// This requires that the above commands as well as `/etc/passwd` must exist on
 	// the target host, otherwise it will be a fatal error.
+	// default: false
 	Local *bool `json:"local,omitempty"`
 
 	// Sets the profile of the user.

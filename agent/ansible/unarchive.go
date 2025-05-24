@@ -35,6 +35,7 @@ type UnarchiveParameters struct {
 	// machine.
 	// This option has been deprecated in favor of `remote_src`.
 	// This option is mutually exclusive with `remote_src`.
+	// default: true
 	Copy *bool `json:"copy,omitempty"`
 
 	// If the specified absolute path (file or directory) already exists, this step
@@ -45,23 +46,28 @@ type UnarchiveParameters struct {
 
 	// Size of the volatile memory buffer that is used for extracting files from
 	// the archive in bytes.
+	// default: 65536
 	IoBufferSize *int `json:"io_buffer_size,omitempty"`
 
 	// If set to True, return the list of files that are contained in the tarball.
+	// default: false
 	ListFiles *bool `json:"list_files,omitempty"`
 
 	// List the directory and file entries that you would like to exclude from the
 	// unarchive action.
 	// Mutually exclusive with `include`.
+	// default: []
 	Exclude *[]string `json:"exclude,omitempty"`
 
 	// List of directory and file entries that you would like to extract from the
 	// archive. If `include` is not empty, only files listed here will be
 	// extracted.
 	// Mutually exclusive with `exclude`.
+	// default: []
 	Include *[]string `json:"include,omitempty"`
 
 	// Do not replace existing files that are newer than files from the archive.
+	// default: false
 	KeepNewer *bool `json:"keep_newer,omitempty"`
 
 	// Specify additional options by passing in an array.
@@ -69,20 +75,24 @@ type UnarchiveParameters struct {
 	// array. See examples.
 	// Command-line options with multiple elements must use multiple lines in the
 	// array, one for each element.
+	// default: []
 	ExtraOpts *[]string `json:"extra_opts,omitempty"`
 
 	// Set to `true` to indicate the archived file is already on the remote system
 	// and not local to the Ansible controller.
 	// This option is mutually exclusive with `copy`.
+	// default: false
 	RemoteSrc *bool `json:"remote_src,omitempty"`
 
 	// This only applies if using a https URL as the source of the file.
 	// This should only set to `false` used on personally controlled sites using
 	// self-signed certificate.
 	// Prior to 2.2 the code worked as if this was set to `true`.
+	// default: true
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 
 	// This option controls the auto-decryption of source files using vault.
+	// default: true
 	Decrypt *bool `json:"decrypt,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -153,6 +163,7 @@ type UnarchiveParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

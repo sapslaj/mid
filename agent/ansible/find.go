@@ -14,6 +14,26 @@ import (
 // should use it directly.
 const FindName = "find"
 
+// Type of file to select.
+// The `link` and `any` choices were added in Ansible 2.3.
+type FindFileType string
+
+const (
+	FindFileTypeAny       FindFileType = "any"
+	FindFileTypeDirectory FindFileType = "directory"
+	FindFileTypeFile      FindFileType = "file"
+	FindFileTypeLink      FindFileType = "link"
+)
+
+// Choose the file property against which we compare age.
+type FindAgeStamp string
+
+const (
+	FindAgeStampAtime FindAgeStamp = "atime"
+	FindAgeStampCtime FindAgeStamp = "ctime"
+	FindAgeStampMtime FindAgeStamp = "mtime"
+)
+
 // Parameters for the `find` Ansible module.
 type FindParameters struct {
 	// Select files whose age is equal to or greater than the specified time.
@@ -35,6 +55,7 @@ type FindParameters struct {
 	// If any of the patterns contain a comma, make sure to put them in a list to
 	// avoid splitting the patterns in undesirable ways.
 	// Defaults to `*` when `use_regex=False`, or `.*` when `use_regex=True`.
+	// default: []
 	Patterns *[]string `json:"patterns,omitempty"`
 
 	// One or more (shell or regex) patterns, which type is controlled by
@@ -56,6 +77,7 @@ type FindParameters struct {
 	// Setting this to `true` can have performance and memory implications for
 	// large files.
 	// This uses `re.search(\`) instead of `re.match(\`).
+	// default: false
 	ReadWholeFile *bool `json:"read_whole_file,omitempty"`
 
 	// List of paths of directories to search. All paths must be fully qualified.
@@ -65,10 +87,12 @@ type FindParameters struct {
 
 	// Type of file to select.
 	// The `link` and `any` choices were added in Ansible 2.3.
-	FileType *string `json:"file_type,omitempty"`
+	// default: FindFileTypeFile
+	FileType *FindFileType `json:"file_type,omitempty"`
 
 	// If target is a directory, recursively descend into the directory looking for
 	// files.
+	// default: false
 	Recurse *bool `json:"recurse,omitempty"`
 
 	// Select files whose size is equal to or greater than the specified size.
@@ -79,9 +103,11 @@ type FindParameters struct {
 	Size *string `json:"size,omitempty"`
 
 	// Choose the file property against which we compare age.
-	AgeStamp *string `json:"age_stamp,omitempty"`
+	// default: FindAgeStampMtime
+	AgeStamp *FindAgeStamp `json:"age_stamp,omitempty"`
 
 	// Set this to `true` to include hidden files, otherwise they will be ignored.
+	// default: false
 	Hidden *bool `json:"hidden,omitempty"`
 
 	// Choose objects matching a specified permission. This value is restricted to
@@ -92,16 +118,20 @@ type FindParameters struct {
 
 	// Restrict mode matching to exact matches only, and not as a minimum set of
 	// permissions to match.
+	// default: true
 	ExactMode *bool `json:"exact_mode,omitempty"`
 
 	// Set this to `true` to follow symlinks in path for systems with python 2.6+.
+	// default: false
 	Follow *bool `json:"follow,omitempty"`
 
 	// Set this to `true` to retrieve a file's SHA1 checksum.
+	// default: false
 	GetChecksum *bool `json:"get_checksum,omitempty"`
 
 	// If `false`, the patterns are file globs (shell).
 	// If `true`, they are python regexes.
+	// default: false
 	UseRegex *bool `json:"use_regex,omitempty"`
 
 	// Set the maximum number of levels to descend into.

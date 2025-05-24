@@ -9,6 +9,14 @@ import (
 // For Windows targets, use the `ansible.windows.win_group` module instead.
 const GroupName = "group"
 
+// Whether the group should be present or not on the remote host.
+type GroupState string
+
+const (
+	GroupStateAbsent  GroupState = "absent"
+	GroupStatePresent GroupState = "present"
+)
+
 // Parameters for the `group` Ansible module.
 type GroupParameters struct {
 	// Name of the group to manage.
@@ -18,14 +26,17 @@ type GroupParameters struct {
 	Gid *int `json:"gid,omitempty"`
 
 	// Whether the group should be present or not on the remote host.
-	State *string `json:"state,omitempty"`
+	// default: GroupStatePresent
+	State *GroupState `json:"state,omitempty"`
 
 	// Whether to delete a group even if it is the primary group of a user.
 	// Only applicable on platforms which implement a `--force` flag on the group
 	// deletion command.
+	// default: false
 	Force *bool `json:"force,omitempty"`
 
 	// If `yes`, indicates that the group created is a system group.
+	// default: false
 	System *bool `json:"system,omitempty"`
 
 	// Forces the use of "local" command alternatives on platforms that implement
@@ -35,11 +46,13 @@ type GroupParameters struct {
 	// instead of `groupadd`).
 	// This requires that these commands exist on the targeted host, otherwise it
 	// will be a fatal error.
+	// default: false
 	Local *bool `json:"local,omitempty"`
 
 	// This option allows to change the group ID to a non-unique value. Requires
 	// `gid`.
 	// Not supported on macOS or BusyBox distributions.
+	// default: false
 	NonUnique *bool `json:"non_unique,omitempty"`
 
 	// Sets the GID_MIN value for group creation.

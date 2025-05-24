@@ -9,6 +9,27 @@ import (
 // Or just query existing selections.
 const DebconfName = "debconf"
 
+// The type of the value supplied.
+// It is highly recommended to add `no_log=True` to task while specifying
+// `vtype=password`.
+// `seen` was added in Ansible 2.2.
+// After Ansible 2.17, user can specify `value` as a list, if `vtype` is set as
+// `multiselect`.
+type DebconfVtype string
+
+const (
+	DebconfVtypeBoolean     DebconfVtype = "boolean"
+	DebconfVtypeError       DebconfVtype = "error"
+	DebconfVtypeMultiselect DebconfVtype = "multiselect"
+	DebconfVtypeNote        DebconfVtype = "note"
+	DebconfVtypePassword    DebconfVtype = "password"
+	DebconfVtypeSeen        DebconfVtype = "seen"
+	DebconfVtypeSelect      DebconfVtype = "select"
+	DebconfVtypeString      DebconfVtype = "string"
+	DebconfVtypeText        DebconfVtype = "text"
+	DebconfVtypeTitle       DebconfVtype = "title"
+)
+
 // Parameters for the `debconf` Ansible module.
 type DebconfParameters struct {
 	// Name of package to configure.
@@ -23,13 +44,14 @@ type DebconfParameters struct {
 	// `seen` was added in Ansible 2.2.
 	// After Ansible 2.17, user can specify `value` as a list, if `vtype` is set as
 	// `multiselect`.
-	Vtype *string `json:"vtype,omitempty"`
+	Vtype *DebconfVtype `json:"vtype,omitempty"`
 
 	// Value to set the configuration to.
 	// After Ansible 2.17, `value` is of type `raw`.
 	Value *any `json:"value,omitempty"`
 
 	// Do not set `seen` flag when pre-seeding.
+	// default: false
 	Unseen *bool `json:"unseen,omitempty"`
 }
 

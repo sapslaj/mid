@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from io import StringIO
+import json
 import multiprocessing
 import os
 import pathlib
@@ -19,6 +20,11 @@ sys.path.insert(0, str(ansible_dir.parent.absolute().resolve(True)))
 
 
 def pascalcased(s: str) -> str:
+    try:
+        s = re.sub(r"['\"!@#$%^&\*\(\)\[\]\{\};:\,\./<>\?\|`~=\-+ ]+", "_", s)
+    except Exception as e:
+        print("EXCEPTION ON", s)
+        raise e
     return "".join([word.capitalize() for word in s.split("_")])
 
 
@@ -145,17 +151,67 @@ def process_module_file(module_file: str):
         f.write(")\n\n")
         f.write(doc_comment(documentation["description"], indent=0))
         f.write(f'const {pascalcase_name}Name = "{name}"\n\n')
+        for key, value in documentation["options"].items():
+            if "choices" not in value:
+                continue
+            if value["type"] != "str":
+                if value.get("elements", None) != "str":
+                    raise Exception(f"{name}.{key} enum type is unsupported")
+            pascalcase_key = pascalcased(key)
+            f.write(doc_comment(value["description"], indent=0))
+            f.write(f"type {pascalcase_name}{pascalcase_key} string\n\n")
+            f.write("const (\n")
+            for choice in value["choices"]:
+                if isinstance(value["choices"], dict):
+                    f.write(doc_comment(value["choices"][choice], indent=1))
+                f.write("\t")
+                f.write(f"{pascalcase_name}{pascalcase_key}{pascalcased(choice)}")
+                f.write(" ")
+                f.write(f"{pascalcase_name}{pascalcase_key}")
+                f.write(" = ")
+                f.write(f'"{choice}"\n')
+            f.write(")\n\n")
         f.write(doc_comment(f"Parameters for the `{name}` Ansible module.", indent=0))
         f.write(f"type {pascalcase_name}Parameters struct {'{'}\n")
         for key, value in documentation["options"].items():
             required = value.get("required", False)
             f.write(doc_comment(value["description"], indent=1))
+            if "default" in value:
+                default = value["default"]
+                default_repr = ""
+                if "choices" in value:
+                    if value["type"] == "list":
+                        default_repr = f"[]{pascalcase_name}{pascalcased(key)}"
+                        default_repr += "{"
+                        if not isinstance(default, list):
+                            raise Exception(
+                                "list type does not use a list for the default value"
+                            )
+                        default_repr += ", ".join(
+                            [
+                                f"{pascalcase_name}{pascalcased(key)}{pascalcased(default_choice)}"
+                                for default_choice in default
+                            ]
+                        )
+                        default_repr += "}"
+                    else:
+                        default_repr = (
+                            f"{pascalcase_name}{pascalcased(key)}{pascalcased(default)}"
+                        )
+                elif default is None:
+                    default_repr = "nil"
+                else:
+                    default_repr = json.dumps(default)
+                f.write(doc_comment(f"default: {default_repr}", indent=1))
             f.write("\t")
             f.write(pascalcased(key))
             f.write(" ")
             if not required:
                 f.write("*")
-            f.write(composite_type_ansible_to_go(value))
+            if "choices" in value:
+                f.write(f"{pascalcase_name}{pascalcased(key)}")
+            else:
+                f.write(composite_type_ansible_to_go(value))
             f.write(' `json:"')
             f.write(key)
             if not required:

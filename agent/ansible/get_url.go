@@ -31,6 +31,7 @@ type GetUrlParameters struct {
 	Ciphers *[]string `json:"ciphers,omitempty"`
 
 	// Whether to attempt to decompress gzip content-encoded responses.
+	// default: true
 	Decompress *bool `json:"decompress,omitempty"`
 
 	// HTTP, HTTPS, or FTP URL in the form
@@ -59,10 +60,12 @@ type GetUrlParameters struct {
 	// be downloaded if the destination does not exist. Generally should be `true`
 	// only for small local files.
 	// Prior to 0.6, this module behaved as if `true` was the default.
+	// default: false
 	Force *bool `json:"force,omitempty"`
 
 	// Create a backup file including the timestamp information so you can get the
 	// original file back if you somehow clobbered it incorrectly.
+	// default: false
 	Backup *bool `json:"backup,omitempty"`
 
 	// If a checksum is passed to this parameter, the digest of the destination
@@ -84,18 +87,22 @@ type GetUrlParameters struct {
 	// `destination_checksum`, the destination file is deleted.
 	// If the checksum URL requires username and password, `url_username` and
 	// `url_password` are used to download the checksum file.
+	// default: ""
 	Checksum *string `json:"checksum,omitempty"`
 
 	// if `false`, it will not use a proxy, even if one is defined in an
 	// environment variable on the target hosts.
+	// default: true
 	UseProxy *bool `json:"use_proxy,omitempty"`
 
 	// If `false`, SSL certificates will not be validated.
 	// This should only be used on personally controlled sites using self-signed
 	// certificates.
+	// default: true
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 
 	// Timeout in seconds for URL request.
+	// default: 10
 	Timeout *int `json:"timeout,omitempty"`
 
 	// Add custom HTTP headers to a request in hash/dict format.
@@ -122,6 +129,7 @@ type GetUrlParameters struct {
 	// information when a webservice responds to an initial request with a 401
 	// status. Since some basic auth services do not properly send a 401, logins
 	// will fail.
+	// default: false
 	ForceBasicAuth *bool `json:"force_basic_auth,omitempty"`
 
 	// PEM formatted certificate chain file to be used for SSL client
@@ -137,12 +145,14 @@ type GetUrlParameters struct {
 	ClientKey *string `json:"client_key,omitempty"`
 
 	// Header to identify as, generally appears in web server logs.
+	// default: "ansible-httpget"
 	HttpAgent *string `json:"http_agent,omitempty"`
 
 	// A list of header names that will not be sent on subsequent redirected
 	// requests. This list is case insensitive. By default all headers will be
 	// redirected. In some cases it may be beneficial to list headers such as
 	// `Authorization` here to avoid potential credential exposure.
+	// default: []
 	UnredirectedHeaders *[]string `json:"unredirected_headers,omitempty"`
 
 	// Use GSSAPI to perform the authentication, typically this is for Kerberos or
@@ -154,11 +164,13 @@ type GetUrlParameters struct {
 	// credential cache.
 	// NTLM authentication is `not` supported even if the GSSAPI mech for NTLM has
 	// been installed.
+	// default: false
 	UseGssapi *bool `json:"use_gssapi,omitempty"`
 
 	// Determining whether to use credentials from `~/.netrc` file.
 	// By default `.netrc` is used with Basic authentication headers.
 	// When `false`, `.netrc` credentials are ignored.
+	// default: true
 	UseNetrc *bool `json:"use_netrc,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -229,6 +241,7 @@ type GetUrlParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

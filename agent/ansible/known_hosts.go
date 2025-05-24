@@ -14,6 +14,15 @@ import (
 // `ansible.builtin.template` module more useful.
 const KnownHostsName = "known_hosts"
 
+// `present` to add host keys.
+// `absent` to remove host keys.
+type KnownHostsState string
+
+const (
+	KnownHostsStateAbsent  KnownHostsState = "absent"
+	KnownHostsStatePresent KnownHostsState = "present"
+)
+
 // Parameters for the `known_hosts` Ansible module.
 type KnownHostsParameters struct {
 	// The host to add or remove (must match a host specified in key). It will be
@@ -41,14 +50,17 @@ type KnownHostsParameters struct {
 	// The known_hosts file to edit.
 	// The known_hosts file will be created if needed. The rest of the path must
 	// exist prior to running the module.
+	// default: "~/.ssh/known_hosts"
 	Path *string `json:"path,omitempty"`
 
 	// Hash the hostname in the known_hosts file.
+	// default: "no"
 	HashHost *bool `json:"hash_host,omitempty"`
 
 	// `present` to add host keys.
 	// `absent` to remove host keys.
-	State *string `json:"state,omitempty"`
+	// default: KnownHostsStatePresent
+	State *KnownHostsState `json:"state,omitempty"`
 }
 
 // Wrap the `KnownHostsParameters into an `rpc.RPCCall`.

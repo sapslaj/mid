@@ -19,6 +19,7 @@ const PingName = "ping"
 type PingParameters struct {
 	// Data to return for the R`ping` return value.
 	// If this parameter is set to `crash`, the module will cause an exception.
+	// default: "pong"
 	Data *string `json:"data,omitempty"`
 }
 

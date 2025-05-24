@@ -37,9 +37,11 @@ type ExpectParameters struct {
 
 	// Amount of time in seconds to wait for the expected strings. Use `null` to
 	// disable timeout.
+	// default: 30
 	Timeout *any `json:"timeout,omitempty"`
 
 	// Whether or not to echo out your response strings.
+	// default: false
 	Echo *bool `json:"echo,omitempty"`
 }
 

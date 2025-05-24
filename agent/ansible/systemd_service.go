@@ -11,6 +11,38 @@ import (
 // an alias for backward compatibility.
 const SystemdServiceName = "systemd_service"
 
+// `started`/`stopped` are idempotent actions that will not run commands unless
+// necessary. `restarted` will always bounce the unit. `reloaded` will always
+// reload and if the service is not running at the moment of the reload, it is
+// started.
+// If set, requires `name`.
+type SystemdServiceState string
+
+const (
+	SystemdServiceStateReloaded  SystemdServiceState = "reloaded"
+	SystemdServiceStateRestarted SystemdServiceState = "restarted"
+	SystemdServiceStateStarted   SystemdServiceState = "started"
+	SystemdServiceStateStopped   SystemdServiceState = "stopped"
+)
+
+// Run `systemctl` within a given service manager scope, either as the default
+// system scope `system`, the current user's scope `user`, or the scope of all
+// users `global`.
+// For systemd to work with `user`, the executing user must have its own
+// instance of dbus started and accessible (systemd requirement).
+// The user dbus process is normally started during normal login, but not during
+// the run of Ansible tasks. Otherwise you will probably get a 'Failed to
+// connect to bus: no such file or directory' error.
+// The user must have access, normally given via setting the `XDG_RUNTIME_DIR`
+// variable, see the example below.
+type SystemdServiceScope string
+
+const (
+	SystemdServiceScopeSystem SystemdServiceScope = "system"
+	SystemdServiceScopeUser   SystemdServiceScope = "user"
+	SystemdServiceScopeGlobal SystemdServiceScope = "global"
+)
+
 // Parameters for the `systemd_service` Ansible module.
 type SystemdServiceParameters struct {
 	// Name of the unit. This parameter takes the name of exactly one unit to work
@@ -25,7 +57,7 @@ type SystemdServiceParameters struct {
 	// reload and if the service is not running at the moment of the reload, it is
 	// started.
 	// If set, requires `name`.
-	State *string `json:"state,omitempty"`
+	State *SystemdServiceState `json:"state,omitempty"`
 
 	// Whether the unit should start on boot. At least one of `state` and `enabled`
 	// are required.
@@ -44,10 +76,12 @@ type SystemdServiceParameters struct {
 	// has read any changes.
 	// When set to `true`, runs `daemon-reload` even if the module does not start
 	// or stop anything.
+	// default: false
 	DaemonReload *bool `json:"daemon_reload,omitempty"`
 
 	// Run daemon_reexec command before doing any other operations, the systemd
 	// manager will serialize the manager state.
+	// default: false
 	DaemonReexec *bool `json:"daemon_reexec,omitempty"`
 
 	// Run `systemctl` within a given service manager scope, either as the default
@@ -60,10 +94,12 @@ type SystemdServiceParameters struct {
 	// to connect to bus: no such file or directory' error.
 	// The user must have access, normally given via setting the `XDG_RUNTIME_DIR`
 	// variable, see the example below.
-	Scope *string `json:"scope,omitempty"`
+	// default: SystemdServiceScopeSystem
+	Scope *SystemdServiceScope `json:"scope,omitempty"`
 
 	// Do not synchronously wait for the requested operation to finish. Enqueued
 	// job will continue without Ansible blocking on its completion.
+	// default: false
 	NoBlock *bool `json:"no_block,omitempty"`
 }
 

@@ -29,6 +29,7 @@ type CommandParameters struct {
 	// substitution which would remove it.
 	// Set to `false` to disable expansion and treat the value as a literal
 	// argument.
+	// default: true
 	ExpandArgumentVars *bool `json:"expand_argument_vars,omitempty"`
 
 	// The command module takes a free form string as a command to run.
@@ -62,9 +63,11 @@ type CommandParameters struct {
 	Stdin *string `json:"stdin,omitempty"`
 
 	// If set to `true`, append a newline to stdin data.
+	// default: true
 	StdinAddNewline *bool `json:"stdin_add_newline,omitempty"`
 
 	// Strip empty lines from the end of stdout/stderr in result.
+	// default: true
 	StripEmptyEnds *bool `json:"strip_empty_ends,omitempty"`
 }
 

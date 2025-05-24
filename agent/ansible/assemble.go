@@ -25,6 +25,7 @@ type AssembleParameters struct {
 
 	// Create a backup file (if `true`), including the timestamp information so you
 	// can get the original file back if you somehow clobbered it incorrectly.
+	// default: false
 	Backup *bool `json:"backup,omitempty"`
 
 	// A delimiter to separate the file contents.
@@ -32,6 +33,7 @@ type AssembleParameters struct {
 
 	// If `false`, it will search for src at originating/master machine.
 	// If `true`, it will go to the remote/target machine for the src.
+	// default: true
 	RemoteSrc *bool `json:"remote_src,omitempty"`
 
 	// Assemble files only if the given regular expression matches the filename.
@@ -42,6 +44,7 @@ type AssembleParameters struct {
 
 	// A boolean that controls if files that start with a `.` will be included or
 	// not.
+	// default: false
 	IgnoreHidden *bool `json:"ignore_hidden,omitempty"`
 
 	// The validation command to run before copying into place.
@@ -52,6 +55,7 @@ type AssembleParameters struct {
 	Validate *string `json:"validate,omitempty"`
 
 	// This option controls the auto-decryption of source files using vault.
+	// default: true
 	Decrypt *bool `json:"decrypt,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -122,6 +126,7 @@ type AssembleParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

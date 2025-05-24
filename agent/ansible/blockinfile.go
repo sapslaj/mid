@@ -9,6 +9,14 @@ import (
 // by customizable marker lines.
 const BlockinfileName = "blockinfile"
 
+// Whether the block should be there or not.
+type BlockinfileState string
+
+const (
+	BlockinfileStateAbsent  BlockinfileState = "absent"
+	BlockinfileStatePresent BlockinfileState = "present"
+)
+
 // Parameters for the `blockinfile` Ansible module.
 type BlockinfileParameters struct {
 	// The file to modify.
@@ -17,7 +25,8 @@ type BlockinfileParameters struct {
 	Path string `json:"path"`
 
 	// Whether the block should be there or not.
-	State *string `json:"state,omitempty"`
+	// default: BlockinfileStatePresent
+	State *BlockinfileState `json:"state,omitempty"`
 
 	// The marker line template.
 	// `{mark}` will be replaced with the values in `marker_begin`
@@ -28,11 +37,13 @@ type BlockinfileParameters struct {
 	// repeatedly inserted on subsequent playbook runs.
 	// A newline is automatically appended by the module to `marker_begin` and
 	// `marker_end`.
+	// default: "# {mark} ANSIBLE MANAGED BLOCK"
 	Marker *string `json:"marker,omitempty"`
 
 	// The text to insert inside the marker lines.
 	// If it is missing or an empty string, the block will be removed as if `state`
 	// were specified to `absent`.
+	// default: ""
 	Block *string `json:"block,omitempty"`
 
 	// If specified and no begin/ending `marker` lines are found, the block will be
@@ -58,26 +69,32 @@ type BlockinfileParameters struct {
 	Insertbefore *string `json:"insertbefore,omitempty"`
 
 	// Create a new file if it does not exist.
+	// default: false
 	Create *bool `json:"create,omitempty"`
 
 	// Create a backup file including the timestamp information so you can get the
 	// original file back if you somehow clobbered it incorrectly.
+	// default: false
 	Backup *bool `json:"backup,omitempty"`
 
 	// This will be inserted at `{mark}` in the opening ansible block `marker`.
+	// default: "BEGIN"
 	MarkerBegin *string `json:"marker_begin,omitempty"`
 
 	// This will be inserted at `{mark}` in the closing ansible block `marker`.
+	// default: "END"
 	MarkerEnd *string `json:"marker_end,omitempty"`
 
 	// Append a blank line to the inserted block, if this does not appear at the
 	// end of the file.
 	// Note that this attribute is not considered when `state` is set to `absent`
+	// default: false
 	AppendNewline *bool `json:"append_newline,omitempty"`
 
 	// Prepend a blank line to the inserted block, if this does not appear at the
 	// beginning of the file.
 	// Note that this attribute is not considered when `state` is set to `absent`
+	// default: false
 	PrependNewline *bool `json:"prepend_newline,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -148,6 +165,7 @@ type BlockinfileParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

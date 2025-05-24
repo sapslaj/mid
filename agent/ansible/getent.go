@@ -29,6 +29,7 @@ type GetentParameters struct {
 	Split *string `json:"split,omitempty"`
 
 	// If a supplied key is missing this will make the task fail if `true`.
+	// default: "yes"
 	FailKey *bool `json:"fail_key,omitempty"`
 }
 

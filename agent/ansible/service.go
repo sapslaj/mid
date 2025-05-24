@@ -21,6 +21,22 @@ import (
 // For Windows targets, use the `ansible.windows.win_service` module instead.
 const ServiceName = "service"
 
+// `started`/`stopped` are idempotent actions that will not run commands unless
+// necessary.
+// `restarted` will always bounce the service.
+// `reloaded` will always reload.
+// At least one of `state` and `enabled` are required.
+// Note that `reloaded` will start the service if it is not already started,
+// even if your chosen init system wouldn't normally.
+type ServiceState string
+
+const (
+	ServiceStateReloaded  ServiceState = "reloaded"
+	ServiceStateRestarted ServiceState = "restarted"
+	ServiceStateStarted   ServiceState = "started"
+	ServiceStateStopped   ServiceState = "stopped"
+)
+
 // Parameters for the `service` Ansible module.
 type ServiceParameters struct {
 	// Name of the service.
@@ -33,7 +49,7 @@ type ServiceParameters struct {
 	// At least one of `state` and `enabled` are required.
 	// Note that `reloaded` will start the service if it is not already started,
 	// even if your chosen init system wouldn't normally.
-	State *string `json:"state,omitempty"`
+	State *ServiceState `json:"state,omitempty"`
 
 	// If the service is being `restarted` then sleep this many seconds between the
 	// stop and start command.
@@ -57,10 +73,12 @@ type ServiceParameters struct {
 	// For OpenRC init scripts (e.g. Gentoo) only.
 	// The runlevel that this service belongs to.
 	// While using remote hosts with systemd this setting will be ignored.
+	// default: "default"
 	Runlevel *string `json:"runlevel,omitempty"`
 
 	// Additional arguments provided on the command line.
 	// While using remote hosts with systemd this setting will be ignored.
+	// default: ""
 	Arguments *string `json:"arguments,omitempty"`
 
 	// The service module actually uses system specific modules, normally through
@@ -69,6 +87,7 @@ type ServiceParameters struct {
 	// to the `ansible.legacy.service` module when none matching is found.
 	// The 'old service module' still uses autodetection and in no way does it
 	// correspond to the `service` command.
+	// default: "auto"
 	Use *string `json:"use,omitempty"`
 }
 

@@ -37,9 +37,11 @@ type SetupParameters struct {
 	// specify `!all,!min`. To collect only specific facts, use `!all,!min`, and
 	// specify the particular fact subsets. Use the filter parameter if you do not
 	// want to display some collected facts.
+	// default: "all"
 	GatherSubset *[]string `json:"gather_subset,omitempty"`
 
 	// Set the default timeout in seconds for individual fact gathering.
+	// default: 10
 	GatherTimeout *int `json:"gather_timeout,omitempty"`
 
 	// If supplied, only return facts that match one of the shell-style (fnmatch)
@@ -47,6 +49,7 @@ type SetupParameters struct {
 	// type has changed from string to list and the default has became an empty
 	// list. A simple string is still accepted and works as a single pattern. The
 	// behaviour prior to Ansible 2.11 remains.
+	// default: []
 	Filter *[]string `json:"filter,omitempty"`
 
 	// Path used for local ansible facts (`*.fact`) - files in this dir will be run
@@ -61,6 +64,7 @@ type SetupParameters struct {
 	// scripts `.ps1` which outputs an object. This object will be formatted by
 	// Ansible as json so the script should be outputting a raw hashtable, array,
 	// or other primitive object.
+	// default: "/etc/ansible/facts.d"
 	FactPath *string `json:"fact_path,omitempty"`
 }
 

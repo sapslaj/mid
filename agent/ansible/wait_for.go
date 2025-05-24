@@ -23,21 +23,41 @@ import (
 // For Windows targets, use the `ansible.windows.win_wait_for` module instead.
 const WaitForName = "wait_for"
 
+// Either `present`, `started`, or `stopped`, `absent`, or `drained`.
+// When checking a port `started` will ensure the port is open, `stopped` will
+// check that it is closed, `drained` will check for active connections.
+// When checking for a file or a search string `present` or `started` will
+// ensure that the file or string is present before continuing, `absent` will
+// check that file is absent or removed.
+type WaitForState string
+
+const (
+	WaitForStateAbsent  WaitForState = "absent"
+	WaitForStateDrained WaitForState = "drained"
+	WaitForStatePresent WaitForState = "present"
+	WaitForStateStarted WaitForState = "started"
+	WaitForStateStopped WaitForState = "stopped"
+)
+
 // Parameters for the `wait_for` Ansible module.
 type WaitForParameters struct {
 	// A resolvable hostname or IP address to wait for.
+	// default: "127.0.0.1"
 	Host *string `json:"host,omitempty"`
 
 	// Maximum number of seconds to wait for, when used with another condition it
 	// will force an error.
 	// When used without other conditions it is equivalent of just sleeping.
+	// default: 300
 	Timeout *int `json:"timeout,omitempty"`
 
 	// Maximum number of seconds to wait for a connection to happen before closing
 	// and retrying.
+	// default: 5
 	ConnectTimeout *int `json:"connect_timeout,omitempty"`
 
 	// Number of seconds to wait before starting to poll.
+	// default: 0
 	Delay *int `json:"delay,omitempty"`
 
 	// Port number to poll.
@@ -45,6 +65,8 @@ type WaitForParameters struct {
 	Port *int `json:"port,omitempty"`
 
 	// The list of TCP connection states which are counted as active connections.
+	// default: ["ESTABLISHED", "FIN_WAIT1", "FIN_WAIT2", "SYN_RECV", "SYN_SENT",
+	// "TIME_WAIT"]
 	ActiveConnectionStates *[]string `json:"active_connection_states,omitempty"`
 
 	// Either `present`, `started`, or `stopped`, `absent`, or `drained`.
@@ -53,7 +75,8 @@ type WaitForParameters struct {
 	// When checking for a file or a search string `present` or `started` will
 	// ensure that the file or string is present before continuing, `absent` will
 	// check that file is absent or removed.
-	State *string `json:"state,omitempty"`
+	// default: WaitForStateStarted
+	State *WaitForState `json:"state,omitempty"`
 
 	// Path to a file on the filesystem that must exist before continuing.
 	// `path` and `port` are mutually exclusive parameters.
@@ -69,6 +92,7 @@ type WaitForParameters struct {
 
 	// Number of seconds to sleep between checks.
 	// Before Ansible 2.3 this was hardcoded to 1 second.
+	// default: 1
 	Sleep *int `json:"sleep,omitempty"`
 
 	// This overrides the normal error message from a failure to meet the required

@@ -8,13 +8,22 @@ import (
 // Add or remove an APT repositories in Ubuntu and Debian.
 const AptRepositoryName = "apt_repository"
 
+// A source string state.
+type AptRepositoryState string
+
+const (
+	AptRepositoryStateAbsent  AptRepositoryState = "absent"
+	AptRepositoryStatePresent AptRepositoryState = "present"
+)
+
 // Parameters for the `apt_repository` Ansible module.
 type AptRepositoryParameters struct {
 	// A source string for the repository.
 	Repo string `json:"repo"`
 
 	// A source string state.
-	State *string `json:"state,omitempty"`
+	// default: AptRepositoryStatePresent
+	State *AptRepositoryState `json:"state,omitempty"`
 
 	// The octal mode for newly created files in `sources.list.d`.
 	// Default is what system uses (probably 0644).
@@ -22,19 +31,23 @@ type AptRepositoryParameters struct {
 
 	// Run the equivalent of `apt-get update` when a change occurs. Cache updates
 	// are run after making changes.
+	// default: "yes"
 	UpdateCache *bool `json:"update_cache,omitempty"`
 
 	// Amount of retries if the cache update fails. Also see
 	// `update_cache_retry_max_delay`.
+	// default: 5
 	UpdateCacheRetries *int `json:"update_cache_retries,omitempty"`
 
 	// Use an exponential backoff delay for each retry (see `update_cache_retries`)
 	// up to this max delay in seconds.
+	// default: 12
 	UpdateCacheRetryMaxDelay *int `json:"update_cache_retry_max_delay,omitempty"`
 
 	// If `false`, SSL certificates for the target repo will not be validated. This
 	// should only be used on personally controlled sites using self-signed
 	// certificates.
+	// default: "yes"
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 
 	// Sets the name of the source list file in `sources.list.d`. Defaults to a
@@ -55,6 +68,7 @@ type AptRepositoryParameters struct {
 	// on the remote that is not the system Python, set `install_python_apt=false`
 	// and ensure that the Python apt library for your Python version is installed
 	// some other way.
+	// default: true
 	InstallPythonApt *bool `json:"install_python_apt,omitempty"`
 }
 

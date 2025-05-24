@@ -13,10 +13,19 @@ import (
 // For Windows targets, use the `ansible.windows.win_tempfile` module instead.
 const TempfileName = "tempfile"
 
+// Whether to create file or directory.
+type TempfileState string
+
+const (
+	TempfileStateDirectory TempfileState = "directory"
+	TempfileStateFile      TempfileState = "file"
+)
+
 // Parameters for the `tempfile` Ansible module.
 type TempfileParameters struct {
 	// Whether to create file or directory.
-	State *string `json:"state,omitempty"`
+	// default: TempfileStateFile
+	State *TempfileState `json:"state,omitempty"`
 
 	// Location where temporary file or directory should be created.
 	// If path is not specified, the default system temporary directory will be
@@ -24,9 +33,11 @@ type TempfileParameters struct {
 	Path *string `json:"path,omitempty"`
 
 	// Prefix of file/directory name created by module.
+	// default: "ansible."
 	Prefix *string `json:"prefix,omitempty"`
 
 	// Suffix of file/directory name created by module.
+	// default: ""
 	Suffix *string `json:"suffix,omitempty"`
 }
 

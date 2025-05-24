@@ -8,6 +8,23 @@ import (
 // Add and remove deb822 formatted repositories in Debian based distributions.
 const Deb822RepositoryName = "deb822_repository"
 
+// Which types of packages to look for from a given source; either binary `deb`
+// or source code `deb-src`.
+type Deb822RepositoryTypes string
+
+const (
+	Deb822RepositoryTypesDeb    Deb822RepositoryTypes = "deb"
+	Deb822RepositoryTypesDebSrc Deb822RepositoryTypes = "deb-src"
+)
+
+// A source string state.
+type Deb822RepositoryState string
+
+const (
+	Deb822RepositoryStateAbsent  Deb822RepositoryState = "absent"
+	Deb822RepositoryStatePresent Deb822RepositoryState = "present"
+)
+
 // Parameters for the `deb822_repository` Ansible module.
 type Deb822RepositoryParameters struct {
 	// Allow downgrading a package that was previously authenticated but is no
@@ -83,17 +100,20 @@ type Deb822RepositoryParameters struct {
 
 	// Which types of packages to look for from a given source; either binary `deb`
 	// or source code `deb-src`.
-	Types *[]string `json:"types,omitempty"`
+	// default: []Deb822RepositoryTypes{Deb822RepositoryTypesDeb}
+	Types *Deb822RepositoryTypes `json:"types,omitempty"`
 
 	// The URIs must specify the base of the Debian distribution archive, from
 	// which APT finds the information it needs.
 	Uris *[]string `json:"uris,omitempty"`
 
 	// The octal mode for newly created files in `sources.list.d`.
+	// default: "0644"
 	Mode *any `json:"mode,omitempty"`
 
 	// A source string state.
-	State *string `json:"state,omitempty"`
+	// default: Deb822RepositoryStatePresent
+	State *Deb822RepositoryState `json:"state,omitempty"`
 }
 
 // Wrap the `Deb822RepositoryParameters into an `rpc.RPCCall`.

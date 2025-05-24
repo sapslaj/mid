@@ -15,6 +15,14 @@ import (
 // `ansible.builtin.copy` or `ansible.builtin.template` modules.
 const LineinfileName = "lineinfile"
 
+// Whether the line should be there or not.
+type LineinfileState string
+
+const (
+	LineinfileStateAbsent  LineinfileState = "absent"
+	LineinfileStatePresent LineinfileState = "present"
+)
+
 // Parameters for the `lineinfile` Ansible module.
 type LineinfileParameters struct {
 	// The file to modify.
@@ -46,7 +54,8 @@ type LineinfileParameters struct {
 	SearchString *string `json:"search_string,omitempty"`
 
 	// Whether the line should be there or not.
-	State *string `json:"state,omitempty"`
+	// default: LineinfileStatePresent
+	State *LineinfileState `json:"state,omitempty"`
 
 	// The line to insert/replace into the file.
 	// Required for `state=present`.
@@ -63,6 +72,7 @@ type LineinfileParameters struct {
 	// If the `regexp` does match, the last matching line will be replaced by the
 	// expanded line parameter.
 	// Mutually exclusive with `search_string`.
+	// default: false
 	Backrefs *bool `json:"backrefs,omitempty"`
 
 	// Used with `state=present`.
@@ -95,15 +105,18 @@ type LineinfileParameters struct {
 	// Used with `state=present`.
 	// If specified, the file will be created if it does not already exist.
 	// By default it will fail if the file is missing.
+	// default: false
 	Create *bool `json:"create,omitempty"`
 
 	// Create a backup file including the timestamp information so you can get the
 	// original file back if you somehow clobbered it incorrectly.
+	// default: false
 	Backup *bool `json:"backup,omitempty"`
 
 	// Used with `insertafter` or `insertbefore`.
 	// If set, `insertafter` and `insertbefore` will work with the first line that
 	// matches the given regular expression.
+	// default: false
 	Firstmatch *bool `json:"firstmatch,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -174,6 +187,7 @@ type LineinfileParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

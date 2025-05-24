@@ -20,15 +20,18 @@ type SubversionParameters struct {
 	Dest *string `json:"dest,omitempty"`
 
 	// Specific revision to checkout.
+	// default: "HEAD"
 	Revision *string `json:"revision,omitempty"`
 
 	// If `true`, modified files will be discarded. If `false`, module will fail if
 	// it encounters modified files. Prior to 1.9 the default was `true`.
+	// default: "no"
 	Force *bool `json:"force,omitempty"`
 
 	// If the directory exists, then the working copy will be checked-out over-the-
 	// top using `svn checkout --force`; if force is specified then existing files
 	// with different content are reverted.
+	// default: "no"
 	InPlace *bool `json:"in_place,omitempty"`
 
 	// `--username` parameter passed to svn.
@@ -45,19 +48,24 @@ type SubversionParameters struct {
 	Executable *string `json:"executable,omitempty"`
 
 	// If `false`, do not check out the repository if it does not exist locally.
+	// default: "yes"
 	Checkout *bool `json:"checkout,omitempty"`
 
 	// If `false`, do not retrieve new revisions from the origin repository.
+	// default: "yes"
 	Update *bool `json:"update,omitempty"`
 
 	// If `true`, do export instead of checkout/update.
+	// default: "no"
 	Export *bool `json:"export,omitempty"`
 
 	// If `false`, do not call svn switch before update.
+	// default: "yes"
 	Switch *bool `json:"switch,omitempty"`
 
 	// If `false`, passes the `--trust-server-cert` flag to svn.
 	// If `true`, does not pass the flag.
+	// default: "no"
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 }
 

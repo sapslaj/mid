@@ -38,6 +38,7 @@ type ReplaceParameters struct {
 	// If not set, matches are removed entirely.
 	// Backreferences can be used ambiguously like `\\1`, or explicitly like
 	// `\\g<1>`.
+	// default: ""
 	Replace *string `json:"replace,omitempty"`
 
 	// If specified, only content after this match will be replaced/removed.
@@ -60,9 +61,11 @@ type ReplaceParameters struct {
 
 	// Create a backup file including the timestamp information so you can get the
 	// original file back if you somehow clobbered it incorrectly.
+	// default: false
 	Backup *bool `json:"backup,omitempty"`
 
 	// The character encoding for reading and writing the file.
+	// default: "utf-8"
 	Encoding *string `json:"encoding,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -133,6 +136,7 @@ type ReplaceParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

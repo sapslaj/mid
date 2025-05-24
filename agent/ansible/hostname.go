@@ -10,6 +10,29 @@ import (
 // Windows, HP-UX, and AIX are not currently supported.
 const HostnameName = "hostname"
 
+// Which strategy to use to update the hostname.
+// If not set we try to autodetect, but this can be problematic, particularly
+// with containers as they can present misleading information.
+// Note that `systemd` should be specified for RHEL/EL/CentOS 7+. Older
+// distributions should use `redhat`.
+type HostnameUse string
+
+const (
+	HostnameUseAlpine  HostnameUse = "alpine"
+	HostnameUseDebian  HostnameUse = "debian"
+	HostnameUseFreebsd HostnameUse = "freebsd"
+	HostnameUseGeneric HostnameUse = "generic"
+	HostnameUseMacos   HostnameUse = "macos"
+	HostnameUseMacosx  HostnameUse = "macosx"
+	HostnameUseDarwin  HostnameUse = "darwin"
+	HostnameUseOpenbsd HostnameUse = "openbsd"
+	HostnameUseOpenrc  HostnameUse = "openrc"
+	HostnameUseRedhat  HostnameUse = "redhat"
+	HostnameUseSles    HostnameUse = "sles"
+	HostnameUseSolaris HostnameUse = "solaris"
+	HostnameUseSystemd HostnameUse = "systemd"
+)
+
 // Parameters for the `hostname` Ansible module.
 type HostnameParameters struct {
 	// Name of the host.
@@ -23,7 +46,7 @@ type HostnameParameters struct {
 	// with containers as they can present misleading information.
 	// Note that `systemd` should be specified for RHEL/EL/CentOS 7+. Older
 	// distributions should use `redhat`.
-	Use *string `json:"use,omitempty"`
+	Use *HostnameUse `json:"use,omitempty"`
 }
 
 // Wrap the `HostnameParameters into an `rpc.RPCCall`.

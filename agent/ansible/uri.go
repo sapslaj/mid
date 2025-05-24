@@ -10,6 +10,41 @@ import (
 // For Windows targets, use the `ansible.windows.win_uri` module instead.
 const UriName = "uri"
 
+// The serialization format of the body. When set to `json`, `form-multipart`,
+// or `form-urlencoded`, encodes the body argument, if needed, and automatically
+// sets the `Content-Type` header accordingly.
+// As of v2.3 it is possible to override the `Content-Type` header, when set to
+// `json` or `form-urlencoded` via the `headers` option.
+// The `Content-Type` header cannot be overridden when using `form-multipart`.
+// `form-urlencoded` was added in v2.7.
+// `form-multipart` was added in v2.10.
+type UriBodyFormat string
+
+const (
+	UriBodyFormatFormUrlencoded UriBodyFormat = "form-urlencoded"
+	UriBodyFormatJson           UriBodyFormat = "json"
+	UriBodyFormatRaw            UriBodyFormat = "raw"
+	UriBodyFormatFormMultipart  UriBodyFormat = "form-multipart"
+)
+
+// Whether or not the URI module should follow redirects.
+type UriFollowRedirects string
+
+const (
+	// Will follow all redirects.
+	UriFollowRedirectsAll UriFollowRedirects = "all"
+	// Will not follow any redirects.
+	UriFollowRedirectsNone UriFollowRedirects = "none"
+	// Only redirects doing GET or HEAD requests will be followed.
+	UriFollowRedirectsSafe UriFollowRedirects = "safe"
+	// Defer to urllib2 behavior (As of writing this follows HTTP redirects).
+	UriFollowRedirectsUrllib2 UriFollowRedirects = "urllib2"
+	// (DEPRECATED, removed in 2.22) alias of `none`.
+	UriFollowRedirectsNo UriFollowRedirects = "no"
+	// (DEPRECATED, removed in 2.22) alias of `all`.
+	UriFollowRedirectsYes UriFollowRedirects = "yes"
+)
+
 // Parameters for the `uri` Ansible module.
 type UriParameters struct {
 	// SSL/TLS Ciphers to use for the request.
@@ -22,6 +57,7 @@ type UriParameters struct {
 	Ciphers *[]string `json:"ciphers,omitempty"`
 
 	// Whether to attempt to decompress gzip content-encoded responses.
+	// default: true
 	Decompress *bool `json:"decompress,omitempty"`
 
 	// HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path.
@@ -55,12 +91,14 @@ type UriParameters struct {
 	// The `Content-Type` header cannot be overridden when using `form-multipart`.
 	// `form-urlencoded` was added in v2.7.
 	// `form-multipart` was added in v2.10.
-	BodyFormat *string `json:"body_format,omitempty"`
+	// default: UriBodyFormatRaw
+	BodyFormat *UriBodyFormat `json:"body_format,omitempty"`
 
 	// The HTTP method of the request or response.
 	// In more recent versions we do not restrict the method at the module level
 	// anymore but it still must be a valid method accepted by the service handling
 	// the request.
+	// default: "GET"
 	Method *string `json:"method,omitempty"`
 
 	// Whether or not to return the body of the response as a "content" key in the
@@ -68,6 +106,7 @@ type UriParameters struct {
 	// Independently of this option, if the reported `Content-Type` is
 	// `application/json`, then the JSON is always loaded into a key called
 	// R`ignore:json` in the dictionary results.
+	// default: false
 	ReturnContent *bool `json:"return_content,omitempty"`
 
 	// Force the sending of the Basic authentication header upon initial request.
@@ -83,10 +122,12 @@ type UriParameters struct {
 	// Ansible's HTTP library will not properly respond with HTTP credentials, and
 	// logins will fail.
 	// The webservice bans or rate-limits clients that cause any HTTP 401 errors.
+	// default: false
 	ForceBasicAuth *bool `json:"force_basic_auth,omitempty"`
 
 	// Whether or not the URI module should follow redirects.
-	FollowRedirects *string `json:"follow_redirects,omitempty"`
+	// default: UriFollowRedirectsSafe
+	FollowRedirects *UriFollowRedirects `json:"follow_redirects,omitempty"`
 
 	// A filename, when it already exists, this step will not be run.
 	Creates *string `json:"creates,omitempty"`
@@ -96,20 +137,24 @@ type UriParameters struct {
 
 	// A list of valid, numeric, HTTP status codes that signifies success of the
 	// request.
+	// default: [200]
 	StatusCode *[]int `json:"status_code,omitempty"`
 
 	// The socket level timeout in seconds
+	// default: 30
 	Timeout *int `json:"timeout,omitempty"`
 
 	// Add custom HTTP headers to a request in the format of a YAML hash. As of
 	// Ansible 2.3 supplying `Content-Type` here will override the header generated
 	// by supplying `json` or `form-urlencoded` for `body_format`.
+	// default: {}
 	Headers *map[string]any `json:"headers,omitempty"`
 
 	// If `false`, SSL certificates will not be validated.
 	// This should only set to `false` used on personally controlled sites using
 	// self-signed certificates.
 	// Prior to 1.9.2 the code defaulted to `false`.
+	// default: true
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 
 	// PEM formatted certificate chain file to be used for SSL client
@@ -136,25 +181,30 @@ type UriParameters struct {
 	// If `false`, the module will search for the `src` on the controller node.
 	// If `true`, the module will search for the `src` on the managed (remote)
 	// node.
+	// default: false
 	RemoteSrc *bool `json:"remote_src,omitempty"`
 
 	// If `true` do not get a cached copy.
+	// default: false
 	Force *bool `json:"force,omitempty"`
 
 	// If `false`, it will not use a proxy, even if one is defined in an
 	// environment variable on the target hosts.
+	// default: true
 	UseProxy *bool `json:"use_proxy,omitempty"`
 
 	// Path to Unix domain socket to use for connection.
 	UnixSocket *string `json:"unix_socket,omitempty"`
 
 	// Header to identify as, generally appears in web server logs.
+	// default: "ansible-httpget"
 	HttpAgent *string `json:"http_agent,omitempty"`
 
 	// A list of header names that will not be sent on subsequent redirected
 	// requests. This list is case insensitive. By default all headers will be
 	// redirected. In some cases it may be beneficial to list headers such as
 	// `Authorization` here to avoid potential credential exposure.
+	// default: []
 	UnredirectedHeaders *[]string `json:"unredirected_headers,omitempty"`
 
 	// Use GSSAPI to perform the authentication, typically this is for Kerberos or
@@ -166,11 +216,13 @@ type UriParameters struct {
 	// credential cache.
 	// NTLM authentication is `not` supported even if the GSSAPI mech for NTLM has
 	// been installed.
+	// default: false
 	UseGssapi *bool `json:"use_gssapi,omitempty"`
 
 	// Determining whether to use credentials from `~/.netrc` file.
 	// By default `.netrc` is used with Basic authentication headers.
 	// When `false`, `.netrc` credentials are ignored.
+	// default: true
 	UseNetrc *bool `json:"use_netrc,omitempty"`
 
 	// The permissions the resulting filesystem object should have.
@@ -241,6 +293,7 @@ type UriParameters struct {
 	// Ansible to perform unsafe writes).
 	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
 	// corruption.
+	// default: false
 	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
 
 	// The attributes the resulting filesystem object should have.

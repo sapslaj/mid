@@ -9,22 +9,40 @@ import (
 // For Windows targets, use the `ansible.windows.win_stat` module instead.
 const StatName = "stat"
 
+// Algorithm to determine checksum of file.
+// Will throw an error if the host is unable to use specified algorithm.
+// The remote host has to support the hashing method specified, `md5` can be
+// unavailable if the host is FIPS-140 compliant.
+type StatChecksumAlgorithm string
+
+const (
+	StatChecksumAlgorithmMd5    StatChecksumAlgorithm = "md5"
+	StatChecksumAlgorithmSha1   StatChecksumAlgorithm = "sha1"
+	StatChecksumAlgorithmSha224 StatChecksumAlgorithm = "sha224"
+	StatChecksumAlgorithmSha256 StatChecksumAlgorithm = "sha256"
+	StatChecksumAlgorithmSha384 StatChecksumAlgorithm = "sha384"
+	StatChecksumAlgorithmSha512 StatChecksumAlgorithm = "sha512"
+)
+
 // Parameters for the `stat` Ansible module.
 type StatParameters struct {
 	// The full path of the file/object to get the facts of.
 	Path string `json:"path"`
 
 	// Whether to follow symlinks.
+	// default: false
 	Follow *bool `json:"follow,omitempty"`
 
 	// Whether to return a checksum of the file.
+	// default: true
 	GetChecksum *bool `json:"get_checksum,omitempty"`
 
 	// Algorithm to determine checksum of file.
 	// Will throw an error if the host is unable to use specified algorithm.
 	// The remote host has to support the hashing method specified, `md5` can be
 	// unavailable if the host is FIPS-140 compliant.
-	ChecksumAlgorithm *string `json:"checksum_algorithm,omitempty"`
+	// default: StatChecksumAlgorithmSha1
+	ChecksumAlgorithm *StatChecksumAlgorithm `json:"checksum_algorithm,omitempty"`
 
 	// Use file magic and return data about the nature of the file. This uses the
 	// `file` utility found on most Linux/Unix systems.
@@ -32,9 +50,11 @@ type StatParameters struct {
 	// return, if possible.
 	// In Ansible 2.3 this option changed from `mime` to `get_mime` and the default
 	// changed to `true`.
+	// default: true
 	GetMime *bool `json:"get_mime,omitempty"`
 
 	// Get file attributes using lsattr tool if present.
+	// default: true
 	GetAttributes *bool `json:"get_attributes,omitempty"`
 }
 

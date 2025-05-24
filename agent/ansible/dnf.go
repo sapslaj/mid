@@ -9,10 +9,42 @@ import (
 // package manager.
 const DnfName = "dnf"
 
+// Backend module to use.
+type DnfUseBackend string
+
+const (
+	// Automatically select the backend based on the `ansible_facts.pkg_mgr` fact.
+	DnfUseBackendAuto DnfUseBackend = "auto"
+	// Alias for `auto` (see Notes)
+	DnfUseBackendYum DnfUseBackend = "yum"
+	// `ansible.builtin.dnf`
+	DnfUseBackendDnf DnfUseBackend = "dnf"
+	// Alias for `dnf`
+	DnfUseBackendYum4 DnfUseBackend = "yum4"
+	// Alias for `dnf`
+	DnfUseBackendDnf4 DnfUseBackend = "dnf4"
+	// `ansible.builtin.dnf5`
+	DnfUseBackendDnf5 DnfUseBackend = "dnf5"
+)
+
+// Whether to install (`present`, `latest`), or remove (`absent`) a package.
+// Default is `None`, however in effect the default action is `present` unless
+// the `autoremove=true`, then `absent` is inferred.
+type DnfState string
+
+const (
+	DnfStateAbsent    DnfState = "absent"
+	DnfStatePresent   DnfState = "present"
+	DnfStateInstalled DnfState = "installed"
+	DnfStateRemoved   DnfState = "removed"
+	DnfStateLatest    DnfState = "latest"
+)
+
 // Parameters for the `dnf` Ansible module.
 type DnfParameters struct {
 	// Backend module to use.
-	UseBackend *string `json:"use_backend,omitempty"`
+	// default: DnfUseBackendAuto
+	UseBackend *DnfUseBackend `json:"use_backend,omitempty"`
 
 	// A package name or package specifier with version, like `name-1.0`. When
 	// using state=latest, this can be '*' which means run: dnf -y update. You can
@@ -23,6 +55,7 @@ type DnfParameters struct {
 	// `<=`. Example - `name >= 1.0`. Spaces around the operator are required.
 	// You can also pass an absolute path for a binary which is provided by the
 	// package to install. See examples for more information.
+	// default: []
 	Name *[]string `json:"name,omitempty"`
 
 	// Various (non-idempotent) commands for usage with `/usr/bin/ansible` and
@@ -33,16 +66,18 @@ type DnfParameters struct {
 	// Whether to install (`present`, `latest`), or remove (`absent`) a package.
 	// Default is `None`, however in effect the default action is `present` unless
 	// the `autoremove=true`, then `absent` is inferred.
-	State *string `json:"state,omitempty"`
+	State *DnfState `json:"state,omitempty"`
 
 	// `Repoid` of repositories to enable for the install/update operation. These
 	// repos will not persist beyond the transaction. When specifying multiple
 	// repos, separate them with a ",".
+	// default: []
 	Enablerepo *[]string `json:"enablerepo,omitempty"`
 
 	// `Repoid` of repositories to disable for the install/update operation. These
 	// repos will not persist beyond the transaction. When specifying multiple
 	// repos, separate them with a `,`.
+	// default: []
 	Disablerepo *[]string `json:"disablerepo,omitempty"`
 
 	// The remote dnf configuration file to use for the transaction.
@@ -52,10 +87,12 @@ type DnfParameters struct {
 	// installed. Has an effect only if `state=present` or `state=latest`.
 	// This setting affects packages installed from a repository as well as "local"
 	// packages installed from the filesystem or a URL.
+	// default: "no"
 	DisableGpgCheck *bool `json:"disable_gpg_check,omitempty"`
 
 	// Specifies an alternative installroot, relative to which all packages will be
 	// installed.
+	// default: "/"
 	Installroot *string `json:"installroot,omitempty"`
 
 	// Specifies an alternative release from which all packages will be installed.
@@ -64,42 +101,51 @@ type DnfParameters struct {
 	// If `true`, removes all "leaf" packages from the system that were originally
 	// installed as dependencies of user-installed packages but which are no longer
 	// required by any such package. Should be used alone or when `state=absent`.
+	// default: "no"
 	Autoremove *bool `json:"autoremove,omitempty"`
 
 	// Package name(s) to exclude when `state=present`, or latest. This can be a
 	// list or a comma separated string.
+	// default: []
 	Exclude *[]string `json:"exclude,omitempty"`
 
 	// Skip all unavailable packages or packages with broken dependencies without
 	// raising an error. Equivalent to passing the `--skip-broken` option.
+	// default: "no"
 	SkipBroken *bool `json:"skip_broken,omitempty"`
 
 	// Force dnf to check if cache is out of date and redownload if needed. Has an
 	// effect only if `state=present` or `state=latest`.
+	// default: "no"
 	UpdateCache *bool `json:"update_cache,omitempty"`
 
 	// When using latest, only update installed packages. Do not install packages.
 	// Has an effect only if `state=present` or `state=latest`.
+	// default: "no"
 	UpdateOnly *bool `json:"update_only,omitempty"`
 
 	// If set to `true`, and `state=latest` then only installs updates that have
 	// been marked security related.
 	// Note that, similar to `dnf upgrade-minimal`, this filter applies to
 	// dependencies as well.
+	// default: "no"
 	Security *bool `json:"security,omitempty"`
 
 	// If set to `true`, and `state=latest` then only installs updates that have
 	// been marked bugfix related.
 	// Note that, similar to `dnf upgrade-minimal`, this filter applies to
 	// dependencies as well.
+	// default: "no"
 	Bugfix *bool `json:"bugfix,omitempty"`
 
 	// `Plugin` name to enable for the install/update operation. The enabled plugin
 	// will not persist beyond the transaction.
+	// default: []
 	EnablePlugin *[]string `json:"enable_plugin,omitempty"`
 
 	// `Plugin` name to disable for the install/update operation. The disabled
 	// plugins will not persist beyond the transaction.
+	// default: []
 	DisablePlugin *[]string `json:"disable_plugin,omitempty"`
 
 	// Disable the excludes defined in DNF config files.
@@ -113,11 +159,13 @@ type DnfParameters struct {
 	// be validated.
 	// This should only set to `false` used on personally controlled sites using
 	// self-signed certificates as it avoids verifying the source site.
+	// default: "yes"
 	ValidateCerts *bool `json:"validate_certs,omitempty"`
 
 	// Disables SSL validation of the repository server for this transaction.
 	// This should be set to `false` if one of the configured repositories is using
 	// an untrusted or self-signed certificate.
+	// default: "yes"
 	Sslverify *bool `json:"sslverify,omitempty"`
 
 	// Specify if the named package and version is allowed to downgrade a maybe
@@ -127,19 +175,24 @@ type DnfParameters struct {
 	// complete list of specified packages to install (because dependencies between
 	// the downgraded package and others can cause changes to the packages which
 	// were in the earlier transaction).
+	// default: "no"
 	AllowDowngrade *bool `json:"allow_downgrade,omitempty"`
 
 	// This is effectively a no-op in DNF as it is not needed with DNF.
 	// This option is deprecated and will be removed in ansible-core 2.20.
+	// default: "yes"
 	InstallRepoquery *bool `json:"install_repoquery,omitempty"`
 
 	// Only download the packages, do not install them.
+	// default: "no"
 	DownloadOnly *bool `json:"download_only,omitempty"`
 
 	// Amount of time to wait for the dnf lockfile to be freed.
+	// default: 30
 	LockTimeout *int `json:"lock_timeout,omitempty"`
 
 	// Will also install all packages linked by a weak dependency relation.
+	// default: "yes"
 	InstallWeakDeps *bool `json:"install_weak_deps,omitempty"`
 
 	// Specifies an alternate directory to store packages.
@@ -147,6 +200,7 @@ type DnfParameters struct {
 	DownloadDir *string `json:"download_dir,omitempty"`
 
 	// If `true` it allows erasing of installed packages to resolve dependencies.
+	// default: "no"
 	Allowerasing *bool `json:"allowerasing,omitempty"`
 
 	// This is the opposite of the `best` option kept for backwards compatibility.
@@ -163,6 +217,7 @@ type DnfParameters struct {
 
 	// Tells dnf to run entirely from system cache; does not download or update
 	// metadata.
+	// default: "no"
 	Cacheonly *bool `json:"cacheonly,omitempty"`
 }
 

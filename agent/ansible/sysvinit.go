@@ -8,6 +8,18 @@ import (
 // Controls services on target hosts that use the SysV init system.
 const SysvinitName = "sysvinit"
 
+// `started`/`stopped` are idempotent actions that will not run commands unless
+// necessary. Not all init scripts support `restarted` nor `reloaded` natively,
+// so these will both trigger a stop and start as needed.
+type SysvinitState string
+
+const (
+	SysvinitStateStarted   SysvinitState = "started"
+	SysvinitStateStopped   SysvinitState = "stopped"
+	SysvinitStateRestarted SysvinitState = "restarted"
+	SysvinitStateReloaded  SysvinitState = "reloaded"
+)
+
 // Parameters for the `sysvinit` Ansible module.
 type SysvinitParameters struct {
 	// Name of the service.
@@ -16,7 +28,7 @@ type SysvinitParameters struct {
 	// `started`/`stopped` are idempotent actions that will not run commands unless
 	// necessary. Not all init scripts support `restarted` nor `reloaded` natively,
 	// so these will both trigger a stop and start as needed.
-	State *string `json:"state,omitempty"`
+	State *SysvinitState `json:"state,omitempty"`
 
 	// Whether the service should start on boot. At least one of `state` and
 	// `enabled` are required.
@@ -25,6 +37,7 @@ type SysvinitParameters struct {
 	// If the service is being `restarted` or `reloaded` then sleep this many
 	// seconds between the stop and start command. This helps to workaround badly
 	// behaving services.
+	// default: 1
 	Sleep *int `json:"sleep,omitempty"`
 
 	// A substring to look for as would be found in the output of the `ps` command
@@ -46,6 +59,7 @@ type SysvinitParameters struct {
 	// This is useful with badly written init scripts or daemons, which commonly
 	// manifests as the task hanging as it is still holding the tty or the service
 	// dying when the task is over as the connection closes the session.
+	// default: false
 	Daemonize *bool `json:"daemonize,omitempty"`
 }
 
