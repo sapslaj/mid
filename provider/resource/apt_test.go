@@ -71,7 +71,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			expected: ansible.AptParameters{
 				Name:        ptr.Of([]string{"emacs"}),
-				State:       ptr.Of("absent"),
+				State:       ansible.OptionalAptState("absent"),
 				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
@@ -123,7 +123,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			expected: ansible.AptParameters{
 				Name:        ptr.Of([]string{"*"}),
-				State:       ptr.Of("latest"),
+				State:       ansible.OptionalAptState("latest"),
 				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: true,
@@ -134,7 +134,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Upgrade: ptr.Of("dist"),
 			},
 			expected: ansible.AptParameters{
-				Upgrade:     ptr.Of("dist"),
+				Upgrade:     ansible.OptionalAptUpgrade("dist"),
 				LockTimeout: ptr.Of(120),
 			},
 			taskParametersNeedsName: false,
@@ -171,7 +171,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				DpkgOptions: ptr.Of("force-confold,force-confdef"),
 			},
 			expected: ansible.AptParameters{
-				Upgrade:     ptr.Of("dist"),
+				Upgrade:     ansible.OptionalAptUpgrade("dist"),
 				UpdateCache: ptr.Of(true),
 				DpkgOptions: ptr.Of("force-confold,force-confdef"),
 				LockTimeout: ptr.Of(120),

@@ -59,7 +59,7 @@ func (r User) argsToTaskParameters(input UserArgs) (ansible.UserParameters, erro
 	}
 	return ansible.UserParameters{
 		Name:           *input.Name,
-		State:          input.Ensure,
+		State:          ansible.OptionalUserState(input.Ensure),
 		Append:         ptr.Of(!groupsExclusive),
 		Comment:        input.Comment,
 		Local:          input.Local,
@@ -79,7 +79,7 @@ func (r User) argsToTaskParameters(input UserArgs) (ansible.UserParameters, erro
 		UidMax:         input.UidMax,
 		UidMin:         input.UidMin,
 		Umask:          input.Umask,
-		UpdatePassword: input.UpdatePassword,
+		UpdatePassword: ansible.OptionalUserUpdatePassword(input.UpdatePassword),
 	}, nil
 }
 
@@ -314,7 +314,7 @@ func (r User) Delete(
 	if err != nil {
 		return err
 	}
-	parameters.State = ptr.Of("absent")
+	parameters.State = ansible.OptionalUserState("absent")
 
 	call, err := parameters.ToRPCCall()
 	if err != nil {

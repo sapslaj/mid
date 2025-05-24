@@ -13,7 +13,7 @@ func (i *ExecCommand) Annotate(a infer.Annotator) {
 	a.Describe(
 		&i.Command,
 		`List of arguments to execute. Under the hood, these are passed to `+
-		"`execve`" + `, bypassing any shell`,
+			"`execve`"+`, bypassing any shell`,
 	)
 	a.Describe(
 		&i.Environment,

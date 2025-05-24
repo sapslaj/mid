@@ -9,12 +9,12 @@ import (
 // provider configuration
 type Config struct {
 	// remote endpoint connection configuration
-	Connection        *Connection `pulumi:"connection" provider:"secret"`
+	Connection *Connection `pulumi:"connection" provider:"secret"`
 
 	// The value passed into the provider config for `deleteUnreachable`. It is
 	// generally a better idea to use `GetDeleteUnreachable()` instead of looking
 	// at this property directly.
-	DeleteUnreachable bool        `pulumi:"deleteUnreachable,optional"`
+	DeleteUnreachable bool `pulumi:"deleteUnreachable,optional"`
 }
 
 func (i *Config) Annotate(a infer.Annotator) {

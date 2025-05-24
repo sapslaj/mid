@@ -102,11 +102,11 @@ func (r Apt) argsToTaskParameters(input AptArgs) (ansible.AptParameters, error) 
 		OnlyUpgrade:              input.OnlyUpgrade,
 		PolicyRcD:                input.PolicyRcD,
 		Purge:                    input.Purge,
-		State:                    input.Ensure,
+		State:                    ansible.OptionalAptState(input.Ensure),
 		UpdateCache:              input.UpdateCache,
 		UpdateCacheRetries:       input.UpdateCacheRetries,
 		UpdateCacheRetryMaxDelay: input.UpdateCacheRetryMaxDelay,
-		Upgrade:                  input.Upgrade,
+		Upgrade:                  ansible.OptionalAptUpgrade(input.Upgrade),
 	}
 
 	if input.Name != nil && parameters.Name == nil {
@@ -514,7 +514,7 @@ func (r Apt) Update(
 			span.SetStatus(codes.Error, err.Error())
 			return AptState{}, err
 		}
-		parameters.State = ptr.Of("absent")
+		parameters.State = ansible.OptionalAptState("absent")
 		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
@@ -531,7 +531,7 @@ func (r Apt) Update(
 			span.SetStatus(codes.Error, err.Error())
 			return AptState{}, err
 		}
-		parameters.State = ptr.Of(newState)
+		parameters.State = ansible.OptionalAptState(newState)
 		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
@@ -566,7 +566,7 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToTaskParameters(props.AptArgs)
-	parameters.State = ptr.Of("absent")
+	parameters.State = ansible.OptionalAptState("absent")
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err

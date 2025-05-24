@@ -49,7 +49,7 @@ func (r Group) argsToTaskParameters(input GroupArgs) (ansible.GroupParameters, e
 		Local:     input.Local,
 		Name:      *input.Name,
 		NonUnique: input.NonUnique,
-		State:     input.Ensure,
+		State:     ansible.OptionalGroupState(input.Ensure),
 		System:    input.System,
 	}, nil
 }
@@ -274,7 +274,7 @@ func (r Group) Delete(
 	if err != nil {
 		return err
 	}
-	parameters.State = ptr.Of("absent")
+	parameters.State = ansible.OptionalGroupState("absent")
 
 	call, err := parameters.ToRPCCall()
 	if err != nil {
