@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"reflect"
 
-	"github.com/aws/smithy-go/ptr"
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	ptypes "github.com/pulumi/pulumi-go-provider/infer/types"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -259,7 +259,7 @@ func (r File) argsToCopyTaskParameters(input FileArgs) (*copyTaskParameters, err
 		LocalFollow:   input.LocalFollow,
 		Mode:          input.Mode,
 		Owner:         input.Owner,
-		RemoteSrc:     ptr.Bool(isRemoteSource),
+		RemoteSrc:     ptr.Of(isRemoteSource),
 		Selevel:       input.Selevel,
 		Serole:        input.Serole,
 		Setype:        input.Setype,
@@ -519,7 +519,7 @@ func (r File) Create(
 	preview bool,
 ) (string, FileState, error) {
 	if input.Path == nil {
-		input.Path = ptr.String(name)
+		input.Path = ptr.Of(name)
 	}
 
 	state := r.updateState(FileState{}, input, true)
@@ -598,7 +598,7 @@ func (r File) Delete(
 
 	parameters, err := r.argsToFileTaskParameters(FileArgs{
 		Path:   &props.Path,
-		Ensure: (*FileEnsure)(ptr.String(string(FileEnsureAbsent))),
+		Ensure: (*FileEnsure)(ptr.Of(string(FileEnsureAbsent))),
 	})
 	if err != nil {
 		return err

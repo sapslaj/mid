@@ -206,8 +206,8 @@ func NewQEMU(t *testing.T, config Config) (*TestMachine, error) {
 		Verbose:         true,
 		Params: []string{
 			"-snapshot",
-			"-smp", "2",
-			"-m", "1024",
+			"-smp", "2", // XXX: does this need to be configurable?
+			"-m", "1024", // XXX: does this need to be configurable?
 			"-netdev", fmt.Sprintf("id=net00,type=user,hostfwd=tcp::%d-:22", tm.SSHPort),
 			"-device", "virtio-net-pci,netdev=net00",
 			"-drive", fmt.Sprintf("if=virtio,format=qcow2,file=%s", img),
