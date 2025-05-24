@@ -20,6 +20,28 @@ const (
 	PipStatePresent        PipState = "present"
 )
 
+func OptionalPipState[T interface {
+	*PipState | PipState | *string | string
+}](s T) *PipState {
+	switch v := any(s).(type) {
+	case *PipState:
+		return v
+	case PipState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := PipState(*v)
+		return &val
+	case string:
+		val := PipState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `pip` Ansible module.
 type PipParameters struct {
 	// The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of

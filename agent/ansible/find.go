@@ -25,6 +25,28 @@ const (
 	FindFileTypeLink      FindFileType = "link"
 )
 
+func OptionalFindFileType[T interface {
+	*FindFileType | FindFileType | *string | string
+}](s T) *FindFileType {
+	switch v := any(s).(type) {
+	case *FindFileType:
+		return v
+	case FindFileType:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := FindFileType(*v)
+		return &val
+	case string:
+		val := FindFileType(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Choose the file property against which we compare age.
 type FindAgeStamp string
 
@@ -33,6 +55,28 @@ const (
 	FindAgeStampCtime FindAgeStamp = "ctime"
 	FindAgeStampMtime FindAgeStamp = "mtime"
 )
+
+func OptionalFindAgeStamp[T interface {
+	*FindAgeStamp | FindAgeStamp | *string | string
+}](s T) *FindAgeStamp {
+	switch v := any(s).(type) {
+	case *FindAgeStamp:
+		return v
+	case FindAgeStamp:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := FindAgeStamp(*v)
+		return &val
+	case string:
+		val := FindAgeStamp(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `find` Ansible module.
 type FindParameters struct {

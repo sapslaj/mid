@@ -21,6 +21,28 @@ const (
 	UserStatePresent UserState = "present"
 )
 
+func OptionalUserState[T interface {
+	*UserState | UserState | *string | string
+}](s T) *UserState {
+	switch v := any(s).(type) {
+	case *UserState:
+		return v
+	case UserState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := UserState(*v)
+		return &val
+	case string:
+		val := UserState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // `always` will update passwords if they differ.
 // `on_create` will only set the password for newly created users.
 type UserUpdatePassword string
@@ -29,6 +51,28 @@ const (
 	UserUpdatePasswordAlways   UserUpdatePassword = "always"
 	UserUpdatePasswordOnCreate UserUpdatePassword = "on_create"
 )
+
+func OptionalUserUpdatePassword[T interface {
+	*UserUpdatePassword | UserUpdatePassword | *string | string
+}](s T) *UserUpdatePassword {
+	switch v := any(s).(type) {
+	case *UserUpdatePassword:
+		return v
+	case UserUpdatePassword:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := UserUpdatePassword(*v)
+		return &val
+	case string:
+		val := UserUpdatePassword(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `user` Ansible module.
 type UserParameters struct {

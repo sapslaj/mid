@@ -25,6 +25,28 @@ const (
 	SystemdServiceStateStopped   SystemdServiceState = "stopped"
 )
 
+func OptionalSystemdServiceState[T interface {
+	*SystemdServiceState | SystemdServiceState | *string | string
+}](s T) *SystemdServiceState {
+	switch v := any(s).(type) {
+	case *SystemdServiceState:
+		return v
+	case SystemdServiceState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := SystemdServiceState(*v)
+		return &val
+	case string:
+		val := SystemdServiceState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Run `systemctl` within a given service manager scope, either as the default
 // system scope `system`, the current user's scope `user`, or the scope of all
 // users `global`.
@@ -42,6 +64,28 @@ const (
 	SystemdServiceScopeUser   SystemdServiceScope = "user"
 	SystemdServiceScopeGlobal SystemdServiceScope = "global"
 )
+
+func OptionalSystemdServiceScope[T interface {
+	*SystemdServiceScope | SystemdServiceScope | *string | string
+}](s T) *SystemdServiceScope {
+	switch v := any(s).(type) {
+	case *SystemdServiceScope:
+		return v
+	case SystemdServiceScope:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := SystemdServiceScope(*v)
+		return &val
+	case string:
+		val := SystemdServiceScope(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `systemd_service` Ansible module.
 type SystemdServiceParameters struct {

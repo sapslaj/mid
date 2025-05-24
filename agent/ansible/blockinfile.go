@@ -17,6 +17,28 @@ const (
 	BlockinfileStatePresent BlockinfileState = "present"
 )
 
+func OptionalBlockinfileState[T interface {
+	*BlockinfileState | BlockinfileState | *string | string
+}](s T) *BlockinfileState {
+	switch v := any(s).(type) {
+	case *BlockinfileState:
+		return v
+	case BlockinfileState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := BlockinfileState(*v)
+		return &val
+	case string:
+		val := BlockinfileState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `blockinfile` Ansible module.
 type BlockinfileParameters struct {
 	// The file to modify.

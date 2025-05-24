@@ -21,6 +21,28 @@ const (
 	TempfileStateFile      TempfileState = "file"
 )
 
+func OptionalTempfileState[T interface {
+	*TempfileState | TempfileState | *string | string
+}](s T) *TempfileState {
+	switch v := any(s).(type) {
+	case *TempfileState:
+		return v
+	case TempfileState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := TempfileState(*v)
+		return &val
+	case string:
+		val := TempfileState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `tempfile` Ansible module.
 type TempfileParameters struct {
 	// Whether to create file or directory.

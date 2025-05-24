@@ -55,6 +55,28 @@ const (
 	PackageFactsManagerOpenbsdPkg PackageFactsManager = "openbsd_pkg"
 )
 
+func OptionalPackageFactsManager[T interface {
+	*PackageFactsManager | PackageFactsManager | *string | string
+}](s T) *PackageFactsManager {
+	switch v := any(s).(type) {
+	case *PackageFactsManager:
+		return v
+	case PackageFactsManager:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := PackageFactsManager(*v)
+		return &val
+	case string:
+		val := PackageFactsManager(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // This option controls how the module queries the package managers on the
 // system.
 type PackageFactsStrategy string
@@ -66,6 +88,28 @@ const (
 	// system.
 	PackageFactsStrategyAll PackageFactsStrategy = "all"
 )
+
+func OptionalPackageFactsStrategy[T interface {
+	*PackageFactsStrategy | PackageFactsStrategy | *string | string
+}](s T) *PackageFactsStrategy {
+	switch v := any(s).(type) {
+	case *PackageFactsStrategy:
+		return v
+	case PackageFactsStrategy:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := PackageFactsStrategy(*v)
+		return &val
+	case string:
+		val := PackageFactsStrategy(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `package_facts` Ansible module.
 type PackageFactsParameters struct {

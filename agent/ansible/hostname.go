@@ -33,6 +33,28 @@ const (
 	HostnameUseSystemd HostnameUse = "systemd"
 )
 
+func OptionalHostnameUse[T interface {
+	*HostnameUse | HostnameUse | *string | string
+}](s T) *HostnameUse {
+	switch v := any(s).(type) {
+	case *HostnameUse:
+		return v
+	case HostnameUse:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := HostnameUse(*v)
+		return &val
+	case string:
+		val := HostnameUse(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `hostname` Ansible module.
 type HostnameParameters struct {
 	// Name of the host.

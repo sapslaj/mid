@@ -16,6 +16,28 @@ const (
 	RpmKeyStatePresent RpmKeyState = "present"
 )
 
+func OptionalRpmKeyState[T interface {
+	*RpmKeyState | RpmKeyState | *string | string
+}](s T) *RpmKeyState {
+	switch v := any(s).(type) {
+	case *RpmKeyState:
+		return v
+	case RpmKeyState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := RpmKeyState(*v)
+		return &val
+	case string:
+		val := RpmKeyState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `rpm_key` Ansible module.
 type RpmKeyParameters struct {
 	// Key that will be modified. Can be a url, a file on the managed node, or a

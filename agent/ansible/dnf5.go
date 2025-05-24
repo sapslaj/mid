@@ -26,6 +26,28 @@ const (
 	Dnf5StateLatest    Dnf5State = "latest"
 )
 
+func OptionalDnf5State[T interface {
+	*Dnf5State | Dnf5State | *string | string
+}](s T) *Dnf5State {
+	switch v := any(s).(type) {
+	case *Dnf5State:
+		return v
+	case Dnf5State:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := Dnf5State(*v)
+		return &val
+	case string:
+		val := Dnf5State(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `dnf5` Ansible module.
 type Dnf5Parameters struct {
 	// A package name or package specifier with version, like `name-1.0`. When

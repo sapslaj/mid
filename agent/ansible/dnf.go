@@ -27,6 +27,28 @@ const (
 	DnfUseBackendDnf5 DnfUseBackend = "dnf5"
 )
 
+func OptionalDnfUseBackend[T interface {
+	*DnfUseBackend | DnfUseBackend | *string | string
+}](s T) *DnfUseBackend {
+	switch v := any(s).(type) {
+	case *DnfUseBackend:
+		return v
+	case DnfUseBackend:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := DnfUseBackend(*v)
+		return &val
+	case string:
+		val := DnfUseBackend(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Whether to install (`present`, `latest`), or remove (`absent`) a package.
 // Default is `None`, however in effect the default action is `present` unless
 // the `autoremove=true`, then `absent` is inferred.
@@ -39,6 +61,28 @@ const (
 	DnfStateRemoved   DnfState = "removed"
 	DnfStateLatest    DnfState = "latest"
 )
+
+func OptionalDnfState[T interface {
+	*DnfState | DnfState | *string | string
+}](s T) *DnfState {
+	switch v := any(s).(type) {
+	case *DnfState:
+		return v
+	case DnfState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := DnfState(*v)
+		return &val
+	case string:
+		val := DnfState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `dnf` Ansible module.
 type DnfParameters struct {

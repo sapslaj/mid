@@ -23,6 +23,28 @@ const (
 	LineinfileStatePresent LineinfileState = "present"
 )
 
+func OptionalLineinfileState[T interface {
+	*LineinfileState | LineinfileState | *string | string
+}](s T) *LineinfileState {
+	switch v := any(s).(type) {
+	case *LineinfileState:
+		return v
+	case LineinfileState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := LineinfileState(*v)
+		return &val
+	case string:
+		val := LineinfileState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `lineinfile` Ansible module.
 type LineinfileParameters struct {
 	// The file to modify.

@@ -21,6 +21,28 @@ const (
 	YumRepositoryFailovermethodPriority   YumRepositoryFailovermethod = "priority"
 )
 
+func OptionalYumRepositoryFailovermethod[T interface {
+	*YumRepositoryFailovermethod | YumRepositoryFailovermethod | *string | string
+}](s T) *YumRepositoryFailovermethod {
+	switch v := any(s).(type) {
+	case *YumRepositoryFailovermethod:
+		return v
+	case YumRepositoryFailovermethod:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := YumRepositoryFailovermethod(*v)
+		return &val
+	case string:
+		val := YumRepositoryFailovermethod(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Determines how upstream HTTP caches are instructed to handle any HTTP
 // downloads that Yum does.
 // `all` means that all HTTP downloads should be cached.
@@ -37,6 +59,28 @@ const (
 	YumRepositoryHttpCachingNone     YumRepositoryHttpCaching = "none"
 )
 
+func OptionalYumRepositoryHttpCaching[T interface {
+	*YumRepositoryHttpCaching | YumRepositoryHttpCaching | *string | string
+}](s T) *YumRepositoryHttpCaching {
+	switch v := any(s).(type) {
+	case *YumRepositoryHttpCaching:
+		return v
+	case YumRepositoryHttpCaching:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := YumRepositoryHttpCaching(*v)
+		return &val
+	case string:
+		val := YumRepositoryHttpCaching(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Determines how yum resolves host names.
 // `4` or `IPv4` - resolve to IPv4 addresses only.
 // `6` or `IPv6` - resolve to IPv6 addresses only.
@@ -50,6 +94,28 @@ const (
 	YumRepositoryIpResolveWhatever YumRepositoryIpResolve = "whatever"
 )
 
+func OptionalYumRepositoryIpResolve[T interface {
+	*YumRepositoryIpResolve | YumRepositoryIpResolve | *string | string
+}](s T) *YumRepositoryIpResolve {
+	switch v := any(s).(type) {
+	case *YumRepositoryIpResolve:
+		return v
+	case YumRepositoryIpResolve:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := YumRepositoryIpResolve(*v)
+		return &val
+	case string:
+		val := YumRepositoryIpResolve(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Either `1` or `0`. Determines whether or not yum keeps the cache of headers
 // and packages after successful installation.
 // This parameter is deprecated as it is only valid in the main configuration
@@ -60,6 +126,28 @@ const (
 	YumRepositoryKeepcache0 YumRepositoryKeepcache = "0"
 	YumRepositoryKeepcache1 YumRepositoryKeepcache = "1"
 )
+
+func OptionalYumRepositoryKeepcache[T interface {
+	*YumRepositoryKeepcache | YumRepositoryKeepcache | *string | string
+}](s T) *YumRepositoryKeepcache {
+	switch v := any(s).(type) {
+	case *YumRepositoryKeepcache:
+		return v
+	case YumRepositoryKeepcache:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := YumRepositoryKeepcache(*v)
+		return &val
+	case string:
+		val := YumRepositoryKeepcache(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Filter the `metadata_expire` time, allowing a trade of speed for accuracy if
 // a command doesn't require it. Each yum command can specify that it requires a
@@ -87,6 +175,28 @@ const (
 	YumRepositoryMetadataExpireFilterReadOnlyFuture  YumRepositoryMetadataExpireFilter = "read-only:future"
 )
 
+func OptionalYumRepositoryMetadataExpireFilter[T interface {
+	*YumRepositoryMetadataExpireFilter | YumRepositoryMetadataExpireFilter | *string | string
+}](s T) *YumRepositoryMetadataExpireFilter {
+	switch v := any(s).(type) {
+	case *YumRepositoryMetadataExpireFilter:
+		return v
+	case YumRepositoryMetadataExpireFilter:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := YumRepositoryMetadataExpireFilter(*v)
+		return &val
+	case string:
+		val := YumRepositoryMetadataExpireFilter(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // State of the repo file.
 type YumRepositoryState string
 
@@ -94,6 +204,28 @@ const (
 	YumRepositoryStateAbsent  YumRepositoryState = "absent"
 	YumRepositoryStatePresent YumRepositoryState = "present"
 )
+
+func OptionalYumRepositoryState[T interface {
+	*YumRepositoryState | YumRepositoryState | *string | string
+}](s T) *YumRepositoryState {
+	switch v := any(s).(type) {
+	case *YumRepositoryState:
+		return v
+	case YumRepositoryState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := YumRepositoryState(*v)
+		return &val
+	case string:
+		val := YumRepositoryState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `yum_repository` Ansible module.
 type YumRepositoryParameters struct {

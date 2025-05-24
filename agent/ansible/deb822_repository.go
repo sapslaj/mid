@@ -17,6 +17,28 @@ const (
 	Deb822RepositoryTypesDebSrc Deb822RepositoryTypes = "deb-src"
 )
 
+func OptionalDeb822RepositoryTypes[T interface {
+	*Deb822RepositoryTypes | Deb822RepositoryTypes | *string | string
+}](s T) *Deb822RepositoryTypes {
+	switch v := any(s).(type) {
+	case *Deb822RepositoryTypes:
+		return v
+	case Deb822RepositoryTypes:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := Deb822RepositoryTypes(*v)
+		return &val
+	case string:
+		val := Deb822RepositoryTypes(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // A source string state.
 type Deb822RepositoryState string
 
@@ -24,6 +46,28 @@ const (
 	Deb822RepositoryStateAbsent  Deb822RepositoryState = "absent"
 	Deb822RepositoryStatePresent Deb822RepositoryState = "present"
 )
+
+func OptionalDeb822RepositoryState[T interface {
+	*Deb822RepositoryState | Deb822RepositoryState | *string | string
+}](s T) *Deb822RepositoryState {
+	switch v := any(s).(type) {
+	case *Deb822RepositoryState:
+		return v
+	case Deb822RepositoryState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := Deb822RepositoryState(*v)
+		return &val
+	case string:
+		val := Deb822RepositoryState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `deb822_repository` Ansible module.
 type Deb822RepositoryParameters struct {

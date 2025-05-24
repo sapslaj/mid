@@ -28,6 +28,28 @@ const (
 	CronStatePresent CronState = "present"
 )
 
+func OptionalCronState[T interface {
+	*CronState | CronState | *string | string
+}](s T) *CronState {
+	switch v := any(s).(type) {
+	case *CronState:
+		return v
+	case CronState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := CronState(*v)
+		return &val
+	case string:
+		val := CronState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Special time specification nickname.
 type CronSpecialTime string
 
@@ -40,6 +62,28 @@ const (
 	CronSpecialTimeWeekly   CronSpecialTime = "weekly"
 	CronSpecialTimeYearly   CronSpecialTime = "yearly"
 )
+
+func OptionalCronSpecialTime[T interface {
+	*CronSpecialTime | CronSpecialTime | *string | string
+}](s T) *CronSpecialTime {
+	switch v := any(s).(type) {
+	case *CronSpecialTime:
+		return v
+	case CronSpecialTime:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := CronSpecialTime(*v)
+		return &val
+	case string:
+		val := CronSpecialTime(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `cron` Ansible module.
 type CronParameters struct {

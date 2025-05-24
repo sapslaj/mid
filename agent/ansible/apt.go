@@ -22,6 +22,28 @@ const (
 	AptStateFixed    AptState = "fixed"
 )
 
+func OptionalAptState[T interface {
+	*AptState | AptState | *string | string
+}](s T) *AptState {
+	switch v := any(s).(type) {
+	case *AptState:
+		return v
+	case AptState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := AptState(*v)
+		return &val
+	case string:
+		val := AptState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // If yes or safe, performs an aptitude safe-upgrade.
 // If full, performs an aptitude full-upgrade.
 // If dist, performs an apt-get dist-upgrade.
@@ -36,6 +58,28 @@ const (
 	AptUpgradeSafe AptUpgrade = "safe"
 	AptUpgradeYes  AptUpgrade = "yes"
 )
+
+func OptionalAptUpgrade[T interface {
+	*AptUpgrade | AptUpgrade | *string | string
+}](s T) *AptUpgrade {
+	switch v := any(s).(type) {
+	case *AptUpgrade:
+		return v
+	case AptUpgrade:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := AptUpgrade(*v)
+		return &val
+	case string:
+		val := AptUpgrade(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `apt` Ansible module.
 type AptParameters struct {

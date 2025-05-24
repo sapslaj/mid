@@ -45,6 +45,28 @@ const (
 	FileStateTouch     FileState = "touch"
 )
 
+func OptionalFileState[T interface {
+	*FileState | FileState | *string | string
+}](s T) *FileState {
+	switch v := any(s).(type) {
+	case *FileState:
+		return v
+	case FileState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := FileState(*v)
+		return &val
+	case string:
+		val := FileState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `file` Ansible module.
 type FileParameters struct {
 	// Path to the file being managed.

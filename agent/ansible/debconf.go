@@ -30,6 +30,28 @@ const (
 	DebconfVtypeTitle       DebconfVtype = "title"
 )
 
+func OptionalDebconfVtype[T interface {
+	*DebconfVtype | DebconfVtype | *string | string
+}](s T) *DebconfVtype {
+	switch v := any(s).(type) {
+	case *DebconfVtype:
+		return v
+	case DebconfVtype:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := DebconfVtype(*v)
+		return &val
+	case string:
+		val := DebconfVtype(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `debconf` Ansible module.
 type DebconfParameters struct {
 	// Name of package to configure.

@@ -23,6 +23,28 @@ const (
 	KnownHostsStatePresent KnownHostsState = "present"
 )
 
+func OptionalKnownHostsState[T interface {
+	*KnownHostsState | KnownHostsState | *string | string
+}](s T) *KnownHostsState {
+	switch v := any(s).(type) {
+	case *KnownHostsState:
+		return v
+	case KnownHostsState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := KnownHostsState(*v)
+		return &val
+	case string:
+		val := KnownHostsState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `known_hosts` Ansible module.
 type KnownHostsParameters struct {
 	// The host to add or remove (must match a host specified in key). It will be

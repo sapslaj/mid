@@ -16,6 +16,28 @@ const (
 	AptRepositoryStatePresent AptRepositoryState = "present"
 )
 
+func OptionalAptRepositoryState[T interface {
+	*AptRepositoryState | AptRepositoryState | *string | string
+}](s T) *AptRepositoryState {
+	switch v := any(s).(type) {
+	case *AptRepositoryState:
+		return v
+	case AptRepositoryState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := AptRepositoryState(*v)
+		return &val
+	case string:
+		val := AptRepositoryState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `apt_repository` Ansible module.
 type AptRepositoryParameters struct {
 	// A source string for the repository.

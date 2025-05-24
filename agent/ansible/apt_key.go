@@ -16,6 +16,28 @@ const (
 	AptKeyStatePresent AptKeyState = "present"
 )
 
+func OptionalAptKeyState[T interface {
+	*AptKeyState | AptKeyState | *string | string
+}](s T) *AptKeyState {
+	switch v := any(s).(type) {
+	case *AptKeyState:
+		return v
+	case AptKeyState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := AptKeyState(*v)
+		return &val
+	case string:
+		val := AptKeyState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `apt_key` Ansible module.
 type AptKeyParameters struct {
 	// The identifier of the key.

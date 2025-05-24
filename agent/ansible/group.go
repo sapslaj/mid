@@ -17,6 +17,28 @@ const (
 	GroupStatePresent GroupState = "present"
 )
 
+func OptionalGroupState[T interface {
+	*GroupState | GroupState | *string | string
+}](s T) *GroupState {
+	switch v := any(s).(type) {
+	case *GroupState:
+		return v
+	case GroupState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := GroupState(*v)
+		return &val
+	case string:
+		val := GroupState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `group` Ansible module.
 type GroupParameters struct {
 	// Name of the group to manage.

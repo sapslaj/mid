@@ -28,6 +28,28 @@ const (
 	IptablesTableSecurity IptablesTable = "security"
 )
 
+func OptionalIptablesTable[T interface {
+	*IptablesTable | IptablesTable | *string | string
+}](s T) *IptablesTable {
+	switch v := any(s).(type) {
+	case *IptablesTable:
+		return v
+	case IptablesTable:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesTable(*v)
+		return &val
+	case string:
+		val := IptablesTable(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Whether the rule should be absent or present.
 type IptablesState string
 
@@ -35,6 +57,28 @@ const (
 	IptablesStateAbsent  IptablesState = "absent"
 	IptablesStatePresent IptablesState = "present"
 )
+
+func OptionalIptablesState[T interface {
+	*IptablesState | IptablesState | *string | string
+}](s T) *IptablesState {
+	switch v := any(s).(type) {
+	case *IptablesState:
+		return v
+	case IptablesState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesState(*v)
+		return &val
+	case string:
+		val := IptablesState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Whether the rule should be appended at the bottom or inserted at the top.
 // If the rule already exists the chain will not be modified.
@@ -45,6 +89,28 @@ const (
 	IptablesActionInsert IptablesAction = "insert"
 )
 
+func OptionalIptablesAction[T interface {
+	*IptablesAction | IptablesAction | *string | string
+}](s T) *IptablesAction {
+	switch v := any(s).(type) {
+	case *IptablesAction:
+		return v
+	case IptablesAction:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesAction(*v)
+		return &val
+	case string:
+		val := IptablesAction(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Which version of the IP protocol this rule should apply to.
 type IptablesIpVersion string
 
@@ -52,6 +118,28 @@ const (
 	IptablesIpVersionIpv4 IptablesIpVersion = "ipv4"
 	IptablesIpVersionIpv6 IptablesIpVersion = "ipv6"
 )
+
+func OptionalIptablesIpVersion[T interface {
+	*IptablesIpVersion | IptablesIpVersion | *string | string
+}](s T) *IptablesIpVersion {
+	switch v := any(s).(type) {
+	case *IptablesIpVersion:
+		return v
+	case IptablesIpVersion:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesIpVersion(*v)
+		return &val
+	case string:
+		val := IptablesIpVersion(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Logging level according to the syslogd-defined priorities.
 // The value can be strings or numbers from 1-8.
@@ -77,6 +165,28 @@ const (
 	IptablesLogLevelDebug   IptablesLogLevel = "debug"
 )
 
+func OptionalIptablesLogLevel[T interface {
+	*IptablesLogLevel | IptablesLogLevel | *string | string
+}](s T) *IptablesLogLevel {
+	switch v := any(s).(type) {
+	case *IptablesLogLevel:
+		return v
+	case IptablesLogLevel:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesLogLevel(*v)
+		return &val
+	case string:
+		val := IptablesLogLevel(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // This allows matching packets that have the SYN bit set and the ACK and RST
 // bits unset.
 // When negated, this matches all packets with the RST or the ACK bits set.
@@ -87,6 +197,28 @@ const (
 	IptablesSynMatch  IptablesSyn = "match"
 	IptablesSynNegate IptablesSyn = "negate"
 )
+
+func OptionalIptablesSyn[T interface {
+	*IptablesSyn | IptablesSyn | *string | string
+}](s T) *IptablesSyn {
+	switch v := any(s).(type) {
+	case *IptablesSyn:
+		return v
+	case IptablesSyn:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesSyn(*v)
+		return &val
+	case string:
+		val := IptablesSyn(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Specifies the necessary flags for the match_set parameter.
 // Must be used together with the `match_set` parameter.
@@ -103,6 +235,28 @@ const (
 	IptablesMatchSetFlagsSrcSrc IptablesMatchSetFlags = "src,src"
 )
 
+func OptionalIptablesMatchSetFlags[T interface {
+	*IptablesMatchSetFlags | IptablesMatchSetFlags | *string | string
+}](s T) *IptablesMatchSetFlags {
+	switch v := any(s).(type) {
+	case *IptablesMatchSetFlags:
+		return v
+	case IptablesMatchSetFlags:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesMatchSetFlags(*v)
+		return &val
+	case string:
+		val := IptablesMatchSetFlags(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Set the policy for the chain to the given target.
 // Only built-in chains can have policies.
 // This parameter requires the `chain` parameter.
@@ -117,6 +271,28 @@ const (
 	IptablesPolicyQueue  IptablesPolicy = "QUEUE"
 	IptablesPolicyReturn IptablesPolicy = "RETURN"
 )
+
+func OptionalIptablesPolicy[T interface {
+	*IptablesPolicy | IptablesPolicy | *string | string
+}](s T) *IptablesPolicy {
+	switch v := any(s).(type) {
+	case *IptablesPolicy:
+		return v
+	case IptablesPolicy:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := IptablesPolicy(*v)
+		return &val
+	case string:
+		val := IptablesPolicy(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `iptables` Ansible module.
 type IptablesParameters struct {

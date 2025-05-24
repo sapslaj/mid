@@ -27,6 +27,28 @@ const (
 	UriBodyFormatFormMultipart  UriBodyFormat = "form-multipart"
 )
 
+func OptionalUriBodyFormat[T interface {
+	*UriBodyFormat | UriBodyFormat | *string | string
+}](s T) *UriBodyFormat {
+	switch v := any(s).(type) {
+	case *UriBodyFormat:
+		return v
+	case UriBodyFormat:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := UriBodyFormat(*v)
+		return &val
+	case string:
+		val := UriBodyFormat(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Whether or not the URI module should follow redirects.
 type UriFollowRedirects string
 
@@ -44,6 +66,28 @@ const (
 	// (DEPRECATED, removed in 2.22) alias of `all`.
 	UriFollowRedirectsYes UriFollowRedirects = "yes"
 )
+
+func OptionalUriFollowRedirects[T interface {
+	*UriFollowRedirects | UriFollowRedirects | *string | string
+}](s T) *UriFollowRedirects {
+	switch v := any(s).(type) {
+	case *UriFollowRedirects:
+		return v
+	case UriFollowRedirects:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := UriFollowRedirects(*v)
+		return &val
+	case string:
+		val := UriFollowRedirects(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
 
 // Parameters for the `uri` Ansible module.
 type UriParameters struct {

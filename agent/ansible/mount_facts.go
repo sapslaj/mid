@@ -18,6 +18,28 @@ const (
 	MountFactsOnTimeoutIgnore MountFactsOnTimeout = "ignore"
 )
 
+func OptionalMountFactsOnTimeout[T interface {
+	*MountFactsOnTimeout | MountFactsOnTimeout | *string | string
+}](s T) *MountFactsOnTimeout {
+	switch v := any(s).(type) {
+	case *MountFactsOnTimeout:
+		return v
+	case MountFactsOnTimeout:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := MountFactsOnTimeout(*v)
+		return &val
+	case string:
+		val := MountFactsOnTimeout(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `mount_facts` Ansible module.
 type MountFactsParameters struct {
 	// A list of fnmatch patterns to filter mounts by the special device or remote

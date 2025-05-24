@@ -20,6 +20,28 @@ const (
 	SysvinitStateReloaded  SysvinitState = "reloaded"
 )
 
+func OptionalSysvinitState[T interface {
+	*SysvinitState | SysvinitState | *string | string
+}](s T) *SysvinitState {
+	switch v := any(s).(type) {
+	case *SysvinitState:
+		return v
+	case SysvinitState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := SysvinitState(*v)
+		return &val
+	case string:
+		val := SysvinitState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `sysvinit` Ansible module.
 type SysvinitParameters struct {
 	// Name of the service.

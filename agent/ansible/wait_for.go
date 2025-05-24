@@ -39,6 +39,28 @@ const (
 	WaitForStateStopped WaitForState = "stopped"
 )
 
+func OptionalWaitForState[T interface {
+	*WaitForState | WaitForState | *string | string
+}](s T) *WaitForState {
+	switch v := any(s).(type) {
+	case *WaitForState:
+		return v
+	case WaitForState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := WaitForState(*v)
+		return &val
+	case string:
+		val := WaitForState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `wait_for` Ansible module.
 type WaitForParameters struct {
 	// A resolvable hostname or IP address to wait for.

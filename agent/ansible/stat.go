@@ -24,6 +24,28 @@ const (
 	StatChecksumAlgorithmSha512 StatChecksumAlgorithm = "sha512"
 )
 
+func OptionalStatChecksumAlgorithm[T interface {
+	*StatChecksumAlgorithm | StatChecksumAlgorithm | *string | string
+}](s T) *StatChecksumAlgorithm {
+	switch v := any(s).(type) {
+	case *StatChecksumAlgorithm:
+		return v
+	case StatChecksumAlgorithm:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := StatChecksumAlgorithm(*v)
+		return &val
+	case string:
+		val := StatChecksumAlgorithm(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `stat` Ansible module.
 type StatParameters struct {
 	// The full path of the file/object to get the facts of.

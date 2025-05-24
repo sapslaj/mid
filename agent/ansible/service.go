@@ -37,6 +37,28 @@ const (
 	ServiceStateStopped   ServiceState = "stopped"
 )
 
+func OptionalServiceState[T interface {
+	*ServiceState | ServiceState | *string | string
+}](s T) *ServiceState {
+	switch v := any(s).(type) {
+	case *ServiceState:
+		return v
+	case ServiceState:
+		return &v
+	case *string:
+		if v == nil {
+			return nil
+		}
+		val := ServiceState(*v)
+		return &val
+	case string:
+		val := ServiceState(v)
+		return &val
+	default:
+		panic("unsupported type")
+	}
+}
+
 // Parameters for the `service` Ansible module.
 type ServiceParameters struct {
 	// Name of the service.
