@@ -8,6 +8,7 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -36,44 +37,13 @@ type FileLineState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-type lineinfileTaskParameters struct {
-	Attributes   *string `json:"attributes,omitempty"`
-	Backrefs     *bool   `json:"backrefs,omitempty"`
-	Backup       *bool   `json:"backup,omitempty"`
-	Create       *bool   `json:"create,omitempty"`
-	Firstmatch   *bool   `json:"firstmatch,omitempty"`
-	Group        *string `json:"group,omitempty"`
-	Insertafter  *string `json:"insertafter,omitempty"`
-	Insertbefore *string `json:"insertbefore,omitempty"`
-	Line         *string `json:"line,omitempty"`
-	Mode         any     `json:"mode,omitempty"`
-	Owner        *string `json:"owner,omitempty"`
-	Path         string  `json:"path"`
-	Regexp       *string `json:"regexp,omitempty"`
-	SearchString *string `json:"search_string,omitempty"`
-	Selevel      *string `json:"selevel,omitempty"`
-	Serole       *string `json:"serole,omitempty"`
-	Setype       *string `json:"setype,omitempty"`
-	Seuser       *string `json:"seuser,omitempty"`
-	State        *string `json:"state,omitempty"`
-	UnsafeWrites *bool   `json:"unsafe_writes,omitempty"`
-	Validate     *string `json:"validate,omitempty"`
-}
-
-type lineinfileTaskResult struct {
-	Changed *bool `json:"changed,omitempty"`
-	Diff    *any  `json:"diff,omitempty"`
-}
-
-func (result *lineinfileTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
-func (r FileLine) argsToTaskParameters(input FileLineArgs) (lineinfileTaskParameters, error) {
-	return lineinfileTaskParameters{
-		State:        input.Ensure,
+func (r FileLine) argsToTaskParameters(input FileLineArgs) (ansible.LineinfileParameters, error) {
+	var state *ansible.LineinfileState
+	if input.Ensure != nil {
+		state = ansible.OptionalLineinfileState(string(*input.Ensure))
+	}
+	return ansible.LineinfileParameters{
+		State:        state,
 		Path:         input.Path,
 		Backrefs:     input.Backrefs,
 		Backup:       input.Backup,
@@ -221,7 +191,7 @@ func (r FileLine) Read(
 		return id, inputs, state, err
 	}
 
-	result, err := executor.GetTaskResult[*lineinfileTaskResult](output, 0, 0)
+	result, err := executor.GetTaskResult[*ansible.LineinfileReturn](output, 0, 0)
 	if err != nil {
 		return id, inputs, state, err
 	}
@@ -277,7 +247,7 @@ func (r FileLine) Update(
 		return olds, err
 	}
 
-	result, err := executor.GetTaskResult[*lineinfileTaskResult](output, 0, 0)
+	result, err := executor.GetTaskResult[*ansible.LineinfileReturn](output, 0, 0)
 
 	state := r.updateState(olds, news, result.IsChanged())
 	return state, nil
