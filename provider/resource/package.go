@@ -10,6 +10,7 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -31,24 +32,8 @@ type PackageState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-type packageTaskParameters struct {
-	Name  any    `json:"name"`
-	State string `json:"state"`
-}
-
-type packageTaskResult struct {
-	Changed *bool `json:"changed,omitempty"`
-	Diff    *any  `json:"diff,omitempty"`
-}
-
-func (result *packageTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
-func (r Package) argsToTaskParameters(input PackageArgs) (packageTaskParameters, error) {
-	parameters := packageTaskParameters{}
+func (r Package) argsToTaskParameters(input PackageArgs) (ansible.PackageParameters, error) {
+	parameters := ansible.PackageParameters{}
 	if input.Ensure != nil {
 		parameters.State = *input.Ensure
 	} else {
@@ -168,24 +153,6 @@ func (r Package) Create(
 		return id, state, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return id, state, nil
-		}
-
-		if err == nil {
-			return id, state, fmt.Errorf("cannot connect to host")
-		} else {
-			return id, state, fmt.Errorf("cannot connect to host: %w", err)
-		}
-	}
-
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: true,
 		Become:      true,
@@ -198,6 +165,9 @@ func (r Package) Create(
 		},
 	})
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && preview {
+			return id, state, nil
+		}
 		return id, state, err
 	}
 
@@ -241,8 +211,11 @@ func (r Package) Read(
 		return id, inputs, state, err
 	}
 
-	result, err := executor.GetTaskResult[*packageTaskResult](output, 0, 0)
+	result, err := executor.GetTaskResult[*ansible.PackageFactsReturn](output, 0, 0)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) {
+			return id, inputs, state, nil
+		}
 		return id, inputs, state, err
 	}
 
@@ -309,10 +282,13 @@ func (r Package) Update(
 			},
 		})
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				return olds, nil
+			}
 			return olds, err
 		}
 
-		result, err := executor.GetTaskResult[*packageTaskResult](output, 0, 0)
+		result, err := executor.GetTaskResult[*ansible.PackageReturn](output, 0, 0)
 		if err != nil {
 			return olds, err
 		}
@@ -357,7 +333,7 @@ func (r Package) Update(
 		}
 	}
 
-	taskParameterSets := []packageTaskParameters{}
+	taskParameterSets := []ansible.PackageParameters{}
 
 	absents := []string{}
 	presents := []string{}
@@ -371,14 +347,14 @@ func (r Package) Update(
 	}
 
 	if len(absents) > 0 {
-		taskParameterSets = append(taskParameterSets, packageTaskParameters{
+		taskParameterSets = append(taskParameterSets, ansible.PackageParameters{
 			Name:  absents,
 			State: "absent",
 		})
 	}
 
 	if len(presents) > 0 {
-		taskParameterSets = append(taskParameterSets, packageTaskParameters{
+		taskParameterSets = append(taskParameterSets, ansible.PackageParameters{
 			Name:  presents,
 			State: newState,
 		})
@@ -407,7 +383,7 @@ func (r Package) Update(
 
 	changed := false
 	for i := range output.Results[0].Tasks {
-		r, err := executor.GetTaskResult[*packageTaskResult](output, 0, i)
+		r, err := executor.GetTaskResult[*ansible.PackageReturn](output, 0, i)
 		if err != nil {
 			return olds, err
 		}
@@ -461,6 +437,12 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 			},
 		},
 	})
+	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
+			return nil
+		}
+		return err
+	}
 
-	return err
+	return nil
 }
