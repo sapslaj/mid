@@ -362,7 +362,7 @@ func TestAgentFileStat_checksum(t *testing.T) {
 	})
 	defer harness.Close()
 
-	require.True(t, harness.AssertCommand(t, "echo foo > /foo"))
+	require.True(t, harness.AssertCommand(t, "echo foo | sudo tee /foo"))
 
 	res, err := harness.Provider.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:fileStat"),
