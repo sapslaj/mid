@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"reflect"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	ptypes "github.com/pulumi/pulumi-go-provider/infer/types"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
 
+	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -112,48 +113,18 @@ type FileState struct {
 	Triggers   types.TriggersOutput `pulumi:"triggers"`
 }
 
-type fileTaskParameters struct {
-	AccessTime             *string `json:"access_time,omitempty"`
-	AccessTimeFormat       *string `json:"access_time_format,omitempty"`
-	Attributes             *string `json:"attributes,omitempty"`
-	Follow                 *bool   `json:"follow,omitempty"`
-	Force                  *bool   `json:"force,omitempty"`
-	Group                  *string `json:"group,omitempty"`
-	Mode                   *string `json:"mode,omitempty"`
-	ModificationTime       *string `json:"modification_time,omitempty"`
-	ModificationTimeFormat *string `json:"modification_time_format,omitempty"`
-	Owner                  *string `json:"owner,omitempty"`
-	Path                   string  `json:"path"`
-	Recurse                *bool   `json:"recurse,omitempty"`
-	Selevel                *string `json:"selevel,omitempty"`
-	Serole                 *string `json:"serole,omitempty"`
-	Setype                 *string `json:"setype,omitempty"`
-	Seuser                 *string `json:"seuser,omitempty"`
-	Src                    *string `json:"src,omitempty"`
-	State                  *string `json:"state,omitempty"`
-	UnsafeWrites           *bool   `json:"unsafe_writes,omitempty"`
-}
-
-type fileTaskResult struct {
-	Changed *bool  `json:"changed,omitempty"`
-	Diff    *any   `json:"diff,omitempty"`
-	Path    string `json:"string"`
-}
-
-func (result *fileTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
-}
-
-func (r File) argsToFileTaskParameters(input FileArgs) (*fileTaskParameters, error) {
-	return &fileTaskParameters{
+func (r File) argsToFileTaskParameters(input FileArgs) (*ansible.FileParameters, error) {
+	var state *ansible.FileState
+	if input.Ensure != nil {
+		state = ansible.OptionalFileState(string(*input.Ensure))
+	}
+	return &ansible.FileParameters{
 		AccessTime:             input.AccessTime,
 		AccessTimeFormat:       input.AccessTimeFormat,
 		Attributes:             input.Attributes,
 		Follow:                 input.Follow,
 		Group:                  input.Group,
-		Mode:                   input.Mode,
+		Mode:                   ptr.ToAny(input.Mode),
 		ModificationTime:       input.ModificationTime,
 		ModificationTimeFormat: input.ModificationTimeFormat,
 		Owner:                  input.Owner,
@@ -164,54 +135,9 @@ func (r File) argsToFileTaskParameters(input FileArgs) (*fileTaskParameters, err
 		Setype:                 input.Setype,
 		Seuser:                 input.Seuser,
 		Src:                    input.RemoteSource,
-		State:                  (*string)(input.Ensure),
+		State:                  state,
 		UnsafeWrites:           input.UnsafeWrites,
 	}, nil
-}
-
-type copyTaskParameters struct {
-	Attributes    *string `json:"attributes,omitempty"`
-	Backup        *bool   `json:"backup,omitempty"`
-	Checksum      *string `json:"checksum,omitempty"`
-	Content       *string `json:"content,omitempty"`
-	Dest          *string `json:"dest,omitempty"`
-	DirectoryMode *string `json:"directory_mode,omitempty"`
-	Follow        *bool   `json:"follow,omitempty"`
-	Force         *bool   `json:"force,omitempty"`
-	Group         *string `json:"group,omitempty"`
-	LocalFollow   *bool   `json:"local_follow,omitempty"`
-	Mode          *string `json:"mode,omitempty"`
-	Owner         *string `json:"owner,omitempty"`
-	RemoteSrc     *bool   `json:"remote_src,omitempty"`
-	Selevel       *string `json:"selevel,omitempty"`
-	Serole        *string `json:"serole,omitempty"`
-	Setype        *string `json:"setype,omitempty"`
-	Seuser        *string `json:"seuser,omitempty"`
-	Src           *string `json:"src,omitempty"`
-	UnsafeWrites  *bool   `json:"unsafe_writes,omitempty"`
-	Validate      *string `json:"validate,omitempty"`
-}
-
-type copyTaskResult struct {
-	Changed    *bool  `json:"changed,omitempty"`
-	Diff       *any   `json:"diff,omitempty"`
-	BackupFile string `json:"backup_file"`
-	Checksum   string `json:"checksum"`
-	Dest       string `json:"dest"`
-	Gid        int    `json:"gid"`
-	Group      string `json:"group"`
-	Mode       string `json:"mode"`
-	Owner      string `json:"owner"`
-	Size       int    `json:"size"`
-	Src        string `json:"src"`
-	State      string `json:"state"`
-	Uid        int    `json:"uid"`
-}
-
-func (result *copyTaskResult) IsChanged() bool {
-	changed := result.Changed != nil && *result.Changed
-	hasDiff := result.Diff != nil
-	return changed || hasDiff
 }
 
 func (r File) argsToSource(input FileArgs) (*string, error) {
@@ -239,25 +165,25 @@ func (r File) argsToSource(input FileArgs) (*string, error) {
 	return nil, nil
 }
 
-func (r File) argsToCopyTaskParameters(input FileArgs) (*copyTaskParameters, error) {
+func (r File) argsToCopyTaskParameters(input FileArgs) (*ansible.CopyParameters, error) {
 	isRemoteSource := input.RemoteSource != nil
 	source, err := r.argsToSource(input)
 	if err != nil {
 		return nil, err
 	}
 
-	return &copyTaskParameters{
+	return &ansible.CopyParameters{
 		Attributes:    input.Attributes,
 		Backup:        input.Backup,
 		Checksum:      input.Checksum,
 		Content:       input.Content,
-		Dest:          input.Path,
-		DirectoryMode: input.DirectoryMode,
+		Dest:          *input.Path,
+		DirectoryMode: ptr.ToAny(input.DirectoryMode),
 		Follow:        input.Follow,
 		Force:         input.Force,
 		Group:         input.Group,
 		LocalFollow:   input.LocalFollow,
-		Mode:          input.Mode,
+		Mode:          ptr.ToAny(input.Mode),
 		Owner:         input.Owner,
 		RemoteSrc:     ptr.Of(isRemoteSource),
 		Selevel:       input.Selevel,
@@ -270,21 +196,8 @@ func (r File) argsToCopyTaskParameters(input FileArgs) (*copyTaskParameters, err
 	}, nil
 }
 
-type statTaskParameters struct {
-	ChecksumAlgorithm *string `json:"checksum_algorithm,omitempty"`
-	Follow            *bool   `json:"follow,omitempty"`
-	GetAttributes     *bool   `json:"get_attributes,omitempty"`
-	GetChecksum       *bool   `json:"get_checksum,omitempty"`
-	GetMime           *bool   `json:"get_mime,omitempty"`
-	Path              string  `json:"path"`
-}
-
-type statTaskResult struct {
-	Stat FileStateStat `json:"stat"`
-}
-
-func (r File) argsToStatTaskParameters(input FileArgs) (*statTaskParameters, error) {
-	return &statTaskParameters{
+func (r File) argsToStatTaskParameters(input FileArgs) (*ansible.StatParameters, error) {
+	return &ansible.StatParameters{
 		Follow: input.Follow,
 		Path:   *input.Path,
 	}, nil
@@ -297,15 +210,6 @@ func (r File) updateState(olds FileState, news FileArgs, changed bool) FileState
 	}
 	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
-}
-
-func anyNonNils(vs ...any) bool {
-	for _, v := range vs {
-		if v != nil && !reflect.ValueOf(v).IsNil() {
-			return true
-		}
-	}
-	return false
 }
 
 func (r File) Diff(
@@ -391,12 +295,12 @@ func (r File) runCreateUpdatePlay(
 	fileTaskIndex := -1
 	statTaskIndex := -1
 
-	copyNeeded := anyNonNils(
+	copyNeeded := ptr.AnyNonNils(
 		input.Source,
 		input.Content,
 	)
 
-	fileNeeded := anyNonNils(
+	fileNeeded := ptr.AnyNonNils(
 		input.AccessTime,
 		input.AccessTimeFormat,
 		input.ModificationTime,
@@ -480,18 +384,18 @@ func (r File) runCreateUpdatePlay(
 	changed := false
 
 	if copyNeeded {
-		result, err := executor.GetTaskResult[copyTaskResult](output, 0, copyTaskIndex)
+		result, err := executor.GetTaskResult[ansible.CopyReturn](output, 0, copyTaskIndex)
 		if err != nil {
 			return state, err
 		}
 		if result.IsChanged() {
 			changed = true
 		}
-		state.BackupFile = &result.BackupFile
+		state.BackupFile = result.BackupFile
 	}
 
 	if fileNeeded {
-		result, err := executor.GetTaskResult[fileTaskResult](output, 0, fileTaskIndex)
+		result, err := executor.GetTaskResult[ansible.FileReturn](output, 0, fileTaskIndex)
 		if err != nil {
 			return state, err
 		}
@@ -500,12 +404,15 @@ func (r File) runCreateUpdatePlay(
 		}
 	}
 
-	statResult, err := executor.GetTaskResult[statTaskResult](output, 0, statTaskIndex)
+	statResult, err := executor.GetTaskResult[ansible.StatReturn](output, 0, statTaskIndex)
 	if err != nil {
 		return state, err
 	}
 
-	state.Stat = statResult.Stat
+	state.Stat, err = rpc.AnyToJSONT[FileStateStat](statResult.Stat)
+	if err != nil {
+		return state, err
+	}
 
 	state = r.updateState(state, input, changed)
 
@@ -579,7 +486,7 @@ func (r File) Delete(
 	id string,
 	props FileState,
 ) error {
-	shouldDelete := anyNonNils(
+	shouldDelete := ptr.AnyNonNils(
 		props.Source,
 		props.Content,
 		props.AccessTime,

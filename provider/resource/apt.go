@@ -59,7 +59,7 @@ type AptState struct {
 }
 
 func (r Apt) taskParametersNeedsName(input AptArgs) bool {
-	return !anyNonNils(
+	return !ptr.AnyNonNils(
 		input.Autoclean,
 		input.Autoremove,
 		input.Clean,
@@ -70,7 +70,7 @@ func (r Apt) taskParametersNeedsName(input AptArgs) bool {
 }
 
 func (r Apt) canAssumeEnsure(input AptArgs) bool {
-	if anyNonNils(
+	if ptr.AnyNonNils(
 		input.Name,
 		input.Names,
 		input.Deb,

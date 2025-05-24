@@ -1,5 +1,7 @@
 package ptr
 
+import "reflect"
+
 func Of[T any](v T) *T {
 	return &v
 }
@@ -16,6 +18,14 @@ func From[T any](v *T) T {
 	return FromDefault(v, def)
 }
 
+func ToAny[T any](a *T) *any {
+	if a == nil {
+		return nil
+	}
+	b := any(*a)
+	return &b
+}
+
 func SlicesOf[T any](v []T) []*T {
 	s := make([]*T, len(v))
 	for i := range v {
@@ -30,4 +40,13 @@ func SlicesFrom[T any](v []*T) []T {
 		s[i] = *v[i]
 	}
 	return s
+}
+
+func AnyNonNils(vs ...any) bool {
+	for _, v := range vs {
+		if v != nil && !reflect.ValueOf(v).IsNil() {
+			return true
+		}
+	}
+	return false
 }
