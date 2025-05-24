@@ -5,16 +5,34 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Runs getent against one of its various databases and returns information into
+// the host's facts, in a `getent_<database>` prefixed variable.
 const GetentName = "getent"
 
+// Parameters for the `getent` Ansible module.
 type GetentParameters struct {
-	Database string  `json:"database"`
-	Key      *string `json:"key,omitempty"`
-	Service  *string `json:"service,omitempty"`
-	Split    *string `json:"split,omitempty"`
-	FailKey  *bool   `json:"fail_key,omitempty"`
+	// The name of a getent database supported by the target system (passwd, group,
+	// hosts, etc).
+	Database string `json:"database"`
+
+	// Key from which to return values from the specified database, otherwise the
+	// full contents are returned.
+	Key *string `json:"key,omitempty"`
+
+	// Override all databases with the specified service
+	// The underlying system must support the service flag which is not always
+	// available.
+	Service *string `json:"service,omitempty"`
+
+	// Character used to split the database values into lists/arrays such as `:` or
+	// `\\t`, otherwise it will try to pick one depending on the database.
+	Split *string `json:"split,omitempty"`
+
+	// If a supplied key is missing this will make the task fail if `true`.
+	FailKey *bool `json:"fail_key,omitempty"`
 }
 
+// Wrap the `GetentParameters into an `rpc.RPCCall`.
 func (p *GetentParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -29,11 +47,15 @@ func (p *GetentParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], err
 	}, nil
 }
 
+// Return values for the `getent` Ansible module.
 type GetentReturn struct {
 	AnsibleCommonReturns
+
+	// Facts to add to ansible_facts.
 	AnsibleFacts *map[string]any `json:"ansible_facts,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `GetentReturn`
 func GetentReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GetentReturn, error) {
 	return rpc.AnyToJSONT[GetentReturn](r.Result.Result)
 }

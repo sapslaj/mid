@@ -5,18 +5,45 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// The `ansible.builtin.expect` module executes a command and responds to
+// prompts.
+// The given command will be executed on all selected nodes. It will not be
+// processed through the shell, so variables like `$HOME` and operations like
+// `"<"`, `">"`, `"|"`, and `"&"` will not work.
 const ExpectName = "expect"
 
+// Parameters for the `expect` Ansible module.
 type ExpectParameters struct {
-	Command   string         `json:"command"`
-	Creates   *string        `json:"creates,omitempty"`
-	Removes   *string        `json:"removes,omitempty"`
-	Chdir     *string        `json:"chdir,omitempty"`
+	// The command module takes command to run.
+	Command string `json:"command"`
+
+	// A filename, when it already exists, this step will `not` be run.
+	Creates *string `json:"creates,omitempty"`
+
+	// A filename, when it does not exist, this step will `not` be run.
+	Removes *string `json:"removes,omitempty"`
+
+	// Change into this directory before running the command.
+	Chdir *string `json:"chdir,omitempty"`
+
+	// Mapping of prompt regular expressions and corresponding answer(s).
+	// Each key in `responses` is a Python regex
+	// `https://docs.python.org/3/library/re.html#regular-expression-syntax`.
+	// The value of each key is a string or list of strings. If the value is a
+	// string and the prompt is encountered multiple times, the answer will be
+	// repeated. Provide the value as a list to give different answers for
+	// successive matches.
 	Responses map[string]any `json:"responses"`
-	Timeout   *any           `json:"timeout,omitempty"`
-	Echo      *bool          `json:"echo,omitempty"`
+
+	// Amount of time in seconds to wait for the expected strings. Use `null` to
+	// disable timeout.
+	Timeout *any `json:"timeout,omitempty"`
+
+	// Whether or not to echo out your response strings.
+	Echo *bool `json:"echo,omitempty"`
 }
 
+// Wrap the `ExpectParameters into an `rpc.RPCCall`.
 func (p *ExpectParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -31,10 +58,12 @@ func (p *ExpectParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], err
 	}, nil
 }
 
+// Return values for the `expect` Ansible module.
 type ExpectReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `ExpectReturn`
 func ExpectReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ExpectReturn, error) {
 	return rpc.AnyToJSONT[ExpectReturn](r.Result.Result)
 }

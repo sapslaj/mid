@@ -5,12 +5,24 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// A trivial test module, this module always returns `pong` on successful
+// contact. It does not make sense in playbooks, but it is useful from
+// `/usr/bin/ansible` to verify the ability to login and that a usable Python is
+// configured.
+// This is NOT ICMP ping, this is just a trivial test module that requires
+// Python on the remote-node.
+// For Windows targets, use the `ansible.windows.win_ping` module instead.
+// For Network targets, use the `ansible.netcommon.net_ping` module instead.
 const PingName = "ping"
 
+// Parameters for the `ping` Ansible module.
 type PingParameters struct {
+	// Data to return for the R`ping` return value.
+	// If this parameter is set to `crash`, the module will cause an exception.
 	Data *string `json:"data,omitempty"`
 }
 
+// Wrap the `PingParameters into an `rpc.RPCCall`.
 func (p *PingParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -25,11 +37,15 @@ func (p *PingParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error
 	}, nil
 }
 
+// Return values for the `ping` Ansible module.
 type PingReturn struct {
 	AnsibleCommonReturns
+
+	// Value provided with the `data` parameter.
 	Ping *string `json:"ping,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `PingReturn`
 func PingReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PingReturn, error) {
 	return rpc.AnyToJSONT[PingReturn](r.Result.Result)
 }

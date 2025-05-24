@@ -5,27 +5,98 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Use this module to manage crontab and environment variables entries. This
+// module allows you to create environment variables and named crontab entries,
+// update, or delete them.
+// When crontab jobs are managed: the module includes one line with the
+// description of the crontab entry `"#Ansible: <name>"` corresponding to the
+// `name` passed to the module, which is used by future ansible/module calls to
+// find/check the state. The `name` parameter should be unique, and changing the
+// `name` value will result in a new cron task being created (or a different one
+// being removed).
+// When environment variables are managed, no comment line is added, but, when
+// the module needs to find/check the state, it uses the `name` parameter to
+// find the environment variable definition line.
+// When using symbols such as `%`, they must be properly escaped.
 const CronName = "cron"
 
+// Parameters for the `cron` Ansible module.
 type CronParameters struct {
-	Name         string  `json:"name"`
-	User         *string `json:"user,omitempty"`
-	Job          *string `json:"job,omitempty"`
-	State        *string `json:"state,omitempty"`
-	CronFile     *string `json:"cron_file,omitempty"`
-	Backup       *bool   `json:"backup,omitempty"`
-	Minute       *string `json:"minute,omitempty"`
-	Hour         *string `json:"hour,omitempty"`
-	Day          *string `json:"day,omitempty"`
-	Month        *string `json:"month,omitempty"`
-	Weekday      *string `json:"weekday,omitempty"`
-	SpecialTime  *string `json:"special_time,omitempty"`
-	Disabled     *bool   `json:"disabled,omitempty"`
-	Env          *bool   `json:"env,omitempty"`
-	Insertafter  *string `json:"insertafter,omitempty"`
+	// Description of a crontab entry or, if `env` is set, the name of environment
+	// variable.
+	// This parameter is always required as of ansible-core 2.12.
+	Name string `json:"name"`
+
+	// The specific user whose crontab should be modified.
+	// When unset, this parameter defaults to the current user.
+	User *string `json:"user,omitempty"`
+
+	// The command to execute or, if `env` is set, the value of environment
+	// variable.
+	// The command should not contain line breaks.
+	// Required if `state=present`.
+	Job *string `json:"job,omitempty"`
+
+	// Whether to ensure the job or environment variable is present or absent.
+	State *string `json:"state,omitempty"`
+
+	// If specified, uses this file instead of an individual user's crontab. The
+	// assumption is that this file is exclusively managed by the module, do not
+	// use if the file contains multiple entries, NEVER use for /etc/crontab.
+	// If this is a relative path, it is interpreted with respect to `/etc/cron.d`.
+	// Many Linux distros expect (and some require) the filename portion to consist
+	// solely of upper- and lower-case letters, digits, underscores, and hyphens.
+	// Using this parameter requires you to specify the `user` as well, unless
+	// `state=absent`.
+	// Either this parameter or `name` is required.
+	CronFile *string `json:"cron_file,omitempty"`
+
+	// If set, create a backup of the crontab before it is modified. The location
+	// of the backup is returned in the R`ignore:backup_file` variable by this
+	// module.
+	Backup *bool `json:"backup,omitempty"`
+
+	// Minute when the job should run (`0-59`, `*`, `*/2`, and so on).
+	Minute *string `json:"minute,omitempty"`
+
+	// Hour when the job should run (`0-23`, `*`, `*/2`, and so on).
+	Hour *string `json:"hour,omitempty"`
+
+	// Day of the month the job should run (`1-31`, `*`, `*/2`, and so on).
+	Day *string `json:"day,omitempty"`
+
+	// Month of the year the job should run (`1-12`, `*`, `*/2`, and so on).
+	Month *string `json:"month,omitempty"`
+
+	// Day of the week that the job should run (`0-6` for Sunday-Saturday, `*`, and
+	// so on).
+	Weekday *string `json:"weekday,omitempty"`
+
+	// Special time specification nickname.
+	SpecialTime *string `json:"special_time,omitempty"`
+
+	// If the job should be disabled (commented out) in the crontab.
+	// Only has effect if `state=present`.
+	Disabled *bool `json:"disabled,omitempty"`
+
+	// If set, manages a crontab's environment variable.
+	// New variables are added on top of crontab.
+	// `name` and `value` parameters are the name and the value of environment
+	// variable.
+	Env *bool `json:"env,omitempty"`
+
+	// Used with `state=present` and `env`.
+	// If specified, the environment variable will be inserted after the
+	// declaration of specified environment variable.
+	Insertafter *string `json:"insertafter,omitempty"`
+
+	// Used with `state=present` and `env`.
+	// If specified, the environment variable will be inserted before the
+	// declaration of specified environment variable.
 	Insertbefore *string `json:"insertbefore,omitempty"`
 }
 
+// Wrap the `CronParameters into an `rpc.RPCCall`.
 func (p *CronParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -40,10 +111,12 @@ func (p *CronParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error
 	}, nil
 }
 
+// Return values for the `cron` Ansible module.
 type CronReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `CronReturn`
 func CronReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CronReturn, error) {
 	return rpc.AnyToJSONT[CronReturn](r.Result.Result)
 }

@@ -5,17 +5,40 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Retrieves facts for a file similar to the Linux/Unix `stat` command.
+// For Windows targets, use the `ansible.windows.win_stat` module instead.
 const StatName = "stat"
 
+// Parameters for the `stat` Ansible module.
 type StatParameters struct {
-	Path              string  `json:"path"`
-	Follow            *bool   `json:"follow,omitempty"`
-	GetChecksum       *bool   `json:"get_checksum,omitempty"`
+	// The full path of the file/object to get the facts of.
+	Path string `json:"path"`
+
+	// Whether to follow symlinks.
+	Follow *bool `json:"follow,omitempty"`
+
+	// Whether to return a checksum of the file.
+	GetChecksum *bool `json:"get_checksum,omitempty"`
+
+	// Algorithm to determine checksum of file.
+	// Will throw an error if the host is unable to use specified algorithm.
+	// The remote host has to support the hashing method specified, `md5` can be
+	// unavailable if the host is FIPS-140 compliant.
 	ChecksumAlgorithm *string `json:"checksum_algorithm,omitempty"`
-	GetMime           *bool   `json:"get_mime,omitempty"`
-	GetAttributes     *bool   `json:"get_attributes,omitempty"`
+
+	// Use file magic and return data about the nature of the file. This uses the
+	// `file` utility found on most Linux/Unix systems.
+	// This will add both R`stat.mimetype` and R`stat.charset` fields to the
+	// return, if possible.
+	// In Ansible 2.3 this option changed from `mime` to `get_mime` and the default
+	// changed to `true`.
+	GetMime *bool `json:"get_mime,omitempty"`
+
+	// Get file attributes using lsattr tool if present.
+	GetAttributes *bool `json:"get_attributes,omitempty"`
 }
 
+// Wrap the `StatParameters into an `rpc.RPCCall`.
 func (p *StatParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -30,11 +53,16 @@ func (p *StatParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error
 	}, nil
 }
 
+// Return values for the `stat` Ansible module.
 type StatReturn struct {
 	AnsibleCommonReturns
+
+	// Dictionary containing all the stat data, some platforms might add additional
+	// fields.
 	Stat *map[string]any `json:"stat,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `StatReturn`
 func StatReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (StatReturn, error) {
 	return rpc.AnyToJSONT[StatReturn](r.Result.Result)
 }

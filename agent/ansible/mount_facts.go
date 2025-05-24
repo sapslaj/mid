@@ -5,18 +5,67 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Retrieve information about mounts from preferred sources and filter the
+// results based on the filesystem type and device.
 const MountFactsName = "mount_facts"
 
+// Parameters for the `mount_facts` Ansible module.
 type MountFactsParameters struct {
-	Devices                *[]string `json:"devices,omitempty"`
-	Fstypes                *[]string `json:"fstypes,omitempty"`
-	Sources                *[]string `json:"sources,omitempty"`
-	MountBinary            *any      `json:"mount_binary,omitempty"`
-	Timeout                *float64  `json:"timeout,omitempty"`
-	OnTimeout              *string   `json:"on_timeout,omitempty"`
-	IncludeAggregateMounts *bool     `json:"include_aggregate_mounts,omitempty"`
+	// A list of fnmatch patterns to filter mounts by the special device or remote
+	// file system.
+	Devices *[]string `json:"devices,omitempty"`
+
+	// A list of fnmatch patterns to filter mounts by the type of the file system.
+	Fstypes *[]string `json:"fstypes,omitempty"`
+
+	// A list of sources used to determine the mounts. Missing file sources (or
+	// empty files) are skipped. Repeat sources, including symlinks, are skipped.
+	// The `mount_points` return value contains the first definition found for a
+	// mount point.
+	// Additional mounts to the same mount point are available from
+	// `aggregate_mounts` (if enabled).
+	// By default, mounts are retrieved from all of the standard locations, which
+	// have the predefined aliases `all`/`static`/`dynamic`.
+	// `all` contains `dynamic` and `static`.
+	// `dynamic` contains `/etc/mtab`, `/proc/mounts`, `/etc/mnttab`, and the value
+	// of `mount_binary` if it is not None. This allows platforms like BSD or AIX,
+	// which don't have an equivalent to `/proc/mounts`, to collect the current
+	// mounts by default. See the `mount_binary` option to disable the fall back or
+	// configure a different executable.
+	// `static` contains `/etc/fstab`, `/etc/vfstab`, and `/etc/filesystems`. Note
+	// that `/etc/filesystems` is specific to AIX. The Linux file by this name has
+	// a different format/purpose and is ignored.
+	// The value of `mount_binary` can be configured as a source, which will cause
+	// it to always execute. Depending on the other sources configured, this could
+	// be inefficient/redundant. For example, if `/proc/mounts` and `mount` are
+	// listed as `sources`, Linux hosts will retrieve the same mounts twice.
+	Sources *[]string `json:"sources,omitempty"`
+
+	// The `mount_binary` is used if `sources` contain the value "mount", or if
+	// `sources` contains a dynamic source, and none were found (as can be expected
+	// on BSD or AIX hosts).
+	// Set to `null` to stop after no dynamic file source is found instead.
+	MountBinary *any `json:"mount_binary,omitempty"`
+
+	// This is the maximum number of seconds to wait for each mount to complete.
+	// When this is `null`, wait indefinitely.
+	// Configure in conjunction with `on_timeout` to skip unresponsive mounts.
+	// This timeout also applies to the `mount_binary` command to list mounts.
+	// If the module is configured to run during the play's fact gathering stage,
+	// set a timeout using module_defaults to prevent a hang (see example).
+	Timeout *float64 `json:"timeout,omitempty"`
+
+	// The action to take when gathering mount information exceeds `timeout`.
+	OnTimeout *string `json:"on_timeout,omitempty"`
+
+	// Whether or not the module should return the `aggregate_mounts` list in
+	// `ansible_facts`.
+	// When this is `null`, a warning will be emitted if multiple mounts for the
+	// same mount point are found.
+	IncludeAggregateMounts *bool `json:"include_aggregate_mounts,omitempty"`
 }
 
+// Wrap the `MountFactsParameters into an `rpc.RPCCall`.
 func (p *MountFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -31,11 +80,22 @@ func (p *MountFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs],
 	}, nil
 }
 
+// Return values for the `mount_facts` Ansible module.
 type MountFactsReturn struct {
 	AnsibleCommonReturns
+
+	// An ansible_facts dictionary containing a dictionary of `mount_points` and
+	// list of `aggregate_mounts` when enabled.
+	// Each key in `mount_points` is a mount point, and the value contains mount
+	// information (similar to `ansible_facts["mounts"]`). Each value also contains
+	// the key `ansible_context`, with details about the source and line(s)
+	// corresponding to the parsed mount point.
+	// When `aggregate_mounts` are included, the containing dictionaries are the
+	// same format as the `mount_point` values.
 	AnsibleFacts *map[string]any `json:"ansible_facts,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `MountFactsReturn`
 func MountFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (MountFactsReturn, error) {
 	return rpc.AnyToJSONT[MountFactsReturn](r.Result.Result)
 }

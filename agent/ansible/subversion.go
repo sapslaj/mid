@@ -5,24 +5,63 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Deploy given repository URL / revision to dest. If dest exists, update to the
+// specified revision, otherwise perform a checkout.
 const SubversionName = "subversion"
 
+// Parameters for the `subversion` Ansible module.
 type SubversionParameters struct {
-	Repo          string  `json:"repo"`
-	Dest          *string `json:"dest,omitempty"`
-	Revision      *string `json:"revision,omitempty"`
-	Force         *bool   `json:"force,omitempty"`
-	InPlace       *bool   `json:"in_place,omitempty"`
-	Username      *string `json:"username,omitempty"`
-	Password      *string `json:"password,omitempty"`
-	Executable    *string `json:"executable,omitempty"`
-	Checkout      *bool   `json:"checkout,omitempty"`
-	Update        *bool   `json:"update,omitempty"`
-	Export        *bool   `json:"export,omitempty"`
-	Switch        *bool   `json:"switch,omitempty"`
-	ValidateCerts *bool   `json:"validate_certs,omitempty"`
+	// The subversion URL to the repository.
+	Repo string `json:"repo"`
+
+	// Absolute path where the repository should be deployed.
+	// The destination directory must be specified unless `checkout=no`,
+	// `update=no`, and `export=no`.
+	Dest *string `json:"dest,omitempty"`
+
+	// Specific revision to checkout.
+	Revision *string `json:"revision,omitempty"`
+
+	// If `true`, modified files will be discarded. If `false`, module will fail if
+	// it encounters modified files. Prior to 1.9 the default was `true`.
+	Force *bool `json:"force,omitempty"`
+
+	// If the directory exists, then the working copy will be checked-out over-the-
+	// top using `svn checkout --force`; if force is specified then existing files
+	// with different content are reverted.
+	InPlace *bool `json:"in_place,omitempty"`
+
+	// `--username` parameter passed to svn.
+	Username *string `json:"username,omitempty"`
+
+	// `--password` parameter passed to svn when svn is less than version 1.10.0.
+	// This is not secure and the password will be leaked to argv.
+	// `--password-from-stdin` parameter when svn is greater or equal to version
+	// 1.10.0.
+	Password *string `json:"password,omitempty"`
+
+	// Path to svn executable to use. If not supplied, the normal mechanism for
+	// resolving binary paths will be used.
+	Executable *string `json:"executable,omitempty"`
+
+	// If `false`, do not check out the repository if it does not exist locally.
+	Checkout *bool `json:"checkout,omitempty"`
+
+	// If `false`, do not retrieve new revisions from the origin repository.
+	Update *bool `json:"update,omitempty"`
+
+	// If `true`, do export instead of checkout/update.
+	Export *bool `json:"export,omitempty"`
+
+	// If `false`, do not call svn switch before update.
+	Switch *bool `json:"switch,omitempty"`
+
+	// If `false`, passes the `--trust-server-cert` flag to svn.
+	// If `true`, does not pass the flag.
+	ValidateCerts *bool `json:"validate_certs,omitempty"`
 }
 
+// Wrap the `SubversionParameters into an `rpc.RPCCall`.
 func (p *SubversionParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -37,10 +76,12 @@ func (p *SubversionParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs],
 	}, nil
 }
 
+// Return values for the `subversion` Ansible module.
 type SubversionReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `SubversionReturn`
 func SubversionReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SubversionReturn, error) {
 	return rpc.AnyToJSONT[SubversionReturn](r.Result.Result)
 }

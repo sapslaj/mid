@@ -5,25 +5,88 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Manage Python library dependencies. To use this module, one of the following
+// keys is required: `name` or `requirements`.
 const PipName = "pip"
 
+// Parameters for the `pip` Ansible module.
 type PipParameters struct {
-	Name                   *[]string `json:"name,omitempty"`
-	Version                *string   `json:"version,omitempty"`
-	Requirements           *string   `json:"requirements,omitempty"`
-	Virtualenv             *string   `json:"virtualenv,omitempty"`
-	VirtualenvSitePackages *bool     `json:"virtualenv_site_packages,omitempty"`
-	VirtualenvCommand      *string   `json:"virtualenv_command,omitempty"`
-	VirtualenvPython       *string   `json:"virtualenv_python,omitempty"`
-	State                  *string   `json:"state,omitempty"`
-	ExtraArgs              *string   `json:"extra_args,omitempty"`
-	Editable               *bool     `json:"editable,omitempty"`
-	Chdir                  *string   `json:"chdir,omitempty"`
-	Executable             *string   `json:"executable,omitempty"`
-	Umask                  *string   `json:"umask,omitempty"`
-	BreakSystemPackages    *bool     `json:"break_system_packages,omitempty"`
+	// The name of a Python library to install or the url(bzr+,hg+,git+,svn+) of
+	// the remote package.
+	// This can be a list (since 2.2) and contain version specifiers (since 2.7).
+	Name *[]string `json:"name,omitempty"`
+
+	// The version number to install of the Python library specified in the `name`
+	// parameter.
+	Version *string `json:"version,omitempty"`
+
+	// The path to a pip requirements file, which should be local to the remote
+	// system. File can be specified as a relative path if using the `chdir`
+	// option.
+	Requirements *string `json:"requirements,omitempty"`
+
+	// An optional path to a `virtualenv` directory to install into. It cannot be
+	// specified together with the `executable` parameter (added in 2.1). If the
+	// virtualenv does not exist, it will be created before installing packages.
+	// The optional `virtualenv_site_packages`, `virtualenv_command`, and
+	// `virtualenv_python` options affect the creation of the virtualenv.
+	Virtualenv *string `json:"virtualenv,omitempty"`
+
+	// Whether the virtual environment will inherit packages from the global `site-
+	// packages` directory. Note that if this setting is changed on an already
+	// existing virtual environment it will not have any effect, the environment
+	// must be deleted and newly created.
+	VirtualenvSitePackages *bool `json:"virtualenv_site_packages,omitempty"`
+
+	// The command or a pathname to the command to create the virtual environment
+	// with. For example `pyvenv`, `virtualenv`, `virtualenv2`, `~/bin/virtualenv`,
+	// `/usr/local/bin/virtualenv`.
+	VirtualenvCommand *string `json:"virtualenv_command,omitempty"`
+
+	// The Python executable used for creating the virtual environment. For example
+	// `python3.12`, `python2.7`. When not specified, the Python version used to
+	// run the ansible module is used. This parameter should not be used when
+	// `virtualenv_command` is using `pyvenv` or the `-m venv` module.
+	VirtualenvPython *string `json:"virtualenv_python,omitempty"`
+
+	// The state of module.
+	// The `forcereinstall` option is only available in Ansible 2.1 and above.
+	State *string `json:"state,omitempty"`
+
+	// Extra arguments passed to `pip`.
+	ExtraArgs *string `json:"extra_args,omitempty"`
+
+	// Pass the editable flag.
+	Editable *bool `json:"editable,omitempty"`
+
+	// cd into this directory before running the command.
+	Chdir *string `json:"chdir,omitempty"`
+
+	// The explicit executable or pathname for the `pip` executable, if different
+	// from the Ansible Python interpreter. For example `pip3.3`, if there are both
+	// Python 2.7 and 3.3 installations in the system and you want to run pip for
+	// the Python 3.3 installation.
+	// Mutually exclusive with `virtualenv` (added in 2.1).
+	// Does not affect the Ansible Python interpreter.
+	// The `setuptools` package must be installed for both the Ansible Python
+	// interpreter and for the version of Python specified by this option.
+	Executable *string `json:"executable,omitempty"`
+
+	// The system umask to apply before installing the pip package. This is useful,
+	// for example, when installing on systems that have a very restrictive umask
+	// by default (e.g., `0077`) and you want to `pip install` packages which are
+	// to be used by all users. Note that this requires you to specify desired
+	// umask mode as an octal string, (e.g., `0022`).
+	Umask *string `json:"umask,omitempty"`
+
+	// Allow `pip` to modify an externally-managed Python installation as defined
+	// by PEP 668.
+	// This is typically required when installing packages outside a virtual
+	// environment on modern systems.
+	BreakSystemPackages *bool `json:"break_system_packages,omitempty"`
 }
 
+// Wrap the `PipParameters into an `rpc.RPCCall`.
 func (p *PipParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -38,15 +101,27 @@ func (p *PipParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error)
 	}, nil
 }
 
+// Return values for the `pip` Ansible module.
 type PipReturn struct {
 	AnsibleCommonReturns
-	Cmd          *string `json:"cmd,omitempty"`
-	Name         *[]any  `json:"name,omitempty"`
+
+	// pip command used by the module
+	Cmd *string `json:"cmd,omitempty"`
+
+	// list of python modules targeted by pip
+	Name *[]any `json:"name,omitempty"`
+
+	// Path to the requirements file
 	Requirements *string `json:"requirements,omitempty"`
-	Version      *string `json:"version,omitempty"`
-	Virtualenv   *string `json:"virtualenv,omitempty"`
+
+	// Version of the package specified in 'name'
+	Version *string `json:"version,omitempty"`
+
+	// Path to the virtualenv
+	Virtualenv *string `json:"virtualenv,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `PipReturn`
 func PipReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PipReturn, error) {
 	return rpc.AnyToJSONT[PipReturn](r.Result.Result)
 }

@@ -5,13 +5,28 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Set system's hostname. Supports most OSs/Distributions including those using
+// `systemd`.
+// Windows, HP-UX, and AIX are not currently supported.
 const HostnameName = "hostname"
 
+// Parameters for the `hostname` Ansible module.
 type HostnameParameters struct {
-	Name string  `json:"name"`
-	Use  *string `json:"use,omitempty"`
+	// Name of the host.
+	// If the value is a fully qualified domain name that does not resolve from the
+	// given host, this will cause the module to hang for a few seconds while
+	// waiting for the name resolution attempt to timeout.
+	Name string `json:"name"`
+
+	// Which strategy to use to update the hostname.
+	// If not set we try to autodetect, but this can be problematic, particularly
+	// with containers as they can present misleading information.
+	// Note that `systemd` should be specified for RHEL/EL/CentOS 7+. Older
+	// distributions should use `redhat`.
+	Use *string `json:"use,omitempty"`
 }
 
+// Wrap the `HostnameParameters into an `rpc.RPCCall`.
 func (p *HostnameParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -26,10 +41,12 @@ func (p *HostnameParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], e
 	}, nil
 }
 
+// Return values for the `hostname` Ansible module.
 type HostnameReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `HostnameReturn`
 func HostnameReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (HostnameReturn, error) {
 	return rpc.AnyToJSONT[HostnameReturn](r.Result.Result)
 }

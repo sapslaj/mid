@@ -5,19 +5,43 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Add or remove an `apt` key, optionally downloading it.
 const AptKeyName = "apt_key"
 
+// Parameters for the `apt_key` Ansible module.
 type AptKeyParameters struct {
-	Id            *string `json:"id,omitempty"`
-	Data          *string `json:"data,omitempty"`
-	File          *string `json:"file,omitempty"`
-	Keyring       *string `json:"keyring,omitempty"`
-	Url           *string `json:"url,omitempty"`
-	Keyserver     *string `json:"keyserver,omitempty"`
-	State         *string `json:"state,omitempty"`
-	ValidateCerts *bool   `json:"validate_certs,omitempty"`
+	// The identifier of the key.
+	// Including this allows check mode to correctly report the changed state.
+	// If specifying a subkey's id be aware that apt-key does not understand how to
+	// remove keys via a subkey id. Specify the primary key's id instead.
+	// This parameter is required when `state` is set to `absent`.
+	Id *string `json:"id,omitempty"`
+
+	// The keyfile contents to add to the keyring.
+	Data *string `json:"data,omitempty"`
+
+	// The path to a keyfile on the remote server to add to the keyring.
+	File *string `json:"file,omitempty"`
+
+	// The full path to specific keyring file in `/etc/apt/trusted.gpg.d/`.
+	Keyring *string `json:"keyring,omitempty"`
+
+	// The URL to retrieve key from.
+	Url *string `json:"url,omitempty"`
+
+	// The keyserver to retrieve key from.
+	Keyserver *string `json:"keyserver,omitempty"`
+
+	// Ensures that the key is present (added) or absent (revoked).
+	State *string `json:"state,omitempty"`
+
+	// If `false`, SSL certificates for the target url will not be validated. This
+	// should only be used on personally controlled sites using self-signed
+	// certificates.
+	ValidateCerts *bool `json:"validate_certs,omitempty"`
 }
 
+// Wrap the `AptKeyParameters into an `rpc.RPCCall`.
 func (p *AptKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -32,16 +56,30 @@ func (p *AptKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], err
 	}, nil
 }
 
+// Return values for the `apt_key` Ansible module.
 type AptKeyReturn struct {
 	AnsibleCommonReturns
-	After   *[]any  `json:"after,omitempty"`
-	Before  *[]any  `json:"before,omitempty"`
-	Fp      *string `json:"fp,omitempty"`
-	Id      *string `json:"id,omitempty"`
-	KeyId   *string `json:"key_id,omitempty"`
+
+	// List of apt key ids or fingerprints after any modification
+	After *[]any `json:"after,omitempty"`
+
+	// List of apt key ids or fingprints before any modifications
+	Before *[]any `json:"before,omitempty"`
+
+	// Fingerprint of the key to import
+	Fp *string `json:"fp,omitempty"`
+
+	// key id from source
+	Id *string `json:"id,omitempty"`
+
+	// calculated key id, it should be same as 'id', but can be different
+	KeyId *string `json:"key_id,omitempty"`
+
+	// calculated short key id
 	ShortId *string `json:"short_id,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `AptKeyReturn`
 func AptKeyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AptKeyReturn, error) {
 	return rpc.AnyToJSONT[AptKeyReturn](r.Result.Result)
 }

@@ -5,19 +5,51 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Controls services on target hosts that use the SysV init system.
 const SysvinitName = "sysvinit"
 
+// Parameters for the `sysvinit` Ansible module.
 type SysvinitParameters struct {
-	Name      string    `json:"name"`
-	State     *string   `json:"state,omitempty"`
-	Enabled   *bool     `json:"enabled,omitempty"`
-	Sleep     *int      `json:"sleep,omitempty"`
-	Pattern   *string   `json:"pattern,omitempty"`
+	// Name of the service.
+	Name string `json:"name"`
+
+	// `started`/`stopped` are idempotent actions that will not run commands unless
+	// necessary. Not all init scripts support `restarted` nor `reloaded` natively,
+	// so these will both trigger a stop and start as needed.
+	State *string `json:"state,omitempty"`
+
+	// Whether the service should start on boot. At least one of `state` and
+	// `enabled` are required.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// If the service is being `restarted` or `reloaded` then sleep this many
+	// seconds between the stop and start command. This helps to workaround badly
+	// behaving services.
+	Sleep *int `json:"sleep,omitempty"`
+
+	// A substring to look for as would be found in the output of the `ps` command
+	// as a stand-in for a status result.
+	// If the string is found, the service will be assumed to be running.
+	// This option is mainly for use with init scripts that don't support the
+	// `status` option.
+	Pattern *string `json:"pattern,omitempty"`
+
+	// The runlevels this script should be enabled/disabled from.
+	// Use this to override the defaults set by the package or init script itself.
 	Runlevels *[]string `json:"runlevels,omitempty"`
-	Arguments *string   `json:"arguments,omitempty"`
-	Daemonize *bool     `json:"daemonize,omitempty"`
+
+	// Additional arguments provided on the command line that some init scripts
+	// accept.
+	Arguments *string `json:"arguments,omitempty"`
+
+	// Have the module daemonize as the service itself might not do so properly.
+	// This is useful with badly written init scripts or daemons, which commonly
+	// manifests as the task hanging as it is still holding the tty or the service
+	// dying when the task is over as the connection closes the session.
+	Daemonize *bool `json:"daemonize,omitempty"`
 }
 
+// Wrap the `SysvinitParameters into an `rpc.RPCCall`.
 func (p *SysvinitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -32,11 +64,15 @@ func (p *SysvinitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], e
 	}, nil
 }
 
+// Return values for the `sysvinit` Ansible module.
 type SysvinitReturn struct {
 	AnsibleCommonReturns
+
+	// results from actions taken
 	Results *any `json:"results,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `SysvinitReturn`
 func SysvinitReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SysvinitReturn, error) {
 	return rpc.AnyToJSONT[SysvinitReturn](r.Result.Result)
 }

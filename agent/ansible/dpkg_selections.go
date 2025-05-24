@@ -5,13 +5,20 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Change dpkg package selection state via `--get-selections` and `--set-
+// selections`.
 const DpkgSelectionsName = "dpkg_selections"
 
+// Parameters for the `dpkg_selections` Ansible module.
 type DpkgSelectionsParameters struct {
-	Name      string `json:"name"`
+	// Name of the package.
+	Name string `json:"name"`
+
+	// The selection state to set the package to.
 	Selection string `json:"selection"`
 }
 
+// Wrap the `DpkgSelectionsParameters into an `rpc.RPCCall`.
 func (p *DpkgSelectionsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -26,10 +33,12 @@ func (p *DpkgSelectionsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteAr
 	}, nil
 }
 
+// Return values for the `dpkg_selections` Ansible module.
 type DpkgSelectionsReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `DpkgSelectionsReturn`
 func DpkgSelectionsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DpkgSelectionsReturn, error) {
 	return rpc.AnyToJSONT[DpkgSelectionsReturn](r.Result.Result)
 }

@@ -3,9 +3,11 @@ from io import StringIO
 import multiprocessing
 import os
 import pathlib
+import re
 import sys
 from typing import Any
 from importlib import import_module
+import textwrap
 
 import deepmerge
 import yaml
@@ -23,6 +25,27 @@ def pascalcased(s: str) -> str:
 def yaml_loads(data: Any) -> Any:
     yaml.safe_load(StringIO(data))
     return
+
+
+def unmarkup(s: str) -> str:
+    return re.sub(r"[A-Z]\((.+?)\)", r"`\1`", s)
+
+
+def doc_comment(paragraphs: list[str] | str, indent: int) -> str:
+    if isinstance(paragraphs, str):
+        paragraphs = [paragraphs]
+    indent_text = ("\t" * indent) + "// "
+    result = ""
+    for para in paragraphs:
+        lines = textwrap.wrap(
+            text=unmarkup(para),
+            width=80,
+            initial_indent=indent_text,
+            subsequent_indent=indent_text,
+        )
+        for line in lines:
+            result += line + "\n"
+    return result.rstrip() + "\n"
 
 
 def scalar_type_ansible_to_go(t: str) -> str:
@@ -120,10 +143,13 @@ def process_module_file(module_file: str):
         f.write("import (\n")
         f.write('\t"github.com/sapslaj/mid/agent/rpc"\n')
         f.write(")\n\n")
+        f.write(doc_comment(documentation["description"], indent=0))
         f.write(f'const {pascalcase_name}Name = "{name}"\n\n')
+        f.write(doc_comment(f"Parameters for the `{name}` Ansible module.", indent=0))
         f.write(f"type {pascalcase_name}Parameters struct {'{'}\n")
         for key, value in documentation["options"].items():
             required = value.get("required", False)
+            f.write(doc_comment(value["description"], indent=1))
             f.write("\t")
             f.write(pascalcased(key))
             f.write(" ")
@@ -134,8 +160,15 @@ def process_module_file(module_file: str):
             f.write(key)
             if not required:
                 f.write(",omitempty")
-            f.write('"`\n')
+            f.write('"`\n\n')
         f.write("}\n\n")
+        f.write("")
+        f.write(
+            doc_comment(
+                f"Wrap the `{pascalcase_name}Parameters into an `rpc.RPCCall`.",
+                indent=0,
+            )
+        )
         f.write(
             f"func (p *{pascalcase_name}Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {'{'}\n"
         )
@@ -151,9 +184,13 @@ def process_module_file(module_file: str):
         f.write("\t\t},\n")
         f.write("\t}, nil\n")
         f.write("}\n\n")
+        f.write(
+            doc_comment(f"Return values for the `{name}` Ansible module.", indent=0)
+        )
         f.write(f"type {pascalcase_name}Return struct {'{'}\n")
-        f.write("\tAnsibleCommonReturns\n")
+        f.write("\tAnsibleCommonReturns\n\n")
         for key, value in returns.items():
+            f.write(doc_comment(value["description"], indent=1))
             f.write("\t")
             f.write(pascalcased(key))
             f.write(" *")
@@ -161,8 +198,14 @@ def process_module_file(module_file: str):
             f.write(' `json:"')
             f.write(key)
             f.write(",omitempty")
-            f.write('"`\n')
+            f.write('"`\n\n')
         f.write("}\n\n")
+        f.write(
+            doc_comment(
+                f"Unwrap the `rpc.RPCResult` into an `{pascalcase_name}Return`",
+                indent=0,
+            )
+        )
         f.write(
             f"func {pascalcase_name}ReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) ({pascalcase_name}Return, error) {'{'}\n"
         )

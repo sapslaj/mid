@@ -5,23 +5,78 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// You can wait for a set amount of time `timeout`, this is the default if
+// nothing is specified or just `timeout` is specified. This does not produce an
+// error.
+// Waiting for a port to become available is useful for when services are not
+// immediately available after their init scripts return which is true of
+// certain Java application servers.
+// It is also useful when starting guests with the `community.libvirt.virt`
+// module and needing to pause until they are ready.
+// This module can also be used to wait for a regex match a string to be present
+// in a file.
+// In Ansible 1.6 and later, this module can also be used to wait for a file to
+// be available or absent on the filesystem.
+// In Ansible 1.8 and later, this module can also be used to wait for active
+// connections to be closed before continuing, useful if a node is being rotated
+// out of a load balancer pool.
+// For Windows targets, use the `ansible.windows.win_wait_for` module instead.
 const WaitForName = "wait_for"
 
+// Parameters for the `wait_for` Ansible module.
 type WaitForParameters struct {
-	Host                   *string   `json:"host,omitempty"`
-	Timeout                *int      `json:"timeout,omitempty"`
-	ConnectTimeout         *int      `json:"connect_timeout,omitempty"`
-	Delay                  *int      `json:"delay,omitempty"`
-	Port                   *int      `json:"port,omitempty"`
+	// A resolvable hostname or IP address to wait for.
+	Host *string `json:"host,omitempty"`
+
+	// Maximum number of seconds to wait for, when used with another condition it
+	// will force an error.
+	// When used without other conditions it is equivalent of just sleeping.
+	Timeout *int `json:"timeout,omitempty"`
+
+	// Maximum number of seconds to wait for a connection to happen before closing
+	// and retrying.
+	ConnectTimeout *int `json:"connect_timeout,omitempty"`
+
+	// Number of seconds to wait before starting to poll.
+	Delay *int `json:"delay,omitempty"`
+
+	// Port number to poll.
+	// `path` and `port` are mutually exclusive parameters.
+	Port *int `json:"port,omitempty"`
+
+	// The list of TCP connection states which are counted as active connections.
 	ActiveConnectionStates *[]string `json:"active_connection_states,omitempty"`
-	State                  *string   `json:"state,omitempty"`
-	Path                   *string   `json:"path,omitempty"`
-	SearchRegex            *string   `json:"search_regex,omitempty"`
-	ExcludeHosts           *[]string `json:"exclude_hosts,omitempty"`
-	Sleep                  *int      `json:"sleep,omitempty"`
-	Msg                    *string   `json:"msg,omitempty"`
+
+	// Either `present`, `started`, or `stopped`, `absent`, or `drained`.
+	// When checking a port `started` will ensure the port is open, `stopped` will
+	// check that it is closed, `drained` will check for active connections.
+	// When checking for a file or a search string `present` or `started` will
+	// ensure that the file or string is present before continuing, `absent` will
+	// check that file is absent or removed.
+	State *string `json:"state,omitempty"`
+
+	// Path to a file on the filesystem that must exist before continuing.
+	// `path` and `port` are mutually exclusive parameters.
+	Path *string `json:"path,omitempty"`
+
+	// Can be used to match a string in either a file or a socket connection.
+	// Defaults to a multiline regex.
+	SearchRegex *string `json:"search_regex,omitempty"`
+
+	// List of hosts or IPs to ignore when looking for active TCP connections for
+	// `drained` state.
+	ExcludeHosts *[]string `json:"exclude_hosts,omitempty"`
+
+	// Number of seconds to sleep between checks.
+	// Before Ansible 2.3 this was hardcoded to 1 second.
+	Sleep *int `json:"sleep,omitempty"`
+
+	// This overrides the normal error message from a failure to meet the required
+	// conditions.
+	Msg *string `json:"msg,omitempty"`
 }
 
+// Wrap the `WaitForParameters into an `rpc.RPCCall`.
 func (p *WaitForParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -36,13 +91,24 @@ func (p *WaitForParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], er
 	}, nil
 }
 
+// Return values for the `wait_for` Ansible module.
 type WaitForReturn struct {
 	AnsibleCommonReturns
-	Elapsed        *int            `json:"elapsed,omitempty"`
-	MatchGroups    *[]any          `json:"match_groups,omitempty"`
+
+	// The number of seconds that elapsed while waiting
+	Elapsed *int `json:"elapsed,omitempty"`
+
+	// Tuple containing all the subgroups of the match as returned by
+	// `https://docs.python.org/3/library/re.html#re.MatchObject.groups`
+	MatchGroups *[]any `json:"match_groups,omitempty"`
+
+	// Dictionary containing all the named subgroups of the match, keyed by the
+	// subgroup name, as returned by
+	// `https://docs.python.org/3/library/re.html#re.MatchObject.groupdict`
 	MatchGroupdict *map[string]any `json:"match_groupdict,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `WaitForReturn`
 func WaitForReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (WaitForReturn, error) {
 	return rpc.AnyToJSONT[WaitForReturn](r.Result.Result)
 }

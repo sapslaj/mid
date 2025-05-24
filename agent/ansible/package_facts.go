@@ -5,13 +5,27 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Return information about installed packages as facts.
 const PackageFactsName = "package_facts"
 
+// Parameters for the `package_facts` Ansible module.
 type PackageFactsParameters struct {
-	Manager  *[]string `json:"manager,omitempty"`
-	Strategy *string   `json:"strategy,omitempty"`
+	// The package manager(s) used by the system so we can query the package
+	// information. This is a list and can support multiple package managers per
+	// system, since version 2.8.
+	// The `portage` and `pkg` options were added in version 2.8.
+	// The `apk` option was added in version 2.11.
+	// The `pkg_info`' option was added in version 2.13.
+	// Aliases were added in 2.18, to support using
+	// `manager={{ansible_facts['pkg_mgr']}}`
+	Manager *[]string `json:"manager,omitempty"`
+
+	// This option controls how the module queries the package managers on the
+	// system.
+	Strategy *string `json:"strategy,omitempty"`
 }
 
+// Wrap the `PackageFactsParameters into an `rpc.RPCCall`.
 func (p *PackageFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -26,11 +40,15 @@ func (p *PackageFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs
 	}, nil
 }
 
+// Return values for the `package_facts` Ansible module.
 type PackageFactsReturn struct {
 	AnsibleCommonReturns
+
+	// Facts to add to ansible_facts.
 	AnsibleFacts *any `json:"ansible_facts,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `PackageFactsReturn`
 func PackageFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PackageFactsReturn, error) {
 	return rpc.AnyToJSONT[PackageFactsReturn](r.Result.Result)
 }

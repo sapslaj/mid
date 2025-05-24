@@ -5,30 +5,175 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Set attributes of files, directories, or symlinks and their targets.
+// Alternatively, remove files, symlinks or directories.
+// Many other modules support the same options as the `ansible.builtin.file`
+// module - including `ansible.builtin.copy`, `ansible.builtin.template`, and
+// `ansible.builtin.assemble`.
+// For Windows targets, use the `ansible.windows.win_file` module instead.
 const FileName = "file"
 
+// Parameters for the `file` Ansible module.
 type FileParameters struct {
-	Path                   string  `json:"path"`
-	State                  *string `json:"state,omitempty"`
-	Src                    *string `json:"src,omitempty"`
-	Recurse                *bool   `json:"recurse,omitempty"`
-	Force                  *bool   `json:"force,omitempty"`
-	Follow                 *bool   `json:"follow,omitempty"`
-	ModificationTime       *string `json:"modification_time,omitempty"`
+	// Path to the file being managed.
+	Path string `json:"path"`
+
+	// If `absent`, directories will be recursively deleted, and files or symlinks
+	// will be unlinked. In the case of a directory, if `diff` is declared, you
+	// will see the files and folders deleted listed under `path_contents`. Note
+	// that `absent` will not cause `ansible.builtin.file` to fail if the `path`
+	// does not exist as the state did not change.
+	// If `directory`, all intermediate subdirectories will be created if they do
+	// not exist. Since Ansible 1.7 they will be created with the supplied
+	// permissions.
+	// If `file`, with no other options, returns the current state of `path`.
+	// If `file`, even with other options (such as `mode`), the file will be
+	// modified if it exists but will NOT be created if it does not exist. Set to
+	// `touch` or use the `ansible.builtin.copy` or `ansible.builtin.template`
+	// module if you want to create the file if it does not exist.
+	// If `hard`, the hard link will be created or changed.
+	// If `link`, the symbolic link will be created or changed.
+	// If `touch` (new in 1.4), an empty file will be created if the file does not
+	// exist, while an existing file or directory will receive updated file access
+	// and modification times (similar to the way `touch` works from the command
+	// line).
+	// Default is the current state of the file if it exists, `directory` if
+	// `recurse=yes`, or `file` otherwise.
+	State *string `json:"state,omitempty"`
+
+	// Path of the file to link to.
+	// This applies only to `state=link` and `state=hard`.
+	// For `state=link`, this will also accept a non-existing path.
+	// Relative paths are relative to the file being created (`path`) which is how
+	// the Unix command `ln -s SRC DEST` treats relative paths.
+	Src *string `json:"src,omitempty"`
+
+	// Recursively set the specified file attributes on directory contents.
+	// This applies only when `state` is set to `directory`.
+	Recurse *bool `json:"recurse,omitempty"`
+
+	// Force the creation of the links in two cases: if the link type is symbolic
+	// and the source file does not exist (but will appear later); the destination
+	// exists and is a file (so, we need to unlink the `path` file and create a
+	// link to the `src` file in place of it).
+	Force *bool `json:"force,omitempty"`
+
+	// This flag indicates that filesystem links, if they exist, should be
+	// followed.
+	// `follow=yes` and `state=link` can modify `src` when combined with parameters
+	// such as `mode`.
+	// Previous to Ansible 2.5, this was `false` by default.
+	// While creating a symlink with a non-existent destination, set `follow=false`
+	// to avoid a warning message related to permission issues. The warning message
+	// is added to notify the user that we can not set permissions to the non-
+	// existent destination.
+	Follow *bool `json:"follow,omitempty"`
+
+	// This parameter indicates the time the file's modification time should be set
+	// to.
+	// Should be `preserve` when no modification is required, `YYYYMMDDHHMM.SS`
+	// when using default time format, or `now`.
+	// Default is None meaning that `preserve` is the default for
+	// `state=[file,directory,link,hard]` and `now` is default for `state=touch`.
+	ModificationTime *string `json:"modification_time,omitempty"`
+
+	// When used with `modification_time`, indicates the time format that must be
+	// used.
+	// Based on default Python format (see time.strftime doc).
 	ModificationTimeFormat *string `json:"modification_time_format,omitempty"`
-	AccessTime             *string `json:"access_time,omitempty"`
-	AccessTimeFormat       *string `json:"access_time_format,omitempty"`
-	Mode                   *any    `json:"mode,omitempty"`
-	Owner                  *string `json:"owner,omitempty"`
-	Group                  *string `json:"group,omitempty"`
-	Seuser                 *string `json:"seuser,omitempty"`
-	Serole                 *string `json:"serole,omitempty"`
-	Setype                 *string `json:"setype,omitempty"`
-	Selevel                *string `json:"selevel,omitempty"`
-	UnsafeWrites           *bool   `json:"unsafe_writes,omitempty"`
-	Attributes             *string `json:"attributes,omitempty"`
+
+	// This parameter indicates the time the file's access time should be set to.
+	// Should be `preserve` when no modification is required, `YYYYMMDDHHMM.SS`
+	// when using default time format, or `now`.
+	// Default is `None` meaning that `preserve` is the default for
+	// `state=[file,directory,link,hard]` and `now` is default for `state=touch`.
+	AccessTime *string `json:"access_time,omitempty"`
+
+	// When used with `access_time`, indicates the time format that must be used.
+	// Based on default Python format (see time.strftime doc).
+	AccessTimeFormat *string `json:"access_time_format,omitempty"`
+
+	// The permissions the resulting filesystem object should have.
+	// For those used to `/usr/bin/chmod` remember that modes are actually octal
+	// numbers. You must give Ansible enough information to parse them correctly.
+	// For consistent results, quote octal numbers (for example, `'644'` or
+	// `'1777'`) so Ansible receives a string and can do its own conversion from
+	// string into number. Adding a leading zero (for example, `0755`) works
+	// sometimes, but can fail in loops and some other circumstances.
+	// Giving Ansible a number without following either of these rules will end up
+	// with a decimal number which will have unexpected results.
+	// As of Ansible 1.8, the mode may be specified as a symbolic mode (for
+	// example, `u+rwx` or `u=rw,g=r,o=r`).
+	// If `mode` is not specified and the destination filesystem object `does not`
+	// exist, the default `umask` on the system will be used when setting the mode
+	// for the newly created filesystem object.
+	// If `mode` is not specified and the destination filesystem object `does`
+	// exist, the mode of the existing filesystem object will be used.
+	// Specifying `mode` is the best way to ensure filesystem objects are created
+	// with the correct permissions. See CVE-2020-1736 for further details.
+	Mode *any `json:"mode,omitempty"`
+
+	// Name of the user that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current user unless you are root, in
+	// which case it can preserve the previous ownership.
+	// Specifying a numeric username will be assumed to be a user ID and not a
+	// username. Avoid numeric usernames to avoid this confusion.
+	Owner *string `json:"owner,omitempty"`
+
+	// Name of the group that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current group of the current user unless
+	// you are root, in which case it can preserve the previous ownership.
+	Group *string `json:"group,omitempty"`
+
+	// The user part of the SELinux filesystem object context.
+	// By default it uses the `system` policy, where applicable.
+	// When set to `_default`, it will use the `user` portion of the policy if
+	// available.
+	Seuser *string `json:"seuser,omitempty"`
+
+	// The role part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `role` portion of the policy if
+	// available.
+	Serole *string `json:"serole,omitempty"`
+
+	// The type part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `type` portion of the policy if
+	// available.
+	Setype *string `json:"setype,omitempty"`
+
+	// The level part of the SELinux filesystem object context.
+	// This is the MLS/MCS attribute, sometimes known as the `range`.
+	// When set to `_default`, it will use the `level` portion of the policy if
+	// available.
+	Selevel *string `json:"selevel,omitempty"`
+
+	// Influence when to use atomic operation to prevent data corruption or
+	// inconsistent reads from the target filesystem object.
+	// By default this module uses atomic operations to prevent data corruption or
+	// inconsistent reads from the target filesystem objects, but sometimes systems
+	// are configured or just broken in ways that prevent this. One example is
+	// docker mounted filesystem objects, which cannot be updated atomically from
+	// inside the container and can only be written in an unsafe manner.
+	// This option allows Ansible to fall back to unsafe methods of updating
+	// filesystem objects when atomic operations fail (however, it doesn't force
+	// Ansible to perform unsafe writes).
+	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
+	// corruption.
+	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
+
+	// The attributes the resulting filesystem object should have.
+	// To get supported flags look at the man page for `chattr` on the target
+	// system.
+	// This string should contain the attributes in the same order as the one
+	// displayed by `lsattr`.
+	// The `=` operator is assumed as default, otherwise `+` or `-` operators need
+	// to be included in the string.
+	Attributes *string `json:"attributes,omitempty"`
 }
 
+// Wrap the `FileParameters into an `rpc.RPCCall`.
 func (p *FileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -43,12 +188,18 @@ func (p *FileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error
 	}, nil
 }
 
+// Return values for the `file` Ansible module.
 type FileReturn struct {
 	AnsibleCommonReturns
+
+	// Destination file/path, equal to the value passed to `path`.
 	Dest *string `json:"dest,omitempty"`
+
+	// Destination file/path, equal to the value passed to `path`.
 	Path *string `json:"path,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `FileReturn`
 func FileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FileReturn, error) {
 	return rpc.AnyToJSONT[FileReturn](r.Result.Result)
 }

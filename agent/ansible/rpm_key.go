@@ -5,15 +5,30 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Adds or removes `rpm --import` a gpg key to your rpm database.
 const RpmKeyName = "rpm_key"
 
+// Parameters for the `rpm_key` Ansible module.
 type RpmKeyParameters struct {
-	Key           string    `json:"key"`
-	State         *string   `json:"state,omitempty"`
-	ValidateCerts *bool     `json:"validate_certs,omitempty"`
-	Fingerprint   *[]string `json:"fingerprint,omitempty"`
+	// Key that will be modified. Can be a url, a file on the managed node, or a
+	// keyid if the key already exists in the database.
+	Key string `json:"key"`
+
+	// If the key will be imported or removed from the rpm db.
+	State *string `json:"state,omitempty"`
+
+	// If `false` and the `key` is a url starting with `https`, SSL certificates
+	// will not be validated.
+	// This should only be used on personally controlled sites using self-signed
+	// certificates.
+	ValidateCerts *bool `json:"validate_certs,omitempty"`
+
+	// The long-form fingerprint of the key being imported.
+	// This will be used to verify the specified key.
+	Fingerprint *[]string `json:"fingerprint,omitempty"`
 }
 
+// Wrap the `RpmKeyParameters into an `rpc.RPCCall`.
 func (p *RpmKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -28,10 +43,12 @@ func (p *RpmKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], err
 	}, nil
 }
 
+// Return values for the `rpm_key` Ansible module.
 type RpmKeyReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `RpmKeyReturn`
 func RpmKeyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (RpmKeyReturn, error) {
 	return rpc.AnyToJSONT[RpmKeyReturn](r.Result.Result)
 }

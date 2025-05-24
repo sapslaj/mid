@@ -5,16 +5,53 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// The `ansible.builtin.known_hosts` module lets you add or remove host keys
+// from the `known_hosts` file.
+// Starting at Ansible 2.2, multiple entries per host are allowed, but only one
+// for each key type supported by ssh. This is useful if you're going to want to
+// use the `ansible.builtin.git` module over ssh, for example.
+// If you have a very large number of host keys to manage, you will find the
+// `ansible.builtin.template` module more useful.
 const KnownHostsName = "known_hosts"
 
+// Parameters for the `known_hosts` Ansible module.
 type KnownHostsParameters struct {
-	Name     string  `json:"name"`
-	Key      *string `json:"key,omitempty"`
-	Path     *string `json:"path,omitempty"`
-	HashHost *bool   `json:"hash_host,omitempty"`
-	State    *string `json:"state,omitempty"`
+	// The host to add or remove (must match a host specified in key). It will be
+	// converted to lowercase so that `ssh-keygen` can find it.
+	// Must match with <hostname> or <ip> present in key attribute.
+	// For custom SSH port, `name` needs to specify port as well. See example
+	// section.
+	Name string `json:"name"`
+
+	// The SSH public host key, as a string.
+	// Required if `state=present`, optional when `state=absent`, in which case all
+	// keys for the host are removed.
+	// The key must be in the right format for SSH (see sshd(8), section
+	// "SSH_KNOWN_HOSTS FILE FORMAT").
+	// Specifically, the key should not match the format that is found in an SSH
+	// pubkey file, but should rather have the hostname prepended to a line that
+	// includes the pubkey, the same way that it would appear in the known_hosts
+	// file. The value prepended to the line must also match the value of the name
+	// parameter.
+	// Should be of format `<hostname[,IP]> ssh-rsa <pubkey>`.
+	// For custom SSH port, `key` needs to specify port as well. See example
+	// section.
+	Key *string `json:"key,omitempty"`
+
+	// The known_hosts file to edit.
+	// The known_hosts file will be created if needed. The rest of the path must
+	// exist prior to running the module.
+	Path *string `json:"path,omitempty"`
+
+	// Hash the hostname in the known_hosts file.
+	HashHost *bool `json:"hash_host,omitempty"`
+
+	// `present` to add host keys.
+	// `absent` to remove host keys.
+	State *string `json:"state,omitempty"`
 }
 
+// Wrap the `KnownHostsParameters into an `rpc.RPCCall`.
 func (p *KnownHostsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -29,10 +66,12 @@ func (p *KnownHostsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs],
 	}, nil
 }
 
+// Return values for the `known_hosts` Ansible module.
 type KnownHostsReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `KnownHostsReturn`
 func KnownHostsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (KnownHostsReturn, error) {
 	return rpc.AnyToJSONT[KnownHostsReturn](r.Result.Result)
 }

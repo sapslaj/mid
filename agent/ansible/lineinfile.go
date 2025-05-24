@@ -5,32 +5,199 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// This module ensures a particular line is in a file, or replace an existing
+// line using a back-referenced regular expression.
+// This is primarily useful when you want to change a single line in a file
+// only.
+// See the `ansible.builtin.replace` module if you want to change multiple,
+// similar lines or check `ansible.builtin.blockinfile` if you want to
+// insert/update/remove a block of lines in a file. For other cases, see the
+// `ansible.builtin.copy` or `ansible.builtin.template` modules.
 const LineinfileName = "lineinfile"
 
+// Parameters for the `lineinfile` Ansible module.
 type LineinfileParameters struct {
-	Path         string  `json:"path"`
-	Regexp       *string `json:"regexp,omitempty"`
+	// The file to modify.
+	// Before Ansible 2.3 this option was only usable as `dest`, `destfile` and
+	// `name`.
+	Path string `json:"path"`
+
+	// The regular expression to look for in every line of the file.
+	// For `state=present`, the pattern to replace if found. Only the last line
+	// found will be replaced.
+	// For `state=absent`, the pattern of the line(s) to remove.
+	// If the regular expression is not matched, the line will be added to the file
+	// in keeping with `insertbefore` or `insertafter` settings.
+	// When modifying a line the regexp should typically match both the initial
+	// state of the line as well as its state after replacement by `line` to ensure
+	// idempotence.
+	// Uses Python regular expressions. See
+	// `https://docs.python.org/3/library/re.html`.
+	Regexp *string `json:"regexp,omitempty"`
+
+	// The literal string to look for in every line of the file. This does not have
+	// to match the entire line.
+	// For `state=present`, the line to replace if the string is found in the file.
+	// Only the last line found will be replaced.
+	// For `state=absent`, the line(s) to remove if the string is in the line.
+	// If the literal expression is not matched, the line will be added to the file
+	// in keeping with `insertbefore` or `insertafter` settings.
+	// Mutually exclusive with `backrefs` and `regexp`.
 	SearchString *string `json:"search_string,omitempty"`
-	State        *string `json:"state,omitempty"`
-	Line         *string `json:"line,omitempty"`
-	Backrefs     *bool   `json:"backrefs,omitempty"`
-	Insertafter  *string `json:"insertafter,omitempty"`
+
+	// Whether the line should be there or not.
+	State *string `json:"state,omitempty"`
+
+	// The line to insert/replace into the file.
+	// Required for `state=present`.
+	// If `backrefs` is set, may contain backreferences that will get expanded with
+	// the `regexp` capture groups if the regexp matches.
+	Line *string `json:"line,omitempty"`
+
+	// Used with `state=present`.
+	// If set, `line` can contain backreferences (both positional and named) that
+	// will get populated if the `regexp` matches.
+	// This parameter changes the operation of the module slightly; `insertbefore`
+	// and `insertafter` will be ignored, and if the `regexp` does not match
+	// anywhere in the file, the file will be left unchanged.
+	// If the `regexp` does match, the last matching line will be replaced by the
+	// expanded line parameter.
+	// Mutually exclusive with `search_string`.
+	Backrefs *bool `json:"backrefs,omitempty"`
+
+	// Used with `state=present`.
+	// If specified, the line will be inserted after the last match of specified
+	// regular expression.
+	// If the first match is required, use(firstmatch=yes).
+	// A special value is available; `EOF` for inserting the line at the end of the
+	// file.
+	// If specified regular expression has no matches or no value is passed, `EOF`
+	// will be used instead.
+	// If `insertbefore` is set, default value `EOF` will be ignored.
+	// If regular expressions are passed to both `regexp` and `insertafter`,
+	// `insertafter` is only honored if no match for `regexp` is found.
+	// May not be used with `backrefs` or `insertbefore`.
+	Insertafter *string `json:"insertafter,omitempty"`
+
+	// Used with `state=present`.
+	// If specified, the line will be inserted before the last match of specified
+	// regular expression.
+	// If the first match is required, use `firstmatch=yes`.
+	// A value is available; `BOF` for inserting the line at the beginning of the
+	// file.
+	// If specified regular expression has no matches, the line will be inserted at
+	// the end of the file.
+	// If regular expressions are passed to both `regexp` and `insertbefore`,
+	// `insertbefore` is only honored if no match for `regexp` is found.
+	// May not be used with `backrefs` or `insertafter`.
 	Insertbefore *string `json:"insertbefore,omitempty"`
-	Create       *bool   `json:"create,omitempty"`
-	Backup       *bool   `json:"backup,omitempty"`
-	Firstmatch   *bool   `json:"firstmatch,omitempty"`
-	Mode         *any    `json:"mode,omitempty"`
-	Owner        *string `json:"owner,omitempty"`
-	Group        *string `json:"group,omitempty"`
-	Seuser       *string `json:"seuser,omitempty"`
-	Serole       *string `json:"serole,omitempty"`
-	Setype       *string `json:"setype,omitempty"`
-	Selevel      *string `json:"selevel,omitempty"`
-	UnsafeWrites *bool   `json:"unsafe_writes,omitempty"`
-	Attributes   *string `json:"attributes,omitempty"`
-	Validate     *string `json:"validate,omitempty"`
+
+	// Used with `state=present`.
+	// If specified, the file will be created if it does not already exist.
+	// By default it will fail if the file is missing.
+	Create *bool `json:"create,omitempty"`
+
+	// Create a backup file including the timestamp information so you can get the
+	// original file back if you somehow clobbered it incorrectly.
+	Backup *bool `json:"backup,omitempty"`
+
+	// Used with `insertafter` or `insertbefore`.
+	// If set, `insertafter` and `insertbefore` will work with the first line that
+	// matches the given regular expression.
+	Firstmatch *bool `json:"firstmatch,omitempty"`
+
+	// The permissions the resulting filesystem object should have.
+	// For those used to `/usr/bin/chmod` remember that modes are actually octal
+	// numbers. You must give Ansible enough information to parse them correctly.
+	// For consistent results, quote octal numbers (for example, `'644'` or
+	// `'1777'`) so Ansible receives a string and can do its own conversion from
+	// string into number. Adding a leading zero (for example, `0755`) works
+	// sometimes, but can fail in loops and some other circumstances.
+	// Giving Ansible a number without following either of these rules will end up
+	// with a decimal number which will have unexpected results.
+	// As of Ansible 1.8, the mode may be specified as a symbolic mode (for
+	// example, `u+rwx` or `u=rw,g=r,o=r`).
+	// If `mode` is not specified and the destination filesystem object `does not`
+	// exist, the default `umask` on the system will be used when setting the mode
+	// for the newly created filesystem object.
+	// If `mode` is not specified and the destination filesystem object `does`
+	// exist, the mode of the existing filesystem object will be used.
+	// Specifying `mode` is the best way to ensure filesystem objects are created
+	// with the correct permissions. See CVE-2020-1736 for further details.
+	Mode *any `json:"mode,omitempty"`
+
+	// Name of the user that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current user unless you are root, in
+	// which case it can preserve the previous ownership.
+	// Specifying a numeric username will be assumed to be a user ID and not a
+	// username. Avoid numeric usernames to avoid this confusion.
+	Owner *string `json:"owner,omitempty"`
+
+	// Name of the group that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current group of the current user unless
+	// you are root, in which case it can preserve the previous ownership.
+	Group *string `json:"group,omitempty"`
+
+	// The user part of the SELinux filesystem object context.
+	// By default it uses the `system` policy, where applicable.
+	// When set to `_default`, it will use the `user` portion of the policy if
+	// available.
+	Seuser *string `json:"seuser,omitempty"`
+
+	// The role part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `role` portion of the policy if
+	// available.
+	Serole *string `json:"serole,omitempty"`
+
+	// The type part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `type` portion of the policy if
+	// available.
+	Setype *string `json:"setype,omitempty"`
+
+	// The level part of the SELinux filesystem object context.
+	// This is the MLS/MCS attribute, sometimes known as the `range`.
+	// When set to `_default`, it will use the `level` portion of the policy if
+	// available.
+	Selevel *string `json:"selevel,omitempty"`
+
+	// Influence when to use atomic operation to prevent data corruption or
+	// inconsistent reads from the target filesystem object.
+	// By default this module uses atomic operations to prevent data corruption or
+	// inconsistent reads from the target filesystem objects, but sometimes systems
+	// are configured or just broken in ways that prevent this. One example is
+	// docker mounted filesystem objects, which cannot be updated atomically from
+	// inside the container and can only be written in an unsafe manner.
+	// This option allows Ansible to fall back to unsafe methods of updating
+	// filesystem objects when atomic operations fail (however, it doesn't force
+	// Ansible to perform unsafe writes).
+	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
+	// corruption.
+	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
+
+	// The attributes the resulting filesystem object should have.
+	// To get supported flags look at the man page for `chattr` on the target
+	// system.
+	// This string should contain the attributes in the same order as the one
+	// displayed by `lsattr`.
+	// The `=` operator is assumed as default, otherwise `+` or `-` operators need
+	// to be included in the string.
+	Attributes *string `json:"attributes,omitempty"`
+
+	// The validation command to run before copying the updated file into the final
+	// destination.
+	// A temporary file path is used to validate, passed in through `%s` which must
+	// be present as in the examples below.
+	// Also, the command is passed securely so shell features such as expansion and
+	// pipes will not work.
+	// For an example on how to handle more complex validation than what this
+	// option provides, see `handling complex
+	// validation,complex_configuration_validation`.
+	Validate *string `json:"validate,omitempty"`
 }
 
+// Wrap the `LineinfileParameters into an `rpc.RPCCall`.
 func (p *LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -45,11 +212,15 @@ func (p *LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs],
 	}, nil
 }
 
+// Return values for the `lineinfile` Ansible module.
 type LineinfileReturn struct {
 	AnsibleCommonReturns
+
+	// backup file location
 	Backup *string `json:"backup,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `LineinfileReturn`
 func LineinfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LineinfileReturn, error) {
 	return rpc.AnyToJSONT[LineinfileReturn](r.Result.Result)
 }

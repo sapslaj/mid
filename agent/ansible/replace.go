@@ -5,28 +5,158 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// This module will replace all instances of a pattern within a file.
+// It is up to the user to maintain idempotence by ensuring that the same
+// pattern would never match any replacements made.
 const ReplaceName = "replace"
 
+// Parameters for the `replace` Ansible module.
 type ReplaceParameters struct {
-	Path         string  `json:"path"`
-	Regexp       string  `json:"regexp"`
-	Replace      *string `json:"replace,omitempty"`
-	After        *string `json:"after,omitempty"`
-	Before       *string `json:"before,omitempty"`
-	Backup       *bool   `json:"backup,omitempty"`
-	Encoding     *string `json:"encoding,omitempty"`
-	Mode         *any    `json:"mode,omitempty"`
-	Owner        *string `json:"owner,omitempty"`
-	Group        *string `json:"group,omitempty"`
-	Seuser       *string `json:"seuser,omitempty"`
-	Serole       *string `json:"serole,omitempty"`
-	Setype       *string `json:"setype,omitempty"`
-	Selevel      *string `json:"selevel,omitempty"`
-	UnsafeWrites *bool   `json:"unsafe_writes,omitempty"`
-	Attributes   *string `json:"attributes,omitempty"`
-	Validate     *string `json:"validate,omitempty"`
+	// The file to modify.
+	// Before Ansible 2.3 this option was only usable as `dest`, `destfile` and
+	// `name`.
+	Path string `json:"path"`
+
+	// The regular expression to look for in the contents of the file.
+	// Uses Python regular expressions; see
+	// `https://docs.python.org/3/library/re.html`.
+	// Uses MULTILINE mode, which means `^` and `$` match the beginning and end of
+	// the file, as well as the beginning and end respectively of `each line` of
+	// the file.
+	// Does not use DOTALL, which means the `.` special character matches any
+	// character `except newlines`. A common mistake is to assume that a negated
+	// character set like `[^#]` will also not match newlines.
+	// In order to exclude newlines, they must be added to the set like `[^#\\n]`.
+	// Note that, as of Ansible 2.0, short form tasks should have any escape
+	// sequences backslash-escaped in order to prevent them being parsed as string
+	// literal escapes. See the examples.
+	Regexp string `json:"regexp"`
+
+	// The string to replace regexp matches.
+	// May contain backreferences that will get expanded with the regexp capture
+	// groups if the regexp matches.
+	// If not set, matches are removed entirely.
+	// Backreferences can be used ambiguously like `\\1`, or explicitly like
+	// `\\g<1>`.
+	Replace *string `json:"replace,omitempty"`
+
+	// If specified, only content after this match will be replaced/removed.
+	// Can be used in combination with `before`.
+	// Uses Python regular expressions; see
+	// `https://docs.python.org/3/library/re.html`.
+	// Uses DOTALL, which means the `.` special character `can match newlines`.
+	// Does not use MULTILINE, so `^` and `$` will only match the beginning and end
+	// of the file.
+	After *string `json:"after,omitempty"`
+
+	// If specified, only content before this match will be replaced/removed.
+	// Can be used in combination with `after`.
+	// Uses Python regular expressions; see
+	// `https://docs.python.org/3/library/re.html`.
+	// Uses DOTALL, which means the `.` special character `can match newlines`.
+	// Does not use MULTILINE, so `^` and `$` will only match the beginning and end
+	// of the file.
+	Before *string `json:"before,omitempty"`
+
+	// Create a backup file including the timestamp information so you can get the
+	// original file back if you somehow clobbered it incorrectly.
+	Backup *bool `json:"backup,omitempty"`
+
+	// The character encoding for reading and writing the file.
+	Encoding *string `json:"encoding,omitempty"`
+
+	// The permissions the resulting filesystem object should have.
+	// For those used to `/usr/bin/chmod` remember that modes are actually octal
+	// numbers. You must give Ansible enough information to parse them correctly.
+	// For consistent results, quote octal numbers (for example, `'644'` or
+	// `'1777'`) so Ansible receives a string and can do its own conversion from
+	// string into number. Adding a leading zero (for example, `0755`) works
+	// sometimes, but can fail in loops and some other circumstances.
+	// Giving Ansible a number without following either of these rules will end up
+	// with a decimal number which will have unexpected results.
+	// As of Ansible 1.8, the mode may be specified as a symbolic mode (for
+	// example, `u+rwx` or `u=rw,g=r,o=r`).
+	// If `mode` is not specified and the destination filesystem object `does not`
+	// exist, the default `umask` on the system will be used when setting the mode
+	// for the newly created filesystem object.
+	// If `mode` is not specified and the destination filesystem object `does`
+	// exist, the mode of the existing filesystem object will be used.
+	// Specifying `mode` is the best way to ensure filesystem objects are created
+	// with the correct permissions. See CVE-2020-1736 for further details.
+	Mode *any `json:"mode,omitempty"`
+
+	// Name of the user that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current user unless you are root, in
+	// which case it can preserve the previous ownership.
+	// Specifying a numeric username will be assumed to be a user ID and not a
+	// username. Avoid numeric usernames to avoid this confusion.
+	Owner *string `json:"owner,omitempty"`
+
+	// Name of the group that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current group of the current user unless
+	// you are root, in which case it can preserve the previous ownership.
+	Group *string `json:"group,omitempty"`
+
+	// The user part of the SELinux filesystem object context.
+	// By default it uses the `system` policy, where applicable.
+	// When set to `_default`, it will use the `user` portion of the policy if
+	// available.
+	Seuser *string `json:"seuser,omitempty"`
+
+	// The role part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `role` portion of the policy if
+	// available.
+	Serole *string `json:"serole,omitempty"`
+
+	// The type part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `type` portion of the policy if
+	// available.
+	Setype *string `json:"setype,omitempty"`
+
+	// The level part of the SELinux filesystem object context.
+	// This is the MLS/MCS attribute, sometimes known as the `range`.
+	// When set to `_default`, it will use the `level` portion of the policy if
+	// available.
+	Selevel *string `json:"selevel,omitempty"`
+
+	// Influence when to use atomic operation to prevent data corruption or
+	// inconsistent reads from the target filesystem object.
+	// By default this module uses atomic operations to prevent data corruption or
+	// inconsistent reads from the target filesystem objects, but sometimes systems
+	// are configured or just broken in ways that prevent this. One example is
+	// docker mounted filesystem objects, which cannot be updated atomically from
+	// inside the container and can only be written in an unsafe manner.
+	// This option allows Ansible to fall back to unsafe methods of updating
+	// filesystem objects when atomic operations fail (however, it doesn't force
+	// Ansible to perform unsafe writes).
+	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
+	// corruption.
+	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
+
+	// The attributes the resulting filesystem object should have.
+	// To get supported flags look at the man page for `chattr` on the target
+	// system.
+	// This string should contain the attributes in the same order as the one
+	// displayed by `lsattr`.
+	// The `=` operator is assumed as default, otherwise `+` or `-` operators need
+	// to be included in the string.
+	Attributes *string `json:"attributes,omitempty"`
+
+	// The validation command to run before copying the updated file into the final
+	// destination.
+	// A temporary file path is used to validate, passed in through `%s` which must
+	// be present as in the examples below.
+	// Also, the command is passed securely so shell features such as expansion and
+	// pipes will not work.
+	// For an example on how to handle more complex validation than what this
+	// option provides, see `handling complex
+	// validation,complex_configuration_validation`.
+	Validate *string `json:"validate,omitempty"`
 }
 
+// Wrap the `ReplaceParameters into an `rpc.RPCCall`.
 func (p *ReplaceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -41,10 +171,12 @@ func (p *ReplaceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], er
 	}, nil
 }
 
+// Return values for the `replace` Ansible module.
 type ReplaceReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `ReplaceReturn`
 func ReplaceReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ReplaceReturn, error) {
 	return rpc.AnyToJSONT[ReplaceReturn](r.Result.Result)
 }

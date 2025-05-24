@@ -5,33 +5,173 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// This module will insert/update/remove a block of multi-line text surrounded
+// by customizable marker lines.
 const BlockinfileName = "blockinfile"
 
+// Parameters for the `blockinfile` Ansible module.
 type BlockinfileParameters struct {
-	Path           string  `json:"path"`
-	State          *string `json:"state,omitempty"`
-	Marker         *string `json:"marker,omitempty"`
-	Block          *string `json:"block,omitempty"`
-	Insertafter    *string `json:"insertafter,omitempty"`
-	Insertbefore   *string `json:"insertbefore,omitempty"`
-	Create         *bool   `json:"create,omitempty"`
-	Backup         *bool   `json:"backup,omitempty"`
-	MarkerBegin    *string `json:"marker_begin,omitempty"`
-	MarkerEnd      *string `json:"marker_end,omitempty"`
-	AppendNewline  *bool   `json:"append_newline,omitempty"`
-	PrependNewline *bool   `json:"prepend_newline,omitempty"`
-	Mode           *any    `json:"mode,omitempty"`
-	Owner          *string `json:"owner,omitempty"`
-	Group          *string `json:"group,omitempty"`
-	Seuser         *string `json:"seuser,omitempty"`
-	Serole         *string `json:"serole,omitempty"`
-	Setype         *string `json:"setype,omitempty"`
-	Selevel        *string `json:"selevel,omitempty"`
-	UnsafeWrites   *bool   `json:"unsafe_writes,omitempty"`
-	Attributes     *string `json:"attributes,omitempty"`
-	Validate       *string `json:"validate,omitempty"`
+	// The file to modify.
+	// Before Ansible 2.3 this option was only usable as `dest`, `destfile` and
+	// `name`.
+	Path string `json:"path"`
+
+	// Whether the block should be there or not.
+	State *string `json:"state,omitempty"`
+
+	// The marker line template.
+	// `{mark}` will be replaced with the values in `marker_begin`
+	// (default=`BEGIN`) and `marker_end` (default=`END`).
+	// Using a custom marker without the `{mark}` variable may result in the block
+	// being repeatedly inserted on subsequent playbook runs.
+	// Multi-line markers are not supported and will result in the block being
+	// repeatedly inserted on subsequent playbook runs.
+	// A newline is automatically appended by the module to `marker_begin` and
+	// `marker_end`.
+	Marker *string `json:"marker,omitempty"`
+
+	// The text to insert inside the marker lines.
+	// If it is missing or an empty string, the block will be removed as if `state`
+	// were specified to `absent`.
+	Block *string `json:"block,omitempty"`
+
+	// If specified and no begin/ending `marker` lines are found, the block will be
+	// inserted after the last match of specified regular expression.
+	// A special value is available; `EOF` for inserting the block at the end of
+	// the file.
+	// If specified regular expression has no matches or no value is passed, `EOF`
+	// will be used instead.
+	// The presence of the multiline flag (?m) in the regular expression controls
+	// whether the match is done line by line or with multiple lines. This
+	// behaviour was added in ansible-core 2.14.
+	Insertafter *string `json:"insertafter,omitempty"`
+
+	// If specified and no begin/ending `marker` lines are found, the block will be
+	// inserted before the last match of specified regular expression.
+	// A special value is available; `BOF` for inserting the block at the beginning
+	// of the file.
+	// If specified regular expression has no matches, the block will be inserted
+	// at the end of the file.
+	// The presence of the multiline flag (?m) in the regular expression controls
+	// whether the match is done line by line or with multiple lines. This
+	// behaviour was added in ansible-core 2.14.
+	Insertbefore *string `json:"insertbefore,omitempty"`
+
+	// Create a new file if it does not exist.
+	Create *bool `json:"create,omitempty"`
+
+	// Create a backup file including the timestamp information so you can get the
+	// original file back if you somehow clobbered it incorrectly.
+	Backup *bool `json:"backup,omitempty"`
+
+	// This will be inserted at `{mark}` in the opening ansible block `marker`.
+	MarkerBegin *string `json:"marker_begin,omitempty"`
+
+	// This will be inserted at `{mark}` in the closing ansible block `marker`.
+	MarkerEnd *string `json:"marker_end,omitempty"`
+
+	// Append a blank line to the inserted block, if this does not appear at the
+	// end of the file.
+	// Note that this attribute is not considered when `state` is set to `absent`
+	AppendNewline *bool `json:"append_newline,omitempty"`
+
+	// Prepend a blank line to the inserted block, if this does not appear at the
+	// beginning of the file.
+	// Note that this attribute is not considered when `state` is set to `absent`
+	PrependNewline *bool `json:"prepend_newline,omitempty"`
+
+	// The permissions the resulting filesystem object should have.
+	// For those used to `/usr/bin/chmod` remember that modes are actually octal
+	// numbers. You must give Ansible enough information to parse them correctly.
+	// For consistent results, quote octal numbers (for example, `'644'` or
+	// `'1777'`) so Ansible receives a string and can do its own conversion from
+	// string into number. Adding a leading zero (for example, `0755`) works
+	// sometimes, but can fail in loops and some other circumstances.
+	// Giving Ansible a number without following either of these rules will end up
+	// with a decimal number which will have unexpected results.
+	// As of Ansible 1.8, the mode may be specified as a symbolic mode (for
+	// example, `u+rwx` or `u=rw,g=r,o=r`).
+	// If `mode` is not specified and the destination filesystem object `does not`
+	// exist, the default `umask` on the system will be used when setting the mode
+	// for the newly created filesystem object.
+	// If `mode` is not specified and the destination filesystem object `does`
+	// exist, the mode of the existing filesystem object will be used.
+	// Specifying `mode` is the best way to ensure filesystem objects are created
+	// with the correct permissions. See CVE-2020-1736 for further details.
+	Mode *any `json:"mode,omitempty"`
+
+	// Name of the user that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current user unless you are root, in
+	// which case it can preserve the previous ownership.
+	// Specifying a numeric username will be assumed to be a user ID and not a
+	// username. Avoid numeric usernames to avoid this confusion.
+	Owner *string `json:"owner,omitempty"`
+
+	// Name of the group that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current group of the current user unless
+	// you are root, in which case it can preserve the previous ownership.
+	Group *string `json:"group,omitempty"`
+
+	// The user part of the SELinux filesystem object context.
+	// By default it uses the `system` policy, where applicable.
+	// When set to `_default`, it will use the `user` portion of the policy if
+	// available.
+	Seuser *string `json:"seuser,omitempty"`
+
+	// The role part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `role` portion of the policy if
+	// available.
+	Serole *string `json:"serole,omitempty"`
+
+	// The type part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `type` portion of the policy if
+	// available.
+	Setype *string `json:"setype,omitempty"`
+
+	// The level part of the SELinux filesystem object context.
+	// This is the MLS/MCS attribute, sometimes known as the `range`.
+	// When set to `_default`, it will use the `level` portion of the policy if
+	// available.
+	Selevel *string `json:"selevel,omitempty"`
+
+	// Influence when to use atomic operation to prevent data corruption or
+	// inconsistent reads from the target filesystem object.
+	// By default this module uses atomic operations to prevent data corruption or
+	// inconsistent reads from the target filesystem objects, but sometimes systems
+	// are configured or just broken in ways that prevent this. One example is
+	// docker mounted filesystem objects, which cannot be updated atomically from
+	// inside the container and can only be written in an unsafe manner.
+	// This option allows Ansible to fall back to unsafe methods of updating
+	// filesystem objects when atomic operations fail (however, it doesn't force
+	// Ansible to perform unsafe writes).
+	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
+	// corruption.
+	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
+
+	// The attributes the resulting filesystem object should have.
+	// To get supported flags look at the man page for `chattr` on the target
+	// system.
+	// This string should contain the attributes in the same order as the one
+	// displayed by `lsattr`.
+	// The `=` operator is assumed as default, otherwise `+` or `-` operators need
+	// to be included in the string.
+	Attributes *string `json:"attributes,omitempty"`
+
+	// The validation command to run before copying the updated file into the final
+	// destination.
+	// A temporary file path is used to validate, passed in through `%s` which must
+	// be present as in the examples below.
+	// Also, the command is passed securely so shell features such as expansion and
+	// pipes will not work.
+	// For an example on how to handle more complex validation than what this
+	// option provides, see `handling complex
+	// validation,complex_configuration_validation`.
+	Validate *string `json:"validate,omitempty"`
 }
 
+// Wrap the `BlockinfileParameters into an `rpc.RPCCall`.
 func (p *BlockinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -46,10 +186,12 @@ func (p *BlockinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs]
 	}, nil
 }
 
+// Return values for the `blockinfile` Ansible module.
 type BlockinfileReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `BlockinfileReturn`
 func BlockinfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (BlockinfileReturn, error) {
 	return rpc.AnyToJSONT[BlockinfileReturn](r.Result.Result)
 }

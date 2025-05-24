@@ -5,20 +5,69 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Controls systemd units (services, timers, and so on) on remote hosts.
+// `ansible.builtin.systemd` is renamed to `ansible.builtin.systemd_service` to
+// better reflect the scope of the module. `ansible.builtin.systemd` is kept as
+// an alias for backward compatibility.
 const SystemdServiceName = "systemd_service"
 
+// Parameters for the `systemd_service` Ansible module.
 type SystemdServiceParameters struct {
-	Name         *string `json:"name,omitempty"`
-	State        *string `json:"state,omitempty"`
-	Enabled      *bool   `json:"enabled,omitempty"`
-	Force        *bool   `json:"force,omitempty"`
-	Masked       *bool   `json:"masked,omitempty"`
-	DaemonReload *bool   `json:"daemon_reload,omitempty"`
-	DaemonReexec *bool   `json:"daemon_reexec,omitempty"`
-	Scope        *string `json:"scope,omitempty"`
-	NoBlock      *bool   `json:"no_block,omitempty"`
+	// Name of the unit. This parameter takes the name of exactly one unit to work
+	// with.
+	// When no extension is given, it is implied to a `.service` as systemd.
+	// When using in a chroot environment you always need to specify the name of
+	// the unit with the extension. For example, `crond.service`.
+	Name *string `json:"name,omitempty"`
+
+	// `started`/`stopped` are idempotent actions that will not run commands unless
+	// necessary. `restarted` will always bounce the unit. `reloaded` will always
+	// reload and if the service is not running at the moment of the reload, it is
+	// started.
+	// If set, requires `name`.
+	State *string `json:"state,omitempty"`
+
+	// Whether the unit should start on boot. At least one of `state` and `enabled`
+	// are required.
+	// If set, requires `name`.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Whether to override existing symlinks.
+	Force *bool `json:"force,omitempty"`
+
+	// Whether the unit should be masked or not. A masked unit is impossible to
+	// start.
+	// If set, requires `name`.
+	Masked *bool `json:"masked,omitempty"`
+
+	// Run `daemon-reload` before doing any other operations, to make sure systemd
+	// has read any changes.
+	// When set to `true`, runs `daemon-reload` even if the module does not start
+	// or stop anything.
+	DaemonReload *bool `json:"daemon_reload,omitempty"`
+
+	// Run daemon_reexec command before doing any other operations, the systemd
+	// manager will serialize the manager state.
+	DaemonReexec *bool `json:"daemon_reexec,omitempty"`
+
+	// Run `systemctl` within a given service manager scope, either as the default
+	// system scope `system`, the current user's scope `user`, or the scope of all
+	// users `global`.
+	// For systemd to work with `user`, the executing user must have its own
+	// instance of dbus started and accessible (systemd requirement).
+	// The user dbus process is normally started during normal login, but not
+	// during the run of Ansible tasks. Otherwise you will probably get a 'Failed
+	// to connect to bus: no such file or directory' error.
+	// The user must have access, normally given via setting the `XDG_RUNTIME_DIR`
+	// variable, see the example below.
+	Scope *string `json:"scope,omitempty"`
+
+	// Do not synchronously wait for the requested operation to finish. Enqueued
+	// job will continue without Ansible blocking on its completion.
+	NoBlock *bool `json:"no_block,omitempty"`
 }
 
+// Wrap the `SystemdServiceParameters into an `rpc.RPCCall`.
 func (p *SystemdServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -33,11 +82,15 @@ func (p *SystemdServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteAr
 	}, nil
 }
 
+// Return values for the `systemd_service` Ansible module.
 type SystemdServiceReturn struct {
 	AnsibleCommonReturns
+
+	// A dictionary with the key=value pairs returned from `systemctl show`.
 	Status *map[string]any `json:"status,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `SystemdServiceReturn`
 func SystemdServiceReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SystemdServiceReturn, error) {
 	return rpc.AnyToJSONT[SystemdServiceReturn](r.Result.Result)
 }

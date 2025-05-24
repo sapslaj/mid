@@ -5,36 +5,141 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Manage `git` checkouts of repositories to deploy files or software.
 const GitName = "git"
 
+// Parameters for the `git` Ansible module.
 type GitParameters struct {
-	Repo             string    `json:"repo"`
-	Dest             string    `json:"dest"`
-	Version          *string   `json:"version,omitempty"`
-	AcceptHostkey    *bool     `json:"accept_hostkey,omitempty"`
-	AcceptNewhostkey *bool     `json:"accept_newhostkey,omitempty"`
-	SshOpts          *string   `json:"ssh_opts,omitempty"`
-	KeyFile          *string   `json:"key_file,omitempty"`
-	Reference        *string   `json:"reference,omitempty"`
-	Remote           *string   `json:"remote,omitempty"`
-	Refspec          *string   `json:"refspec,omitempty"`
-	Force            *bool     `json:"force,omitempty"`
-	Depth            *int      `json:"depth,omitempty"`
-	Clone            *bool     `json:"clone,omitempty"`
-	Update           *bool     `json:"update,omitempty"`
-	Executable       *string   `json:"executable,omitempty"`
-	Bare             *bool     `json:"bare,omitempty"`
-	Umask            *any      `json:"umask,omitempty"`
-	Recursive        *bool     `json:"recursive,omitempty"`
-	SingleBranch     *bool     `json:"single_branch,omitempty"`
-	TrackSubmodules  *bool     `json:"track_submodules,omitempty"`
-	VerifyCommit     *bool     `json:"verify_commit,omitempty"`
-	Archive          *string   `json:"archive,omitempty"`
-	ArchivePrefix    *string   `json:"archive_prefix,omitempty"`
-	SeparateGitDir   *string   `json:"separate_git_dir,omitempty"`
-	GpgAllowlist     *[]string `json:"gpg_allowlist,omitempty"`
+	// git, SSH, or HTT`S` protocol address of the git repository.
+	Repo string `json:"repo"`
+
+	// The path of where the repository should be checked out. This is equivalent
+	// to `git clone [repo_url] [directory]`. The repository named in `repo` is not
+	// appended to this path and the destination directory must be empty. This
+	// parameter is required, unless `clone` is set to `false`.
+	Dest string `json:"dest"`
+
+	// What version of the repository to check out. This can be the literal string
+	// `HEAD`, a branch name, a tag name. It can also be a `SHA-1` hash, in which
+	// case `refspec` needs to be specified if the given revision is not already
+	// available.
+	Version *string `json:"version,omitempty"`
+
+	// Will ensure or not that `-o StrictHostKeyChecking=no` is present as an ssh
+	// option.
+	// Be aware that this disables a protection against MITM attacks.
+	// Those using OpenSSH >= 7.5 might want to use `accept_newhostkey` or set
+	// `ssh_opts` to `StrictHostKeyChecking=accept-new` instead, it does not remove
+	// the MITM issue but it does restrict it to the first attempt.
+	AcceptHostkey *bool `json:"accept_hostkey,omitempty"`
+
+	// As of OpenSSH 7.5, `-o StrictHostKeyChecking=accept-new` can be used which
+	// is safer and will only accepts host keys which are not present or are the
+	// same. If `true`, ensure that `-o StrictHostKeyChecking=accept-new` is
+	// present as an ssh option.
+	AcceptNewhostkey *bool `json:"accept_newhostkey,omitempty"`
+
+	// Options git will pass to ssh when used as protocol, it works via `git`'s
+	// `GIT_SSH`/`GIT_SSH_COMMAND` environment variables.
+	// For older versions it appends `GIT_SSH_OPTS` (specific to this module) to
+	// the variables above or via a wrapper script.
+	// Other options can add to this list, like `key_file` and `accept_hostkey`.
+	// An example value could be `-o StrictHostKeyChecking=no` (although this
+	// particular option is better set by `accept_hostkey`).
+	// The module ensures that `BatchMode=yes` is always present to avoid prompts.
+	SshOpts *string `json:"ssh_opts,omitempty"`
+
+	// Specify an optional private key file path, on the target host, to use for
+	// the checkout.
+	// This ensures `IdentitiesOnly=yes` is present in `ssh_opts`.
+	KeyFile *string `json:"key_file,omitempty"`
+
+	// Reference repository (see `git clone --reference ...`).
+	Reference *string `json:"reference,omitempty"`
+
+	// Name of the remote.
+	Remote *string `json:"remote,omitempty"`
+
+	// Add an additional refspec to be fetched. If version is set to a `SHA-1` not
+	// reachable from any branch or tag, this option may be necessary to specify
+	// the ref containing the `SHA-1`. Uses the same syntax as the `git fetch`
+	// command. An example value could be "refs/meta/config".
+	Refspec *string `json:"refspec,omitempty"`
+
+	// If `true`, any modified files in the working repository will be discarded.
+	// Prior to 0.7, this was always `true` and could not be disabled.  Prior to
+	// 1.9, the default was `true`.
+	Force *bool `json:"force,omitempty"`
+
+	// Create a shallow clone with a history truncated to the specified number or
+	// revisions. The minimum possible value is `1`, otherwise ignored. Needs
+	// `git>=1.9.1` to work correctly.
+	Depth *int `json:"depth,omitempty"`
+
+	// If `false`, do not clone the repository even if it does not exist locally.
+	Clone *bool `json:"clone,omitempty"`
+
+	// If `false`, do not retrieve new revisions from the origin repository.
+	// Operations like archive will work on the existing (old) repository and might
+	// not respond to changes to the options version or remote.
+	Update *bool `json:"update,omitempty"`
+
+	// Path to git executable to use. If not supplied, the normal mechanism for
+	// resolving binary paths will be used.
+	Executable *string `json:"executable,omitempty"`
+
+	// If `true`, repository will be created as a bare repo, otherwise it will be a
+	// standard repo with a workspace.
+	Bare *bool `json:"bare,omitempty"`
+
+	// The umask to set before doing any checkouts, or any other repository
+	// maintenance.
+	Umask *any `json:"umask,omitempty"`
+
+	// If `false`, repository will be cloned without the `--recursive` option,
+	// skipping sub-modules.
+	Recursive *bool `json:"recursive,omitempty"`
+
+	// Clone only the history leading to the tip of the specified revision.
+	SingleBranch *bool `json:"single_branch,omitempty"`
+
+	// If `true`, submodules will track the latest commit on their master branch
+	// (or other branch specified in `.gitmodules`).  If `false`, submodules will
+	// be kept at the revision specified by the main project. This is equivalent to
+	// specifying the `--remote` flag to git submodule update.
+	TrackSubmodules *bool `json:"track_submodules,omitempty"`
+
+	// If `true`, when cloning or checking out a `version` verify the signature of
+	// a GPG signed commit. This requires git version>=2.1.0 to be installed. The
+	// commit MUST be signed and the public key MUST be present in the GPG keyring.
+	VerifyCommit *bool `json:"verify_commit,omitempty"`
+
+	// Specify archive file path with extension. If specified, creates an archive
+	// file of the specified format containing the tree structure for the source
+	// tree. Allowed archive formats ["zip", "tar.gz", "tar", "tgz"].
+	// This will clone and perform git archive from local directory as not all git
+	// servers support git archive.
+	Archive *string `json:"archive,omitempty"`
+
+	// Specify a prefix to add to each file path in archive. Requires `archive` to
+	// be specified.
+	ArchivePrefix *string `json:"archive_prefix,omitempty"`
+
+	// The path to place the cloned repository. If specified, Git repository can be
+	// separated from working tree.
+	SeparateGitDir *string `json:"separate_git_dir,omitempty"`
+
+	// A list of trusted GPG fingerprints to compare to the fingerprint of the GPG-
+	// signed commit.
+	// Only used when `verify_commit=yes`.
+	// Use of this feature requires Git 2.6+ due to its reliance on git's `--raw`
+	// flag to `verify-commit` and `verify-tag`.
+	// Alias `gpg_allowlist` is added in version 2.17.
+	// Alias `gpg_whitelist` is deprecated and will be removed in version 2.21.
+	GpgAllowlist *[]string `json:"gpg_allowlist,omitempty"`
 }
 
+// Wrap the `GitParameters into an `rpc.RPCCall`.
 func (p *GitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -49,16 +154,32 @@ func (p *GitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error)
 	}, nil
 }
 
+// Return values for the `git` Ansible module.
 type GitReturn struct {
 	AnsibleCommonReturns
-	After            *string `json:"after,omitempty"`
-	Before           *string `json:"before,omitempty"`
-	RemoteUrlChanged *bool   `json:"remote_url_changed,omitempty"`
-	Warnings         *string `json:"warnings,omitempty"`
-	GitDirNow        *string `json:"git_dir_now,omitempty"`
-	GitDirBefore     *string `json:"git_dir_before,omitempty"`
+
+	// Last commit revision of the repository retrieved during the update.
+	After *string `json:"after,omitempty"`
+
+	// Commit revision before the repository was updated, "null" for new
+	// repository.
+	Before *string `json:"before,omitempty"`
+
+	// Contains True or False whether or not the remote URL was changed.
+	RemoteUrlChanged *bool `json:"remote_url_changed,omitempty"`
+
+	// List of warnings if requested features were not available due to a too old
+	// git version.
+	Warnings *string `json:"warnings,omitempty"`
+
+	// Contains the new path of .git directory if it is changed.
+	GitDirNow *string `json:"git_dir_now,omitempty"`
+
+	// Contains the original path of .git directory if it is changed.
+	GitDirBefore *string `json:"git_dir_before,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `GitReturn`
 func GitReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GitReturn, error) {
 	return rpc.AnyToJSONT[GitReturn](r.Result.Result)
 }

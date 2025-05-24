@@ -5,15 +5,66 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// This module is automatically called by playbooks to gather useful variables
+// about remote hosts that can be used in playbooks. It can also be executed
+// directly by `/usr/bin/ansible` to check what variables are available to a
+// host. Ansible provides many `facts` about the system, automatically.
+// This module is also supported for Windows targets.
 const SetupName = "setup"
 
+// Parameters for the `setup` Ansible module.
 type SetupParameters struct {
-	GatherSubset  *[]string `json:"gather_subset,omitempty"`
-	GatherTimeout *int      `json:"gather_timeout,omitempty"`
-	Filter        *[]string `json:"filter,omitempty"`
-	FactPath      *string   `json:"fact_path,omitempty"`
+	// If supplied, restrict the additional facts collected to the given subset.
+	// Possible values: `all`, `all_ipv4_addresses`, `all_ipv6_addresses`,
+	// `apparmor`, `architecture`, `caps`, `chroot`,`cmdline`, `date_time`,
+	// `default_ipv4`, `default_ipv6`, `devices`, `distribution`,
+	// `distribution_major_version`, `distribution_release`,
+	// `distribution_version`, `dns`, `effective_group_ids`, `effective_user_id`,
+	// `env`, `facter`, `fips`, `hardware`, `interfaces`, `is_chroot`, `iscsi`,
+	// `kernel`, `local`, `lsb`, `machine`, `machine_id`, `mounts`, `network`,
+	// `ohai`, `os_family`, `pkg_mgr`, `platform`, `processor`, `processor_cores`,
+	// `processor_count`, `python`, `python_version`, `real_user_id`, `selinux`,
+	// `service_mgr`, `ssh_host_key_dsa_public`, `ssh_host_key_ecdsa_public`,
+	// `ssh_host_key_ed25519_public`, `ssh_host_key_rsa_public`,
+	// `ssh_host_pub_keys`, `ssh_pub_keys`, `system`, `system_capabilities`,
+	// `system_capabilities_enforced`, `systemd`, `user`, `user_dir`, `user_gecos`,
+	// `user_gid`, `user_id`, `user_shell`, `user_uid`, `virtual`,
+	// `virtualization_role`, `virtualization_type`. Can specify a list of values
+	// to specify a larger subset. Values can also be used with an initial `!` to
+	// specify that that specific subset should not be collected.  For instance:
+	// `!hardware,!network,!virtual,!ohai,!facter`. If `!all` is specified then
+	// only the min subset is collected. To avoid collecting even the min subset,
+	// specify `!all,!min`. To collect only specific facts, use `!all,!min`, and
+	// specify the particular fact subsets. Use the filter parameter if you do not
+	// want to display some collected facts.
+	GatherSubset *[]string `json:"gather_subset,omitempty"`
+
+	// Set the default timeout in seconds for individual fact gathering.
+	GatherTimeout *int `json:"gather_timeout,omitempty"`
+
+	// If supplied, only return facts that match one of the shell-style (fnmatch)
+	// pattern. An empty list basically means 'no filter'. As of Ansible 2.11, the
+	// type has changed from string to list and the default has became an empty
+	// list. A simple string is still accepted and works as a single pattern. The
+	// behaviour prior to Ansible 2.11 remains.
+	Filter *[]string `json:"filter,omitempty"`
+
+	// Path used for local ansible facts (`*.fact`) - files in this dir will be run
+	// (if executable) and their results be added to `ansible_local` facts. If a
+	// file is not executable it is read instead. File/results format can be JSON
+	// or INI-format. The default `fact_path` can be specified in `ansible.cfg` for
+	// when setup is automatically called as part of `gather_facts`. NOTE - For
+	// windows clients, the results will be added to a variable named after the
+	// local file (without extension suffix), rather than `ansible_local`.
+	// Since Ansible 2.1, Windows hosts can use `fact_path`. Make sure that this
+	// path exists on the target host. Files in this path MUST be PowerShell
+	// scripts `.ps1` which outputs an object. This object will be formatted by
+	// Ansible as json so the script should be outputting a raw hashtable, array,
+	// or other primitive object.
+	FactPath *string `json:"fact_path,omitempty"`
 }
 
+// Wrap the `SetupParameters into an `rpc.RPCCall`.
 func (p *SetupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -28,10 +79,12 @@ func (p *SetupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], erro
 	}, nil
 }
 
+// Return values for the `setup` Ansible module.
 type SetupReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `SetupReturn`
 func SetupReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SetupReturn, error) {
 	return rpc.AnyToJSONT[SetupReturn](r.Result.Result)
 }

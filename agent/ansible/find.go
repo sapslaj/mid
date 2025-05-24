@@ -5,30 +5,124 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Return a list of files based on specific criteria. Multiple criteria are
+// AND'd together.
+// For Windows targets, use the `ansible.windows.win_find` module instead.
+// This module does not use the `find` command, it is a much simpler and slower
+// Python implementation. It is intended for small and simple uses. Those that
+// need the extra power or speed and have expertise with the UNIX command,
+// should use it directly.
 const FindName = "find"
 
+// Parameters for the `find` Ansible module.
 type FindParameters struct {
-	Age           *string   `json:"age,omitempty"`
-	Patterns      *[]string `json:"patterns,omitempty"`
-	Excludes      *[]string `json:"excludes,omitempty"`
-	Contains      *string   `json:"contains,omitempty"`
-	ReadWholeFile *bool     `json:"read_whole_file,omitempty"`
-	Paths         []string  `json:"paths"`
-	FileType      *string   `json:"file_type,omitempty"`
-	Recurse       *bool     `json:"recurse,omitempty"`
-	Size          *string   `json:"size,omitempty"`
-	AgeStamp      *string   `json:"age_stamp,omitempty"`
-	Hidden        *bool     `json:"hidden,omitempty"`
-	Mode          *any      `json:"mode,omitempty"`
-	ExactMode     *bool     `json:"exact_mode,omitempty"`
-	Follow        *bool     `json:"follow,omitempty"`
-	GetChecksum   *bool     `json:"get_checksum,omitempty"`
-	UseRegex      *bool     `json:"use_regex,omitempty"`
-	Depth         *int      `json:"depth,omitempty"`
-	Encoding      *string   `json:"encoding,omitempty"`
-	Limit         *int      `json:"limit,omitempty"`
+	// Select files whose age is equal to or greater than the specified time.
+	// Use a negative age to find files equal to or less than the specified time.
+	// You can choose seconds, minutes, hours, days, or weeks by specifying the
+	// first letter of any of those words (e.g., "1w").
+	Age *string `json:"age,omitempty"`
+
+	// One or more (shell or regex) patterns, which type is controlled by
+	// `use_regex` option.
+	// The patterns restrict the list of files to be returned to those whose
+	// basenames match at least one of the patterns specified. Multiple patterns
+	// can be specified using a list.
+	// The pattern is matched against the file base name, excluding the directory.
+	// When using regexen, the pattern MUST match the ENTIRE file name, not just
+	// parts of it. So if you are looking to match all files ending in .default,
+	// you'd need to use `.*\.default` as a regexp and not just `\.default`.
+	// This parameter expects a list, which can be either comma separated or YAML.
+	// If any of the patterns contain a comma, make sure to put them in a list to
+	// avoid splitting the patterns in undesirable ways.
+	// Defaults to `*` when `use_regex=False`, or `.*` when `use_regex=True`.
+	Patterns *[]string `json:"patterns,omitempty"`
+
+	// One or more (shell or regex) patterns, which type is controlled by
+	// `use_regex` option.
+	// Items whose basenames match an `excludes` pattern are culled from `patterns`
+	// matches. Multiple patterns can be specified using a list.
+	Excludes *[]string `json:"excludes,omitempty"`
+
+	// A regular expression or pattern which should be matched against the file
+	// content.
+	// If `read_whole_file=false` it matches against the beginning of the line
+	// (uses `re.match(\`)). If `read_whole_file=true`, it searches anywhere for
+	// that pattern (uses `re.search(\`)).
+	// Works only when `file_type` is `file`.
+	Contains *string `json:"contains,omitempty"`
+
+	// When doing a `contains` search, determines whether the whole file should be
+	// read into memory or if the regex should be applied to the file line-by-line.
+	// Setting this to `true` can have performance and memory implications for
+	// large files.
+	// This uses `re.search(\`) instead of `re.match(\`).
+	ReadWholeFile *bool `json:"read_whole_file,omitempty"`
+
+	// List of paths of directories to search. All paths must be fully qualified.
+	// From ansible-core 2.18 and onwards, the data type has changed from `str` to
+	// `path`.
+	Paths []string `json:"paths"`
+
+	// Type of file to select.
+	// The `link` and `any` choices were added in Ansible 2.3.
+	FileType *string `json:"file_type,omitempty"`
+
+	// If target is a directory, recursively descend into the directory looking for
+	// files.
+	Recurse *bool `json:"recurse,omitempty"`
+
+	// Select files whose size is equal to or greater than the specified size.
+	// Use a negative size to find files equal to or less than the specified size.
+	// Unqualified values are in bytes but b, k, m, g, and t can be appended to
+	// specify bytes, kilobytes, megabytes, gigabytes, and terabytes, respectively.
+	// Size is not evaluated for directories.
+	Size *string `json:"size,omitempty"`
+
+	// Choose the file property against which we compare age.
+	AgeStamp *string `json:"age_stamp,omitempty"`
+
+	// Set this to `true` to include hidden files, otherwise they will be ignored.
+	Hidden *bool `json:"hidden,omitempty"`
+
+	// Choose objects matching a specified permission. This value is restricted to
+	// modes that can be applied using the python `os.chmod` function.
+	// The mode can be provided as an octal such as `"0644"` or as symbolic such as
+	// `u=rw,g=r,o=r`.
+	Mode *any `json:"mode,omitempty"`
+
+	// Restrict mode matching to exact matches only, and not as a minimum set of
+	// permissions to match.
+	ExactMode *bool `json:"exact_mode,omitempty"`
+
+	// Set this to `true` to follow symlinks in path for systems with python 2.6+.
+	Follow *bool `json:"follow,omitempty"`
+
+	// Set this to `true` to retrieve a file's SHA1 checksum.
+	GetChecksum *bool `json:"get_checksum,omitempty"`
+
+	// If `false`, the patterns are file globs (shell).
+	// If `true`, they are python regexes.
+	UseRegex *bool `json:"use_regex,omitempty"`
+
+	// Set the maximum number of levels to descend into.
+	// Setting `recurse=false` will override this value, which is effectively depth
+	// 1.
+	// Default is unlimited depth.
+	Depth *int `json:"depth,omitempty"`
+
+	// When doing a `contains` search, determine the encoding of the files to be
+	// searched.
+	Encoding *string `json:"encoding,omitempty"`
+
+	// Limit the maximum number of matching paths returned. After finding this
+	// many, the find action will stop looking.
+	// Matches are made from the top, down (i.e. shallowest directory first).
+	// If not set, or set to v(null), it will do unlimited matches.
+	// Default is unlimited matches.
+	Limit *int `json:"limit,omitempty"`
 }
 
+// Wrap the `FindParameters into an `rpc.RPCCall`.
 func (p *FindParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -43,14 +137,25 @@ func (p *FindParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error
 	}, nil
 }
 
+// Return values for the `find` Ansible module.
 type FindReturn struct {
 	AnsibleCommonReturns
-	Files        *[]any          `json:"files,omitempty"`
-	Matched      *int            `json:"matched,omitempty"`
-	Examined     *int            `json:"examined,omitempty"`
+
+	// All matches found with the specified criteria (see stat module for full
+	// output of each dictionary)
+	Files *[]any `json:"files,omitempty"`
+
+	// Number of matches
+	Matched *int `json:"matched,omitempty"`
+
+	// Number of filesystem objects looked at
+	Examined *int `json:"examined,omitempty"`
+
+	// skipped paths and reasons they were skipped
 	SkippedPaths *map[string]any `json:"skipped_paths,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `FindReturn`
 func FindReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FindReturn, error) {
 	return rpc.AnyToJSONT[FindReturn](r.Result.Result)
 }

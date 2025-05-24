@@ -5,21 +5,60 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Add or remove an APT repositories in Ubuntu and Debian.
 const AptRepositoryName = "apt_repository"
 
+// Parameters for the `apt_repository` Ansible module.
 type AptRepositoryParameters struct {
-	Repo                     string  `json:"repo"`
-	State                    *string `json:"state,omitempty"`
-	Mode                     *any    `json:"mode,omitempty"`
-	UpdateCache              *bool   `json:"update_cache,omitempty"`
-	UpdateCacheRetries       *int    `json:"update_cache_retries,omitempty"`
-	UpdateCacheRetryMaxDelay *int    `json:"update_cache_retry_max_delay,omitempty"`
-	ValidateCerts            *bool   `json:"validate_certs,omitempty"`
-	Filename                 *string `json:"filename,omitempty"`
-	Codename                 *string `json:"codename,omitempty"`
-	InstallPythonApt         *bool   `json:"install_python_apt,omitempty"`
+	// A source string for the repository.
+	Repo string `json:"repo"`
+
+	// A source string state.
+	State *string `json:"state,omitempty"`
+
+	// The octal mode for newly created files in `sources.list.d`.
+	// Default is what system uses (probably 0644).
+	Mode *any `json:"mode,omitempty"`
+
+	// Run the equivalent of `apt-get update` when a change occurs. Cache updates
+	// are run after making changes.
+	UpdateCache *bool `json:"update_cache,omitempty"`
+
+	// Amount of retries if the cache update fails. Also see
+	// `update_cache_retry_max_delay`.
+	UpdateCacheRetries *int `json:"update_cache_retries,omitempty"`
+
+	// Use an exponential backoff delay for each retry (see `update_cache_retries`)
+	// up to this max delay in seconds.
+	UpdateCacheRetryMaxDelay *int `json:"update_cache_retry_max_delay,omitempty"`
+
+	// If `false`, SSL certificates for the target repo will not be validated. This
+	// should only be used on personally controlled sites using self-signed
+	// certificates.
+	ValidateCerts *bool `json:"validate_certs,omitempty"`
+
+	// Sets the name of the source list file in `sources.list.d`. Defaults to a
+	// file name based on the repository source url. The `.list` extension will be
+	// automatically added.
+	Filename *string `json:"filename,omitempty"`
+
+	// Override the distribution codename to use for PPA repositories. Should
+	// usually only be set when working with a PPA on a non-Ubuntu target (for
+	// example, Debian or Mint).
+	Codename *string `json:"codename,omitempty"`
+
+	// Whether to automatically try to install the Python apt library or not, if it
+	// is not already installed. Without this library, the module does not work.
+	// Runs `apt-get install python-apt` for Python 2, and `apt-get install
+	// python3-apt` for Python 3.
+	// Only works with the system Python 2 or Python 3. If you are using a Python
+	// on the remote that is not the system Python, set `install_python_apt=false`
+	// and ensure that the Python apt library for your Python version is installed
+	// some other way.
+	InstallPythonApt *bool `json:"install_python_apt,omitempty"`
 }
 
+// Wrap the `AptRepositoryParameters into an `rpc.RPCCall`.
 func (p *AptRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -34,13 +73,21 @@ func (p *AptRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArg
 	}, nil
 }
 
+// Return values for the `apt_repository` Ansible module.
 type AptRepositoryReturn struct {
 	AnsibleCommonReturns
-	Repo           *string `json:"repo,omitempty"`
-	SourcesAdded   *[]any  `json:"sources_added,omitempty"`
-	SourcesRemoved *[]any  `json:"sources_removed,omitempty"`
+
+	// A source string for the repository
+	Repo *string `json:"repo,omitempty"`
+
+	// List of sources added
+	SourcesAdded *[]any `json:"sources_added,omitempty"`
+
+	// List of sources removed
+	SourcesRemoved *[]any `json:"sources_removed,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `AptRepositoryReturn`
 func AptRepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AptRepositoryReturn, error) {
 	return rpc.AnyToJSONT[AptRepositoryReturn](r.Result.Result)
 }

@@ -5,21 +5,70 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// The `ansible.builtin.command` module takes the command name followed by a
+// list of space-delimited arguments.
+// The given command will be executed on all selected nodes.
+// The command(s) will not be processed through the shell, so operations like
+// `"*"`, `"<"`, `">"`, `"|"`, `";"` and `"&"` will not work. Also, environment
+// variables are resolved via Python, not shell, see `expand_argument_vars` and
+// are left unchanged if not matched. Use the `ansible.builtin.shell` module if
+// you need these features.
+// To create `command` tasks that are easier to read than the ones using space-
+// delimited arguments, pass parameters using the `args` `task keyword,https://d
+// ocs.ansible.com/ansible/latest/reference_appendices/playbooks_keywords.html#t
+// ask` or use `cmd` parameter.
+// Either a free form command or `cmd` parameter is required, see the examples.
+// For Windows targets, use the `ansible.windows.win_command` module instead.
 const CommandName = "command"
 
+// Parameters for the `command` Ansible module.
 type CommandParameters struct {
-	ExpandArgumentVars *bool     `json:"expand_argument_vars,omitempty"`
-	FreeForm           *string   `json:"free_form,omitempty"`
-	Cmd                *string   `json:"cmd,omitempty"`
-	Argv               *[]string `json:"argv,omitempty"`
-	Creates            *string   `json:"creates,omitempty"`
-	Removes            *string   `json:"removes,omitempty"`
-	Chdir              *string   `json:"chdir,omitempty"`
-	Stdin              *string   `json:"stdin,omitempty"`
-	StdinAddNewline    *bool     `json:"stdin_add_newline,omitempty"`
-	StripEmptyEnds     *bool     `json:"strip_empty_ends,omitempty"`
+	// Expands the arguments that are variables, for example `$HOME` will be
+	// expanded before being passed to the command to run.
+	// If a variable is not matched, it is left unchanged, unlike shell
+	// substitution which would remove it.
+	// Set to `false` to disable expansion and treat the value as a literal
+	// argument.
+	ExpandArgumentVars *bool `json:"expand_argument_vars,omitempty"`
+
+	// The command module takes a free form string as a command to run.
+	// There is no actual parameter named `free_form`.
+	FreeForm *string `json:"free_form,omitempty"`
+
+	// The command to run.
+	Cmd *string `json:"cmd,omitempty"`
+
+	// Passes the command as a list rather than a string.
+	// Use `argv` to avoid quoting values that would otherwise be interpreted
+	// incorrectly (for example "user name").
+	// Only the string (free form) or the list (argv) form can be provided, not
+	// both.  One or the other must be provided.
+	Argv *[]string `json:"argv,omitempty"`
+
+	// A filename or (since 2.0) glob pattern. If a matching file already exists,
+	// this step `will not` be run.
+	// This is checked before `removes` is checked.
+	Creates *string `json:"creates,omitempty"`
+
+	// A filename or (since 2.0) glob pattern. If a matching file exists, this step
+	// `will` be run.
+	// This is checked after `creates` is checked.
+	Removes *string `json:"removes,omitempty"`
+
+	// Change into this directory before running the command.
+	Chdir *string `json:"chdir,omitempty"`
+
+	// Set the stdin of the command directly to the specified value.
+	Stdin *string `json:"stdin,omitempty"`
+
+	// If set to `true`, append a newline to stdin data.
+	StdinAddNewline *bool `json:"stdin_add_newline,omitempty"`
+
+	// Strip empty lines from the end of stdout/stderr in result.
+	StripEmptyEnds *bool `json:"strip_empty_ends,omitempty"`
 }
 
+// Wrap the `CommandParameters into an `rpc.RPCCall`.
 func (p *CommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -34,20 +83,42 @@ func (p *CommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], er
 	}, nil
 }
 
+// Return values for the `command` Ansible module.
 type CommandReturn struct {
 	AnsibleCommonReturns
-	Msg         *string `json:"msg,omitempty"`
-	Start       *string `json:"start,omitempty"`
-	End         *string `json:"end,omitempty"`
-	Delta       *string `json:"delta,omitempty"`
-	Stdout      *string `json:"stdout,omitempty"`
-	Stderr      *string `json:"stderr,omitempty"`
-	Cmd         *[]any  `json:"cmd,omitempty"`
-	Rc          *int    `json:"rc,omitempty"`
-	StdoutLines *[]any  `json:"stdout_lines,omitempty"`
-	StderrLines *[]any  `json:"stderr_lines,omitempty"`
+
+	// changed
+	Msg *string `json:"msg,omitempty"`
+
+	// The command execution start time.
+	Start *string `json:"start,omitempty"`
+
+	// The command execution end time.
+	End *string `json:"end,omitempty"`
+
+	// The command execution delta time.
+	Delta *string `json:"delta,omitempty"`
+
+	// The command standard output.
+	Stdout *string `json:"stdout,omitempty"`
+
+	// The command standard error.
+	Stderr *string `json:"stderr,omitempty"`
+
+	// The command executed by the task.
+	Cmd *[]any `json:"cmd,omitempty"`
+
+	// The command return code (0 means success).
+	Rc *int `json:"rc,omitempty"`
+
+	// The command standard output split in lines.
+	StdoutLines *[]any `json:"stdout_lines,omitempty"`
+
+	// The command standard error split in lines.
+	StderrLines *[]any `json:"stderr_lines,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `CommandReturn`
 func CommandReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CommandReturn, error) {
 	return rpc.AnyToJSONT[CommandReturn](r.Result.Result)
 }

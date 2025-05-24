@@ -5,42 +5,177 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Installs, upgrade, removes, and lists packages and groups with the `dnf5`
+// package manager.
+// WARNING: The `dnf5` package manager is still under development and not all
+// features that the existing `ansible.builtin.dnf` module provides are
+// implemented in `ansible.builtin.dnf5`, please consult specific options for
+// more information.
 const Dnf5Name = "dnf5"
 
+// Parameters for the `dnf5` Ansible module.
 type Dnf5Parameters struct {
-	Name             *[]string `json:"name,omitempty"`
-	List             *string   `json:"list,omitempty"`
-	State            *string   `json:"state,omitempty"`
-	Enablerepo       *[]string `json:"enablerepo,omitempty"`
-	Disablerepo      *[]string `json:"disablerepo,omitempty"`
-	ConfFile         *string   `json:"conf_file,omitempty"`
-	DisableGpgCheck  *bool     `json:"disable_gpg_check,omitempty"`
-	Installroot      *string   `json:"installroot,omitempty"`
-	Releasever       *string   `json:"releasever,omitempty"`
-	Autoremove       *bool     `json:"autoremove,omitempty"`
-	Exclude          *[]string `json:"exclude,omitempty"`
-	SkipBroken       *bool     `json:"skip_broken,omitempty"`
-	UpdateCache      *bool     `json:"update_cache,omitempty"`
-	UpdateOnly       *bool     `json:"update_only,omitempty"`
-	Security         *bool     `json:"security,omitempty"`
-	Bugfix           *bool     `json:"bugfix,omitempty"`
-	EnablePlugin     *[]string `json:"enable_plugin,omitempty"`
-	DisablePlugin    *[]string `json:"disable_plugin,omitempty"`
-	DisableExcludes  *string   `json:"disable_excludes,omitempty"`
-	ValidateCerts    *bool     `json:"validate_certs,omitempty"`
-	Sslverify        *bool     `json:"sslverify,omitempty"`
-	AllowDowngrade   *bool     `json:"allow_downgrade,omitempty"`
-	InstallRepoquery *bool     `json:"install_repoquery,omitempty"`
-	DownloadOnly     *bool     `json:"download_only,omitempty"`
-	LockTimeout      *int      `json:"lock_timeout,omitempty"`
-	InstallWeakDeps  *bool     `json:"install_weak_deps,omitempty"`
-	DownloadDir      *string   `json:"download_dir,omitempty"`
-	Allowerasing     *bool     `json:"allowerasing,omitempty"`
-	Nobest           *bool     `json:"nobest,omitempty"`
-	Best             *bool     `json:"best,omitempty"`
-	Cacheonly        *bool     `json:"cacheonly,omitempty"`
+	// A package name or package specifier with version, like `name-1.0`. When
+	// using `state=latest`, this can be `*` which means run: `dnf -y update`. You
+	// can also pass a url or a local path to an rpm file. To operate on several
+	// packages this can accept a comma separated string of packages or a list of
+	// packages.
+	// Comparison operators for package version are valid here `>`, `<`, `>=`,
+	// `<=`. Example - `name >= 1.0`. Spaces around the operator are required.
+	// You can also pass an absolute path for a binary which is provided by the
+	// package to install. See examples for more information.
+	Name *[]string `json:"name,omitempty"`
+
+	// Various (non-idempotent) commands for usage with `/usr/bin/ansible` and
+	// `not` playbooks. Use `ansible.builtin.package_facts` instead of the `list`
+	// argument as a best practice.
+	List *string `json:"list,omitempty"`
+
+	// Whether to install (`present`, `latest`), or remove (`absent`) a package.
+	// Default is `None`, however in effect the default action is `present` unless
+	// the `autoremove=true`, then `absent` is inferred.
+	State *string `json:"state,omitempty"`
+
+	// `Repoid` of repositories to enable for the install/update operation. These
+	// repos will not persist beyond the transaction. When specifying multiple
+	// repos, separate them with a `,`.
+	Enablerepo *[]string `json:"enablerepo,omitempty"`
+
+	// `Repoid` of repositories to disable for the install/update operation. These
+	// repos will not persist beyond the transaction. When specifying multiple
+	// repos, separate them with a `,`.
+	Disablerepo *[]string `json:"disablerepo,omitempty"`
+
+	// The remote dnf configuration file to use for the transaction.
+	ConfFile *string `json:"conf_file,omitempty"`
+
+	// Whether to disable the GPG checking of signatures of packages being
+	// installed. Has an effect only if `state` is `present` or `latest`.
+	// This setting affects packages installed from a repository as well as "local"
+	// packages installed from the filesystem or a URL.
+	DisableGpgCheck *bool `json:"disable_gpg_check,omitempty"`
+
+	// Specifies an alternative installroot, relative to which all packages will be
+	// installed.
+	Installroot *string `json:"installroot,omitempty"`
+
+	// Specifies an alternative release from which all packages will be installed.
+	Releasever *string `json:"releasever,omitempty"`
+
+	// If `true`, removes all "leaf" packages from the system that were originally
+	// installed as dependencies of user-installed packages but which are no longer
+	// required by any such package. Should be used alone or when `state=absent`.
+	Autoremove *bool `json:"autoremove,omitempty"`
+
+	// Package name(s) to exclude when `state=present` or `state=latest`. This can
+	// be a list or a comma separated string.
+	Exclude *[]string `json:"exclude,omitempty"`
+
+	// Skip all unavailable packages or packages with broken dependencies without
+	// raising an error. Equivalent to passing the `--skip-broken` option.
+	SkipBroken *bool `json:"skip_broken,omitempty"`
+
+	// Force dnf to check if cache is out of date and redownload if needed. Has an
+	// effect only if `state=present` or `state=latest`.
+	UpdateCache *bool `json:"update_cache,omitempty"`
+
+	// When using latest, only update installed packages. Do not install packages.
+	// Has an effect only if `state=present` or `state=latest`.
+	UpdateOnly *bool `json:"update_only,omitempty"`
+
+	// If set to `true`, and `state=latest` then only installs updates that have
+	// been marked security related.
+	// Note that, similar to `dnf upgrade-minimal`, this filter applies to
+	// dependencies as well.
+	Security *bool `json:"security,omitempty"`
+
+	// If set to `true`, and `state=latest` then only installs updates that have
+	// been marked bugfix related.
+	// Note that, similar to `dnf upgrade-minimal`, this filter applies to
+	// dependencies as well.
+	Bugfix *bool `json:"bugfix,omitempty"`
+
+	// `Plugin` name to enable for the install/update operation. The enabled plugin
+	// will not persist beyond the transaction.
+	// `disable_plugin` takes precedence in case a plugin is listed in both
+	// `enable_plugin` and `disable_plugin`.
+	// Requires python3-libdnf5 5.2.0.0+.
+	EnablePlugin *[]string `json:"enable_plugin,omitempty"`
+
+	// `Plugin` name to disable for the install/update operation. The disabled
+	// plugins will not persist beyond the transaction.
+	// `disable_plugin` takes precedence in case a plugin is listed in both
+	// `enable_plugin` and `disable_plugin`.
+	// Requires python3-libdnf5 5.2.0.0+.
+	DisablePlugin *[]string `json:"disable_plugin,omitempty"`
+
+	// Disable the excludes defined in DNF config files.
+	// If set to `all`, disables all excludes.
+	// If set to `main`, disable excludes defined in `[main]` in `dnf.conf`.
+	// If set to `repoid`, disable excludes defined for given repo id.
+	DisableExcludes *string `json:"disable_excludes,omitempty"`
+
+	// This is effectively a no-op in the dnf5 module as dnf5 itself handles
+	// downloading a https url as the source of the rpm, but is an accepted
+	// parameter for feature parity/compatibility with the `ansible.builtin.dnf`
+	// module.
+	ValidateCerts *bool `json:"validate_certs,omitempty"`
+
+	// Disables SSL validation of the repository server for this transaction.
+	// This should be set to `false` if one of the configured repositories is using
+	// an untrusted or self-signed certificate.
+	Sslverify *bool `json:"sslverify,omitempty"`
+
+	// Specify if the named package and version is allowed to downgrade a maybe
+	// already installed higher version of that package. Note that setting
+	// `allow_downgrade=true` can make this module behave in a non-idempotent way.
+	// The task could end up with a set of packages that does not match the
+	// complete list of specified packages to install (because dependencies between
+	// the downgraded package and others can cause changes to the packages which
+	// were in the earlier transaction).
+	AllowDowngrade *bool `json:"allow_downgrade,omitempty"`
+
+	// This is effectively a no-op in DNF as it is not needed with DNF.
+	// This option is deprecated and will be removed in ansible-core 2.20.
+	InstallRepoquery *bool `json:"install_repoquery,omitempty"`
+
+	// Only download the packages, do not install them.
+	DownloadOnly *bool `json:"download_only,omitempty"`
+
+	// This is currently a no-op as dnf5 does not provide an option to configure
+	// it.
+	// Amount of time to wait for the dnf lockfile to be freed.
+	LockTimeout *int `json:"lock_timeout,omitempty"`
+
+	// Will also install all packages linked by a weak dependency relation.
+	InstallWeakDeps *bool `json:"install_weak_deps,omitempty"`
+
+	// Specifies an alternate directory to store packages.
+	// Has an effect only if `download_only` is specified.
+	DownloadDir *string `json:"download_dir,omitempty"`
+
+	// If `true` it allows  erasing  of  installed  packages to resolve
+	// dependencies.
+	Allowerasing *bool `json:"allowerasing,omitempty"`
+
+	// This is the opposite of the `best` option kept for backwards compatibility.
+	// Since ansible-core 2.17 the default value is set by the operating system
+	// distribution.
+	Nobest *bool `json:"nobest,omitempty"`
+
+	// When set to `true`, either use a package with the highest version available
+	// or fail.
+	// When set to `false`, if the latest version cannot be installed go with the
+	// lower version.
+	// Default is set by the operating system distribution.
+	Best *bool `json:"best,omitempty"`
+
+	// Tells dnf to run entirely from system cache; does not download or update
+	// metadata.
+	Cacheonly *bool `json:"cacheonly,omitempty"`
 }
 
+// Wrap the `Dnf5Parameters into an `rpc.RPCCall`.
 func (p *Dnf5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -55,14 +190,24 @@ func (p *Dnf5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error
 	}, nil
 }
 
+// Return values for the `dnf5` Ansible module.
 type Dnf5Return struct {
 	AnsibleCommonReturns
-	Msg      *string `json:"msg,omitempty"`
-	Results  *[]any  `json:"results,omitempty"`
-	Failures *[]any  `json:"failures,omitempty"`
-	Rc       *int    `json:"rc,omitempty"`
+
+	// Additional information about the result
+	Msg *string `json:"msg,omitempty"`
+
+	// A list of the dnf transaction results
+	Results *[]any `json:"results,omitempty"`
+
+	// A list of the dnf transaction failures
+	Failures *[]any `json:"failures,omitempty"`
+
+	// For compatibility, 0 for success, 1 for failure
+	Rc *int `json:"rc,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `Dnf5Return`
 func Dnf5ReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (Dnf5Return, error) {
 	return rpc.AnyToJSONT[Dnf5Return](r.Result.Result)
 }

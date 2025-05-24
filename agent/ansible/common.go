@@ -8,6 +8,7 @@ type AnsibleCommonReturns struct {
 	Diff    *any    `json:"diff,omitempty"`
 }
 
+// Returns true if Changed or Diff is set, false otherwise.
 func (returns *AnsibleCommonReturns) IsChanged() bool {
 	changed := returns.Changed
 	hasDiff := returns.Diff != nil

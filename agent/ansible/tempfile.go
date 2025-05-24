@@ -5,15 +5,32 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// The `ansible.builtin.tempfile` module creates temporary files and
+// directories. `mktemp` command takes different parameters on various systems,
+// this module helps to avoid troubles related to that. Files/directories
+// created by module are accessible only by creator. In case you need to make
+// them world-accessible you need to use `ansible.builtin.file` module.
+// For Windows targets, use the `ansible.windows.win_tempfile` module instead.
 const TempfileName = "tempfile"
 
+// Parameters for the `tempfile` Ansible module.
 type TempfileParameters struct {
-	State  *string `json:"state,omitempty"`
-	Path   *string `json:"path,omitempty"`
+	// Whether to create file or directory.
+	State *string `json:"state,omitempty"`
+
+	// Location where temporary file or directory should be created.
+	// If path is not specified, the default system temporary directory will be
+	// used.
+	Path *string `json:"path,omitempty"`
+
+	// Prefix of file/directory name created by module.
 	Prefix *string `json:"prefix,omitempty"`
+
+	// Suffix of file/directory name created by module.
 	Suffix *string `json:"suffix,omitempty"`
 }
 
+// Wrap the `TempfileParameters into an `rpc.RPCCall`.
 func (p *TempfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -28,11 +45,15 @@ func (p *TempfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], e
 	}, nil
 }
 
+// Return values for the `tempfile` Ansible module.
 type TempfileReturn struct {
 	AnsibleCommonReturns
+
+	// Path to created file or directory.
 	Path *string `json:"path,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `TempfileReturn`
 func TempfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (TempfileReturn, error) {
 	return rpc.AnyToJSONT[TempfileReturn](r.Result.Result)
 }

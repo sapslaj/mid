@@ -5,16 +5,35 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Configure a .deb package using debconf-set-selections.
+// Or just query existing selections.
 const DebconfName = "debconf"
 
+// Parameters for the `debconf` Ansible module.
 type DebconfParameters struct {
-	Name     string  `json:"name"`
+	// Name of package to configure.
+	Name string `json:"name"`
+
+	// A debconf configuration setting.
 	Question *string `json:"question,omitempty"`
-	Vtype    *string `json:"vtype,omitempty"`
-	Value    *any    `json:"value,omitempty"`
-	Unseen   *bool   `json:"unseen,omitempty"`
+
+	// The type of the value supplied.
+	// It is highly recommended to add `no_log=True` to task while specifying
+	// `vtype=password`.
+	// `seen` was added in Ansible 2.2.
+	// After Ansible 2.17, user can specify `value` as a list, if `vtype` is set as
+	// `multiselect`.
+	Vtype *string `json:"vtype,omitempty"`
+
+	// Value to set the configuration to.
+	// After Ansible 2.17, `value` is of type `raw`.
+	Value *any `json:"value,omitempty"`
+
+	// Do not set `seen` flag when pre-seeding.
+	Unseen *bool `json:"unseen,omitempty"`
 }
 
+// Wrap the `DebconfParameters into an `rpc.RPCCall`.
 func (p *DebconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -29,10 +48,12 @@ func (p *DebconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], er
 	}, nil
 }
 
+// Return values for the `debconf` Ansible module.
 type DebconfReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `DebconfReturn`
 func DebconfReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DebconfReturn, error) {
 	return rpc.AnyToJSONT[DebconfReturn](r.Result.Result)
 }

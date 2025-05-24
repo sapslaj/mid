@@ -5,51 +5,242 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Manage user accounts and user attributes.
+// For Windows targets, use the `ansible.windows.win_user` module instead.
 const UserName = "user"
 
+// Parameters for the `user` Ansible module.
 type UserParameters struct {
-	Name                         string    `json:"name"`
-	Uid                          *int      `json:"uid,omitempty"`
-	Comment                      *string   `json:"comment,omitempty"`
-	Hidden                       *bool     `json:"hidden,omitempty"`
-	NonUnique                    *bool     `json:"non_unique,omitempty"`
-	Seuser                       *string   `json:"seuser,omitempty"`
-	Group                        *string   `json:"group,omitempty"`
-	Groups                       *[]string `json:"groups,omitempty"`
-	Append                       *bool     `json:"append,omitempty"`
-	Shell                        *string   `json:"shell,omitempty"`
-	Home                         *string   `json:"home,omitempty"`
-	Skeleton                     *string   `json:"skeleton,omitempty"`
-	Password                     *string   `json:"password,omitempty"`
-	State                        *string   `json:"state,omitempty"`
-	CreateHome                   *bool     `json:"create_home,omitempty"`
-	MoveHome                     *bool     `json:"move_home,omitempty"`
-	System                       *bool     `json:"system,omitempty"`
-	Force                        *bool     `json:"force,omitempty"`
-	Remove                       *bool     `json:"remove,omitempty"`
-	LoginClass                   *string   `json:"login_class,omitempty"`
-	GenerateSshKey               *bool     `json:"generate_ssh_key,omitempty"`
-	SshKeyBits                   *int      `json:"ssh_key_bits,omitempty"`
-	SshKeyType                   *string   `json:"ssh_key_type,omitempty"`
-	SshKeyFile                   *string   `json:"ssh_key_file,omitempty"`
-	SshKeyComment                *string   `json:"ssh_key_comment,omitempty"`
-	SshKeyPassphrase             *string   `json:"ssh_key_passphrase,omitempty"`
-	UpdatePassword               *string   `json:"update_password,omitempty"`
-	Expires                      *float64  `json:"expires,omitempty"`
-	PasswordLock                 *bool     `json:"password_lock,omitempty"`
-	Local                        *bool     `json:"local,omitempty"`
-	Profile                      *string   `json:"profile,omitempty"`
-	Authorization                *string   `json:"authorization,omitempty"`
-	Role                         *string   `json:"role,omitempty"`
-	PasswordExpireMax            *int      `json:"password_expire_max,omitempty"`
-	PasswordExpireMin            *int      `json:"password_expire_min,omitempty"`
-	PasswordExpireWarn           *int      `json:"password_expire_warn,omitempty"`
-	Umask                        *string   `json:"umask,omitempty"`
-	PasswordExpireAccountDisable *int      `json:"password_expire_account_disable,omitempty"`
-	UidMin                       *int      `json:"uid_min,omitempty"`
-	UidMax                       *int      `json:"uid_max,omitempty"`
+	// Name of the user to create, remove or modify.
+	Name string `json:"name"`
+
+	// Optionally sets the `UID` of the user.
+	Uid *int `json:"uid,omitempty"`
+
+	// Optionally sets the description (aka `GECOS`) of user account.
+	// On macOS, this defaults to the `name` option.
+	Comment *string `json:"comment,omitempty"`
+
+	// macOS only, optionally hide the user from the login window and system
+	// preferences.
+	// The default will be `true` if the `system` option is used.
+	Hidden *bool `json:"hidden,omitempty"`
+
+	// Optionally when used with the `-u` option, this option allows to change the
+	// user ID to a non-unique value.
+	NonUnique *bool `json:"non_unique,omitempty"`
+
+	// Optionally sets the `seuser` type `user_u` on SELinux enabled systems.
+	Seuser *string `json:"seuser,omitempty"`
+
+	// Optionally sets the user's primary group (takes a group name).
+	// On macOS, this defaults to `staff`.
+	Group *string `json:"group,omitempty"`
+
+	// A list of supplementary groups which the user is also a member of.
+	// By default, the user is removed from all other groups. Configure `append` to
+	// modify this.
+	// When set to an empty string `''`, the user is removed from all groups except
+	// the primary group.
+	// Before Ansible 2.3, the only input format allowed was a comma separated
+	// string.
+	Groups *[]string `json:"groups,omitempty"`
+
+	// If `true`, add the user to the groups specified in `groups`.
+	// If `false`, user will only be added to the groups specified in `groups`,
+	// removing them from all other groups.
+	Append *bool `json:"append,omitempty"`
+
+	// Optionally set the user's shell.
+	// On macOS, before Ansible 2.5, the default shell for non-system users was
+	// `/usr/bin/false`. Since Ansible 2.5, the default shell for non-system users
+	// on macOS is `/bin/bash`.
+	// On other operating systems, the default shell is determined by the
+	// underlying tool invoked by this module. See Notes for a per platform list of
+	// invoked tools.
+	// From Ansible 2.18, the type is changed to `path` from `str`.
+	Shell *string `json:"shell,omitempty"`
+
+	// Optionally set the user's home directory.
+	Home *string `json:"home,omitempty"`
+
+	// Optionally set a home skeleton directory.
+	// Requires `create_home` option!
+	Skeleton *string `json:"skeleton,omitempty"`
+
+	// If provided, set the user's password to the provided encrypted hash (Linux)
+	// or plain text password (macOS).
+	// `Linux/Unix/POSIX:` Enter the hashed password as the value.
+	// See `FAQ entry,https://docs.ansible.com/ansible/latest/reference_appendices/
+	// faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module` for
+	// details on various ways to generate the hash of a password.
+	// To create an account with a locked/disabled password on Linux systems, set
+	// this to `'!'` or `'*'`.
+	// To create an account with a locked/disabled password on OpenBSD, set this to
+	// `'*************'`.
+	// `OS X/macOS:` Enter the cleartext password as the value. Be sure to take
+	// relevant security precautions.
+	// On macOS, the password specified in the `password` option will always be
+	// set, regardless of whether the user account already exists or not.
+	// When the password is passed as an argument, the `ansible.builtin.user`
+	// module will always return changed to `true` for macOS systems. Since macOS
+	// no longer provides access to the hashed passwords directly.
+	Password *string `json:"password,omitempty"`
+
+	// Whether the account should exist or not, taking action if the state is
+	// different from what is stated.
+	// See this `FAQ entry,https://docs.ansible.com/ansible/latest/reference_append
+	// ices/faq.html#running-on-macos-as-a-target` for additional requirements when
+	// removing users on macOS systems.
+	State *string `json:"state,omitempty"`
+
+	// Unless set to `false`, a home directory will be made for the user when the
+	// account is created or if the home directory does not exist.
+	// Changed from `createhome` to `create_home` in Ansible 2.5.
+	CreateHome *bool `json:"create_home,omitempty"`
+
+	// If set to `true` when used with `home`, attempt to move the user's old home
+	// directory to the specified directory if it isn't there already and the old
+	// home exists.
+	MoveHome *bool `json:"move_home,omitempty"`
+
+	// When creating an account `state=present`, setting this to `true` makes the
+	// user a system account.
+	// This setting cannot be changed on existing users.
+	System *bool `json:"system,omitempty"`
+
+	// This only affects `state=absent`, it forces removal of the user and
+	// associated directories on supported platforms.
+	// The behavior is the same as `userdel --force`, check the man page for
+	// `userdel` on your system for details and support.
+	// When used with `generate_ssh_key=yes` this forces an existing key to be
+	// overwritten.
+	Force *bool `json:"force,omitempty"`
+
+	// This only affects `state=absent`, it attempts to remove directories
+	// associated with the user.
+	// The behavior is the same as `userdel --remove`, check the man page for
+	// details and support.
+	Remove *bool `json:"remove,omitempty"`
+
+	// Optionally sets the user's login class, a feature of most BSD OSs.
+	LoginClass *string `json:"login_class,omitempty"`
+
+	// Whether to generate a SSH key for the user in question.
+	// This will `not` overwrite an existing SSH key unless used with `force=yes`.
+	GenerateSshKey *bool `json:"generate_ssh_key,omitempty"`
+
+	// Optionally specify number of bits in SSH key to create.
+	// The default value depends on `ssh-keygen`.
+	SshKeyBits *int `json:"ssh_key_bits,omitempty"`
+
+	// Optionally specify the type of SSH key to generate.
+	// Available SSH key types will depend on implementation present on target
+	// host.
+	SshKeyType *string `json:"ssh_key_type,omitempty"`
+
+	// Optionally specify the SSH key filename.
+	// If this is a relative filename then it will be relative to the user's home
+	// directory.
+	// This parameter defaults to `.ssh/id_rsa`.
+	SshKeyFile *string `json:"ssh_key_file,omitempty"`
+
+	// Optionally define the comment for the SSH key.
+	SshKeyComment *string `json:"ssh_key_comment,omitempty"`
+
+	// Set a passphrase for the SSH key.
+	// If no passphrase is provided, the SSH key will default to having no
+	// passphrase.
+	SshKeyPassphrase *string `json:"ssh_key_passphrase,omitempty"`
+
+	// `always` will update passwords if they differ.
+	// `on_create` will only set the password for newly created users.
+	UpdatePassword *string `json:"update_password,omitempty"`
+
+	// An expiry time for the user in epoch, it will be ignored on platforms that
+	// do not support this.
+	// Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
+	// Since Ansible 2.6 you can remove the expiry time by specifying a negative
+	// value. Currently supported on GNU/Linux and FreeBSD.
+	Expires *float64 `json:"expires,omitempty"`
+
+	// Lock the password (`usermod -L`, `usermod -U`, `pw lock`).
+	// Implementation differs by platform. This option does not always mean the
+	// user cannot login using other methods.
+	// This option does not disable the user, only lock the password.
+	// This must be set to `false` in order to unlock a currently locked password.
+	// The absence of this parameter will not unlock a password.
+	// Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
+	PasswordLock *bool `json:"password_lock,omitempty"`
+
+	// Forces the use of "local" command alternatives on platforms that implement
+	// it.
+	// This is useful in environments that use centralized authentication when you
+	// want to manipulate the local users (in other words, it uses `luseradd`
+	// instead of `useradd`).
+	// This will check `/etc/passwd` for an existing account before invoking
+	// commands. If the local account database exists somewhere other than
+	// `/etc/passwd`, this setting will not work properly.
+	// This requires that the above commands as well as `/etc/passwd` must exist on
+	// the target host, otherwise it will be a fatal error.
+	Local *bool `json:"local,omitempty"`
+
+	// Sets the profile of the user.
+	// Can set multiple profiles using comma separation.
+	// To delete all the profiles, use `profile=''`.
+	// Currently supported on Illumos/Solaris. Does nothing when used with other
+	// platforms.
+	Profile *string `json:"profile,omitempty"`
+
+	// Sets the authorization of the user.
+	// Can set multiple authorizations using comma separation.
+	// To delete all authorizations, use `authorization=''`.
+	// Currently supported on Illumos/Solaris. Does nothing when used with other
+	// platforms.
+	Authorization *string `json:"authorization,omitempty"`
+
+	// Sets the role of the user.
+	// Can set multiple roles using comma separation.
+	// To delete all roles, use `role=''`.
+	// Currently supported on Illumos/Solaris. Does nothing when used with other
+	// platforms.
+	Role *string `json:"role,omitempty"`
+
+	// Maximum number of days between password change.
+	// Supported on Linux only.
+	PasswordExpireMax *int `json:"password_expire_max,omitempty"`
+
+	// Minimum number of days between password change.
+	// Supported on Linux only.
+	PasswordExpireMin *int `json:"password_expire_min,omitempty"`
+
+	// Number of days of warning before password expires.
+	// Supported on Linux only.
+	PasswordExpireWarn *int `json:"password_expire_warn,omitempty"`
+
+	// Sets the umask of the user.
+	// Currently supported on Linux. Does nothing when used with other platforms.
+	// Requires `local` is omitted or `false`.
+	Umask *string `json:"umask,omitempty"`
+
+	// Number of days after a password expires until the account is disabled.
+	// Currently supported on AIX, Linux, NetBSD, OpenBSD.
+	PasswordExpireAccountDisable *int `json:"password_expire_account_disable,omitempty"`
+
+	// Sets the UID_MIN value for user creation.
+	// Overwrites /etc/login.defs default value.
+	// Currently supported on Linux. Does nothing when used with other platforms.
+	// Requires `local` is omitted or `False`.
+	UidMin *int `json:"uid_min,omitempty"`
+
+	// Sets the UID_MAX value for user creation.
+	// Overwrites /etc/login.defs default value.
+	// Currently supported on Linux. Does nothing when used with other platforms.
+	// Requires `local` is omitted or `False`.
+	UidMax *int `json:"uid_max,omitempty"`
 }
 
+// Wrap the `UserParameters into an `rpc.RPCCall`.
 func (p *UserParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -64,29 +255,69 @@ func (p *UserParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error
 	}, nil
 }
 
+// Return values for the `user` Ansible module.
 type UserReturn struct {
 	AnsibleCommonReturns
-	Append         *bool   `json:"append,omitempty"`
-	Comment        *string `json:"comment,omitempty"`
-	CreateHome     *bool   `json:"create_home,omitempty"`
-	Force          *bool   `json:"force,omitempty"`
-	Group          *int    `json:"group,omitempty"`
-	Groups         *string `json:"groups,omitempty"`
-	Home           *string `json:"home,omitempty"`
-	MoveHome       *bool   `json:"move_home,omitempty"`
-	Name           *string `json:"name,omitempty"`
-	Password       *string `json:"password,omitempty"`
-	Remove         *bool   `json:"remove,omitempty"`
-	Shell          *string `json:"shell,omitempty"`
+
+	// Whether or not to append the user to groups.
+	Append *bool `json:"append,omitempty"`
+
+	// Comment section from passwd file, usually the user name.
+	Comment *string `json:"comment,omitempty"`
+
+	// Whether or not to create the home directory.
+	CreateHome *bool `json:"create_home,omitempty"`
+
+	// Whether or not a user account was forcibly deleted.
+	Force *bool `json:"force,omitempty"`
+
+	// Primary user group ID
+	Group *int `json:"group,omitempty"`
+
+	// List of groups of which the user is a member.
+	Groups *string `json:"groups,omitempty"`
+
+	// Path to user's home directory.
+	Home *string `json:"home,omitempty"`
+
+	// Whether or not to move an existing home directory.
+	MoveHome *bool `json:"move_home,omitempty"`
+
+	// User account name.
+	Name *string `json:"name,omitempty"`
+
+	// Masked value of the password.
+	Password *string `json:"password,omitempty"`
+
+	// Whether or not to remove the user account.
+	Remove *bool `json:"remove,omitempty"`
+
+	// User login shell.
+	Shell *string `json:"shell,omitempty"`
+
+	// Fingerprint of generated SSH key.
 	SshFingerprint *string `json:"ssh_fingerprint,omitempty"`
-	SshKeyFile     *string `json:"ssh_key_file,omitempty"`
-	SshPublicKey   *string `json:"ssh_public_key,omitempty"`
-	Stderr         *string `json:"stderr,omitempty"`
-	Stdout         *string `json:"stdout,omitempty"`
-	System         *bool   `json:"system,omitempty"`
-	Uid            *int    `json:"uid,omitempty"`
+
+	// Path to generated SSH private key file.
+	SshKeyFile *string `json:"ssh_key_file,omitempty"`
+
+	// Generated SSH public key file.
+	SshPublicKey *string `json:"ssh_public_key,omitempty"`
+
+	// Standard error from running commands.
+	Stderr *string `json:"stderr,omitempty"`
+
+	// Standard output from running commands.
+	Stdout *string `json:"stdout,omitempty"`
+
+	// Whether or not the account is a system account.
+	System *bool `json:"system,omitempty"`
+
+	// User ID of the user account.
+	Uid *int `json:"uid,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `UserReturn`
 func UserReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (UserReturn, error) {
 	return rpc.AnyToJSONT[UserReturn](r.Result.Result)
 }

@@ -5,70 +5,365 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Add or remove YUM repositories in RPM-based Linux distributions.
+// If you wish to update an existing repository definition use
+// `community.general.ini_file` instead.
 const YumRepositoryName = "yum_repository"
 
+// Parameters for the `yum_repository` Ansible module.
 type YumRepositoryParameters struct {
-	Async                      *bool     `json:"async,omitempty"`
-	Bandwidth                  *string   `json:"bandwidth,omitempty"`
-	Baseurl                    *[]string `json:"baseurl,omitempty"`
-	Cost                       *string   `json:"cost,omitempty"`
-	Countme                    *bool     `json:"countme,omitempty"`
-	DeltarpmMetadataPercentage *string   `json:"deltarpm_metadata_percentage,omitempty"`
-	DeltarpmPercentage         *string   `json:"deltarpm_percentage,omitempty"`
-	Description                *string   `json:"description,omitempty"`
-	Enabled                    *bool     `json:"enabled,omitempty"`
-	Enablegroups               *bool     `json:"enablegroups,omitempty"`
-	Exclude                    *[]string `json:"exclude,omitempty"`
-	Failovermethod             *string   `json:"failovermethod,omitempty"`
-	File                       *string   `json:"file,omitempty"`
-	Gpgcakey                   *string   `json:"gpgcakey,omitempty"`
-	Gpgcheck                   *bool     `json:"gpgcheck,omitempty"`
-	Gpgkey                     *[]string `json:"gpgkey,omitempty"`
-	ModuleHotfixes             *bool     `json:"module_hotfixes,omitempty"`
-	HttpCaching                *string   `json:"http_caching,omitempty"`
-	Include                    *string   `json:"include,omitempty"`
-	Includepkgs                *[]string `json:"includepkgs,omitempty"`
-	IpResolve                  *string   `json:"ip_resolve,omitempty"`
-	Keepalive                  *bool     `json:"keepalive,omitempty"`
-	Keepcache                  *string   `json:"keepcache,omitempty"`
-	MetadataExpire             *string   `json:"metadata_expire,omitempty"`
-	MetadataExpireFilter       *string   `json:"metadata_expire_filter,omitempty"`
-	Metalink                   *string   `json:"metalink,omitempty"`
-	Mirrorlist                 *string   `json:"mirrorlist,omitempty"`
-	MirrorlistExpire           *string   `json:"mirrorlist_expire,omitempty"`
-	Name                       string    `json:"name"`
-	Password                   *string   `json:"password,omitempty"`
-	Priority                   *string   `json:"priority,omitempty"`
-	Protect                    *bool     `json:"protect,omitempty"`
-	Proxy                      *string   `json:"proxy,omitempty"`
-	ProxyPassword              *string   `json:"proxy_password,omitempty"`
-	ProxyUsername              *string   `json:"proxy_username,omitempty"`
-	RepoGpgcheck               *bool     `json:"repo_gpgcheck,omitempty"`
-	Reposdir                   *string   `json:"reposdir,omitempty"`
-	Retries                    *string   `json:"retries,omitempty"`
-	S3Enabled                  *bool     `json:"s3_enabled,omitempty"`
-	SkipIfUnavailable          *bool     `json:"skip_if_unavailable,omitempty"`
-	SslCheckCertPermissions    *bool     `json:"ssl_check_cert_permissions,omitempty"`
-	Sslcacert                  *string   `json:"sslcacert,omitempty"`
-	Sslclientcert              *string   `json:"sslclientcert,omitempty"`
-	Sslclientkey               *string   `json:"sslclientkey,omitempty"`
-	Sslverify                  *bool     `json:"sslverify,omitempty"`
-	State                      *string   `json:"state,omitempty"`
-	Throttle                   *string   `json:"throttle,omitempty"`
-	Timeout                    *string   `json:"timeout,omitempty"`
-	UiRepoidVars               *string   `json:"ui_repoid_vars,omitempty"`
-	Username                   *string   `json:"username,omitempty"`
-	Mode                       *any      `json:"mode,omitempty"`
-	Owner                      *string   `json:"owner,omitempty"`
-	Group                      *string   `json:"group,omitempty"`
-	Seuser                     *string   `json:"seuser,omitempty"`
-	Serole                     *string   `json:"serole,omitempty"`
-	Setype                     *string   `json:"setype,omitempty"`
-	Selevel                    *string   `json:"selevel,omitempty"`
-	UnsafeWrites               *bool     `json:"unsafe_writes,omitempty"`
-	Attributes                 *string   `json:"attributes,omitempty"`
+	// If set to `true` Yum will download packages and metadata from this repo in
+	// parallel, if possible.
+	// In ansible-core 2.11, 2.12, and 2.13 the default value is `true`.
+	// This option has been removed in RHEL 8. If you're using one of the versions
+	// listed above, you can set this option to `null` to avoid passing an unknown
+	// configuration option.
+	// This parameter is deprecated as it has been removed on systems supported by
+	// ansible-core and will be removed in ansible-core 2.22.
+	Async *bool `json:"async,omitempty"`
+
+	// Maximum available network bandwidth in bytes/second. Used with the
+	// `throttle` option.
+	// If `throttle` is a percentage and bandwidth is `0` then bandwidth throttling
+	// will be disabled. If `throttle` is expressed as a data rate (bytes/sec) then
+	// this option is ignored. Default is `0` (no bandwidth throttling).
+	Bandwidth *string `json:"bandwidth,omitempty"`
+
+	// URL to the directory where the yum repository's 'repodata' directory lives.
+	// It can also be a list of multiple URLs.
+	// This, the `metalink` or `mirrorlist` parameters are required if `state` is
+	// set to `present`.
+	Baseurl *[]string `json:"baseurl,omitempty"`
+
+	// Relative cost of accessing this repository. Useful for weighing one repo's
+	// packages as greater/less than any other.
+	Cost *string `json:"cost,omitempty"`
+
+	// Whether a special flag should be added to a randomly chosen
+	// metalink/mirrorlist query each week. This allows the repository owner to
+	// estimate the number of systems consuming it.
+	Countme *bool `json:"countme,omitempty"`
+
+	// When the relative size of deltarpm metadata vs pkgs is larger than this,
+	// deltarpm metadata is not downloaded from the repo. Note that you can give
+	// values over `100`, so `200` means that the metadata is required to be half
+	// the size of the packages. Use `0` to turn off this check, and always
+	// download metadata.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	DeltarpmMetadataPercentage *string `json:"deltarpm_metadata_percentage,omitempty"`
+
+	// When the relative size of delta vs pkg is larger than this, delta is not
+	// used. Use `0` to turn off delta rpm processing. Local repositories (with
+	// file://`baseurl`) have delta rpms turned off by default.
+	DeltarpmPercentage *string `json:"deltarpm_percentage,omitempty"`
+
+	// A human-readable string describing the repository. This option corresponds
+	// to the `name` property in the repo file.
+	// This parameter is only required if `state=present`.
+	Description *string `json:"description,omitempty"`
+
+	// This tells yum whether or not use this repository.
+	// Yum default value is `true`.
+	Enabled *bool `json:"enabled,omitempty"`
+
+	// Determines whether yum will allow the use of package groups for this
+	// repository.
+	// Yum default value is `true`.
+	Enablegroups *bool `json:"enablegroups,omitempty"`
+
+	// List of packages to exclude from updates or installs. This should be a space
+	// separated list. Shell globs using wildcards (for example `*` and `?`) are
+	// allowed.
+	// The list can also be a regular YAML array.
+	// `excludepkgs` alias was added in ansible-core 2.18.
+	Exclude *[]string `json:"exclude,omitempty"`
+
+	// `roundrobin` randomly selects a URL out of the list of URLs to start with
+	// and proceeds through each of them as it encounters a failure contacting the
+	// host.
+	// `priority` starts from the first `baseurl` listed and reads through them
+	// sequentially.
+	Failovermethod *string `json:"failovermethod,omitempty"`
+
+	// File name without the `.repo` extension to save the repo in. Defaults to the
+	// value of `name`.
+	File *string `json:"file,omitempty"`
+
+	// A URL pointing to the ASCII-armored CA key file for the repository.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	Gpgcakey *string `json:"gpgcakey,omitempty"`
+
+	// Tells yum whether or not it should perform a GPG signature check on
+	// packages.
+	// No default setting. If the value is not set, the system setting from
+	// `/etc/yum.conf` or system default of `false` will be used.
+	Gpgcheck *bool `json:"gpgcheck,omitempty"`
+
+	// A URL pointing to the ASCII-armored GPG key file for the repository.
+	// It can also be a list of multiple URLs.
+	Gpgkey *[]string `json:"gpgkey,omitempty"`
+
+	// Disable module RPM filtering and make all RPMs from the repository
+	// available. The default is `null`.
+	ModuleHotfixes *bool `json:"module_hotfixes,omitempty"`
+
+	// Determines how upstream HTTP caches are instructed to handle any HTTP
+	// downloads that Yum does.
+	// `all` means that all HTTP downloads should be cached.
+	// `packages` means that only RPM package downloads should be cached (but not
+	// repository metadata downloads).
+	// `none` means that no HTTP downloads should be cached.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	HttpCaching *string `json:"http_caching,omitempty"`
+
+	// Include external configuration file. Both, local path and URL is supported.
+	// Configuration file will be inserted at the position of the `include=` line.
+	// Included files may contain further include lines. Yum will abort with an
+	// error if an inclusion loop is detected.
+	Include *string `json:"include,omitempty"`
+
+	// List of packages you want to only use from a repository. This should be a
+	// space separated list. Shell globs using wildcards (for example `*` and `?`)
+	// are allowed. Substitution variables (for example `$releasever`) are honored
+	// here.
+	// The list can also be a regular YAML array.
+	Includepkgs *[]string `json:"includepkgs,omitempty"`
+
+	// Determines how yum resolves host names.
+	// `4` or `IPv4` - resolve to IPv4 addresses only.
+	// `6` or `IPv6` - resolve to IPv6 addresses only.
+	IpResolve *string `json:"ip_resolve,omitempty"`
+
+	// This tells yum whether or not HTTP/1.1 keepalive should be used with this
+	// repository. This can improve transfer speeds by using one connection when
+	// downloading multiple files from a repository.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	Keepalive *bool `json:"keepalive,omitempty"`
+
+	// Either `1` or `0`. Determines whether or not yum keeps the cache of headers
+	// and packages after successful installation.
+	// This parameter is deprecated as it is only valid in the main configuration
+	// and will be removed in ansible-core 2.20.
+	Keepcache *string `json:"keepcache,omitempty"`
+
+	// Time (in seconds) after which the metadata will expire.
+	// Default value is 6 hours.
+	MetadataExpire *string `json:"metadata_expire,omitempty"`
+
+	// Filter the `metadata_expire` time, allowing a trade of speed for accuracy if
+	// a command doesn't require it. Each yum command can specify that it requires
+	// a certain level of timeliness quality from the remote repos. from "I'm about
+	// to install/upgrade, so this better be current" to "Anything that's available
+	// is good enough".
+	// `never` - Nothing is filtered, always obey `metadata_expire`.
+	// `read-only:past` - Commands that only care about past information are
+	// filtered from metadata expiring. Eg. `yum history` info (if history needs to
+	// lookup anything about a previous transaction, then by definition the remote
+	// package was available in the past).
+	// `read-only:present` - Commands that are balanced between past and future.
+	// Eg. `yum list yum`.
+	// `read-only:future` - Commands that are likely to result in running other
+	// commands which will require the latest metadata. Eg. `yum check-update`.
+	// Note that this option does not override `yum clean expire-cache`.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	MetadataExpireFilter *string `json:"metadata_expire_filter,omitempty"`
+
+	// Specifies a URL to a metalink file for the repomd.xml, a list of mirrors for
+	// the entire repository are generated by converting the mirrors for the
+	// repomd.xml file to a `baseurl`.
+	// This, the `baseurl` or `mirrorlist` parameters are required if `state` is
+	// set to `present`.
+	Metalink *string `json:"metalink,omitempty"`
+
+	// Specifies a URL to a file containing a list of baseurls.
+	// This, the `baseurl` or `metalink` parameters are required if `state` is set
+	// to `present`.
+	Mirrorlist *string `json:"mirrorlist,omitempty"`
+
+	// Time (in seconds) after which the mirrorlist locally cached will expire.
+	// Default value is 6 hours.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	MirrorlistExpire *string `json:"mirrorlist_expire,omitempty"`
+
+	// Unique repository ID. This option builds the section name of the repository
+	// in the repo file.
+	// This parameter is only required if `state` is set to `present` or `absent`.
+	Name string `json:"name"`
+
+	// Password to use with the username for basic authentication.
+	Password *string `json:"password,omitempty"`
+
+	// Enforce ordered protection of repositories. The value is an integer from 1
+	// to 99.
+	// This option only works if the YUM Priorities plugin is installed.
+	Priority *string `json:"priority,omitempty"`
+
+	// Protect packages from updates from other repositories.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	Protect *bool `json:"protect,omitempty"`
+
+	// URL to the proxy server that yum should use. Set to `_none_` to disable the
+	// global proxy setting.
+	Proxy *string `json:"proxy,omitempty"`
+
+	// Password for this proxy.
+	ProxyPassword *string `json:"proxy_password,omitempty"`
+
+	// Username to use for proxy.
+	ProxyUsername *string `json:"proxy_username,omitempty"`
+
+	// This tells yum whether or not it should perform a GPG signature check on the
+	// repodata from this repository.
+	RepoGpgcheck *bool `json:"repo_gpgcheck,omitempty"`
+
+	// Directory where the `.repo` files will be stored.
+	Reposdir *string `json:"reposdir,omitempty"`
+
+	// Set the number of times any attempt to retrieve a file should retry before
+	// returning an error. Setting this to `0` makes yum try forever.
+	Retries *string `json:"retries,omitempty"`
+
+	// Enables support for S3 repositories.
+	// This option only works if the YUM S3 plugin is installed.
+	S3Enabled *bool `json:"s3_enabled,omitempty"`
+
+	// If set to `true` yum will continue running if this repository cannot be
+	// contacted for any reason. This should be set carefully as all repos are
+	// consulted for any given command.
+	SkipIfUnavailable *bool `json:"skip_if_unavailable,omitempty"`
+
+	// Whether yum should check the permissions on the paths for the certificates
+	// on the repository (both remote and local).
+	// If we can't read any of the files then yum will force `skip_if_unavailable`
+	// to be `true`. This is most useful for non-root processes which use yum on
+	// repos that have client cert files which are readable only by root.
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	SslCheckCertPermissions *bool `json:"ssl_check_cert_permissions,omitempty"`
+
+	// Path to the directory containing the databases of the certificate
+	// authorities yum should use to verify SSL certificates.
+	Sslcacert *string `json:"sslcacert,omitempty"`
+
+	// Path to the SSL client certificate yum should use to connect to repos/remote
+	// sites.
+	Sslclientcert *string `json:"sslclientcert,omitempty"`
+
+	// Path to the SSL client key yum should use to connect to repos/remote sites.
+	Sslclientkey *string `json:"sslclientkey,omitempty"`
+
+	// Defines whether yum should verify SSL certificates/hosts at all.
+	Sslverify *bool `json:"sslverify,omitempty"`
+
+	// State of the repo file.
+	State *string `json:"state,omitempty"`
+
+	// Enable bandwidth throttling for downloads.
+	// This option can be expressed as a absolute data rate in bytes/sec. An SI
+	// prefix (k, M or G) may be appended to the bandwidth value.
+	Throttle *string `json:"throttle,omitempty"`
+
+	// Number of seconds to wait for a connection before timing out.
+	Timeout *string `json:"timeout,omitempty"`
+
+	// When a repository id is displayed, append these yum variables to the string
+	// if they are used in the `baseurl`/etc. Variables are appended in the order
+	// listed (and found).
+	// This parameter is deprecated as it has no effect with dnf as an underlying
+	// package manager and will be removed in ansible-core 2.22.
+	UiRepoidVars *string `json:"ui_repoid_vars,omitempty"`
+
+	// Username to use for basic authentication to a repo or really any url.
+	Username *string `json:"username,omitempty"`
+
+	// The permissions the resulting filesystem object should have.
+	// For those used to `/usr/bin/chmod` remember that modes are actually octal
+	// numbers. You must give Ansible enough information to parse them correctly.
+	// For consistent results, quote octal numbers (for example, `'644'` or
+	// `'1777'`) so Ansible receives a string and can do its own conversion from
+	// string into number. Adding a leading zero (for example, `0755`) works
+	// sometimes, but can fail in loops and some other circumstances.
+	// Giving Ansible a number without following either of these rules will end up
+	// with a decimal number which will have unexpected results.
+	// As of Ansible 1.8, the mode may be specified as a symbolic mode (for
+	// example, `u+rwx` or `u=rw,g=r,o=r`).
+	// If `mode` is not specified and the destination filesystem object `does not`
+	// exist, the default `umask` on the system will be used when setting the mode
+	// for the newly created filesystem object.
+	// If `mode` is not specified and the destination filesystem object `does`
+	// exist, the mode of the existing filesystem object will be used.
+	// Specifying `mode` is the best way to ensure filesystem objects are created
+	// with the correct permissions. See CVE-2020-1736 for further details.
+	Mode *any `json:"mode,omitempty"`
+
+	// Name of the user that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current user unless you are root, in
+	// which case it can preserve the previous ownership.
+	// Specifying a numeric username will be assumed to be a user ID and not a
+	// username. Avoid numeric usernames to avoid this confusion.
+	Owner *string `json:"owner,omitempty"`
+
+	// Name of the group that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current group of the current user unless
+	// you are root, in which case it can preserve the previous ownership.
+	Group *string `json:"group,omitempty"`
+
+	// The user part of the SELinux filesystem object context.
+	// By default it uses the `system` policy, where applicable.
+	// When set to `_default`, it will use the `user` portion of the policy if
+	// available.
+	Seuser *string `json:"seuser,omitempty"`
+
+	// The role part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `role` portion of the policy if
+	// available.
+	Serole *string `json:"serole,omitempty"`
+
+	// The type part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `type` portion of the policy if
+	// available.
+	Setype *string `json:"setype,omitempty"`
+
+	// The level part of the SELinux filesystem object context.
+	// This is the MLS/MCS attribute, sometimes known as the `range`.
+	// When set to `_default`, it will use the `level` portion of the policy if
+	// available.
+	Selevel *string `json:"selevel,omitempty"`
+
+	// Influence when to use atomic operation to prevent data corruption or
+	// inconsistent reads from the target filesystem object.
+	// By default this module uses atomic operations to prevent data corruption or
+	// inconsistent reads from the target filesystem objects, but sometimes systems
+	// are configured or just broken in ways that prevent this. One example is
+	// docker mounted filesystem objects, which cannot be updated atomically from
+	// inside the container and can only be written in an unsafe manner.
+	// This option allows Ansible to fall back to unsafe methods of updating
+	// filesystem objects when atomic operations fail (however, it doesn't force
+	// Ansible to perform unsafe writes).
+	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
+	// corruption.
+	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
+
+	// The attributes the resulting filesystem object should have.
+	// To get supported flags look at the man page for `chattr` on the target
+	// system.
+	// This string should contain the attributes in the same order as the one
+	// displayed by `lsattr`.
+	// The `=` operator is assumed as default, otherwise `+` or `-` operators need
+	// to be included in the string.
+	Attributes *string `json:"attributes,omitempty"`
 }
 
+// Wrap the `YumRepositoryParameters into an `rpc.RPCCall`.
 func (p *YumRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -83,12 +378,18 @@ func (p *YumRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArg
 	}, nil
 }
 
+// Return values for the `yum_repository` Ansible module.
 type YumRepositoryReturn struct {
 	AnsibleCommonReturns
-	Repo  *string `json:"repo,omitempty"`
+
+	// repository name
+	Repo *string `json:"repo,omitempty"`
+
+	// state of the target, after execution
 	State *string `json:"state,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `YumRepositoryReturn`
 func YumRepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (YumRepositoryReturn, error) {
 	return rpc.AnyToJSONT[YumRepositoryReturn](r.Result.Result)
 }

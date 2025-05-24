@@ -5,20 +5,57 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Manage presence of groups on a host.
+// For Windows targets, use the `ansible.windows.win_group` module instead.
 const GroupName = "group"
 
+// Parameters for the `group` Ansible module.
 type GroupParameters struct {
-	Name      string  `json:"name"`
-	Gid       *int    `json:"gid,omitempty"`
-	State     *string `json:"state,omitempty"`
-	Force     *bool   `json:"force,omitempty"`
-	System    *bool   `json:"system,omitempty"`
-	Local     *bool   `json:"local,omitempty"`
-	NonUnique *bool   `json:"non_unique,omitempty"`
-	GidMin    *int    `json:"gid_min,omitempty"`
-	GidMax    *int    `json:"gid_max,omitempty"`
+	// Name of the group to manage.
+	Name string `json:"name"`
+
+	// Optional `GID` to set for the group.
+	Gid *int `json:"gid,omitempty"`
+
+	// Whether the group should be present or not on the remote host.
+	State *string `json:"state,omitempty"`
+
+	// Whether to delete a group even if it is the primary group of a user.
+	// Only applicable on platforms which implement a `--force` flag on the group
+	// deletion command.
+	Force *bool `json:"force,omitempty"`
+
+	// If `yes`, indicates that the group created is a system group.
+	System *bool `json:"system,omitempty"`
+
+	// Forces the use of "local" command alternatives on platforms that implement
+	// it.
+	// This is useful in environments that use centralized authentication when you
+	// want to manipulate the local groups. (for example, it uses `lgroupadd`
+	// instead of `groupadd`).
+	// This requires that these commands exist on the targeted host, otherwise it
+	// will be a fatal error.
+	Local *bool `json:"local,omitempty"`
+
+	// This option allows to change the group ID to a non-unique value. Requires
+	// `gid`.
+	// Not supported on macOS or BusyBox distributions.
+	NonUnique *bool `json:"non_unique,omitempty"`
+
+	// Sets the GID_MIN value for group creation.
+	// Overwrites /etc/login.defs default value.
+	// Currently supported on Linux. Does nothing when used with other platforms.
+	// Requires `local` is omitted or `False`.
+	GidMin *int `json:"gid_min,omitempty"`
+
+	// Sets the GID_MAX value for group creation.
+	// Overwrites /etc/login.defs default value.
+	// Currently supported on Linux. Does nothing when used with other platforms.
+	// Requires `local` is omitted or `False`.
+	GidMax *int `json:"gid_max,omitempty"`
 }
 
+// Wrap the `GroupParameters into an `rpc.RPCCall`.
 func (p *GroupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -33,14 +70,24 @@ func (p *GroupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], erro
 	}, nil
 }
 
+// Return values for the `group` Ansible module.
 type GroupReturn struct {
 	AnsibleCommonReturns
-	Gid    *int    `json:"gid,omitempty"`
-	Name   *string `json:"name,omitempty"`
-	State  *string `json:"state,omitempty"`
-	System *bool   `json:"system,omitempty"`
+
+	// Group ID of the group.
+	Gid *int `json:"gid,omitempty"`
+
+	// Group name.
+	Name *string `json:"name,omitempty"`
+
+	// Whether the group is present or not.
+	State *string `json:"state,omitempty"`
+
+	// Whether the group is a system group or not.
+	System *bool `json:"system,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `GroupReturn`
 func GroupReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GroupReturn, error) {
 	return rpc.AnyToJSONT[GroupReturn](r.Result.Result)
 }

@@ -5,50 +5,255 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// Interacts with HTTP and HTTPS web services and supports Digest, Basic and
+// WSSE HTTP authentication mechanisms.
+// For Windows targets, use the `ansible.windows.win_uri` module instead.
 const UriName = "uri"
 
+// Parameters for the `uri` Ansible module.
 type UriParameters struct {
-	Ciphers             *[]string       `json:"ciphers,omitempty"`
-	Decompress          *bool           `json:"decompress,omitempty"`
-	Url                 string          `json:"url"`
-	Dest                *string         `json:"dest,omitempty"`
-	UrlUsername         *string         `json:"url_username,omitempty"`
-	UrlPassword         *string         `json:"url_password,omitempty"`
-	Body                *any            `json:"body,omitempty"`
-	BodyFormat          *string         `json:"body_format,omitempty"`
-	Method              *string         `json:"method,omitempty"`
-	ReturnContent       *bool           `json:"return_content,omitempty"`
-	ForceBasicAuth      *bool           `json:"force_basic_auth,omitempty"`
-	FollowRedirects     *string         `json:"follow_redirects,omitempty"`
-	Creates             *string         `json:"creates,omitempty"`
-	Removes             *string         `json:"removes,omitempty"`
-	StatusCode          *[]int          `json:"status_code,omitempty"`
-	Timeout             *int            `json:"timeout,omitempty"`
-	Headers             *map[string]any `json:"headers,omitempty"`
-	ValidateCerts       *bool           `json:"validate_certs,omitempty"`
-	ClientCert          *string         `json:"client_cert,omitempty"`
-	ClientKey           *string         `json:"client_key,omitempty"`
-	CaPath              *string         `json:"ca_path,omitempty"`
-	Src                 *string         `json:"src,omitempty"`
-	RemoteSrc           *bool           `json:"remote_src,omitempty"`
-	Force               *bool           `json:"force,omitempty"`
-	UseProxy            *bool           `json:"use_proxy,omitempty"`
-	UnixSocket          *string         `json:"unix_socket,omitempty"`
-	HttpAgent           *string         `json:"http_agent,omitempty"`
-	UnredirectedHeaders *[]string       `json:"unredirected_headers,omitempty"`
-	UseGssapi           *bool           `json:"use_gssapi,omitempty"`
-	UseNetrc            *bool           `json:"use_netrc,omitempty"`
-	Mode                *any            `json:"mode,omitempty"`
-	Owner               *string         `json:"owner,omitempty"`
-	Group               *string         `json:"group,omitempty"`
-	Seuser              *string         `json:"seuser,omitempty"`
-	Serole              *string         `json:"serole,omitempty"`
-	Setype              *string         `json:"setype,omitempty"`
-	Selevel             *string         `json:"selevel,omitempty"`
-	UnsafeWrites        *bool           `json:"unsafe_writes,omitempty"`
-	Attributes          *string         `json:"attributes,omitempty"`
+	// SSL/TLS Ciphers to use for the request.
+	// When a list is provided, all ciphers are joined in order with `:`
+	// See the `OpenSSL Cipher List
+	// Format,https://www.openssl.org/docs/manmaster/man1/openssl-
+	// ciphers.html#CIPHER-LIST-FORMAT` for more details.
+	// The available ciphers is dependent on the Python and OpenSSL/LibreSSL
+	// versions.
+	Ciphers *[]string `json:"ciphers,omitempty"`
+
+	// Whether to attempt to decompress gzip content-encoded responses.
+	Decompress *bool `json:"decompress,omitempty"`
+
+	// HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path.
+	Url string `json:"url"`
+
+	// A path of where to download the file to (if desired). If `dest` is a
+	// directory, the basename of the file on the remote server will be used.
+	Dest *string `json:"dest,omitempty"`
+
+	// A username for the module to use for Digest, Basic or WSSE authentication.
+	UrlUsername *string `json:"url_username,omitempty"`
+
+	// A password for the module to use for Digest, Basic or WSSE authentication.
+	UrlPassword *string `json:"url_password,omitempty"`
+
+	// The body of the http request/response to the web service. If `body_format`
+	// is set to `json` it will take an already formatted JSON string or convert a
+	// data structure into JSON.
+	// If `body_format` is set to `form-urlencoded` it will convert a dictionary or
+	// list of tuples into an `application/x-www-form-urlencoded` string. (Added in
+	// v2.7)
+	// If `body_format` is set to `form-multipart` it will convert a dictionary
+	// into `multipart/form-multipart` body. (Added in v2.10)
+	Body *any `json:"body,omitempty"`
+
+	// The serialization format of the body. When set to `json`, `form-multipart`,
+	// or `form-urlencoded`, encodes the body argument, if needed, and
+	// automatically sets the `Content-Type` header accordingly.
+	// As of v2.3 it is possible to override the `Content-Type` header, when set to
+	// `json` or `form-urlencoded` via the `headers` option.
+	// The `Content-Type` header cannot be overridden when using `form-multipart`.
+	// `form-urlencoded` was added in v2.7.
+	// `form-multipart` was added in v2.10.
+	BodyFormat *string `json:"body_format,omitempty"`
+
+	// The HTTP method of the request or response.
+	// In more recent versions we do not restrict the method at the module level
+	// anymore but it still must be a valid method accepted by the service handling
+	// the request.
+	Method *string `json:"method,omitempty"`
+
+	// Whether or not to return the body of the response as a "content" key in the
+	// dictionary result no matter it succeeded or failed.
+	// Independently of this option, if the reported `Content-Type` is
+	// `application/json`, then the JSON is always loaded into a key called
+	// R`ignore:json` in the dictionary results.
+	ReturnContent *bool `json:"return_content,omitempty"`
+
+	// Force the sending of the Basic authentication header upon initial request.
+	// When this setting is `false`, this module will first try an unauthenticated
+	// request, and when the server replies with an `HTTP 401` error, it will
+	// submit the Basic authentication header.
+	// When this setting is `true`, this module will immediately send a Basic
+	// authentication header on the first request.
+	// Use this setting in any of the following scenarios:
+	// You know the webservice endpoint always requires HTTP Basic authentication,
+	// and you want to speed up your requests by eliminating the first roundtrip.
+	// The web service does not properly send an HTTP 401 error to your client, so
+	// Ansible's HTTP library will not properly respond with HTTP credentials, and
+	// logins will fail.
+	// The webservice bans or rate-limits clients that cause any HTTP 401 errors.
+	ForceBasicAuth *bool `json:"force_basic_auth,omitempty"`
+
+	// Whether or not the URI module should follow redirects.
+	FollowRedirects *string `json:"follow_redirects,omitempty"`
+
+	// A filename, when it already exists, this step will not be run.
+	Creates *string `json:"creates,omitempty"`
+
+	// A filename, when it does not exist, this step will not be run.
+	Removes *string `json:"removes,omitempty"`
+
+	// A list of valid, numeric, HTTP status codes that signifies success of the
+	// request.
+	StatusCode *[]int `json:"status_code,omitempty"`
+
+	// The socket level timeout in seconds
+	Timeout *int `json:"timeout,omitempty"`
+
+	// Add custom HTTP headers to a request in the format of a YAML hash. As of
+	// Ansible 2.3 supplying `Content-Type` here will override the header generated
+	// by supplying `json` or `form-urlencoded` for `body_format`.
+	Headers *map[string]any `json:"headers,omitempty"`
+
+	// If `false`, SSL certificates will not be validated.
+	// This should only set to `false` used on personally controlled sites using
+	// self-signed certificates.
+	// Prior to 1.9.2 the code defaulted to `false`.
+	ValidateCerts *bool `json:"validate_certs,omitempty"`
+
+	// PEM formatted certificate chain file to be used for SSL client
+	// authentication.
+	// This file can also include the key as well, and if the key is included,
+	// `client_key` is not required.
+	ClientCert *string `json:"client_cert,omitempty"`
+
+	// PEM formatted file that contains your private key to be used for SSL client
+	// authentication.
+	// If `client_cert` contains both the certificate and key, this option is not
+	// required.
+	ClientKey *string `json:"client_key,omitempty"`
+
+	// PEM formatted file that contains a CA certificate to be used for validation.
+	CaPath *string `json:"ca_path,omitempty"`
+
+	// Path to file to be submitted to the remote server.
+	// Cannot be used with `body`.
+	// Should be used with `force_basic_auth` to ensure success when the remote end
+	// sends a 401.
+	Src *string `json:"src,omitempty"`
+
+	// If `false`, the module will search for the `src` on the controller node.
+	// If `true`, the module will search for the `src` on the managed (remote)
+	// node.
+	RemoteSrc *bool `json:"remote_src,omitempty"`
+
+	// If `true` do not get a cached copy.
+	Force *bool `json:"force,omitempty"`
+
+	// If `false`, it will not use a proxy, even if one is defined in an
+	// environment variable on the target hosts.
+	UseProxy *bool `json:"use_proxy,omitempty"`
+
+	// Path to Unix domain socket to use for connection.
+	UnixSocket *string `json:"unix_socket,omitempty"`
+
+	// Header to identify as, generally appears in web server logs.
+	HttpAgent *string `json:"http_agent,omitempty"`
+
+	// A list of header names that will not be sent on subsequent redirected
+	// requests. This list is case insensitive. By default all headers will be
+	// redirected. In some cases it may be beneficial to list headers such as
+	// `Authorization` here to avoid potential credential exposure.
+	UnredirectedHeaders *[]string `json:"unredirected_headers,omitempty"`
+
+	// Use GSSAPI to perform the authentication, typically this is for Kerberos or
+	// Kerberos through Negotiate authentication.
+	// Requires the Python library `gssapi,https://github.com/pythongssapi/python-
+	// gssapi` to be installed.
+	// Credentials for GSSAPI can be specified with `url_username`/`url_password`
+	// or with the GSSAPI env var `KRB5CCNAME` that specified a custom Kerberos
+	// credential cache.
+	// NTLM authentication is `not` supported even if the GSSAPI mech for NTLM has
+	// been installed.
+	UseGssapi *bool `json:"use_gssapi,omitempty"`
+
+	// Determining whether to use credentials from `~/.netrc` file.
+	// By default `.netrc` is used with Basic authentication headers.
+	// When `false`, `.netrc` credentials are ignored.
+	UseNetrc *bool `json:"use_netrc,omitempty"`
+
+	// The permissions the resulting filesystem object should have.
+	// For those used to `/usr/bin/chmod` remember that modes are actually octal
+	// numbers. You must give Ansible enough information to parse them correctly.
+	// For consistent results, quote octal numbers (for example, `'644'` or
+	// `'1777'`) so Ansible receives a string and can do its own conversion from
+	// string into number. Adding a leading zero (for example, `0755`) works
+	// sometimes, but can fail in loops and some other circumstances.
+	// Giving Ansible a number without following either of these rules will end up
+	// with a decimal number which will have unexpected results.
+	// As of Ansible 1.8, the mode may be specified as a symbolic mode (for
+	// example, `u+rwx` or `u=rw,g=r,o=r`).
+	// If `mode` is not specified and the destination filesystem object `does not`
+	// exist, the default `umask` on the system will be used when setting the mode
+	// for the newly created filesystem object.
+	// If `mode` is not specified and the destination filesystem object `does`
+	// exist, the mode of the existing filesystem object will be used.
+	// Specifying `mode` is the best way to ensure filesystem objects are created
+	// with the correct permissions. See CVE-2020-1736 for further details.
+	Mode *any `json:"mode,omitempty"`
+
+	// Name of the user that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current user unless you are root, in
+	// which case it can preserve the previous ownership.
+	// Specifying a numeric username will be assumed to be a user ID and not a
+	// username. Avoid numeric usernames to avoid this confusion.
+	Owner *string `json:"owner,omitempty"`
+
+	// Name of the group that should own the filesystem object, as would be fed to
+	// `chown`.
+	// When left unspecified, it uses the current group of the current user unless
+	// you are root, in which case it can preserve the previous ownership.
+	Group *string `json:"group,omitempty"`
+
+	// The user part of the SELinux filesystem object context.
+	// By default it uses the `system` policy, where applicable.
+	// When set to `_default`, it will use the `user` portion of the policy if
+	// available.
+	Seuser *string `json:"seuser,omitempty"`
+
+	// The role part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `role` portion of the policy if
+	// available.
+	Serole *string `json:"serole,omitempty"`
+
+	// The type part of the SELinux filesystem object context.
+	// When set to `_default`, it will use the `type` portion of the policy if
+	// available.
+	Setype *string `json:"setype,omitempty"`
+
+	// The level part of the SELinux filesystem object context.
+	// This is the MLS/MCS attribute, sometimes known as the `range`.
+	// When set to `_default`, it will use the `level` portion of the policy if
+	// available.
+	Selevel *string `json:"selevel,omitempty"`
+
+	// Influence when to use atomic operation to prevent data corruption or
+	// inconsistent reads from the target filesystem object.
+	// By default this module uses atomic operations to prevent data corruption or
+	// inconsistent reads from the target filesystem objects, but sometimes systems
+	// are configured or just broken in ways that prevent this. One example is
+	// docker mounted filesystem objects, which cannot be updated atomically from
+	// inside the container and can only be written in an unsafe manner.
+	// This option allows Ansible to fall back to unsafe methods of updating
+	// filesystem objects when atomic operations fail (however, it doesn't force
+	// Ansible to perform unsafe writes).
+	// IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
+	// corruption.
+	UnsafeWrites *bool `json:"unsafe_writes,omitempty"`
+
+	// The attributes the resulting filesystem object should have.
+	// To get supported flags look at the man page for `chattr` on the target
+	// system.
+	// This string should contain the attributes in the same order as the one
+	// displayed by `lsattr`.
+	// The `=` operator is assumed as default, otherwise `+` or `-` operators need
+	// to be included in the string.
+	Attributes *string `json:"attributes,omitempty"`
 }
 
+// Wrap the `UriParameters into an `rpc.RPCCall`.
 func (p *UriParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -63,19 +268,39 @@ func (p *UriParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error)
 	}, nil
 }
 
+// Return values for the `uri` Ansible module.
 type UriReturn struct {
 	AnsibleCommonReturns
-	Content       *string         `json:"content,omitempty"`
-	Cookies       *map[string]any `json:"cookies,omitempty"`
-	CookiesString *string         `json:"cookies_string,omitempty"`
-	Elapsed       *int            `json:"elapsed,omitempty"`
-	Msg           *string         `json:"msg,omitempty"`
-	Path          *string         `json:"path,omitempty"`
-	Redirected    *bool           `json:"redirected,omitempty"`
-	Status        *int            `json:"status,omitempty"`
-	Url           *string         `json:"url,omitempty"`
+
+	// The response body content.
+	Content *string `json:"content,omitempty"`
+
+	// The cookie values placed in cookie jar.
+	Cookies *map[string]any `json:"cookies,omitempty"`
+
+	// The value for future request Cookie headers.
+	CookiesString *string `json:"cookies_string,omitempty"`
+
+	// The number of seconds that elapsed while performing the download.
+	Elapsed *int `json:"elapsed,omitempty"`
+
+	// The HTTP message from the request.
+	Msg *string `json:"msg,omitempty"`
+
+	// destination file/path
+	Path *string `json:"path,omitempty"`
+
+	// Whether the request was redirected.
+	Redirected *bool `json:"redirected,omitempty"`
+
+	// The HTTP status code from the request.
+	Status *int `json:"status,omitempty"`
+
+	// The actual URL used for the request.
+	Url *string `json:"url,omitempty"`
 }
 
+// Unwrap the `rpc.RPCResult` into an `UriReturn`
 func UriReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (UriReturn, error) {
 	return rpc.AnyToJSONT[UriReturn](r.Result.Result)
 }

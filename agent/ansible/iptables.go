@@ -5,60 +5,291 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 )
 
+// `ansible.builtin.iptables` is used to set up, maintain, and inspect the
+// tables of IP packet filter rules in the Linux kernel.
+// This module does not handle the saving and/or loading of rules, but rather
+// only manipulates the current rules that are present in memory. This is the
+// same as the behaviour of the `iptables` and `ip6tables` command which this
+// module uses internally.
 const IptablesName = "iptables"
 
+// Parameters for the `iptables` Ansible module.
 type IptablesParameters struct {
-	Table       *string `json:"table,omitempty"`
-	State       *string `json:"state,omitempty"`
-	Action      *string `json:"action,omitempty"`
-	RuleNum     *string `json:"rule_num,omitempty"`
-	IpVersion   *string `json:"ip_version,omitempty"`
-	Chain       *string `json:"chain,omitempty"`
-	Protocol    *string `json:"protocol,omitempty"`
-	Source      *string `json:"source,omitempty"`
+	// This option specifies the packet matching table on which the command should
+	// operate.
+	// If the kernel is configured with automatic module loading, an attempt will
+	// be made to load the appropriate module for that table if it is not already
+	// there.
+	Table *string `json:"table,omitempty"`
+
+	// Whether the rule should be absent or present.
+	State *string `json:"state,omitempty"`
+
+	// Whether the rule should be appended at the bottom or inserted at the top.
+	// If the rule already exists the chain will not be modified.
+	Action *string `json:"action,omitempty"`
+
+	// Insert the rule as the given rule number.
+	// This works only with `action=insert`.
+	RuleNum *string `json:"rule_num,omitempty"`
+
+	// Which version of the IP protocol this rule should apply to.
+	IpVersion *string `json:"ip_version,omitempty"`
+
+	// Specify the iptables chain to modify.
+	// This could be a user-defined chain or one of the standard iptables chains,
+	// like `INPUT`, `FORWARD`, `OUTPUT`, `PREROUTING`, `POSTROUTING`, `SECMARK` or
+	// `CONNSECMARK`.
+	Chain *string `json:"chain,omitempty"`
+
+	// The protocol of the rule or of the packet to check.
+	// The specified protocol can be one of `tcp`, `udp`, `udplite`, `icmp`,
+	// `ipv6-icmp` or `icmpv6`, `esp`, `ah`, `sctp` or the special keyword `all`,
+	// or it can be a numeric value, representing one of these protocols or a
+	// different one.
+	// A protocol name from `/etc/protocols` is also allowed.
+	// A `!` argument before the protocol inverts the test.
+	// The number zero is equivalent to all.
+	// `all` will match with all protocols and is taken as default when this option
+	// is omitted.
+	Protocol *string `json:"protocol,omitempty"`
+
+	// Source specification.
+	// Address can be either a network name, a hostname, a network IP address (with
+	// /mask), or a plain IP address.
+	// Hostnames will be resolved once only, before the rule is submitted to the
+	// kernel. Please note that specifying any name to be resolved with a remote
+	// query such as DNS is a really bad idea.
+	// The mask can be either a network mask or a plain number, specifying the
+	// number of 1's at the left side of the network mask. Thus, a mask of 24 is
+	// equivalent to 255.255.255.0. A `!` argument before the address specification
+	// inverts the sense of the address.
+	Source *string `json:"source,omitempty"`
+
+	// Destination specification.
+	// Address can be either a network name, a hostname, a network IP address (with
+	// /mask), or a plain IP address.
+	// Hostnames will be resolved once only, before the rule is submitted to the
+	// kernel. Please note that specifying any name to be resolved with a remote
+	// query such as DNS is a really bad idea.
+	// The mask can be either a network mask or a plain number, specifying the
+	// number of 1's at the left side of the network mask. Thus, a mask of 24 is
+	// equivalent to 255.255.255.0. A `!` argument before the address specification
+	// inverts the sense of the address.
 	Destination *string `json:"destination,omitempty"`
-	TcpFlags    *struct {
+
+	// TCP flags specification.
+	// `tcp_flags` expects a dict with the two keys `flags` and `flags_set`.
+	TcpFlags *struct {
 		Flags    *[]string `json:"flags,omitempty"`
 		FlagsSet *[]string `json:"flags_set,omitempty"`
 	} `json:"tcp_flags,omitempty"`
-	Match            *[]string `json:"match,omitempty"`
-	Jump             *string   `json:"jump,omitempty"`
-	Gateway          *string   `json:"gateway,omitempty"`
-	LogPrefix        *string   `json:"log_prefix,omitempty"`
-	LogLevel         *string   `json:"log_level,omitempty"`
-	Goto             *string   `json:"goto,omitempty"`
-	InInterface      *string   `json:"in_interface,omitempty"`
-	OutInterface     *string   `json:"out_interface,omitempty"`
-	Fragment         *string   `json:"fragment,omitempty"`
-	SetCounters      *string   `json:"set_counters,omitempty"`
-	SourcePort       *string   `json:"source_port,omitempty"`
-	DestinationPort  *string   `json:"destination_port,omitempty"`
+
+	// Specifies a match to use, that is, an extension module that tests for a
+	// specific property.
+	// The set of matches makes up the condition under which a target is invoked.
+	// Matches are evaluated first to last if specified as an array and work in
+	// short-circuit fashion, in other words if one extension yields false, the
+	// evaluation will stop.
+	Match *[]string `json:"match,omitempty"`
+
+	// This specifies the target of the rule; i.e., what to do if the packet
+	// matches it.
+	// The target can be a user-defined chain (other than the one this rule is in),
+	// one of the special builtin targets that decide the fate of the packet
+	// immediately, or an extension (see EXTENSIONS below).
+	// If this option is omitted in a rule (and the goto parameter is not used),
+	// then matching the rule will have no effect on the packet's fate, but the
+	// counters on the rule will be incremented.
+	Jump *string `json:"jump,omitempty"`
+
+	// This specifies the IP address of the host to send the cloned packets.
+	// This option is only valid when `jump=TEE`.
+	Gateway *string `json:"gateway,omitempty"`
+
+	// Specifies a log text for the rule. Only makes sense with a LOG jump.
+	LogPrefix *string `json:"log_prefix,omitempty"`
+
+	// Logging level according to the syslogd-defined priorities.
+	// The value can be strings or numbers from 1-8.
+	// This parameter is only applicable if `jump=LOG`.
+	LogLevel *string `json:"log_level,omitempty"`
+
+	// This specifies that the processing should continue in a user-specified
+	// chain.
+	// Unlike the jump argument return will not continue processing in this chain
+	// but instead in the chain that called us via jump.
+	Goto *string `json:"goto,omitempty"`
+
+	// Name of an interface via which a packet was received (only for packets
+	// entering the `INPUT`, `FORWARD` and `PREROUTING` chains).
+	// When the `!` argument is used before the interface name, the sense is
+	// inverted.
+	// If the interface name ends in a `+`, then any interface which begins with
+	// this name will match.
+	// If this option is omitted, any interface name will match.
+	InInterface *string `json:"in_interface,omitempty"`
+
+	// Name of an interface via which a packet is going to be sent (for packets
+	// entering the `FORWARD`, `OUTPUT` and `POSTROUTING` chains).
+	// When the `!` argument is used before the interface name, the sense is
+	// inverted.
+	// If the interface name ends in a `+`, then any interface which begins with
+	// this name will match.
+	// If this option is omitted, any interface name will match.
+	OutInterface *string `json:"out_interface,omitempty"`
+
+	// This means that the rule only refers to second and further fragments of
+	// fragmented packets.
+	// Since there is no way to tell the source or destination ports of such a
+	// packet (or ICMP type), such a packet will not match any rules which specify
+	// them.
+	// When the "!" argument precedes the fragment argument, the rule will only
+	// match head fragments, or unfragmented packets.
+	Fragment *string `json:"fragment,omitempty"`
+
+	// This enables the administrator to initialize the packet and byte counters of
+	// a rule (during `INSERT`, `APPEND`, `REPLACE` operations).
+	SetCounters *string `json:"set_counters,omitempty"`
+
+	// Source port or port range specification.
+	// This can either be a service name or a port number.
+	// An inclusive range can also be specified, using the format `first:last`.
+	// If the first port is omitted, `0` is assumed; if the last is omitted,
+	// `65535` is assumed.
+	// If the first port is greater than the second one they will be swapped.
+	SourcePort *string `json:"source_port,omitempty"`
+
+	// Destination port or port range specification. This can either be a service
+	// name or a port number. An inclusive range can also be specified, using the
+	// format first:last. If the first port is omitted, '0' is assumed; if the last
+	// is omitted, '65535' is assumed. If the first port is greater than the second
+	// one they will be swapped. This is only valid if the rule also specifies one
+	// of the following protocols: tcp, udp, dccp or sctp.
+	DestinationPort *string `json:"destination_port,omitempty"`
+
+	// This specifies multiple destination port numbers or port ranges to match in
+	// the multiport module.
+	// It can only be used in conjunction with the protocols tcp, udp, udplite,
+	// dccp and sctp.
 	DestinationPorts *[]string `json:"destination_ports,omitempty"`
-	ToPorts          *string   `json:"to_ports,omitempty"`
-	ToDestination    *string   `json:"to_destination,omitempty"`
-	ToSource         *string   `json:"to_source,omitempty"`
-	Syn              *string   `json:"syn,omitempty"`
-	SetDscpMark      *string   `json:"set_dscp_mark,omitempty"`
-	SetDscpMarkClass *string   `json:"set_dscp_mark_class,omitempty"`
-	Comment          *string   `json:"comment,omitempty"`
-	Ctstate          *[]string `json:"ctstate,omitempty"`
-	SrcRange         *string   `json:"src_range,omitempty"`
-	DstRange         *string   `json:"dst_range,omitempty"`
-	MatchSet         *string   `json:"match_set,omitempty"`
-	MatchSetFlags    *string   `json:"match_set_flags,omitempty"`
-	Limit            *string   `json:"limit,omitempty"`
-	LimitBurst       *string   `json:"limit_burst,omitempty"`
-	UidOwner         *string   `json:"uid_owner,omitempty"`
-	GidOwner         *string   `json:"gid_owner,omitempty"`
-	RejectWith       *string   `json:"reject_with,omitempty"`
-	IcmpType         *string   `json:"icmp_type,omitempty"`
-	Flush            *bool     `json:"flush,omitempty"`
-	Policy           *string   `json:"policy,omitempty"`
-	Wait             *string   `json:"wait,omitempty"`
-	ChainManagement  *bool     `json:"chain_management,omitempty"`
-	Numeric          *bool     `json:"numeric,omitempty"`
+
+	// This specifies a destination port or range of ports to use, without this,
+	// the destination port is never altered.
+	// This is only valid if the rule also specifies one of the protocol `tcp`,
+	// `udp`, `dccp` or `sctp`.
+	ToPorts *string `json:"to_ports,omitempty"`
+
+	// This specifies a destination address to use with `ctstate=DNAT`.
+	// Without this, the destination address is never altered.
+	ToDestination *string `json:"to_destination,omitempty"`
+
+	// This specifies a source address to use with `ctstate=SNAT`.
+	// Without this, the source address is never altered.
+	ToSource *string `json:"to_source,omitempty"`
+
+	// This allows matching packets that have the SYN bit set and the ACK and RST
+	// bits unset.
+	// When negated, this matches all packets with the RST or the ACK bits set.
+	Syn *string `json:"syn,omitempty"`
+
+	// This allows specifying a DSCP mark to be added to packets. It takes either
+	// an integer or hex value.
+	// If the parameter is set, `jump` is set to `DSCP`.
+	// Mutually exclusive with `set_dscp_mark_class`.
+	SetDscpMark *string `json:"set_dscp_mark,omitempty"`
+
+	// This allows specifying a predefined DiffServ class which will be translated
+	// to the corresponding DSCP mark.
+	// If the parameter is set, `jump` is set to `DSCP`.
+	// Mutually exclusive with `set_dscp_mark`.
+	SetDscpMarkClass *string `json:"set_dscp_mark_class,omitempty"`
+
+	// This specifies a comment that will be added to the rule.
+	Comment *string `json:"comment,omitempty"`
+
+	// A list of the connection states to match in the conntrack module.
+	// Possible values are `INVALID`, `NEW`, `ESTABLISHED`, `RELATED`, `UNTRACKED`,
+	// `SNAT`, `DNAT`.
+	Ctstate *[]string `json:"ctstate,omitempty"`
+
+	// Specifies the source IP range to match the iprange module.
+	SrcRange *string `json:"src_range,omitempty"`
+
+	// Specifies the destination IP range to match in the iprange module.
+	DstRange *string `json:"dst_range,omitempty"`
+
+	// Specifies a set name that can be defined by ipset.
+	// Must be used together with the `match_set_flags` parameter.
+	// When the `!` argument is prepended then it inverts the rule.
+	// Uses the iptables set extension.
+	MatchSet *string `json:"match_set,omitempty"`
+
+	// Specifies the necessary flags for the match_set parameter.
+	// Must be used together with the `match_set` parameter.
+	// Uses the iptables set extension.
+	// Choices `dst,dst` and `src,src` added in version 2.17.
+	MatchSetFlags *string `json:"match_set_flags,omitempty"`
+
+	// Specifies the maximum average number of matches to allow per second.
+	// The number can specify units explicitly, using `/second`, `/minute`, `/hour`
+	// or `/day`, or parts of them (so `5/second` is the same as `5/s`).
+	Limit *string `json:"limit,omitempty"`
+
+	// Specifies the maximum burst before the above limit kicks in.
+	LimitBurst *string `json:"limit_burst,omitempty"`
+
+	// Specifies the UID or username to use in the match by owner rule.
+	// From Ansible 2.6 when the `!` argument is prepended then the it inverts the
+	// rule to apply instead to all users except that one specified.
+	UidOwner *string `json:"uid_owner,omitempty"`
+
+	// Specifies the GID or group to use in the match by owner rule.
+	GidOwner *string `json:"gid_owner,omitempty"`
+
+	// Specifies the error packet type to return while rejecting. It implies
+	// `jump=REJECT`.
+	RejectWith *string `json:"reject_with,omitempty"`
+
+	// This allows specification of the ICMP type, which can be a numeric ICMP
+	// type, type/code pair, or one of the ICMP type names shown by the command
+	// `iptables -p icmp -h`.
+	IcmpType *string `json:"icmp_type,omitempty"`
+
+	// Flushes the specified table and chain of all rules.
+	// If no chain is specified then the entire table is purged.
+	// Ignores all other parameters.
+	Flush *bool `json:"flush,omitempty"`
+
+	// Set the policy for the chain to the given target.
+	// Only built-in chains can have policies.
+	// This parameter requires the `chain` parameter.
+	// If you specify this parameter, all other parameters will be ignored.
+	// This parameter is used to set the default policy for the given `chain`. Do
+	// not confuse this with `jump` parameter.
+	Policy *string `json:"policy,omitempty"`
+
+	// Wait N seconds for the xtables lock to prevent multiple instances of the
+	// program from running concurrently.
+	Wait *string `json:"wait,omitempty"`
+
+	// If `true` and `state` is `present`, the chain will be created if needed.
+	// If `true` and `state` is `absent`, the chain will be deleted if the only
+	// other parameter passed are `chain` and optionally `table`.
+	ChainManagement *bool `json:"chain_management,omitempty"`
+
+	// This parameter controls the running of the list -action of iptables, which
+	// is used internally by the module.
+	// Does not affect the actual functionality. Use this if iptables hang when
+	// creating a chain or altering policy.
+	// If `true`, then iptables skips the DNS-lookup of the IP addresses in a chain
+	// when it uses the list -action.
+	// Listing is used internally for example when setting a policy or creating a
+	// chain.
+	Numeric *bool `json:"numeric,omitempty"`
 }
 
+// Wrap the `IptablesParameters into an `rpc.RPCCall`.
 func (p *IptablesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
@@ -73,10 +304,12 @@ func (p *IptablesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], e
 	}, nil
 }
 
+// Return values for the `iptables` Ansible module.
 type IptablesReturn struct {
 	AnsibleCommonReturns
 }
 
+// Unwrap the `rpc.RPCResult` into an `IptablesReturn`
 func IptablesReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (IptablesReturn, error) {
 	return rpc.AnyToJSONT[IptablesReturn](r.Result.Result)
 }
