@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -142,38 +143,28 @@ func (r FileLine) Create(
 		return id, state, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return id, state, nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
+	call, err := parameters.ToRPCCall()
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
+	call.Args.Check = preview
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.lineinfile": parameters,
-				"ignore_errors":              preview,
-			},
-		},
-	})
-	if err != nil {
+	if preview {
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
+			return id, state, nil
+		}
+	}
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
+	if err != nil || !callResult.Result.Success {
+		err = fmt.Errorf(
+			"FileLine failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
@@ -203,6 +194,13 @@ func (r FileLine) Read(
 		return id, inputs, state, err
 	}
 
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return id, inputs, state, err
+	}
+	call.Args.Check = true
+
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
@@ -211,22 +209,19 @@ func (r FileLine) Read(
 		}, nil
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       true,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.lineinfile": parameters,
-			},
-		},
-	})
-	if err != nil {
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
+	if err != nil || !callResult.Result.Success {
+		err = fmt.Errorf(
+			"FileLine failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
-	result, err := executor.GetTaskResult[*ansible.LineinfileReturn](output, 0, 0)
+	result, err := ansible.LineinfileReturnFromRPCResult(callResult)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
@@ -261,42 +256,33 @@ func (r FileLine) Update(
 		return olds, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return olds, nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.lineinfile": parameters,
-			},
-		},
-	})
+	call, err := parameters.ToRPCCall()
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
+	call.Args.Check = preview
 
-	result, err := executor.GetTaskResult[*ansible.LineinfileReturn](output, 0, 0)
+	if preview {
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
+			return olds, nil
+		}
+	}
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
+	if err != nil || !callResult.Result.Success {
+		err = fmt.Errorf(
+			"FileLine failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
+	}
+
+	result, err := ansible.LineinfileReturnFromRPCResult(callResult)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err

@@ -13,11 +13,6 @@ import (
 func TestResourceFileLine(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.QEMUBackend,
-	})
-	defer harness.Close()
-
 	tests := map[string]struct {
 		props  resource.PropertyMap
 		before string
@@ -65,7 +60,12 @@ EOF
 	for name, tc := range tests {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
-			// WARN: do not use t.Parallel() here
+			t.Parallel()
+
+			harness := NewProviderTestHarness(t, testmachine.Config{
+				Backend: testmachine.DockerBackend,
+			})
+			defer harness.Close()
 
 			if tc.before != "" {
 				t.Logf("%s: running before commands", name)
