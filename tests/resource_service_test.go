@@ -27,7 +27,7 @@ func TestResourceService(t *testing.T) {
 	}{
 		"start service": {
 			props: resource.PropertyMap{
-				"name":   resource.NewStringProperty("cron.service"),
+				"name":  resource.NewStringProperty("cron.service"),
 				"state": resource.NewStringProperty("started"),
 			},
 			before: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
@@ -36,8 +36,8 @@ func TestResourceService(t *testing.T) {
 		},
 		"start and enable service": {
 			props: resource.PropertyMap{
-				"name":   resource.NewStringProperty("cron.service"),
-				"state": resource.NewStringProperty("started"),
+				"name":    resource.NewStringProperty("cron.service"),
+				"state":   resource.NewStringProperty("started"),
 				"enabled": resource.NewBoolProperty(true),
 			},
 			before: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
@@ -46,7 +46,7 @@ func TestResourceService(t *testing.T) {
 		},
 		"enable service without start": {
 			props: resource.PropertyMap{
-				"name":   resource.NewStringProperty("cron.service"),
+				"name":    resource.NewStringProperty("cron.service"),
 				"enabled": resource.NewBoolProperty(true),
 			},
 			before: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
