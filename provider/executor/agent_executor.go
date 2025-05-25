@@ -210,6 +210,72 @@ func CallAgent[I any, O any](
 	return res, err
 }
 
+type AnsibleExecuteArgs interface {
+	ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error)
+}
+
+type AnsibleExecuteReturn interface {
+	IsChanged() bool
+	GetMsg() string
+}
+
+func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
+	ctx context.Context,
+	connection *types.Connection,
+	args I,
+	preview bool,
+) (O, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.AnsibleExecute", trace.WithAttributes(
+		attribute.String("exec.strategy", "rpc"),
+		attribute.String("connection.host", *connection.Host),
+		telemetry.OtelJSON("args", args),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
+	var zero O
+
+	call, err := args.ToRPCCall()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return zero, err
+	}
+	call.Args.Check = preview
+
+	callResult, err := CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, connection, call)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return zero, err
+	}
+
+	if !callResult.Result.Success {
+		maybeReturn, _ := rpc.AnyToJSONT[O](callResult.Result.Result)
+		msg := maybeReturn.GetMsg()
+		if msg != "" {
+			err = fmt.Errorf("error running module %q: %s", call.Args.Name, msg)
+		} else {
+			err = fmt.Errorf(
+				"error running module %q: stderr=%s stdout=%s",
+				call.Args.Name,
+				callResult.Result.Stderr,
+				callResult.Result.Stdout,
+			)
+		}
+		span.SetStatus(codes.Error, err.Error())
+		return maybeReturn, err
+	}
+
+	returns, err := rpc.AnyToJSONT[O](callResult.Result.Result)
+	if err != nil {
+		err = fmt.Errorf("error decoding return value for module %q: %w", call.Args.Name, err)
+		span.SetStatus(codes.Error, err.Error())
+		return returns, err
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return returns, nil
+}
+
 func DisconnectAll(ctx context.Context) error {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.DisconnectAll", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
