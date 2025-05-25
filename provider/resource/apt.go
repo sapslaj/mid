@@ -531,6 +531,7 @@ func (r Apt) Update(
 			span.SetStatus(codes.Error, err.Error())
 			return AptState{}, err
 		}
+		parameters.Name = &absents
 		parameters.State = ansible.OptionalAptState("absent")
 		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
@@ -548,6 +549,7 @@ func (r Apt) Update(
 			span.SetStatus(codes.Error, err.Error())
 			return AptState{}, err
 		}
+		parameters.Name = &presents
 		parameters.State = ansible.OptionalAptState(newState)
 		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
