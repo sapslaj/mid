@@ -5,13 +5,16 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
-ANSIBLE_METADATA = {'metadata_version': '1.1',
-                    'status': ['preview'],
-                    'supported_by': 'community'}
+ANSIBLE_METADATA = {
+    "metadata_version": "1.1",
+    "status": ["preview"],
+    "supported_by": "community",
+}
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: rpm_ostree_upgrade
 short_description: Manage rpm-ostree upgrade transactions
@@ -48,24 +51,24 @@ options:
         default: false
         required: false
 
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Upgrade the rpm-ostree image without options, accept all defaults
   ansible.posix.rpm_ostree_upgrade:
 
 - name: Upgrade the rpm-ostree image allowing downgrades
   ansible.posix.rpm_ostree_upgrade:
     allow_downgrade: true
-'''
+"""
 
-RETURN = '''
+RETURN = """
 msg:
     description: The command standard output
     returned: always
     type: str
     sample: 'No upgrade available.'
-'''
+"""
 
 import os
 import traceback
@@ -77,18 +80,18 @@ from ansible.module_utils._text import to_native, to_text
 def rpm_ostree_transaction(module):
     cmd = []
     cmd.append(module.get_bin_path("rpm-ostree"))
-    cmd.append('upgrade')
+    cmd.append("upgrade")
 
-    if module.params['os']:
-        cmd += ['--os', module.params['os']]
-    if module.params['cache_only']:
-        cmd += ['--cache-only']
-    if module.params['allow_downgrade']:
-        cmd += ['--allow-downgrade']
-    if module.params['peer']:
-        cmd += ['--peer']
+    if module.params["os"]:
+        cmd += ["--os", module.params["os"]]
+    if module.params["cache_only"]:
+        cmd += ["--cache-only"]
+    if module.params["allow_downgrade"]:
+        cmd += ["--allow-downgrade"]
+    if module.params["peer"]:
+        cmd += ["--peer"]
 
-    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+    module.run_command_environ_update = dict(LANG="C", LC_ALL="C", LC_MESSAGES="C")
 
     rc, out, err = module.run_command(cmd)
 
@@ -104,16 +107,18 @@ def rpm_ostree_transaction(module):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            os=dict(type='str', default=''),
-            cache_only=dict(type='bool', default=False),
-            allow_downgrade=dict(type='bool', default=False),
-            peer=dict(type='bool', default=False),
+            os=dict(type="str", default=""),
+            cache_only=dict(type="bool", default=False),
+            allow_downgrade=dict(type="bool", default=False),
+            peer=dict(type="bool", default=False),
         ),
     )
 
     # Verify that the platform is an rpm-ostree based system
     if not os.path.exists("/run/ostree-booted"):
-        module.fail_json(msg="Module rpm_ostree_upgrade is only applicable for rpm-ostree based systems.")
+        module.fail_json(
+            msg="Module rpm_ostree_upgrade is only applicable for rpm-ostree based systems."
+        )
 
     try:
         rpm_ostree_transaction(module)
@@ -121,5 +126,5 @@ def main():
         module.fail_json(msg=to_native(e), exception=traceback.format_exc())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

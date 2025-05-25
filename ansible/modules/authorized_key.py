@@ -5,10 +5,11 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
 
-DOCUMENTATION = r'''
+DOCUMENTATION = r"""
 ---
 module: authorized_key
 short_description: Adds or removes an SSH authorized key
@@ -82,9 +83,9 @@ options:
     type: bool
     default: false
 author: Ansible Core Team
-'''
+"""
 
-EXAMPLES = r'''
+EXAMPLES = r"""
 - name: Set authorized key taken from file
   ansible.posix.authorized_key:
     user: charlie
@@ -152,9 +153,9 @@ EXAMPLES = r'''
     user: ubuntu
     state: present
     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
-'''
+"""
 
-RETURN = r'''
+RETURN = r"""
 exclusive:
   description: If the key has been forced to be exclusive or not.
   returned: success
@@ -205,7 +206,7 @@ validate_certs:
   returned: success
   type: bool
   sample: true
-'''
+"""
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
 #
@@ -234,8 +235,7 @@ from ansible.module_utils.six.moves.urllib.parse import urlparse
 
 
 class keydict(dict):
-
-    """ a dictionary that maintains the order of keys as they are added
+    """a dictionary that maintains the order of keys as they are added
 
     This has become an abuse of the dict interface.  Probably should be
     rewritten to be an entirely custom object with methods instead of
@@ -323,7 +323,9 @@ def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False)
         user_entry = pwd.getpwnam(user)
     except KeyError as e:
         if module.check_mode and path is None:
-            module.fail_json(msg="Either user must exist or you must provide full path to key file in check mode")
+            module.fail_json(
+                msg="Either user must exist or you must provide full path to key file in check mode"
+            )
         module.fail_json(msg="Failed to lookup user %s: %s" % (user, to_native(e)))
     if path is None:
         homedir = user_entry.pw_dir
@@ -345,13 +347,15 @@ def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False)
     if manage_dir:
         if not os.path.exists(sshdir):
             try:
-                os.mkdir(sshdir, int('0700', 8))
+                os.mkdir(sshdir, int("0700", 8))
             except OSError as e:
-                module.fail_json(msg="Failed to create directory %s : %s" % (sshdir, to_native(e)))
+                module.fail_json(
+                    msg="Failed to create directory %s : %s" % (sshdir, to_native(e))
+                )
             if module.selinux_enabled():
                 module.set_default_selinux_context(sshdir, False)
         os.chown(sshdir, uid, gid)
-        os.chmod(sshdir, int('0700', 8))
+        os.chmod(sshdir, int("0700", 8))
 
     if not os.path.exists(keysfile):
         basedir = os.path.dirname(keysfile)
@@ -368,7 +372,7 @@ def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False)
 
     try:
         os.chown(keysfile, uid, gid)
-        os.chmod(keysfile, int('0600', 8))
+        os.chmod(keysfile, int("0600", 8))
     except OSError:
         pass
 
@@ -376,15 +380,15 @@ def keyfile(module, user, write=False, path=None, manage_dir=True, follow=False)
 
 
 def parseoptions(module, options):
-    '''
+    """
     reads a string containing ssh-key options
     and returns a dictionary of those options
-    '''
+    """
     options_dict = keydict()  # ordered dict
     if options:
         # the following regex will split on commas while
         # ignoring those commas that fall within quotes
-        regex = re.compile(r'''((?:[^,"']|"[^"]*"|'[^']*')+)''')
+        regex = re.compile(r"""((?:[^,"']|"[^"]*"|'[^']*')+)""")
         parts = regex.split(options)[1:-1]
         for part in parts:
             if "=" in part:
@@ -397,58 +401,58 @@ def parseoptions(module, options):
 
 
 def parsekey(module, raw_key, rank=None):
-    '''
+    """
     parses a key, which may or may not contain a list
     of ssh-key options at the beginning
 
     rank indicates the keys original ordering, so that
     it can be written out in the same order.
-    '''
+    """
 
     VALID_SSH2_KEY_TYPES = [
-        'sk-ecdsa-sha2-nistp256@openssh.com',
-        'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
-        'webauthn-sk-ecdsa-sha2-nistp256@openssh.com',
-        'ecdsa-sha2-nistp256',
-        'ecdsa-sha2-nistp256-cert-v01@openssh.com',
-        'ecdsa-sha2-nistp384',
-        'ecdsa-sha2-nistp384-cert-v01@openssh.com',
-        'ecdsa-sha2-nistp521',
-        'ecdsa-sha2-nistp521-cert-v01@openssh.com',
-        'sk-ssh-ed25519@openssh.com',
-        'sk-ssh-ed25519-cert-v01@openssh.com',
-        'ssh-ed25519',
-        'ssh-ed25519-cert-v01@openssh.com',
-        'ssh-dss',
-        'ssh-rsa',
-        'ssh-xmss@openssh.com',
-        'ssh-xmss-cert-v01@openssh.com',
-        'rsa-sha2-256',
-        'rsa-sha2-512',
-        'ssh-rsa-cert-v01@openssh.com',
-        'rsa-sha2-256-cert-v01@openssh.com',
-        'rsa-sha2-512-cert-v01@openssh.com',
-        'ssh-dss-cert-v01@openssh.com',
+        "sk-ecdsa-sha2-nistp256@openssh.com",
+        "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com",
+        "webauthn-sk-ecdsa-sha2-nistp256@openssh.com",
+        "ecdsa-sha2-nistp256",
+        "ecdsa-sha2-nistp256-cert-v01@openssh.com",
+        "ecdsa-sha2-nistp384",
+        "ecdsa-sha2-nistp384-cert-v01@openssh.com",
+        "ecdsa-sha2-nistp521",
+        "ecdsa-sha2-nistp521-cert-v01@openssh.com",
+        "sk-ssh-ed25519@openssh.com",
+        "sk-ssh-ed25519-cert-v01@openssh.com",
+        "ssh-ed25519",
+        "ssh-ed25519-cert-v01@openssh.com",
+        "ssh-dss",
+        "ssh-rsa",
+        "ssh-xmss@openssh.com",
+        "ssh-xmss-cert-v01@openssh.com",
+        "rsa-sha2-256",
+        "rsa-sha2-512",
+        "ssh-rsa-cert-v01@openssh.com",
+        "rsa-sha2-256-cert-v01@openssh.com",
+        "rsa-sha2-512-cert-v01@openssh.com",
+        "ssh-dss-cert-v01@openssh.com",
     ]
 
-    options = None   # connection options
-    key = None   # encrypted key string
-    key_type = None   # type of ssh key
-    type_index = None   # index of keytype in key string|list
+    options = None  # connection options
+    key = None  # encrypted key string
+    key_type = None  # type of ssh key
+    type_index = None  # index of keytype in key string|list
 
     # remove comment yaml escapes
-    raw_key = raw_key.replace(r'\#', '#')
+    raw_key = raw_key.replace(r"\#", "#")
 
     # split key safely
     lex = shlex.shlex(raw_key)
     lex.quotes = []
-    lex.commenters = ''  # keep comment hashes
+    lex.commenters = ""  # keep comment hashes
     lex.whitespace_split = True
     key_parts = list(lex)
 
-    if key_parts and key_parts[0] == '#':
+    if key_parts and key_parts[0] == "#":
         # comment line, invalid line, etc.
-        return (raw_key, 'skipped', None, None, rank)
+        return (raw_key, "skipped", None, None, rank)
 
     for i in range(0, len(key_parts)):
         if key_parts[i] in VALID_SSH2_KEY_TYPES:
@@ -470,15 +474,14 @@ def parsekey(module, raw_key, rank=None):
 
     # set comment to everything after the key
     if len(key_parts) > (type_index + 1):
-        comment = " ".join(key_parts[(type_index + 2):])
+        comment = " ".join(key_parts[(type_index + 2) :])
 
     return (key, key_type, options, comment, rank)
 
 
 def readfile(filename):
-
     if not os.path.isfile(filename):
-        return ''
+        return ""
 
     f = open(filename)
     try:
@@ -497,7 +500,7 @@ def parsekeys(module, lines):
         else:
             # for an invalid line, just set the line
             # dict key to the line so it will be re-output later
-            keys[line] = (line, 'skipped', None, None, rank_index)
+            keys[line] = (line, "skipped", None, None, rank_index)
     return keys
 
 
@@ -509,7 +512,9 @@ def writefile(module, filename, content):
             f.write(content)
     except IOError as e:
         module.add_cleanup_file(tmp_path)
-        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, to_native(e)))
+        module.fail_json(
+            msg="Failed to write to file %s: %s" % (tmp_path, to_native(e))
+        )
     module.atomic_move(tmp_path, filename)
 
 
@@ -538,14 +543,14 @@ def serialize(keys):
             if not key_type:
                 key_line = key
 
-            if key_type == 'skipped':
+            if key_type == "skipped":
                 key_line = key[0]
             else:
                 key_line = "%s%s %s %s\n" % (option_str, key_type, keyhash, comment)
         except Exception:
             key_line = key
         lines.append(key_line)
-    return ''.join(lines)
+    return "".join(lines)
 
 
 def enforce_state(module, params):
@@ -561,14 +566,14 @@ def enforce_state(module, params):
     key_options = params.get("key_options", None)
     exclusive = params.get("exclusive", False)
     comment = params.get("comment", None)
-    follow = params.get('follow', False)
+    follow = params.get("follow", False)
     error_msg = "Error getting key from: %s"
 
     # if the key is a url or file, request it and use it as key source
     if key.startswith("http"):
         try:
             resp, info = fetch_url(module, key)
-            if info['status'] != 200:
+            if info["status"] != 200:
                 module.fail_json(msg=error_msg % key)
             else:
                 key = resp.read()
@@ -576,7 +581,7 @@ def enforce_state(module, params):
             module.fail_json(msg=error_msg % key)
 
         # resp.read gives bytes on python3, convert to native string type
-        key = to_native(key, errors='surrogate_or_strict')
+        key = to_native(key, errors="surrogate_or_strict")
 
     if key.startswith("file"):
         # if the key is an absolute path, check for existense and use it as a key source
@@ -584,15 +589,19 @@ def enforce_state(module, params):
         if not os.path.exists(key_path):
             module.fail_json(msg="Path to a key file not found: %s" % key_path)
         if not os.path.isfile(key_path):
-            module.fail_json(msg="Path to a key is a directory and must be a file: %s" % key_path)
+            module.fail_json(
+                msg="Path to a key is a directory and must be a file: %s" % key_path
+            )
         try:
-            with open(key_path, 'r') as source_fh:
+            with open(key_path, "r") as source_fh:
                 key = source_fh.read()
         except OSError as e:
-            module.fail_json(msg="Failed to read key file %s : %s" % (key_path, to_native(e)))
+            module.fail_json(
+                msg="Failed to read key file %s : %s" % (key_path, to_native(e))
+            )
 
     # extract individual keys into an array, skipping blank lines and comments
-    new_keys = [s for s in key.splitlines() if s and not s.startswith('#')]
+    new_keys = [s for s in key.splitlines() if s and not s.startswith("#")]
 
     # check current state -- just get the filename, don't create file
     do_write = False
@@ -619,10 +628,22 @@ def enforce_state(module, params):
         if key_options is not None:
             parsed_options = parseoptions(module, key_options)
             # rank here is the rank in the provided new keys, which may be unrelated to rank in existing_keys
-            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3], parsed_new_key[4])
+            parsed_new_key = (
+                parsed_new_key[0],
+                parsed_new_key[1],
+                parsed_options,
+                parsed_new_key[3],
+                parsed_new_key[4],
+            )
 
         if comment is not None:
-            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_new_key[2], comment, parsed_new_key[4])
+            parsed_new_key = (
+                parsed_new_key[0],
+                parsed_new_key[1],
+                parsed_new_key[2],
+                comment,
+                parsed_new_key[4],
+            )
 
         matched = False
         non_matching_keys = []
@@ -633,7 +654,10 @@ def enforce_state(module, params):
             # existing key to the non-matching list
             # We only want it to match everything when the state
             # is present
-            if parsed_new_key[:4] != existing_keys[parsed_new_key[0]][:4] and state == "present":
+            if (
+                parsed_new_key[:4] != existing_keys[parsed_new_key[0]][:4]
+                and state == "present"
+            ):
                 non_matching_keys.append(existing_keys[parsed_new_key[0]])
             else:
                 matched = True
@@ -652,7 +676,13 @@ def enforce_state(module, params):
                 # We want the new key to be after existing keys if not exclusive (rank > max_rank_of_existing_keys)
                 total_rank = max_rank_of_existing_keys + parsed_new_key[4]
                 # replace existing key tuple with new parsed key with its total rank
-                existing_keys[parsed_new_key[0]] = (parsed_new_key[0], parsed_new_key[1], parsed_new_key[2], parsed_new_key[3], total_rank)
+                existing_keys[parsed_new_key[0]] = (
+                    parsed_new_key[0],
+                    parsed_new_key[1],
+                    parsed_new_key[2],
+                    parsed_new_key[3],
+                    total_rank,
+                )
                 do_write = True
 
         elif state == "absent":
@@ -676,16 +706,16 @@ def enforce_state(module, params):
         diff = None
         if module._diff:
             diff = {
-                'before_header': params['keyfile'],
-                'after_header': filename,
-                'before': existing_content,
-                'after': new_content,
+                "before_header": params["keyfile"],
+                "after_header": filename,
+                "before": existing_content,
+                "after": new_content,
             }
-            params['diff'] = diff
+            params["diff"] = diff
 
         if not module.check_mode:
             writefile(module, filename, new_content)
-        params['changed'] = True
+        params["changed"] = True
 
     return params
 
@@ -693,16 +723,16 @@ def enforce_state(module, params):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            user=dict(type='str', required=True),
-            key=dict(type='str', required=True, no_log=False),
-            path=dict(type='path'),
-            manage_dir=dict(type='bool', default=True),
-            state=dict(type='str', default='present', choices=['absent', 'present']),
-            key_options=dict(type='str', no_log=False),
-            exclusive=dict(type='bool', default=False),
-            comment=dict(type='str'),
-            validate_certs=dict(type='bool', default=True),
-            follow=dict(type='bool', default=False),
+            user=dict(type="str", required=True),
+            key=dict(type="str", required=True, no_log=False),
+            path=dict(type="path"),
+            manage_dir=dict(type="bool", default=True),
+            state=dict(type="str", default="present", choices=["absent", "present"]),
+            key_options=dict(type="str", no_log=False),
+            exclusive=dict(type="bool", default=False),
+            comment=dict(type="str"),
+            validate_certs=dict(type="bool", default=True),
+            follow=dict(type="bool", default=False),
         ),
         supports_check_mode=True,
     )
@@ -711,5 +741,5 @@ def main():
     module.exit_json(**results)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -17,11 +17,13 @@ fw_offline = False
 import_failure = True
 try:
     import firewall.config
+
     FW_VERSION = firewall.config.VERSION
 
     from firewall.client import FirewallClient
     from firewall.client import FirewallClientZoneSettings
     from firewall.errors import FirewallError
+
     import_failure = False
 
     try:
@@ -38,10 +40,12 @@ try:
         #  online and offline operations do not share a common firewalld API
         try:
             from firewall.core.fw_test import Firewall_test
+
             fw = Firewall_test()
-        except (ModuleNotFoundError):
+        except ModuleNotFoundError:
             # In firewalld version 0.7.0 this behavior changed
             from firewall.core.fw import Firewall
+
             fw = Firewall(offline=True)
 
         fw.start()
@@ -56,8 +60,17 @@ class FirewallTransaction(object):
     This is the base class for all firewalld transactions we might want to have
     """
 
-    def __init__(self, module, action_args=(), zone=None, desired_state=None,
-                 permanent=False, immediate=False, enabled_values=None, disabled_values=None):
+    def __init__(
+        self,
+        module,
+        action_args=(),
+        zone=None,
+        desired_state=None,
+        permanent=False,
+        immediate=False,
+        enabled_values=None,
+        disabled_values=None,
+    ):
         # type: (firewall.client, tuple, str, bool, bool, bool)
         """
         initializer the transaction
@@ -112,18 +125,19 @@ class FirewallTransaction(object):
         try:
             return action_func(*action_func_args)
         except Exception as e:
-
             # If there are any commonly known errors that we should provide more
             # context for to help the users diagnose what's wrong. Handle that here
             if "INVALID_SERVICE" in "%s" % e:
-                self.msgs.append("Services are defined by port/tcp relationship and named as they are in /etc/services (on most systems)")
+                self.msgs.append(
+                    "Services are defined by port/tcp relationship and named as they are in /etc/services (on most systems)"
+                )
 
             if len(self.msgs) > 0:
                 self.module.fail_json(
-                    msg='ERROR: Exception caught: %s %s' % (e, ', '.join(self.msgs))
+                    msg="ERROR: Exception caught: %s %s" % (e, ", ".join(self.msgs))
                 )
             else:
-                self.module.fail_json(msg='ERROR: Exception caught: %s' % e)
+                self.module.fail_json(msg="ERROR: Exception caught: %s" % e)
 
     def get_fw_zone_settings(self):
         if self.fw_offline:
@@ -174,30 +188,22 @@ class FirewallTransaction(object):
 
         if self.immediate and self.permanent:
             is_enabled_permanent = self.action_handler(
-                self.get_enabled_permanent,
-                self.action_args
+                self.get_enabled_permanent, self.action_args
             )
             is_enabled_immediate = self.action_handler(
-                self.get_enabled_immediate,
-                self.action_args
+                self.get_enabled_immediate, self.action_args
             )
-            self.msgs.append('Permanent and Non-Permanent(immediate) operation')
+            self.msgs.append("Permanent and Non-Permanent(immediate) operation")
 
             if self.desired_state in self.enabled_values:
                 if not is_enabled_permanent or not is_enabled_immediate:
                     if self.module.check_mode:
                         self.module.exit_json(changed=True)
                 if not is_enabled_permanent:
-                    self.action_handler(
-                        self.set_enabled_permanent,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_enabled_permanent, self.action_args)
                     self.changed = True
                 if not is_enabled_immediate:
-                    self.action_handler(
-                        self.set_enabled_immediate,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_enabled_immediate, self.action_args)
                     self.changed = True
                 if self.changed and self.enabled_msg:
                     self.msgs.append(self.enabled_msg)
@@ -207,36 +213,26 @@ class FirewallTransaction(object):
                     if self.module.check_mode:
                         self.module.exit_json(changed=True)
                 if is_enabled_permanent:
-                    self.action_handler(
-                        self.set_disabled_permanent,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_disabled_permanent, self.action_args)
                     self.changed = True
                 if is_enabled_immediate:
-                    self.action_handler(
-                        self.set_disabled_immediate,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_disabled_immediate, self.action_args)
                     self.changed = True
                 if self.changed and self.disabled_msg:
                     self.msgs.append(self.disabled_msg)
 
         elif self.permanent and not self.immediate:
             is_enabled = self.action_handler(
-                self.get_enabled_permanent,
-                self.action_args
+                self.get_enabled_permanent, self.action_args
             )
-            self.msgs.append('Permanent operation')
+            self.msgs.append("Permanent operation")
 
             if self.desired_state in self.enabled_values:
                 if not is_enabled:
                     if self.module.check_mode:
                         self.module.exit_json(changed=True)
 
-                    self.action_handler(
-                        self.set_enabled_permanent,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_enabled_permanent, self.action_args)
                     self.changed = True
                 if self.changed and self.enabled_msg:
                     self.msgs.append(self.enabled_msg)
@@ -246,30 +242,23 @@ class FirewallTransaction(object):
                     if self.module.check_mode:
                         self.module.exit_json(changed=True)
 
-                    self.action_handler(
-                        self.set_disabled_permanent,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_disabled_permanent, self.action_args)
                     self.changed = True
                 if self.changed and self.disabled_msg:
                     self.msgs.append(self.disabled_msg)
 
         elif self.immediate and not self.permanent:
             is_enabled = self.action_handler(
-                self.get_enabled_immediate,
-                self.action_args
+                self.get_enabled_immediate, self.action_args
             )
-            self.msgs.append('Non-permanent operation')
+            self.msgs.append("Non-permanent operation")
 
             if self.desired_state in self.enabled_values:
                 if not is_enabled:
                     if self.module.check_mode:
                         self.module.exit_json(changed=True)
 
-                    self.action_handler(
-                        self.set_enabled_immediate,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_enabled_immediate, self.action_args)
                     self.changed = True
                 if self.changed and self.enabled_msg:
                     self.msgs.append(self.enabled_msg)
@@ -279,10 +268,7 @@ class FirewallTransaction(object):
                     if self.module.check_mode:
                         self.module.exit_json(changed=True)
 
-                    self.action_handler(
-                        self.set_disabled_immediate,
-                        self.action_args
-                    )
+                    self.action_handler(self.set_disabled_immediate, self.action_args)
                     self.changed = True
                 if self.changed and self.disabled_msg:
                     self.msgs.append(self.disabled_msg)
@@ -300,23 +286,37 @@ class FirewallTransaction(object):
         if FW_VERSION and fw_offline:
             # Pre-run version checking
             if LooseVersion(FW_VERSION) < LooseVersion("0.3.9"):
-                module.fail_json(msg='unsupported version of firewalld, offline operations require >= 0.3.9 - found: {0}'.format(FW_VERSION))
+                module.fail_json(
+                    msg="unsupported version of firewalld, offline operations require >= 0.3.9 - found: {0}".format(
+                        FW_VERSION
+                    )
+                )
         elif FW_VERSION and not fw_offline:
             # Pre-run version checking
             if LooseVersion(FW_VERSION) < LooseVersion("0.2.11"):
-                module.fail_json(msg='unsupported version of firewalld, requires >= 0.2.11 - found: {0}'.format(FW_VERSION))
+                module.fail_json(
+                    msg="unsupported version of firewalld, requires >= 0.2.11 - found: {0}".format(
+                        FW_VERSION
+                    )
+                )
 
             # Check for firewalld running
             try:
                 if fw.connected is False:
-                    module.fail_json(msg='firewalld service must be running, or try with offline=true')
+                    module.fail_json(
+                        msg="firewalld service must be running, or try with offline=true"
+                    )
             except AttributeError:
-                module.fail_json(msg="firewalld connection can't be established,\
-                        installed version (%s) likely too old. Requires firewalld >= 0.2.11" % FW_VERSION)
+                module.fail_json(
+                    msg="firewalld connection can't be established,\
+                        installed version (%s) likely too old. Requires firewalld >= 0.2.11"
+                    % FW_VERSION
+                )
 
         if import_failure:
             if HAS_RESPAWN_UTIL:
                 respawn_module("firewall")
             module.fail_json(
-                msg=missing_required_lib('firewall') + '. Version 0.2.11 or newer required (0.3.9 or newer for offline operations)'
+                msg=missing_required_lib("firewall")
+                + ". Version 0.2.11 or newer required (0.3.9 or newer for offline operations)"
             )

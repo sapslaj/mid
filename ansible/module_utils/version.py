@@ -17,4 +17,4 @@ __metaclass__ = type
 
 from ._version import LooseVersion, StrictVersion
 
-__all__ = ['LooseVersion', 'StrictVersion']
+__all__ = ["LooseVersion", "StrictVersion"]

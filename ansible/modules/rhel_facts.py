@@ -5,9 +5,10 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
+
 __metaclass__ = type
 
-DOCUMENTATION = '''
+DOCUMENTATION = """
 ---
 module: rhel_facts
 version_added: 1.5.0
@@ -21,9 +22,9 @@ requirements:
 seealso:
   - module: ansible.builtin.package
 options: {}
-'''
+"""
 
-EXAMPLES = '''
+EXAMPLES = """
 - name: Playbook to use the package module on all RHEL footprints
   vars:
     ansible_facts_modules:
@@ -36,7 +37,7 @@ EXAMPLES = '''
           - htop
           - ansible
         state: present
-'''
+"""
 
 RETURN = """
 ansible_facts:
@@ -57,7 +58,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 def main():
-
     module = AnsibleModule(
         argument_spec=dict(),
         supports_check_mode=True,
@@ -67,10 +67,10 @@ def main():
 
     # Verify that the platform is an rpm-ostree based system
     if os.path.exists("/run/ostree-booted"):
-        ansible_facts['pkg_mgr'] = 'ansible.posix.rhel_rpm_ostree'
+        ansible_facts["pkg_mgr"] = "ansible.posix.rhel_rpm_ostree"
 
     module.exit_json(ansible_facts=ansible_facts, changed=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
