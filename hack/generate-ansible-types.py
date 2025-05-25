@@ -69,6 +69,8 @@ def scalar_type_ansible_to_go(t: str) -> str:
             return "any"
         case "float":
             return "float64"
+        case "any":
+            return "any"
         case _:
             raise Exception(f"unknown type '{t}'")
 
@@ -106,8 +108,32 @@ def composite_type_ansible_to_go(obj: Any) -> str:
             else:
                 return "[]" + scalar_type_ansible_to_go(elements)
         case "dict":
-            if obj.get("elements", None) is not None:
-                raise Exception("dict has subelements???")
+            elements = obj.get("elements", None)
+            if elements is not None:
+                match elements:
+                    case "dict":
+                        contains = obj.get("contains", None)
+                        if contains is None:
+                            raise Exception(
+                                "dict has dict subelements but doesn't specify the type!"
+                            )
+                        result = "map[string]struct {"
+                        for key, value in contains.items():
+                            required = value.get("required", False)
+                            result += "\t\t"
+                            result += pascalcased(key)
+                            result += " "
+                            if not required:
+                                result += "*"
+                            result += composite_type_ansible_to_go(value)
+                            result += ' `json:"'
+                            result += key
+                            if not required:
+                                result += ",omitempty"
+                            result += '"`\n'
+                        result += "\t}"
+                    case _:
+                        raise Exception(f"dict has {elements} subelements???")
             suboptions = obj.get("suboptions", None)
             if not suboptions:
                 return "map[string]any"
@@ -152,16 +178,42 @@ def process_module_file(module_file: str):
         if isinstance(extends_documentation_fragments, str):
             extends_documentation_fragments = [extends_documentation_fragments]
         for extends_documentation_fragment in extends_documentation_fragments:
-            doc_fragment_module = import_module(
-                f"ansible.plugins.doc_fragments.{extends_documentation_fragment}"
+            extends_documentation_fragment = (
+                extends_documentation_fragment.removeprefix("ansible.builtin.")
             )
-            doc_fragment_class = getattr(doc_fragment_module, "ModuleDocFragment", None)
-            if doc_fragment_class is None:
-                continue
-            doc_fragment = yaml.safe_load(
-                StringIO(getattr(doc_fragment_class, "DOCUMENTATION"))
-            )
-            documentation = deepmerge.always_merger.merge(documentation, doc_fragment)
+            try:
+                doc_fragment_module = import_module(
+                    f"ansible.plugins.doc_fragments.{extends_documentation_fragment}"
+                )
+                doc_fragment_class = getattr(
+                    doc_fragment_module, "ModuleDocFragment", None
+                )
+                if doc_fragment_class is None:
+                    continue
+                doc_fragment = yaml.safe_load(
+                    StringIO(getattr(doc_fragment_class, "DOCUMENTATION"))
+                )
+                documentation = deepmerge.always_merger.merge(
+                    documentation, doc_fragment
+                )
+            except ModuleNotFoundError:
+                parts = extends_documentation_fragment.split(".")
+                subattr = parts[-1].upper()
+                extends_documentation_fragment = ".".join(parts[:-1])
+                doc_fragment_module = import_module(
+                    f"ansible.plugins.doc_fragments.{extends_documentation_fragment}"
+                )
+                doc_fragment_class = getattr(
+                    doc_fragment_module, "ModuleDocFragment", None
+                )
+                if doc_fragment_class is None:
+                    continue
+                doc_fragment = yaml.safe_load(
+                    StringIO(getattr(doc_fragment_class, subattr))
+                )
+                documentation = deepmerge.always_merger.merge(
+                    documentation, doc_fragment
+                )
 
         pascalcase_name = pascalcased(name)
 
@@ -178,29 +230,32 @@ def process_module_file(module_file: str):
             for key, value in documentation["options"].items():
                 if "choices" not in value:
                     continue
-                if value["type"] != "str":
-                    if value.get("elements", None) != "str":
-                        raise Exception(f"{name}.{key} enum type is unsupported")
+                if elements := value.get("elements", None):
+                    enum_type = scalar_type_ansible_to_go(elements)
+                else:
+                    enum_type = scalar_type_ansible_to_go(value["type"])
                 pascalcase_key = pascalcased(key)
                 f.write(doc_comment(value["description"], indent=0))
-                f.write(f"type {pascalcase_name}{pascalcase_key} string\n\n")
+                f.write(f"type {pascalcase_name}{pascalcase_key} {enum_type}\n\n")
                 f.write("const (\n")
                 for choice in value["choices"]:
+                    pascalcase_choice = pascalcased(str(choice))
                     if isinstance(value["choices"], dict):
                         f.write(doc_comment(value["choices"][choice], indent=1))
                     f.write("\t")
-                    f.write(f"{pascalcase_name}{pascalcase_key}{pascalcased(choice)}")
+                    f.write(f"{pascalcase_name}{pascalcase_key}{pascalcase_choice}")
                     f.write(" ")
                     f.write(f"{pascalcase_name}{pascalcase_key}")
                     f.write(" = ")
-                    f.write(f'"{choice}"\n')
+                    choice_repred = json.dumps(choice)
+                    f.write(f"{choice_repred}\n")
                 f.write(")\n\n")
                 if not value.get("required", False):
                     f.write(f"func Optional{pascalcase_name}{pascalcase_key}")
                     f.write("[T interface {\n\t")
                     f.write(f"*{pascalcase_name}{pascalcase_key} | ")
                     f.write(f"{pascalcase_name}{pascalcase_key} | ")
-                    f.write("*string | string")
+                    f.write(f"*{enum_type} | {enum_type}")
                     f.write("\n}](s T) ")
                     f.write(f"*{pascalcase_name}{pascalcase_key}")
                     f.write(" {\n")
@@ -209,13 +264,13 @@ def process_module_file(module_file: str):
                     f.write("\t\treturn v\n")
                     f.write(f"\tcase {pascalcase_name}{pascalcase_key}:\n")
                     f.write("\t\treturn &v\n")
-                    f.write("\tcase *string:\n")
+                    f.write(f"\tcase *{enum_type}:\n")
                     f.write("\t\tif v == nil {\n")
                     f.write("\t\t\treturn nil\n")
                     f.write("\t\t}\n")
                     f.write(f"\t\tval := {pascalcase_name}{pascalcase_key}(*v)\n")
                     f.write("\t\treturn &val\n")
-                    f.write("\tcase string:\n")
+                    f.write(f"\tcase {enum_type}:\n")
                     f.write(f"\t\tval := {pascalcase_name}{pascalcase_key}(v)\n")
                     f.write("\t\treturn &val\n")
                     f.write("\tdefault:\n")
@@ -248,7 +303,7 @@ def process_module_file(module_file: str):
                             )
                             default_repr += "}"
                         else:
-                            default_repr = f"{pascalcase_name}{pascalcased(key)}{pascalcased(default)}"
+                            default_repr = f"{pascalcase_name}{pascalcased(key)}{pascalcased(str(default))}"
                     elif default is None:
                         default_repr = "nil"
                     else:
@@ -325,6 +380,11 @@ def process_module_file(module_file: str):
 
 
 def main():
+    [
+        os.remove(agent_dir / "ansible" / generated)
+        for generated in os.listdir(agent_dir / "ansible")
+        if generated != "common.go"
+    ]
     module_files = os.listdir(ansible_dir / "modules")
     with multiprocessing.Pool(os.process_cpu_count()) as p:
         p.map(process_module_file, module_files)
