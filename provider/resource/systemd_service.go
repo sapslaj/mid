@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
-	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
@@ -136,13 +135,6 @@ func (r SystemdService) Create(
 		return id, state, err
 	}
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
-	}
-	call.Args.Check = preview
-
 	if preview {
 		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
 		if !canConnect {
@@ -150,14 +142,11 @@ func (r SystemdService) Create(
 		}
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"systemd service update failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
+	_, err = executor.AnsibleExecute[
+		ansible.SystemdServiceParameters,
+		ansible.SystemdServiceReturn,
+	](ctx, config.Connection, parameters, preview)
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
@@ -191,13 +180,6 @@ func (r SystemdService) Read(
 		return id, inputs, state, err
 	}
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
-	}
-	call.Args.Check = true
-
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
@@ -206,19 +188,10 @@ func (r SystemdService) Read(
 		}, nil
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"systemd service read failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
-		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
-	}
-
-	result, err := ansible.SystemdServiceReturnFromRPCResult(callResult)
+	result, err := executor.AnsibleExecute[
+		ansible.SystemdServiceParameters,
+		ansible.SystemdServiceReturn,
+	](ctx, config.Connection, parameters, true)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
@@ -267,34 +240,17 @@ func (r SystemdService) Update(
 		parameters.State = ansible.OptionalSystemdServiceState("restarted")
 	}
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-	call.Args.Check = preview
-
 	if preview {
-		call.Args.Check = true
 		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
 		if !canConnect {
 			return olds, nil
 		}
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"service update failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
-	result, err := ansible.ServiceReturnFromRPCResult(callResult)
+	result, err := executor.AnsibleExecute[
+		ansible.SystemdServiceParameters,
+		ansible.SystemdServiceReturn,
+	](ctx, config.Connection, parameters, preview)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err
@@ -355,12 +311,6 @@ func (r SystemdService) Delete(
 		return err
 	}
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
@@ -377,14 +327,11 @@ func (r SystemdService) Delete(
 		return err
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"service update failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
+	_, err = executor.AnsibleExecute[
+		ansible.SystemdServiceParameters,
+		ansible.SystemdServiceReturn,
+	](ctx, config.Connection, parameters, false)
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}

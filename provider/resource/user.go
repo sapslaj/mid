@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
-	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
@@ -189,13 +188,6 @@ func (r User) Create(
 		return id, state, err
 	}
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
-	}
-	call.Args.Check = preview
-
 	if preview {
 		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
 		if !canConnect {
@@ -203,14 +195,11 @@ func (r User) Create(
 		}
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"creating user failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
+	_, err = executor.AnsibleExecute[
+		ansible.UserParameters,
+		ansible.UserReturn,
+	](ctx, config.Connection, parameters, preview)
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
@@ -244,13 +233,6 @@ func (r User) Read(
 		return id, inputs, state, err
 	}
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
-	}
-	call.Args.Check = true
-
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
@@ -259,19 +241,10 @@ func (r User) Read(
 		}, nil
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"reading user failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
-		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
-	}
-
-	result, err := ansible.UserReturnFromRPCResult(callResult)
+	result, err := executor.AnsibleExecute[
+		ansible.UserParameters,
+		ansible.UserReturn,
+	](ctx, config.Connection, parameters, true)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
@@ -310,34 +283,17 @@ func (r User) Update(
 		return olds, err
 	}
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-	call.Args.Check = preview
-
 	if preview {
-		call.Args.Check = true
 		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
 		if !canConnect {
 			return olds, nil
 		}
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"updating user failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
-	result, err := ansible.UserReturnFromRPCResult(callResult)
+	result, err := executor.AnsibleExecute[
+		ansible.UserParameters,
+		ansible.UserReturn,
+	](ctx, config.Connection, parameters, preview)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err
@@ -377,12 +333,6 @@ func (r User) Delete(
 	}
 	parameters.State = ansible.OptionalUserState("absent")
 
-	call, err := parameters.ToRPCCall()
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
@@ -399,14 +349,11 @@ func (r User) Delete(
 		return err
 	}
 
-	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
-	if err != nil || !callResult.Result.Success {
-		err = fmt.Errorf(
-			"deleting user failed: stderr=%s stdout=%s, err=%w",
-			callResult.Result.Stderr,
-			callResult.Result.Stdout,
-			err,
-		)
+	_, err = executor.AnsibleExecute[
+		ansible.UserParameters,
+		ansible.UserReturn,
+	](ctx, config.Connection, parameters, false)
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}

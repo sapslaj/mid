@@ -175,19 +175,13 @@ func (r Package) Create(
 		return id, state, err
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.package": parameters,
-				"ignore_errors":           preview,
-			},
-		},
-	})
+	_, err = executor.AnsibleExecute[
+		ansible.PackageParameters,
+		ansible.PackageReturn,
+	](ctx, config.Connection, parameters, preview)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && preview {
+			span.SetAttributes(attribute.Bool("unreachable", true))
 			return id, state, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
@@ -226,27 +220,17 @@ func (r Package) Read(
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
+		span.SetAttributes(attribute.Bool("unreachable", true))
 		return id, inputs, state, nil
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       true,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.package": parameters,
-			},
-		},
-	})
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
-	}
-
-	result, err := executor.GetTaskResult[*ansible.PackageFactsReturn](output, 0, 0)
+	result, err := executor.AnsibleExecute[
+		ansible.PackageParameters,
+		ansible.PackageReturn,
+	](ctx, config.Connection, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
+			span.SetAttributes(attribute.Bool("unreachable", true))
 			return id, inputs, state, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
@@ -296,6 +280,7 @@ func (r Package) Update(
 	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
 
 	if !canConnect {
+		span.SetAttributes(attribute.Bool("unreachable", true))
 		if preview {
 			return olds, nil
 		}
@@ -316,27 +301,15 @@ func (r Package) Update(
 			return olds, err
 		}
 
-		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-			GatherFacts: true,
-			Become:      true,
-			Check:       preview,
-			Tasks: []any{
-				map[string]any{
-					"ansible.builtin.package": parameters,
-					"ignore_errors":           preview,
-				},
-			},
-		})
+		result, err := executor.AnsibleExecute[
+			ansible.PackageParameters,
+			ansible.PackageReturn,
+		](ctx, config.Connection, parameters, preview)
 		if err != nil {
 			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
 				return olds, nil
 			}
-			span.SetStatus(codes.Error, err.Error())
-			return olds, err
-		}
-
-		result, err := executor.GetTaskResult[*ansible.PackageReturn](output, 0, 0)
-		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
@@ -384,8 +357,6 @@ func (r Package) Update(
 		}
 	}
 
-	taskParameterSets := []ansible.PackageParameters{}
-
 	absents := []string{}
 	presents := []string{}
 
@@ -397,52 +368,41 @@ func (r Package) Update(
 		}
 	}
 
+	changed := false
+
 	if len(absents) > 0 {
-		taskParameterSets = append(taskParameterSets, ansible.PackageParameters{
+		parameters := ansible.PackageParameters{
 			Name:  absents,
 			State: "absent",
-		})
-	}
-
-	if len(presents) > 0 {
-		taskParameterSets = append(taskParameterSets, ansible.PackageParameters{
-			Name:  presents,
-			State: newState,
-		})
-	}
-
-	if len(taskParameterSets) == 0 {
-		return olds, errors.New("could not figure out how to update this thing")
-	}
-
-	tasks := []any{}
-	for _, parameters := range taskParameterSets {
-		tasks = append(tasks, map[string]any{
-			"ansible.builtin.package": parameters,
-			"ignore_errors":           preview,
-		})
-	}
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       preview,
-		Tasks:       tasks,
-	})
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
-	changed := false
-	for i := range output.Results[0].Tasks {
-		r, err := executor.GetTaskResult[*ansible.PackageReturn](output, 0, i)
+		}
+		result, err := executor.AnsibleExecute[
+			ansible.PackageParameters,
+			ansible.PackageReturn,
+		](ctx, config.Connection, parameters, preview)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
-		if r.IsChanged() {
+		if result.IsChanged() {
 			changed = true
-			break
+		}
+	}
+
+	if len(presents) > 0 {
+		parameters := ansible.PackageParameters{
+			Name:  presents,
+			State: newState,
+		}
+		result, err := executor.AnsibleExecute[
+			ansible.PackageParameters,
+			ansible.PackageReturn,
+		](ctx, config.Connection, parameters, preview)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return olds, err
+		}
+		if result.IsChanged() {
+			changed = true
 		}
 	}
 
@@ -478,6 +438,9 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 
 	if !canConnect {
 		if config.GetDeleteUnreachable() {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
+			span.SetStatus(codes.Ok, "")
 			return nil
 		}
 
@@ -490,18 +453,15 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 		return err
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: true,
-		Become:      true,
-		Check:       false,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.package": parameters,
-			},
-		},
-	})
+	_, err = executor.AnsibleExecute[
+		ansible.PackageParameters,
+		ansible.PackageReturn,
+	](ctx, config.Connection, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
+			span.SetStatus(codes.Ok, "")
 			return nil
 		}
 		span.SetStatus(codes.Error, err.Error())
