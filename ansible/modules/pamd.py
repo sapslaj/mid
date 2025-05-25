@@ -41,6 +41,15 @@ options:
     type: str
     required: true
     choices: [account, -account, auth, -auth, password, -password, session, -session]
+    __mid_codegen_choicekeymap:
+      "account": Account
+      "-account": AccountNoLog
+      "auth": Auth
+      "-auth": AuthNoLog
+      "password": Password
+      "-password": PasswordNoLog
+      "session": Session
+      "-session": SessionNoLog
   control:
     description:
       - The control of the PAM rule being modified.
@@ -59,6 +68,15 @@ options:
       - The new type to assign to the new rule.
     type: str
     choices: [account, -account, auth, -auth, password, -password, session, -session]
+    __mid_codegen_choicekeymap:
+      "account": Account
+      "-account": AccountNoLog
+      "auth": Auth
+      "-auth": AuthNoLog
+      "password": Password
+      "-password": PasswordNoLog
+      "session": Session
+      "-session": SessionNoLog
   new_control:
     description:
       - The new control to assign to the new rule.

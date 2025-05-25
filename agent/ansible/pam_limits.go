@@ -16,7 +16,7 @@ type PamLimitsLimitType string
 const (
 	PamLimitsLimitTypeHard PamLimitsLimitType = "hard"
 	PamLimitsLimitTypeSoft PamLimitsLimitType = "soft"
-	PamLimitsLimitType     PamLimitsLimitType = "-"
+	PamLimitsLimitTypeBoth PamLimitsLimitType = "-"
 )
 
 // The limit to be set.

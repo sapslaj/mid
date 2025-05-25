@@ -42,12 +42,9 @@ func OptionalOpkgState[T interface {
 }
 
 // The `opkg --force` parameter used.
-// State `""` is deprecated and will be removed in community.general 12.0.0.
-// Please omit the parameter `force` to obtain the same behavior.
 type OpkgForce string
 
 const (
-	OpkgForce                           OpkgForce = ""
 	OpkgForceDepends                    OpkgForce = "depends"
 	OpkgForceMaintainer                 OpkgForce = "maintainer"
 	OpkgForceReinstall                  OpkgForce = "reinstall"
@@ -96,8 +93,6 @@ type OpkgParameters struct {
 	State *OpkgState `json:"state,omitempty"`
 
 	// The `opkg --force` parameter used.
-	// State `""` is deprecated and will be removed in community.general 12.0.0.
-	// Please omit the parameter `force` to obtain the same behavior.
 	Force *OpkgForce `json:"force,omitempty"`
 
 	// Update the package DB first.

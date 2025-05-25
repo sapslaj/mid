@@ -235,11 +235,15 @@ def process_module_file(module_file: str):
                 else:
                     enum_type = scalar_type_ansible_to_go(value["type"])
                 pascalcase_key = pascalcased(key)
+                choicekeymap = value.get("__mid_codegen_choicekeymap", None)
                 f.write(doc_comment(value["description"], indent=0))
                 f.write(f"type {pascalcase_name}{pascalcase_key} {enum_type}\n\n")
                 f.write("const (\n")
                 for choice in value["choices"]:
-                    pascalcase_choice = pascalcased(str(choice))
+                    if choicekeymap:
+                        pascalcase_choice = choicekeymap[choice]
+                    else:
+                        pascalcase_choice = pascalcased(str(choice))
                     if isinstance(value["choices"], dict):
                         f.write(doc_comment(value["choices"][choice], indent=1))
                     f.write("\t")

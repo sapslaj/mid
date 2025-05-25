@@ -44,10 +44,7 @@ options:
   force:
     description:
       - The C(opkg --force) parameter used.
-      - State V("") is deprecated and will be removed in community.general 12.0.0. Please omit the parameter O(force) to obtain
-        the same behavior.
     choices:
-      - ""
       - "depends"
       - "maintainer"
       - "reinstall"

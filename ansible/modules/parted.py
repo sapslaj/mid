@@ -57,6 +57,21 @@ options:
     type: str
     choices: [s, B, KB, KiB, MB, MiB, GB, GiB, TB, TiB, '%', cyl, chs, compact]
     default: KiB
+    __mid_codegen_choicekeymap:
+      "s": S
+      "B": B
+      "KB": KB
+      "KiB": KiB
+      "MB": MB
+      "MiB": MiB
+      "GB": GB
+      "GiB": GiB
+      "TB": TB
+      "TiB": TiB
+      "%": Percent
+      "cyl": Cyl
+      "chs": Chs
+      "compact": Compact
   label:
     description:
       - Disk label type or partition table to use.

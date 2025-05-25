@@ -16,28 +16,28 @@ const PamdName = "pamd"
 type PamdType string
 
 const (
-	PamdTypeAccount  PamdType = "account"
-	PamdTypeAccount  PamdType = "-account"
-	PamdTypeAuth     PamdType = "auth"
-	PamdTypeAuth     PamdType = "-auth"
-	PamdTypePassword PamdType = "password"
-	PamdTypePassword PamdType = "-password"
-	PamdTypeSession  PamdType = "session"
-	PamdTypeSession  PamdType = "-session"
+	PamdTypeAccount       PamdType = "account"
+	PamdTypeAccountNoLog  PamdType = "-account"
+	PamdTypeAuth          PamdType = "auth"
+	PamdTypeAuthNoLog     PamdType = "-auth"
+	PamdTypePassword      PamdType = "password"
+	PamdTypePasswordNoLog PamdType = "-password"
+	PamdTypeSession       PamdType = "session"
+	PamdTypeSessionNoLog  PamdType = "-session"
 )
 
 // The new type to assign to the new rule.
 type PamdNewType string
 
 const (
-	PamdNewTypeAccount  PamdNewType = "account"
-	PamdNewTypeAccount  PamdNewType = "-account"
-	PamdNewTypeAuth     PamdNewType = "auth"
-	PamdNewTypeAuth     PamdNewType = "-auth"
-	PamdNewTypePassword PamdNewType = "password"
-	PamdNewTypePassword PamdNewType = "-password"
-	PamdNewTypeSession  PamdNewType = "session"
-	PamdNewTypeSession  PamdNewType = "-session"
+	PamdNewTypeAccount       PamdNewType = "account"
+	PamdNewTypeAccountNoLog  PamdNewType = "-account"
+	PamdNewTypeAuth          PamdNewType = "auth"
+	PamdNewTypeAuthNoLog     PamdNewType = "-auth"
+	PamdNewTypePassword      PamdNewType = "password"
+	PamdNewTypePasswordNoLog PamdNewType = "-password"
+	PamdNewTypeSession       PamdNewType = "session"
+	PamdNewTypeSessionNoLog  PamdNewType = "-session"
 )
 
 func OptionalPamdNewType[T interface {

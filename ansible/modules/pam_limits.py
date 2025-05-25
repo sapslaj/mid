@@ -39,6 +39,10 @@ options:
       - Limit type, see C(man 5 limits.conf) for an explanation.
     required: true
     choices: ["hard", "soft", "-"]
+    __mid_codegen_choicekeymap:
+      hard: Hard
+      soft: Soft
+      "-": Both
   limit_item:
     type: str
     description:
