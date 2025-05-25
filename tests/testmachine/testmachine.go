@@ -200,20 +200,27 @@ func NewQEMU(t *testing.T, config Config) (*TestMachine, error) {
 	tm.SSHPort = rand.Intn(32768) + 1024
 	tm.SSHHost = "localhost"
 
+	qemuParams := []string{
+		"-snapshot",
+		"-smp", "2", // XXX: does this need to be configurable?
+		"-m", "1024", // XXX: does this need to be configurable?
+		"-netdev", fmt.Sprintf("id=net00,type=user,hostfwd=tcp::%d-:22", tm.SSHPort),
+		"-device", "virtio-net-pci,netdev=net00",
+		"-drive", fmt.Sprintf("if=virtio,format=qcow2,file=%s", img),
+		"-drive", fmt.Sprintf("if=virtio,format=raw,file=%s", path.Join(config.DataPath, "seed.img")),
+	}
+
+	if _, err := os.Stat("/dev/kvm"); err == nil {
+		t.Log("KVM support detected, launching QEMU with KVM")
+		qemuParams = append(qemuParams, "-accel", "kvm")
+	}
+
 	tm.QemuInstance, err = vmtest.NewQemu(&vmtest.QemuOptions{
 		OperatingSystem: vmtest.OS_LINUX,
 		Architecture:    vmtest.QEMU_X86_64,
 		Verbose:         true,
-		Params: []string{
-			"-snapshot",
-			"-smp", "2", // XXX: does this need to be configurable?
-			"-m", "1024", // XXX: does this need to be configurable?
-			"-netdev", fmt.Sprintf("id=net00,type=user,hostfwd=tcp::%d-:22", tm.SSHPort),
-			"-device", "virtio-net-pci,netdev=net00",
-			"-drive", fmt.Sprintf("if=virtio,format=qcow2,file=%s", img),
-			"-drive", fmt.Sprintf("if=virtio,format=raw,file=%s", path.Join(config.DataPath, "seed.img")),
-		},
-		Timeout: 10 * time.Minute,
+		Params:          qemuParams,
+		Timeout:         10 * time.Minute,
 	})
 	if err != nil {
 		return tm, err
