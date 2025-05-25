@@ -18,6 +18,7 @@ import (
 
 	"github.com/anatol/vmtest"
 	"github.com/ory/dockertest/v3"
+	"github.com/sapslaj/mid/pkg/env"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -200,30 +201,55 @@ func NewQEMU(t *testing.T, config Config) (*TestMachine, error) {
 	tm.SSHPort = rand.Intn(32768) + 1024
 	tm.SSHHost = "localhost"
 
-	qemuParams := []string{
-		"-snapshot",
-		"-smp", "2", // XXX: does this need to be configurable?
-		"-m", "1024", // XXX: does this need to be configurable?
-		"-netdev", fmt.Sprintf("id=net00,type=user,hostfwd=tcp::%d-:22", tm.SSHPort),
-		"-device", "virtio-net-pci,netdev=net00",
-		"-drive", fmt.Sprintf("if=virtio,format=qcow2,file=%s", img),
-		"-drive", fmt.Sprintf("if=virtio,format=raw,file=%s", path.Join(config.DataPath, "seed.img")),
+	buildQemuParams := func(kvm bool) []string {
+		params := []string{
+			"-snapshot",
+			"-smp", "2", // XXX: does this need to be configurable?
+			"-m", "1024", // XXX: does this need to be configurable?
+			"-netdev", fmt.Sprintf("id=net00,type=user,hostfwd=tcp::%d-:22", tm.SSHPort),
+			"-device", "virtio-net-pci,netdev=net00",
+			"-drive", fmt.Sprintf("if=virtio,format=qcow2,file=%s", img),
+			"-drive", fmt.Sprintf("if=virtio,format=raw,file=%s", path.Join(config.DataPath, "seed.img")),
+		}
+		if kvm {
+			params = append(params, "-accel", "kvm")
+		}
+		return params
 	}
 
-	if _, err := os.Stat("/dev/kvm"); err == nil {
-		t.Log("KVM support detected, launching QEMU with KVM")
-		qemuParams = append(qemuParams, "-accel", "kvm")
+	enableKvm, err := env.Get[bool]("ENABLE_KVM")
+	if err != nil {
+		if env.IsErrVarNotFound(err) {
+			enableKvm = false
+			if _, err := os.Stat("/dev/kvm"); err == nil {
+				t.Log("KVM support detected, attempting to launch QEMU with KVM")
+				enableKvm = true
+			}
+		}
+		return tm, err
 	}
 
-	tm.QemuInstance, err = vmtest.NewQemu(&vmtest.QemuOptions{
+	qemuOptions := &vmtest.QemuOptions{
 		OperatingSystem: vmtest.OS_LINUX,
 		Architecture:    vmtest.QEMU_X86_64,
-		Verbose:         true,
-		Params:          qemuParams,
+		Verbose:         false,
+		Params:          buildQemuParams(enableKvm),
 		Timeout:         10 * time.Minute,
-	})
+	}
+
+	tm.QemuInstance, err = vmtest.NewQemu(qemuOptions)
 	if err != nil {
-		return tm, err
+		_, isExitError := err.(*exec.ExitError)
+		if isExitError && enableKvm {
+			t.Log("failed to launch VM with KVM support, trying without KVM")
+			qemuOptions.Params = buildQemuParams(false)
+			tm.QemuInstance, err = vmtest.NewQemu(qemuOptions)
+			if err != nil {
+				return tm, err
+			}
+		} else {
+			return tm, err
+		}
 	}
 
 	t.Logf("waiting for cloud-init...")
