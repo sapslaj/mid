@@ -8,9 +8,13 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/pkg/ptr"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -61,6 +65,13 @@ func (r SystemdService) Diff(
 	olds SystemdServiceState,
 	news SystemdServiceArgs,
 ) (p.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:SystemdService.Diff", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+	))
+	defer span.End()
+
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
@@ -86,6 +97,8 @@ func (r SystemdService) Diff(
 		}),
 		types.DiffTriggers(olds, news),
 	)
+
+	span.SetStatus(codes.Ok, "")
 	return diff, nil
 }
 
@@ -95,6 +108,13 @@ func (r SystemdService) Create(
 	input SystemdServiceArgs,
 	preview bool,
 ) (string, SystemdServiceState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:SystemdService.Create", trace.WithAttributes(
+		attribute.String("name", name),
+		telemetry.OtelJSON("input", input),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if input.Name == nil && (input.Enabled != nil || input.Masked != nil || input.Ensure != nil) {
@@ -105,11 +125,14 @@ func (r SystemdService) Create(
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
+	span.SetAttributes(attribute.String("id", id))
 
 	parameters, err := r.argsToTaskParameters(input)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
@@ -125,10 +148,12 @@ func (r SystemdService) Create(
 		}
 
 		if err == nil {
-			return id, state, fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return id, state, err
 	}
 
 	playOutput, err := executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -150,9 +175,11 @@ func (r SystemdService) Create(
 				return id, state, nil
 			}
 		}
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -162,6 +189,13 @@ func (r SystemdService) Read(
 	inputs SystemdServiceArgs,
 	state SystemdServiceState,
 ) (string, SystemdServiceArgs, SystemdServiceState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:SystemdService.Read", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state", state),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if inputs.Name == nil && state.Name != nil && (inputs.Enabled != nil || inputs.Masked != nil || inputs.Ensure != nil) {
@@ -170,6 +204,7 @@ func (r SystemdService) Read(
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
@@ -192,16 +227,19 @@ func (r SystemdService) Read(
 		},
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	result, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](output, 0, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	state = r.updateState(state, inputs, result.IsChanged())
 
+	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
 }
 
@@ -212,6 +250,14 @@ func (r SystemdService) Update(
 	news SystemdServiceArgs,
 	preview bool,
 ) (SystemdServiceState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:SystemdService.Update", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if news.Name == nil && olds.Name != nil && (news.Enabled != nil || news.Masked != nil || news.Ensure != nil) {
@@ -220,6 +266,7 @@ func (r SystemdService) Update(
 
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
@@ -235,10 +282,12 @@ func (r SystemdService) Update(
 		}
 
 		if err == nil {
-			return olds, fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return olds, fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
 	}
 
 	refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
@@ -260,12 +309,18 @@ func (r SystemdService) Update(
 		},
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
 	result, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](output, 0, 0)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
+	}
 
 	state := r.updateState(olds, news, result.IsChanged())
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
@@ -274,6 +329,12 @@ func (r SystemdService) Delete(
 	id string,
 	props SystemdServiceState,
 ) error {
+	ctx, span := Tracer.Start(ctx, "mid:resource:SystemdService.Delete", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("props", props),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	args := SystemdServiceArgs{
@@ -299,12 +360,16 @@ func (r SystemdService) Delete(
 		args.Ensure = ptr.Of("stopped")
 	}
 
+	span.SetAttributes(attribute.Bool("run_play", runPlay))
+
 	if !runPlay {
+		span.SetStatus(codes.Ok, "")
 		return nil
 	}
 
 	parameters, err := r.argsToTaskParameters(args)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -316,10 +381,12 @@ func (r SystemdService) Delete(
 		}
 
 		if err == nil {
-			return fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -332,5 +399,11 @@ func (r SystemdService) Delete(
 			},
 		},
 	})
-	return err
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return nil
 }

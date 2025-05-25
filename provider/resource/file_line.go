@@ -7,8 +7,12 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -71,6 +75,13 @@ func (r FileLine) Diff(
 	olds FileLineState,
 	news FileLineArgs,
 ) (p.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Diff", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+	))
+	defer span.End()
+
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
@@ -97,6 +108,7 @@ func (r FileLine) Diff(
 		types.DiffTriggers(olds, news),
 	)
 
+	span.SetStatus(codes.Ok, "")
 	return diff, nil
 }
 
@@ -106,17 +118,27 @@ func (r FileLine) Create(
 	input FileLineArgs,
 	preview bool,
 ) (string, FileLineState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Create", trace.WithAttributes(
+		attribute.String("name", name),
+		telemetry.OtelJSON("input", input),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(FileLineState{}, input, true)
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
+	span.SetAttributes(attribute.String("id", id))
 
 	parameters, err := r.argsToTaskParameters(input)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
@@ -132,10 +154,12 @@ func (r FileLine) Create(
 		}
 
 		if err == nil {
-			return id, state, fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return id, state, fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return id, state, err
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -150,9 +174,11 @@ func (r FileLine) Create(
 		},
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -162,10 +188,18 @@ func (r FileLine) Read(
 	inputs FileLineArgs,
 	state FileLineState,
 ) (string, FileLineArgs, FileLineState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Read", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state", state),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
@@ -188,16 +222,19 @@ func (r FileLine) Read(
 		},
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	result, err := executor.GetTaskResult[*ansible.LineinfileReturn](output, 0, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	state = r.updateState(state, inputs, result.IsChanged())
 
+	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
 }
 
@@ -208,10 +245,19 @@ func (r FileLine) Update(
 	news FileLineArgs,
 	preview bool,
 ) (FileLineState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Update", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
@@ -227,10 +273,12 @@ func (r FileLine) Update(
 		}
 
 		if err == nil {
-			return olds, fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return olds, fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -244,11 +292,18 @@ func (r FileLine) Update(
 		},
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
 	result, err := executor.GetTaskResult[*ansible.LineinfileReturn](output, 0, 0)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
+	}
 
 	state := r.updateState(olds, news, result.IsChanged())
+
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }

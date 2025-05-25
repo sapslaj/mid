@@ -18,6 +18,7 @@ import (
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -137,6 +138,8 @@ func (r Apt) runApt(
 ) (ansible.AptReturn, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.runApt", trace.WithAttributes(
 		attribute.String("connection.host", *connection.Host),
+		telemetry.OtelJSON("parameters", parameters),
+		attribute.Bool("preview", preview),
 	))
 	defer span.End()
 
@@ -222,6 +225,8 @@ func (r Apt) Diff(
 ) (p.DiffResponse, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Diff", trace.WithAttributes(
 		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
 	))
 	defer span.End()
 
@@ -322,7 +327,11 @@ func (r Apt) Create(
 	input AptArgs,
 	preview bool,
 ) (string, AptState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Create")
+	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Create", trace.WithAttributes(
+		attribute.String("name", name),
+		telemetry.OtelJSON("input", input),
+		attribute.Bool("preview", preview),
+	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
@@ -338,7 +347,6 @@ func (r Apt) Create(
 		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
-
 	span.SetAttributes(attribute.String("id", id))
 
 	parameters, err := r.argsToTaskParameters(input)
@@ -356,9 +364,11 @@ func (r Apt) Create(
 
 	_, err = r.runApt(ctx, config.Connection, parameters, preview)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -370,6 +380,8 @@ func (r Apt) Read(
 ) (string, AptArgs, AptState, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Read", trace.WithAttributes(
 		attribute.String("id", id),
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state", state),
 	))
 	defer span.End()
 
@@ -396,6 +408,7 @@ func (r Apt) Read(
 
 	result, err := r.runApt(ctx, config.Connection, parameters, true)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
@@ -422,6 +435,9 @@ func (r Apt) Update(
 ) (AptState, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Update", trace.WithAttributes(
 		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+		attribute.Bool("preview", preview),
 	))
 	defer span.End()
 
@@ -447,6 +463,7 @@ func (r Apt) Update(
 
 		result, err := r.runApt(ctx, config.Connection, parameters, preview)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
 
@@ -550,6 +567,7 @@ func (r Apt) Update(
 func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Delete", trace.WithAttributes(
 		attribute.String("id", id),
+		telemetry.OtelJSON("props", props),
 	))
 	defer span.End()
 

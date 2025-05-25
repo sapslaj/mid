@@ -8,7 +8,6 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -16,6 +15,7 @@ import (
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -219,35 +219,50 @@ func (r Exec) runRPCExec(
 	input ExecArgs,
 	lifecycle string,
 ) (ExecState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.runRPCExec", trace.WithAttributes(
+		attribute.String("connection.host", *connection.Host),
+		telemetry.OtelJSON("state", state),
+		telemetry.OtelJSON("input", input),
+		attribute.String("lifecycle", lifecycle),
+	))
+	defer span.End()
+
 	call, err := r.argsToRPCCall(input, lifecycle)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, connection, call)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	if result.Error != "" {
-		return state, fmt.Errorf(
+		err = fmt.Errorf(
 			"mid encountered an issue running command '%v': %s",
 			call.Args.Command,
 			result.Error,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
 	}
 
 	if result.Result.ExitCode != 0 {
-		return state, fmt.Errorf(
+		err = fmt.Errorf(
 			"command '%v' exited with status %d: stderr=%s stdout=%s",
 			call.Args.Command,
 			result.Result.ExitCode,
 			result.Result.Stderr,
 			result.Result.Stdout,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
 	}
 
 	state = r.updateStateFromRPCResult(state, input, result)
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
@@ -258,43 +273,59 @@ func (r Exec) runRPCAnsibleExecute(
 	input ExecArgs,
 	lifecycle string,
 ) (ExecState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.runRPCAnsibleExecute", trace.WithAttributes(
+		attribute.String("connection.host", *connection.Host),
+		telemetry.OtelJSON("state", state),
+		telemetry.OtelJSON("input", input),
+		attribute.String("lifecycle", lifecycle),
+	))
+	defer span.End()
+
 	parameters, environment, err := r.argsToTaskParameters(input, lifecycle)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	call, err := parameters.ToRPCCall()
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 	call.Args.Environment = environment
 
 	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, connection, call)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	result, err := ansible.CommandReturnFromRPCResult(callResult)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	if callResult.Error != "" {
-		return state, fmt.Errorf(
+		err = fmt.Errorf(
 			"mid encountered an issue running command '%v': %s",
 			parameters.Argv,
 			callResult.Error,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
 	}
 
 	if !callResult.Result.Success {
 		if result.Rc == nil {
-			return state, fmt.Errorf(
+			err = fmt.Errorf(
 				"mid encountered an issue running command '%v': stderr=%s stdout=%s",
 				parameters.Argv,
 				callResult.Result.Stderr,
 				callResult.Result.Stdout,
 			)
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
 		}
 
 		stdout := "<nil>"
@@ -306,16 +337,19 @@ func (r Exec) runRPCAnsibleExecute(
 			stderr = *result.Stderr
 		}
 
-		return state, fmt.Errorf(
+		err = fmt.Errorf(
 			"command '%v' exited with status %d: stderr=%s stdout=%s",
 			parameters.Argv,
 			*result.Rc,
 			stderr,
 			stdout,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
 	}
 
 	state = r.updateStateFromOutput(state, input, result)
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
@@ -327,6 +361,8 @@ func (r Exec) Diff(
 ) (p.DiffResponse, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Diff", trace.WithAttributes(
 		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
 	))
 	defer span.End()
 
@@ -364,7 +400,11 @@ func (r Exec) Create(
 	input ExecArgs,
 	preview bool,
 ) (string, ExecState, error) {
-	ctx, span := otel.Tracer("mid/provider/resource").Start(ctx, "mid:resource:Exec.Create", trace.WithAttributes())
+	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Create", trace.WithAttributes(
+		attribute.String("name", name),
+		telemetry.OtelJSON("input", input),
+		attribute.Bool("preview", preview),
+	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
@@ -376,6 +416,7 @@ func (r Exec) Create(
 		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
+	span.SetAttributes(attribute.String("id", id))
 
 	if r.canUseRPC(input) {
 		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
@@ -410,6 +451,9 @@ func (r Exec) Update(
 ) (ExecState, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Update", trace.WithAttributes(
 		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+		attribute.Bool("preview", preview),
 	))
 	defer span.End()
 
@@ -443,6 +487,7 @@ func (r Exec) Update(
 func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Delete", trace.WithAttributes(
 		attribute.String("id", id),
+		telemetry.OtelJSON("props", props),
 	))
 	defer span.End()
 

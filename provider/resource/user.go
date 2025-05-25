@@ -8,10 +8,14 @@ import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -98,6 +102,13 @@ func (r User) Diff(
 	olds UserState,
 	news UserArgs,
 ) (p.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:User.Diff", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+	))
+	defer span.End()
+
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
@@ -140,6 +151,7 @@ func (r User) Diff(
 		types.DiffTriggers(olds, news),
 	)
 
+	span.SetStatus(codes.Ok, "")
 	return diff, nil
 }
 
@@ -149,6 +161,13 @@ func (r User) Create(
 	input UserArgs,
 	preview bool,
 ) (string, UserState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:User.Create", trace.WithAttributes(
+		attribute.String("name", name),
+		telemetry.OtelJSON("input", input),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if input.Name == nil {
@@ -159,16 +178,20 @@ func (r User) Create(
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
+	span.SetAttributes(attribute.String("id", id))
 
 	parameters, err := r.argsToTaskParameters(input)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
 	call, err := parameters.ToRPCCall()
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 	call.Args.Check = preview
@@ -182,14 +205,17 @@ func (r User) Create(
 
 	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
-		return id, state, fmt.Errorf(
+		err = fmt.Errorf(
 			"creating user failed: stderr=%s stdout=%s, err=%w",
 			callResult.Result.Stderr,
 			callResult.Result.Stdout,
 			err,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return id, state, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -199,6 +225,13 @@ func (r User) Read(
 	inputs UserArgs,
 	state UserState,
 ) (string, UserArgs, UserState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:User.Read", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state", state),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if inputs.Name == nil {
@@ -207,11 +240,13 @@ func (r User) Read(
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	call, err := parameters.ToRPCCall()
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 	call.Args.Check = true
@@ -226,21 +261,25 @@ func (r User) Read(
 
 	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
-		return id, inputs, state, fmt.Errorf(
+		err = fmt.Errorf(
 			"reading user failed: stderr=%s stdout=%s, err=%w",
 			callResult.Result.Stderr,
 			callResult.Result.Stdout,
 			err,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return id, inputs, state, err
 	}
 
 	result, err := ansible.UserReturnFromRPCResult(callResult)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
 	state = r.updateState(state, inputs, result.IsChanged())
 
+	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
 }
 
@@ -251,6 +290,14 @@ func (r User) Update(
 	news UserArgs,
 	preview bool,
 ) (UserState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:User.Update", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	if news.Name == nil {
@@ -259,11 +306,13 @@ func (r User) Update(
 
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
 	call, err := parameters.ToRPCCall()
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 	call.Args.Check = preview
@@ -278,21 +327,25 @@ func (r User) Update(
 
 	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
-		return olds, fmt.Errorf(
+		err = fmt.Errorf(
 			"updating user failed: stderr=%s stdout=%s, err=%w",
 			callResult.Result.Stderr,
 			callResult.Result.Stdout,
 			err,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
 	}
 
 	result, err := ansible.UserReturnFromRPCResult(callResult)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
 	state := r.updateState(olds, news, result.IsChanged())
 
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
@@ -301,7 +354,14 @@ func (r User) Delete(
 	id string,
 	props UserState,
 ) error {
+	ctx, span := Tracer.Start(ctx, "mid:resource:User.Delete", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("props", props),
+	))
+	defer span.End()
+
 	if props.Ensure != nil && *props.Ensure == "absent" {
+		span.SetStatus(codes.Ok, "")
 		return nil
 	}
 
@@ -312,12 +372,14 @@ func (r User) Delete(
 
 	parameters, err := r.argsToTaskParameters(args)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 	parameters.State = ansible.OptionalUserState("absent")
 
 	call, err := parameters.ToRPCCall()
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -329,21 +391,26 @@ func (r User) Delete(
 		}
 
 		if err == nil {
-			return fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
 	if err != nil || !callResult.Result.Success {
-		return fmt.Errorf(
+		err = fmt.Errorf(
 			"deleting user failed: stderr=%s stdout=%s, err=%w",
 			callResult.Result.Stderr,
 			callResult.Result.Stdout,
 			err,
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return nil
 }

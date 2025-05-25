@@ -9,10 +9,14 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	ptypes "github.com/pulumi/pulumi-go-provider/infer/types"
 	"github.com/pulumi/pulumi/sdk/go/common/resource"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
 )
@@ -218,6 +222,13 @@ func (r File) Diff(
 	olds FileState,
 	news FileArgs,
 ) (p.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:File.Diff", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+	))
+	defer span.End()
+
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
@@ -276,6 +287,13 @@ func (r File) runCreateUpdatePlay(
 	input FileArgs,
 	preview bool,
 ) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:File.runCreateUpdatePlay", trace.WithAttributes(
+		telemetry.OtelJSON("state", state),
+		telemetry.OtelJSON("input", input),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	config := infer.GetConfig[types.Config](ctx)
 	// several scenarios:
 	// are we copying a local file to remote?
@@ -309,9 +327,20 @@ func (r File) runCreateUpdatePlay(
 		input.Ensure,
 	)
 
+	defer func() {
+		span.SetAttributes(
+			attribute.Int("copy_task_index", copyTaskIndex),
+			attribute.Int("file_task_index", fileTaskIndex),
+			attribute.Int("stat_task_index", statTaskIndex),
+			attribute.Bool("copy_needed", copyNeeded),
+			attribute.Bool("file_needed", fileNeeded),
+		)
+	}()
+
 	if preview && copyNeeded {
 		source, err := r.argsToSource(input)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 		if source == nil {
@@ -323,6 +352,7 @@ func (r File) runCreateUpdatePlay(
 	if copyNeeded {
 		params, err := r.argsToCopyTaskParameters(input)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 		copyTaskIndex = len(tasks)
@@ -334,6 +364,7 @@ func (r File) runCreateUpdatePlay(
 	if fileNeeded {
 		params, err := r.argsToFileTaskParameters(input)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 		fileTaskIndex = len(tasks)
@@ -345,6 +376,7 @@ func (r File) runCreateUpdatePlay(
 
 	statParams, err := r.argsToStatTaskParameters(input)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 	statTaskIndex = len(tasks)
@@ -365,10 +397,12 @@ func (r File) runCreateUpdatePlay(
 		}
 
 		if err == nil {
-			return state, fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return state, fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -378,6 +412,7 @@ func (r File) runCreateUpdatePlay(
 		Tasks:       tasks,
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
@@ -397,6 +432,7 @@ func (r File) runCreateUpdatePlay(
 	if fileNeeded {
 		result, err := executor.GetTaskResult[ansible.FileReturn](output, 0, fileTaskIndex)
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 		if result.IsChanged() {
@@ -406,16 +442,19 @@ func (r File) runCreateUpdatePlay(
 
 	statResult, err := executor.GetTaskResult[ansible.StatReturn](output, 0, statTaskIndex)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	state.Stat, err = rpc.AnyToJSONT[FileStateStat](statResult.Stat)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	state = r.updateState(state, input, changed)
 
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
@@ -425,6 +464,13 @@ func (r File) Create(
 	input FileArgs,
 	preview bool,
 ) (string, FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:File.Create", trace.WithAttributes(
+		attribute.String("name", name),
+		telemetry.OtelJSON("input", input),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	if input.Path == nil {
 		input.Path = ptr.Of(name)
 	}
@@ -433,14 +479,18 @@ func (r File) Create(
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return "", state, err
 	}
+	span.SetAttributes(attribute.String("id", id))
 
 	state, err = r.runCreateUpdatePlay(ctx, state, input, preview)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, state, nil
 }
 
@@ -450,15 +500,24 @@ func (r File) Read(
 	inputs FileArgs,
 	state FileState,
 ) (string, FileArgs, FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:File.Read", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state", state),
+	))
+	defer span.End()
+
 	if inputs.Path == nil {
 		inputs.Path = &state.Path
 	}
 
 	state, err := r.runCreateUpdatePlay(ctx, state, inputs, true)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
 }
 
@@ -469,15 +528,25 @@ func (r File) Update(
 	news FileArgs,
 	preview bool,
 ) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid:resource:File.Update", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("olds", olds),
+		telemetry.OtelJSON("news", news),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+
 	if news.Path == nil {
 		news.Path = &olds.Path
 	}
 
 	olds, err := r.runCreateUpdatePlay(ctx, olds, news, preview)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return olds, nil
 }
 
@@ -486,6 +555,12 @@ func (r File) Delete(
 	id string,
 	props FileState,
 ) error {
+	ctx, span := Tracer.Start(ctx, "mid:resource:File.Delete", trace.WithAttributes(
+		attribute.String("id", id),
+		telemetry.OtelJSON("props", props),
+	))
+	defer span.End()
+
 	shouldDelete := ptr.AnyNonNils(
 		props.Source,
 		props.Content,
@@ -497,7 +572,10 @@ func (r File) Delete(
 		props.Ensure,
 	)
 
+	span.SetAttributes(attribute.Bool("should_delete", shouldDelete))
+
 	if !shouldDelete {
+		span.SetStatus(codes.Ok, "")
 		return nil
 	}
 
@@ -508,6 +586,7 @@ func (r File) Delete(
 		Ensure: (*FileEnsure)(ptr.Of(string(FileEnsureAbsent))),
 	})
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
@@ -519,10 +598,12 @@ func (r File) Delete(
 		}
 
 		if err == nil {
-			return fmt.Errorf("cannot connect to host")
+			err = fmt.Errorf("cannot connect to host")
 		} else {
-			return fmt.Errorf("cannot connect to host: %w", err)
+			err = fmt.Errorf("cannot connect to host: %w", err)
 		}
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -535,6 +616,11 @@ func (r File) Delete(
 			},
 		},
 	})
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
 
-	return err
+	span.SetStatus(codes.Ok, "")
+	return nil
 }
