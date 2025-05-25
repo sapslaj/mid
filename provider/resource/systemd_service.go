@@ -290,11 +290,14 @@ func (r SystemdService) Update(
 		return olds, err
 	}
 
-	refreshDiff := resource.NewPropertyValue(olds.Triggers.Refresh).Diff(resource.NewPropertyValue(news.Triggers.Refresh))
-	if refreshDiff != nil {
-		if news.Ensure != nil && *news.Ensure == "started" {
-			parameters.State = ansible.OptionalSystemdServiceState("restarted")
-		}
+	refresh := false
+	triggerDiff := types.DiffTriggers(olds, news)
+	if triggerDiff.HasChanges {
+		refresh = true
+	}
+
+	if refresh && news.Ensure != nil && *news.Ensure == "started" {
+		parameters.State = ansible.OptionalSystemdServiceState("restarted")
 	}
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
