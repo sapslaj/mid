@@ -86,7 +86,11 @@ runs:
     - name: Install QEMU
       if: inputs.tools == 'all' || contains(inputs.tools, 'qemu')
       shell: bash
-      run: sudo apt-get update && sudo apt-get install qemu-system-x86 --no-install-recommends -y
+      run: |
+        set -euxo pipefail
+        sudo apt-get update
+        sudo apt-get install qemu-system-x86 --no-install-recommends -y
+        sudo usermod -aG kvm "$USER"
 
     - name: Install Schema Tools
       if: inputs.tools == 'all' || contains(inputs.tools, 'schema-tools')
