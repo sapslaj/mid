@@ -20,6 +20,7 @@ const (
 	Pkg5StateUninstalled Pkg5State = "uninstalled"
 )
 
+// Convert a supported type to an optional (pointer) Pkg5State
 func OptionalPkg5State[T interface {
 	*Pkg5State | Pkg5State | *string | string
 }](s T) *Pkg5State {
@@ -69,7 +70,7 @@ type Pkg5Parameters struct {
 }
 
 // Wrap the `Pkg5Parameters into an `rpc.RPCCall`.
-func (p *Pkg5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p Pkg5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

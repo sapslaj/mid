@@ -27,6 +27,7 @@ const (
 	XfsQuotaStateAbsent  XfsQuotaState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) XfsQuotaState
 func OptionalXfsQuotaState[T interface {
 	*XfsQuotaState | XfsQuotaState | *string | string
 }](s T) *XfsQuotaState {
@@ -90,7 +91,7 @@ type XfsQuotaParameters struct {
 }
 
 // Wrap the `XfsQuotaParameters into an `rpc.RPCCall`.
-func (p *XfsQuotaParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p XfsQuotaParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

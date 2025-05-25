@@ -16,6 +16,7 @@ const (
 	NictagadmStatePresent NictagadmState = "present"
 )
 
+// Convert a supported type to an optional (pointer) NictagadmState
 func OptionalNictagadmState[T interface {
 	*NictagadmState | NictagadmState | *string | string
 }](s T) *NictagadmState {
@@ -68,7 +69,7 @@ type NictagadmParameters struct {
 }
 
 // Wrap the `NictagadmParameters into an `rpc.RPCCall`.
-func (p *NictagadmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p NictagadmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

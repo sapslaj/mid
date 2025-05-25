@@ -24,6 +24,7 @@ const (
 	ApkStateRemoved   ApkState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) ApkState
 func OptionalApkState[T interface {
 	*ApkState | ApkState | *string | string
 }](s T) *ApkState {
@@ -93,7 +94,7 @@ type ApkParameters struct {
 }
 
 // Wrap the `ApkParameters into an `rpc.RPCCall`.
-func (p *ApkParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ApkParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

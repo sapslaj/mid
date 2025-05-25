@@ -30,6 +30,7 @@ const (
 	IniFileStatePresent IniFileState = "present"
 )
 
+// Convert a supported type to an optional (pointer) IniFileState
 func OptionalIniFileState[T interface {
 	*IniFileState | IniFileState | *string | string
 }](s T) *IniFileState {
@@ -232,7 +233,7 @@ type IniFileParameters struct {
 }
 
 // Wrap the `IniFileParameters into an `rpc.RPCCall`.
-func (p *IniFileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p IniFileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

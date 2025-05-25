@@ -18,6 +18,7 @@ const (
 	SystemdCredsDecryptTranscodeUnhex    SystemdCredsDecryptTranscode = "unhex"
 )
 
+// Convert a supported type to an optional (pointer) SystemdCredsDecryptTranscode
 func OptionalSystemdCredsDecryptTranscode[T interface {
 	*SystemdCredsDecryptTranscode | SystemdCredsDecryptTranscode | *string | string
 }](s T) *SystemdCredsDecryptTranscode {
@@ -70,7 +71,7 @@ type SystemdCredsDecryptParameters struct {
 }
 
 // Wrap the `SystemdCredsDecryptParameters into an `rpc.RPCCall`.
-func (p *SystemdCredsDecryptParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SystemdCredsDecryptParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

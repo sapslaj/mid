@@ -23,6 +23,7 @@ const (
 	LvgStateInactive LvgState = "inactive"
 )
 
+// Convert a supported type to an optional (pointer) LvgState
 func OptionalLvgState[T interface {
 	*LvgState | LvgState | *string | string
 }](s T) *LvgState {
@@ -109,7 +110,7 @@ type LvgParameters struct {
 }
 
 // Wrap the `LvgParameters into an `rpc.RPCCall`.
-func (p *LvgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p LvgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

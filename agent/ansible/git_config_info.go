@@ -23,6 +23,7 @@ const (
 	GitConfigInfoScopeFile   GitConfigInfoScope = "file"
 )
 
+// Convert a supported type to an optional (pointer) GitConfigInfoScope
 func OptionalGitConfigInfoScope[T interface {
 	*GitConfigInfoScope | GitConfigInfoScope | *string | string
 }](s T) *GitConfigInfoScope {
@@ -68,7 +69,7 @@ type GitConfigInfoParameters struct {
 }
 
 // Wrap the `GitConfigInfoParameters into an `rpc.RPCCall`.
-func (p *GitConfigInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p GitConfigInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

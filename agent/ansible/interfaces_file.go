@@ -21,6 +21,7 @@ const (
 	InterfacesFileStateAbsent  InterfacesFileState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) InterfacesFileState
 func OptionalInterfacesFileState[T interface {
 	*InterfacesFileState | InterfacesFileState | *string | string
 }](s T) *InterfacesFileState {
@@ -158,7 +159,7 @@ type InterfacesFileParameters struct {
 }
 
 // Wrap the `InterfacesFileParameters into an `rpc.RPCCall`.
-func (p *InterfacesFileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p InterfacesFileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

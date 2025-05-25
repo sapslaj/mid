@@ -9,8 +9,16 @@ type AnsibleCommonReturns struct {
 }
 
 // Returns true if Changed or Diff is set, false otherwise.
-func (returns *AnsibleCommonReturns) IsChanged() bool {
+func (returns AnsibleCommonReturns) IsChanged() bool {
 	changed := returns.Changed
 	hasDiff := returns.Diff != nil
 	return changed || hasDiff
+}
+
+// Returns "msg" if set, empty string if not
+func (returns AnsibleCommonReturns) GetMsg() string {
+	if returns.Msg == nil {
+		return ""
+	}
+	return *returns.Msg
 }

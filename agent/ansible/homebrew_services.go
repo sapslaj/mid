@@ -17,6 +17,7 @@ const (
 	HomebrewServicesStateRestarted HomebrewServicesState = "restarted"
 )
 
+// Convert a supported type to an optional (pointer) HomebrewServicesState
 func OptionalHomebrewServicesState[T interface {
 	*HomebrewServicesState | HomebrewServicesState | *string | string
 }](s T) *HomebrewServicesState {
@@ -58,7 +59,7 @@ type HomebrewServicesParameters struct {
 }
 
 // Wrap the `HomebrewServicesParameters into an `rpc.RPCCall`.
-func (p *HomebrewServicesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p HomebrewServicesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

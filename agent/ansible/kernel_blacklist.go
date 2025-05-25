@@ -16,6 +16,7 @@ const (
 	KernelBlacklistStatePresent KernelBlacklistState = "present"
 )
 
+// Convert a supported type to an optional (pointer) KernelBlacklistState
 func OptionalKernelBlacklistState[T interface {
 	*KernelBlacklistState | KernelBlacklistState | *string | string
 }](s T) *KernelBlacklistState {
@@ -54,7 +55,7 @@ type KernelBlacklistParameters struct {
 }
 
 // Wrap the `KernelBlacklistParameters into an `rpc.RPCCall`.
-func (p *KernelBlacklistParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p KernelBlacklistParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

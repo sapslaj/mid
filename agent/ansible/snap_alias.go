@@ -16,6 +16,7 @@ const (
 	SnapAliasStatePresent SnapAliasState = "present"
 )
 
+// Convert a supported type to an optional (pointer) SnapAliasState
 func OptionalSnapAliasState[T interface {
 	*SnapAliasState | SnapAliasState | *string | string
 }](s T) *SnapAliasState {
@@ -52,7 +53,7 @@ type SnapAliasParameters struct {
 }
 
 // Wrap the `SnapAliasParameters into an `rpc.RPCCall`.
-func (p *SnapAliasParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SnapAliasParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

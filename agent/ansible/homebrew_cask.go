@@ -21,6 +21,7 @@ const (
 	HomebrewCaskStateUpgraded    HomebrewCaskState = "upgraded"
 )
 
+// Convert a supported type to an optional (pointer) HomebrewCaskState
 func OptionalHomebrewCaskState[T interface {
 	*HomebrewCaskState | HomebrewCaskState | *string | string
 }](s T) *HomebrewCaskState {
@@ -85,7 +86,7 @@ type HomebrewCaskParameters struct {
 }
 
 // Wrap the `HomebrewCaskParameters into an `rpc.RPCCall`.
-func (p *HomebrewCaskParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p HomebrewCaskParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

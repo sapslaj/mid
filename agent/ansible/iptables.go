@@ -28,6 +28,7 @@ const (
 	IptablesTableSecurity IptablesTable = "security"
 )
 
+// Convert a supported type to an optional (pointer) IptablesTable
 func OptionalIptablesTable[T interface {
 	*IptablesTable | IptablesTable | *string | string
 }](s T) *IptablesTable {
@@ -58,6 +59,7 @@ const (
 	IptablesStatePresent IptablesState = "present"
 )
 
+// Convert a supported type to an optional (pointer) IptablesState
 func OptionalIptablesState[T interface {
 	*IptablesState | IptablesState | *string | string
 }](s T) *IptablesState {
@@ -89,6 +91,7 @@ const (
 	IptablesActionInsert IptablesAction = "insert"
 )
 
+// Convert a supported type to an optional (pointer) IptablesAction
 func OptionalIptablesAction[T interface {
 	*IptablesAction | IptablesAction | *string | string
 }](s T) *IptablesAction {
@@ -119,6 +122,7 @@ const (
 	IptablesIpVersionIpv6 IptablesIpVersion = "ipv6"
 )
 
+// Convert a supported type to an optional (pointer) IptablesIpVersion
 func OptionalIptablesIpVersion[T interface {
 	*IptablesIpVersion | IptablesIpVersion | *string | string
 }](s T) *IptablesIpVersion {
@@ -165,6 +169,7 @@ const (
 	IptablesLogLevelDebug   IptablesLogLevel = "debug"
 )
 
+// Convert a supported type to an optional (pointer) IptablesLogLevel
 func OptionalIptablesLogLevel[T interface {
 	*IptablesLogLevel | IptablesLogLevel | *string | string
 }](s T) *IptablesLogLevel {
@@ -198,6 +203,7 @@ const (
 	IptablesSynNegate IptablesSyn = "negate"
 )
 
+// Convert a supported type to an optional (pointer) IptablesSyn
 func OptionalIptablesSyn[T interface {
 	*IptablesSyn | IptablesSyn | *string | string
 }](s T) *IptablesSyn {
@@ -235,6 +241,7 @@ const (
 	IptablesMatchSetFlagsSrcSrc IptablesMatchSetFlags = "src,src"
 )
 
+// Convert a supported type to an optional (pointer) IptablesMatchSetFlags
 func OptionalIptablesMatchSetFlags[T interface {
 	*IptablesMatchSetFlags | IptablesMatchSetFlags | *string | string
 }](s T) *IptablesMatchSetFlags {
@@ -272,6 +279,7 @@ const (
 	IptablesPolicyReturn IptablesPolicy = "RETURN"
 )
 
+// Convert a supported type to an optional (pointer) IptablesPolicy
 func OptionalIptablesPolicy[T interface {
 	*IptablesPolicy | IptablesPolicy | *string | string
 }](s T) *IptablesPolicy {
@@ -582,7 +590,7 @@ type IptablesParameters struct {
 }
 
 // Wrap the `IptablesParameters into an `rpc.RPCCall`.
-func (p *IptablesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p IptablesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

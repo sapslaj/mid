@@ -18,6 +18,7 @@ const (
 	UrpmiStateRemoved   UrpmiState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) UrpmiState
 func OptionalUrpmiState[T interface {
 	*UrpmiState | UrpmiState | *string | string
 }](s T) *UrpmiState {
@@ -68,7 +69,7 @@ type UrpmiParameters struct {
 }
 
 // Wrap the `UrpmiParameters into an `rpc.RPCCall`.
-func (p *UrpmiParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p UrpmiParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

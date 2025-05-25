@@ -37,6 +37,7 @@ const (
 	PipxStateUnpin         PipxState = "unpin"
 )
 
+// Convert a supported type to an optional (pointer) PipxState
 func OptionalPipxState[T interface {
 	*PipxState | PipxState | *string | string
 }](s T) *PipxState {
@@ -182,7 +183,7 @@ type PipxParameters struct {
 }
 
 // Wrap the `PipxParameters into an `rpc.RPCCall`.
-func (p *PipxParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PipxParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

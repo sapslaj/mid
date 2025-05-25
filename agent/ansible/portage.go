@@ -21,6 +21,7 @@ const (
 	PortageStateLatest    PortageState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) PortageState
 func OptionalPortageState[T interface {
 	*PortageState | PortageState | *string | string
 }](s T) *PortageState {
@@ -54,6 +55,7 @@ const (
 	PortageSyncNo  PortageSync = "no"
 )
 
+// Convert a supported type to an optional (pointer) PortageSync
 func OptionalPortageSync[T interface {
 	*PortageSync | PortageSync | *string | string
 }](s T) *PortageSync {
@@ -194,7 +196,7 @@ type PortageParameters struct {
 }
 
 // Wrap the `PortageParameters into an `rpc.RPCCall`.
-func (p *PortageParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PortageParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

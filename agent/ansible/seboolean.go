@@ -27,7 +27,7 @@ type SebooleanParameters struct {
 }
 
 // Wrap the `SebooleanParameters into an `rpc.RPCCall`.
-func (p *SebooleanParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SebooleanParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

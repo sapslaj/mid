@@ -16,6 +16,7 @@ const (
 	PortinstallStateAbsent  PortinstallState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) PortinstallState
 func OptionalPortinstallState[T interface {
 	*PortinstallState | PortinstallState | *string | string
 }](s T) *PortinstallState {
@@ -53,7 +54,7 @@ type PortinstallParameters struct {
 }
 
 // Wrap the `PortinstallParameters into an `rpc.RPCCall`.
-func (p *PortinstallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PortinstallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

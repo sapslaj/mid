@@ -24,6 +24,7 @@ const (
 	StatChecksumAlgorithmSha512 StatChecksumAlgorithm = "sha512"
 )
 
+// Convert a supported type to an optional (pointer) StatChecksumAlgorithm
 func OptionalStatChecksumAlgorithm[T interface {
 	*StatChecksumAlgorithm | StatChecksumAlgorithm | *string | string
 }](s T) *StatChecksumAlgorithm {
@@ -81,7 +82,7 @@ type StatParameters struct {
 }
 
 // Wrap the `StatParameters into an `rpc.RPCCall`.
-func (p *StatParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p StatParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

@@ -26,6 +26,7 @@ const (
 	ZfsDelegateAdminStatePresent ZfsDelegateAdminState = "present"
 )
 
+// Convert a supported type to an optional (pointer) ZfsDelegateAdminState
 func OptionalZfsDelegateAdminState[T interface {
 	*ZfsDelegateAdminState | ZfsDelegateAdminState | *string | string
 }](s T) *ZfsDelegateAdminState {
@@ -88,7 +89,7 @@ type ZfsDelegateAdminParameters struct {
 }
 
 // Wrap the `ZfsDelegateAdminParameters into an `rpc.RPCCall`.
-func (p *ZfsDelegateAdminParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ZfsDelegateAdminParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

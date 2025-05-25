@@ -26,6 +26,7 @@ const (
 	AptRpmStateLatest           AptRpmState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) AptRpmState
 func OptionalAptRpmState[T interface {
 	*AptRpmState | AptRpmState | *string | string
 }](s T) *AptRpmState {
@@ -88,7 +89,7 @@ type AptRpmParameters struct {
 }
 
 // Wrap the `AptRpmParameters into an `rpc.RPCCall`.
-func (p *AptRpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AptRpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

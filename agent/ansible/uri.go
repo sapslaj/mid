@@ -27,6 +27,7 @@ const (
 	UriBodyFormatFormMultipart  UriBodyFormat = "form-multipart"
 )
 
+// Convert a supported type to an optional (pointer) UriBodyFormat
 func OptionalUriBodyFormat[T interface {
 	*UriBodyFormat | UriBodyFormat | *string | string
 }](s T) *UriBodyFormat {
@@ -67,6 +68,7 @@ const (
 	UriFollowRedirectsYes UriFollowRedirects = "yes"
 )
 
+// Convert a supported type to an optional (pointer) UriFollowRedirects
 func OptionalUriFollowRedirects[T interface {
 	*UriFollowRedirects | UriFollowRedirects | *string | string
 }](s T) *UriFollowRedirects {
@@ -351,7 +353,7 @@ type UriParameters struct {
 }
 
 // Wrap the `UriParameters into an `rpc.RPCCall`.
-func (p *UriParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p UriParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

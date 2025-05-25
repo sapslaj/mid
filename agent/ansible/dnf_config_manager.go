@@ -17,6 +17,7 @@ const (
 	DnfConfigManagerStateDisabled DnfConfigManagerState = "disabled"
 )
 
+// Convert a supported type to an optional (pointer) DnfConfigManagerState
 func OptionalDnfConfigManagerState[T interface {
 	*DnfConfigManagerState | DnfConfigManagerState | *string | string
 }](s T) *DnfConfigManagerState {
@@ -51,7 +52,7 @@ type DnfConfigManagerParameters struct {
 }
 
 // Wrap the `DnfConfigManagerParameters into an `rpc.RPCCall`.
-func (p *DnfConfigManagerParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DnfConfigManagerParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

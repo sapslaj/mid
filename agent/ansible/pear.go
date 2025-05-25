@@ -19,6 +19,7 @@ const (
 	PearStateRemoved   PearState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) PearState
 func OptionalPearState[T interface {
 	*PearState | PearState | *string | string
 }](s T) *PearState {
@@ -70,7 +71,7 @@ type PearParameters struct {
 }
 
 // Wrap the `PearParameters into an `rpc.RPCCall`.
-func (p *PearParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PearParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

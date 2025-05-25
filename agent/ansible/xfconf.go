@@ -34,6 +34,7 @@ const (
 	XfconfValueTypeFloat  XfconfValueType = "float"
 )
 
+// Convert a supported type to an optional (pointer) XfconfValueType
 func OptionalXfconfValueType[T interface {
 	*XfconfValueType | XfconfValueType | *string | string
 }](s T) *XfconfValueType {
@@ -66,6 +67,7 @@ const (
 	XfconfStateAbsent  XfconfState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) XfconfState
 func OptionalXfconfState[T interface {
 	*XfconfState | XfconfState | *string | string
 }](s T) *XfconfState {
@@ -127,7 +129,7 @@ type XfconfParameters struct {
 }
 
 // Wrap the `XfconfParameters into an `rpc.RPCCall`.
-func (p *XfconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p XfconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

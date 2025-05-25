@@ -21,6 +21,7 @@ const (
 	UserStatePresent UserState = "present"
 )
 
+// Convert a supported type to an optional (pointer) UserState
 func OptionalUserState[T interface {
 	*UserState | UserState | *string | string
 }](s T) *UserState {
@@ -52,6 +53,7 @@ const (
 	UserUpdatePasswordOnCreate UserUpdatePassword = "on_create"
 )
 
+// Convert a supported type to an optional (pointer) UserUpdatePassword
 func OptionalUserUpdatePassword[T interface {
 	*UserUpdatePassword | UserUpdatePassword | *string | string
 }](s T) *UserUpdatePassword {
@@ -319,7 +321,7 @@ type UserParameters struct {
 }
 
 // Wrap the `UserParameters into an `rpc.RPCCall`.
-func (p *UserParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p UserParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

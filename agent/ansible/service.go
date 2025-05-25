@@ -37,6 +37,7 @@ const (
 	ServiceStateStopped   ServiceState = "stopped"
 )
 
+// Convert a supported type to an optional (pointer) ServiceState
 func OptionalServiceState[T interface {
 	*ServiceState | ServiceState | *string | string
 }](s T) *ServiceState {
@@ -114,7 +115,7 @@ type ServiceParameters struct {
 }
 
 // Wrap the `ServiceParameters into an `rpc.RPCCall`.
-func (p *ServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

@@ -16,6 +16,7 @@ const (
 	NsupdateStateAbsent  NsupdateState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) NsupdateState
 func OptionalNsupdateState[T interface {
 	*NsupdateState | NsupdateState | *string | string
 }](s T) *NsupdateState {
@@ -51,6 +52,7 @@ const (
 	NsupdateKeyAlgorithmHmacSha512          NsupdateKeyAlgorithm = "hmac-sha512"
 )
 
+// Convert a supported type to an optional (pointer) NsupdateKeyAlgorithm
 func OptionalNsupdateKeyAlgorithm[T interface {
 	*NsupdateKeyAlgorithm | NsupdateKeyAlgorithm | *string | string
 }](s T) *NsupdateKeyAlgorithm {
@@ -82,6 +84,7 @@ const (
 	NsupdateProtocolUdp NsupdateProtocol = "udp"
 )
 
+// Convert a supported type to an optional (pointer) NsupdateProtocol
 func OptionalNsupdateProtocol[T interface {
 	*NsupdateProtocol | NsupdateProtocol | *string | string
 }](s T) *NsupdateProtocol {
@@ -154,7 +157,7 @@ type NsupdateParameters struct {
 }
 
 // Wrap the `NsupdateParameters into an `rpc.RPCCall`.
-func (p *NsupdateParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p NsupdateParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

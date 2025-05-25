@@ -20,6 +20,7 @@ const (
 	PipStatePresent        PipState = "present"
 )
 
+// Convert a supported type to an optional (pointer) PipState
 func OptionalPipState[T interface {
 	*PipState | PipState | *string | string
 }](s T) *PipState {
@@ -125,7 +126,7 @@ type PipParameters struct {
 }
 
 // Wrap the `PipParameters into an `rpc.RPCCall`.
-func (p *PipParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PipParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

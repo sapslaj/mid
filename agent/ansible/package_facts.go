@@ -55,6 +55,7 @@ const (
 	PackageFactsManagerOpenbsdPkg PackageFactsManager = "openbsd_pkg"
 )
 
+// Convert a supported type to an optional (pointer) PackageFactsManager
 func OptionalPackageFactsManager[T interface {
 	*PackageFactsManager | PackageFactsManager | *string | string
 }](s T) *PackageFactsManager {
@@ -89,6 +90,7 @@ const (
 	PackageFactsStrategyAll PackageFactsStrategy = "all"
 )
 
+// Convert a supported type to an optional (pointer) PackageFactsStrategy
 func OptionalPackageFactsStrategy[T interface {
 	*PackageFactsStrategy | PackageFactsStrategy | *string | string
 }](s T) *PackageFactsStrategy {
@@ -131,7 +133,7 @@ type PackageFactsParameters struct {
 }
 
 // Wrap the `PackageFactsParameters into an `rpc.RPCCall`.
-func (p *PackageFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PackageFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

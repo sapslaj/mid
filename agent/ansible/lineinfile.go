@@ -23,6 +23,7 @@ const (
 	LineinfileStatePresent LineinfileState = "present"
 )
 
+// Convert a supported type to an optional (pointer) LineinfileState
 func OptionalLineinfileState[T interface {
 	*LineinfileState | LineinfileState | *string | string
 }](s T) *LineinfileState {
@@ -234,7 +235,7 @@ type LineinfileParameters struct {
 }
 
 // Wrap the `LineinfileParameters into an `rpc.RPCCall`.
-func (p *LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

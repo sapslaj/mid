@@ -16,6 +16,7 @@ const (
 	SyspatchRevertOne SyspatchRevert = "one"
 )
 
+// Convert a supported type to an optional (pointer) SyspatchRevert
 func OptionalSyspatchRevert[T interface {
 	*SyspatchRevert | SyspatchRevert | *string | string
 }](s T) *SyspatchRevert {
@@ -45,7 +46,7 @@ type SyspatchParameters struct {
 }
 
 // Wrap the `SyspatchParameters into an `rpc.RPCCall`.
-func (p *SyspatchParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SyspatchParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

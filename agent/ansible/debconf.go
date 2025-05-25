@@ -30,6 +30,7 @@ const (
 	DebconfVtypeTitle       DebconfVtype = "title"
 )
 
+// Convert a supported type to an optional (pointer) DebconfVtype
 func OptionalDebconfVtype[T interface {
 	*DebconfVtype | DebconfVtype | *string | string
 }](s T) *DebconfVtype {
@@ -78,7 +79,7 @@ type DebconfParameters struct {
 }
 
 // Wrap the `DebconfParameters into an `rpc.RPCCall`.
-func (p *DebconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DebconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

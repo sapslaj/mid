@@ -19,6 +19,7 @@ const (
 	MasStatePresent MasState = "present"
 )
 
+// Convert a supported type to an optional (pointer) MasState
 func OptionalMasState[T interface {
 	*MasState | MasState | *string | string
 }](s T) *MasState {
@@ -58,7 +59,7 @@ type MasParameters struct {
 }
 
 // Wrap the `MasParameters into an `rpc.RPCCall`.
-func (p *MasParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p MasParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

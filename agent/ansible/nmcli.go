@@ -79,6 +79,7 @@ const (
 	NmcliTypeLoopback     NmcliType = "loopback"
 )
 
+// Convert a supported type to an optional (pointer) NmcliType
 func OptionalNmcliType[T interface {
 	*NmcliType | NmcliType | *string | string
 }](s T) *NmcliType {
@@ -115,6 +116,7 @@ const (
 	NmcliModeBroadcast    NmcliMode = "broadcast"
 )
 
+// Convert a supported type to an optional (pointer) NmcliMode
 func OptionalNmcliMode[T interface {
 	*NmcliMode | NmcliMode | *string | string
 }](s T) *NmcliMode {
@@ -145,6 +147,7 @@ const (
 	NmcliTransportModeConnected NmcliTransportMode = "connected"
 )
 
+// Convert a supported type to an optional (pointer) NmcliTransportMode
 func OptionalNmcliTransportMode[T interface {
 	*NmcliTransportMode | NmcliTransportMode | *string | string
 }](s T) *NmcliTransportMode {
@@ -179,6 +182,7 @@ const (
 	NmcliSlaveTypeVrf     NmcliSlaveType = "vrf"
 )
 
+// Convert a supported type to an optional (pointer) NmcliSlaveType
 func OptionalNmcliSlaveType[T interface {
 	*NmcliSlaveType | NmcliSlaveType | *string | string
 }](s T) *NmcliSlaveType {
@@ -214,6 +218,7 @@ const (
 	NmcliMethod4Disabled  NmcliMethod4 = "disabled"
 )
 
+// Convert a supported type to an optional (pointer) NmcliMethod4
 func OptionalNmcliMethod4[T interface {
 	*NmcliMethod4 | NmcliMethod4 | *string | string
 }](s T) *NmcliMethod4 {
@@ -252,6 +257,7 @@ const (
 	NmcliMethod6Disabled  NmcliMethod6 = "disabled"
 )
 
+// Convert a supported type to an optional (pointer) NmcliMethod6
 func OptionalNmcliMethod6[T interface {
 	*NmcliMethod6 | NmcliMethod6 | *string | string
 }](s T) *NmcliMethod6 {
@@ -285,6 +291,7 @@ const (
 	NmcliIpPrivacy6Unknown          NmcliIpPrivacy6 = "unknown"
 )
 
+// Convert a supported type to an optional (pointer) NmcliIpPrivacy6
 func OptionalNmcliIpPrivacy6[T interface {
 	*NmcliIpPrivacy6 | NmcliIpPrivacy6 | *string | string
 }](s T) *NmcliIpPrivacy6 {
@@ -319,6 +326,7 @@ const (
 	NmcliAddrGenMode6StablePrivacy  NmcliAddrGenMode6 = "stable-privacy"
 )
 
+// Convert a supported type to an optional (pointer) NmcliAddrGenMode6
 func OptionalNmcliAddrGenMode6[T interface {
 	*NmcliAddrGenMode6 | NmcliAddrGenMode6 | *string | string
 }](s T) *NmcliAddrGenMode6 {
@@ -350,6 +358,7 @@ const (
 	NmcliFailOverMacFollow NmcliFailOverMac = "follow"
 )
 
+// Convert a supported type to an optional (pointer) NmcliFailOverMac
 func OptionalNmcliFailOverMac[T interface {
 	*NmcliFailOverMac | NmcliFailOverMac | *string | string
 }](s T) *NmcliFailOverMac {
@@ -384,6 +393,7 @@ const (
 	NmcliRunnerLacp         NmcliRunner = "lacp"
 )
 
+// Convert a supported type to an optional (pointer) NmcliRunner
 func OptionalNmcliRunner[T interface {
 	*NmcliRunner | NmcliRunner | *string | string
 }](s T) *NmcliRunner {
@@ -416,6 +426,7 @@ const (
 	NmcliRunnerHwaddrPolicyOnlyActive NmcliRunnerHwaddrPolicy = "only_active"
 )
 
+// Convert a supported type to an optional (pointer) NmcliRunnerHwaddrPolicy
 func OptionalNmcliRunnerHwaddrPolicy[T interface {
 	*NmcliRunnerHwaddrPolicy | NmcliRunnerHwaddrPolicy | *string | string
 }](s T) *NmcliRunnerHwaddrPolicy {
@@ -941,7 +952,7 @@ type NmcliParameters struct {
 }
 
 // Wrap the `NmcliParameters into an `rpc.RPCCall`.
-func (p *NmcliParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p NmcliParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

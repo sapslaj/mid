@@ -21,6 +21,7 @@ const (
 	FilesystemStateAbsent  FilesystemState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) FilesystemState
 func OptionalFilesystemState[T interface {
 	*FilesystemState | FilesystemState | *string | string
 }](s T) *FilesystemState {
@@ -66,6 +67,7 @@ const (
 	FilesystemFstypeUfs      FilesystemFstype = "ufs"
 )
 
+// Convert a supported type to an optional (pointer) FilesystemFstype
 func OptionalFilesystemFstype[T interface {
 	*FilesystemFstype | FilesystemFstype | *string | string
 }](s T) *FilesystemFstype {
@@ -150,7 +152,7 @@ type FilesystemParameters struct {
 }
 
 // Wrap the `FilesystemParameters into an `rpc.RPCCall`.
-func (p *FilesystemParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p FilesystemParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

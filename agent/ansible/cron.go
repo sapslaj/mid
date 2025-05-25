@@ -28,6 +28,7 @@ const (
 	CronStatePresent CronState = "present"
 )
 
+// Convert a supported type to an optional (pointer) CronState
 func OptionalCronState[T interface {
 	*CronState | CronState | *string | string
 }](s T) *CronState {
@@ -63,6 +64,7 @@ const (
 	CronSpecialTimeYearly   CronSpecialTime = "yearly"
 )
 
+// Convert a supported type to an optional (pointer) CronSpecialTime
 func OptionalCronSpecialTime[T interface {
 	*CronSpecialTime | CronSpecialTime | *string | string
 }](s T) *CronSpecialTime {
@@ -171,7 +173,7 @@ type CronParameters struct {
 }
 
 // Wrap the `CronParameters into an `rpc.RPCCall`.
-func (p *CronParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p CronParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

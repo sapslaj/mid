@@ -19,6 +19,7 @@ const (
 	DjangoCommandVerbosity3 DjangoCommandVerbosity = 3
 )
 
+// Convert a supported type to an optional (pointer) DjangoCommandVerbosity
 func OptionalDjangoCommandVerbosity[T interface {
 	*DjangoCommandVerbosity | DjangoCommandVerbosity | *int | int
 }](s T) *DjangoCommandVerbosity {
@@ -77,7 +78,7 @@ type DjangoCommandParameters struct {
 }
 
 // Wrap the `DjangoCommandParameters into an `rpc.RPCCall`.
-func (p *DjangoCommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DjangoCommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

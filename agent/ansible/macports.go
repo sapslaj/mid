@@ -20,6 +20,7 @@ const (
 	MacportsStateRemoved   MacportsState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) MacportsState
 func OptionalMacportsState[T interface {
 	*MacportsState | MacportsState | *string | string
 }](s T) *MacportsState {
@@ -69,7 +70,7 @@ type MacportsParameters struct {
 }
 
 // Wrap the `MacportsParameters into an `rpc.RPCCall`.
-func (p *MacportsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p MacportsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

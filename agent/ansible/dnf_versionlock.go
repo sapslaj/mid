@@ -33,6 +33,7 @@ const (
 	DnfVersionlockStatePresent  DnfVersionlockState = "present"
 )
 
+// Convert a supported type to an optional (pointer) DnfVersionlockState
 func OptionalDnfVersionlockState[T interface {
 	*DnfVersionlockState | DnfVersionlockState | *string | string
 }](s T) *DnfVersionlockState {
@@ -86,7 +87,7 @@ type DnfVersionlockParameters struct {
 }
 
 // Wrap the `DnfVersionlockParameters into an `rpc.RPCCall`.
-func (p *DnfVersionlockParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DnfVersionlockParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

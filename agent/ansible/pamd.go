@@ -40,6 +40,7 @@ const (
 	PamdNewTypeSessionNoLog  PamdNewType = "-session"
 )
 
+// Convert a supported type to an optional (pointer) PamdNewType
 func OptionalPamdNewType[T interface {
 	*PamdNewType | PamdNewType | *string | string
 }](s T) *PamdNewType {
@@ -84,6 +85,7 @@ const (
 	PamdStateUpdated     PamdState = "updated"
 )
 
+// Convert a supported type to an optional (pointer) PamdState
 func OptionalPamdState[T interface {
 	*PamdState | PamdState | *string | string
 }](s T) *PamdState {
@@ -173,7 +175,7 @@ type PamdParameters struct {
 }
 
 // Wrap the `PamdParameters into an `rpc.RPCCall`.
-func (p *PamdParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PamdParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

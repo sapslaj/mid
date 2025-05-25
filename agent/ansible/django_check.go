@@ -21,6 +21,7 @@ const (
 	DjangoCheckFailLevelDebug    DjangoCheckFailLevel = "DEBUG"
 )
 
+// Convert a supported type to an optional (pointer) DjangoCheckFailLevel
 func OptionalDjangoCheckFailLevel[T interface {
 	*DjangoCheckFailLevel | DjangoCheckFailLevel | *string | string
 }](s T) *DjangoCheckFailLevel {
@@ -54,6 +55,7 @@ const (
 	DjangoCheckVerbosity3 DjangoCheckVerbosity = 3
 )
 
+// Convert a supported type to an optional (pointer) DjangoCheckVerbosity
 func OptionalDjangoCheckVerbosity[T interface {
 	*DjangoCheckVerbosity | DjangoCheckVerbosity | *int | int
 }](s T) *DjangoCheckVerbosity {
@@ -125,7 +127,7 @@ type DjangoCheckParameters struct {
 }
 
 // Wrap the `DjangoCheckParameters into an `rpc.RPCCall`.
-func (p *DjangoCheckParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DjangoCheckParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

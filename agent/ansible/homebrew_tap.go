@@ -16,6 +16,7 @@ const (
 	HomebrewTapStateAbsent  HomebrewTapState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) HomebrewTapState
 func OptionalHomebrewTapState[T interface {
 	*HomebrewTapState | HomebrewTapState | *string | string
 }](s T) *HomebrewTapState {
@@ -60,7 +61,7 @@ type HomebrewTapParameters struct {
 }
 
 // Wrap the `HomebrewTapParameters into an `rpc.RPCCall`.
-func (p *HomebrewTapParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p HomebrewTapParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

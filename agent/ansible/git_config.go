@@ -27,6 +27,7 @@ const (
 	GitConfigScopeSystem GitConfigScope = "system"
 )
 
+// Convert a supported type to an optional (pointer) GitConfigScope
 func OptionalGitConfigScope[T interface {
 	*GitConfigScope | GitConfigScope | *string | string
 }](s T) *GitConfigScope {
@@ -59,6 +60,7 @@ const (
 	GitConfigStateAbsent  GitConfigState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) GitConfigState
 func OptionalGitConfigState[T interface {
 	*GitConfigState | GitConfigState | *string | string
 }](s T) *GitConfigState {
@@ -92,6 +94,7 @@ const (
 	GitConfigAddModeReplaceAll GitConfigAddMode = "replace-all"
 )
 
+// Convert a supported type to an optional (pointer) GitConfigAddMode
 func OptionalGitConfigAddMode[T interface {
 	*GitConfigAddMode | GitConfigAddMode | *string | string
 }](s T) *GitConfigAddMode {
@@ -155,7 +158,7 @@ type GitConfigParameters struct {
 }
 
 // Wrap the `GitConfigParameters into an `rpc.RPCCall`.
-func (p *GitConfigParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p GitConfigParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

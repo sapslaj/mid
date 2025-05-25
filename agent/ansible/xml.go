@@ -16,6 +16,7 @@ const (
 	XmlStatePresent XmlState = "present"
 )
 
+// Convert a supported type to an optional (pointer) XmlState
 func OptionalXmlState[T interface {
 	*XmlState | XmlState | *string | string
 }](s T) *XmlState {
@@ -47,6 +48,7 @@ const (
 	XmlContentText      XmlContent = "text"
 )
 
+// Convert a supported type to an optional (pointer) XmlContent
 func OptionalXmlContent[T interface {
 	*XmlContent | XmlContent | *string | string
 }](s T) *XmlContent {
@@ -77,6 +79,7 @@ const (
 	XmlInputTypeYaml XmlInputType = "yaml"
 )
 
+// Convert a supported type to an optional (pointer) XmlInputType
 func OptionalXmlInputType[T interface {
 	*XmlInputType | XmlInputType | *string | string
 }](s T) *XmlInputType {
@@ -203,7 +206,7 @@ type XmlParameters struct {
 }
 
 // Wrap the `XmlParameters into an `rpc.RPCCall`.
-func (p *XmlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p XmlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

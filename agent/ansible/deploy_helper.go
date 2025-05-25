@@ -40,6 +40,7 @@ const (
 	DeployHelperStateQuery    DeployHelperState = "query"
 )
 
+// Convert a supported type to an optional (pointer) DeployHelperState
 func OptionalDeployHelperState[T interface {
 	*DeployHelperState | DeployHelperState | *string | string
 }](s T) *DeployHelperState {
@@ -202,7 +203,7 @@ type DeployHelperParameters struct {
 }
 
 // Wrap the `DeployHelperParameters into an `rpc.RPCCall`.
-func (p *DeployHelperParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DeployHelperParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

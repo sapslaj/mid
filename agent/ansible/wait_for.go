@@ -39,6 +39,7 @@ const (
 	WaitForStateStopped WaitForState = "stopped"
 )
 
+// Convert a supported type to an optional (pointer) WaitForState
 func OptionalWaitForState[T interface {
 	*WaitForState | WaitForState | *string | string
 }](s T) *WaitForState {
@@ -123,7 +124,7 @@ type WaitForParameters struct {
 }
 
 // Wrap the `WaitForParameters into an `rpc.RPCCall`.
-func (p *WaitForParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p WaitForParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

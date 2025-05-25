@@ -16,6 +16,7 @@ const (
 	RpmKeyStatePresent RpmKeyState = "present"
 )
 
+// Convert a supported type to an optional (pointer) RpmKeyState
 func OptionalRpmKeyState[T interface {
 	*RpmKeyState | RpmKeyState | *string | string
 }](s T) *RpmKeyState {
@@ -61,7 +62,7 @@ type RpmKeyParameters struct {
 }
 
 // Wrap the `RpmKeyParameters into an `rpc.RPCCall`.
-func (p *RpmKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p RpmKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

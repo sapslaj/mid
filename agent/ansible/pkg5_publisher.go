@@ -18,6 +18,7 @@ const (
 	Pkg5PublisherStateAbsent  Pkg5PublisherState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) Pkg5PublisherState
 func OptionalPkg5PublisherState[T interface {
 	*Pkg5PublisherState | Pkg5PublisherState | *string | string
 }](s T) *Pkg5PublisherState {
@@ -66,7 +67,7 @@ type Pkg5PublisherParameters struct {
 }
 
 // Wrap the `Pkg5PublisherParameters into an `rpc.RPCCall`.
-func (p *Pkg5PublisherParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p Pkg5PublisherParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

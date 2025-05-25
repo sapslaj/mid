@@ -20,6 +20,7 @@ const (
 	BeadmStateUnmounted BeadmState = "unmounted"
 )
 
+// Convert a supported type to an optional (pointer) BeadmState
 func OptionalBeadmState[T interface {
 	*BeadmState | BeadmState | *string | string
 }](s T) *BeadmState {
@@ -73,7 +74,7 @@ type BeadmParameters struct {
 }
 
 // Wrap the `BeadmParameters into an `rpc.RPCCall`.
-func (p *BeadmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p BeadmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

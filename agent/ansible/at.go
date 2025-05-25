@@ -20,6 +20,7 @@ const (
 	AtUnitsWeeks   AtUnits = "weeks"
 )
 
+// Convert a supported type to an optional (pointer) AtUnits
 func OptionalAtUnits[T interface {
 	*AtUnits | AtUnits | *string | string
 }](s T) *AtUnits {
@@ -51,6 +52,7 @@ const (
 	AtStatePresent AtState = "present"
 )
 
+// Convert a supported type to an optional (pointer) AtState
 func OptionalAtState[T interface {
 	*AtState | AtState | *string | string
 }](s T) *AtState {
@@ -98,7 +100,7 @@ type AtParameters struct {
 }
 
 // Wrap the `AtParameters into an `rpc.RPCCall`.
-func (p *AtParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AtParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

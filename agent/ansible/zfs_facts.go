@@ -21,6 +21,7 @@ const (
 	ZfsFactsTypeBookmark   ZfsFactsType = "bookmark"
 )
 
+// Convert a supported type to an optional (pointer) ZfsFactsType
 func OptionalZfsFactsType[T interface {
 	*ZfsFactsType | ZfsFactsType | *string | string
 }](s T) *ZfsFactsType {
@@ -74,7 +75,7 @@ type ZfsFactsParameters struct {
 }
 
 // Wrap the `ZfsFactsParameters into an `rpc.RPCCall`.
-func (p *ZfsFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ZfsFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

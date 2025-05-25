@@ -20,6 +20,7 @@ const (
 	FlatpakMethodUser   FlatpakMethod = "user"
 )
 
+// Convert a supported type to an optional (pointer) FlatpakMethod
 func OptionalFlatpakMethod[T interface {
 	*FlatpakMethod | FlatpakMethod | *string | string
 }](s T) *FlatpakMethod {
@@ -52,6 +53,7 @@ const (
 	FlatpakStateLatest  FlatpakState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) FlatpakState
 func OptionalFlatpakState[T interface {
 	*FlatpakState | FlatpakState | *string | string
 }](s T) *FlatpakState {
@@ -125,7 +127,7 @@ type FlatpakParameters struct {
 }
 
 // Wrap the `FlatpakParameters into an `rpc.RPCCall`.
-func (p *FlatpakParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p FlatpakParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

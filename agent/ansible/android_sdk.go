@@ -23,6 +23,7 @@ const (
 	AndroidSdkStateLatest  AndroidSdkState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) AndroidSdkState
 func OptionalAndroidSdkState[T interface {
 	*AndroidSdkState | AndroidSdkState | *string | string
 }](s T) *AndroidSdkState {
@@ -55,6 +56,7 @@ const (
 	AndroidSdkChannelCanary AndroidSdkChannel = "canary"
 )
 
+// Convert a supported type to an optional (pointer) AndroidSdkChannel
 func OptionalAndroidSdkChannel[T interface {
 	*AndroidSdkChannel | AndroidSdkChannel | *string | string
 }](s T) *AndroidSdkChannel {
@@ -107,7 +109,7 @@ type AndroidSdkParameters struct {
 }
 
 // Wrap the `AndroidSdkParameters into an `rpc.RPCCall`.
-func (p *AndroidSdkParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AndroidSdkParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

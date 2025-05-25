@@ -18,6 +18,7 @@ const (
 	AwallStateEnabled  AwallState = "enabled"
 )
 
+// Convert a supported type to an optional (pointer) AwallState
 func OptionalAwallState[T interface {
 	*AwallState | AwallState | *string | string
 }](s T) *AwallState {
@@ -58,7 +59,7 @@ type AwallParameters struct {
 }
 
 // Wrap the `AwallParameters into an `rpc.RPCCall`.
-func (p *AwallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AwallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

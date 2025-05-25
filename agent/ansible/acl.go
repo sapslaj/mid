@@ -19,6 +19,7 @@ const (
 	AclStateQuery   AclState = "query"
 )
 
+// Convert a supported type to an optional (pointer) AclState
 func OptionalAclState[T interface {
 	*AclState | AclState | *string | string
 }](s T) *AclState {
@@ -52,6 +53,7 @@ const (
 	AclEtypeUser  AclEtype = "user"
 )
 
+// Convert a supported type to an optional (pointer) AclEtype
 func OptionalAclEtype[T interface {
 	*AclEtype | AclEtype | *string | string
 }](s T) *AclEtype {
@@ -85,6 +87,7 @@ const (
 	AclRecalculateMaskNoMask  AclRecalculateMask = "no_mask"
 )
 
+// Convert a supported type to an optional (pointer) AclRecalculateMask
 func OptionalAclRecalculateMask[T interface {
 	*AclRecalculateMask | AclRecalculateMask | *string | string
 }](s T) *AclRecalculateMask {
@@ -175,7 +178,7 @@ type AclParameters struct {
 }
 
 // Wrap the `AclParameters into an `rpc.RPCCall`.
-func (p *AclParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AclParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

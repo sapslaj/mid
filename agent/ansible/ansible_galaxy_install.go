@@ -23,6 +23,7 @@ const (
 	AnsibleGalaxyInstallStateLatest  AnsibleGalaxyInstallState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) AnsibleGalaxyInstallState
 func OptionalAnsibleGalaxyInstallState[T interface {
 	*AnsibleGalaxyInstallState | AnsibleGalaxyInstallState | *string | string
 }](s T) *AnsibleGalaxyInstallState {
@@ -109,7 +110,7 @@ type AnsibleGalaxyInstallParameters struct {
 }
 
 // Wrap the `AnsibleGalaxyInstallParameters into an `rpc.RPCCall`.
-func (p *AnsibleGalaxyInstallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AnsibleGalaxyInstallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

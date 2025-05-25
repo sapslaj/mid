@@ -19,6 +19,7 @@ const (
 	YarnStateLatest  YarnState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) YarnState
 func OptionalYarnState[T interface {
 	*YarnState | YarnState | *string | string
 }](s T) *YarnState {
@@ -83,7 +84,7 @@ type YarnParameters struct {
 }
 
 // Wrap the `YarnParameters into an `rpc.RPCCall`.
-func (p *YarnParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p YarnParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

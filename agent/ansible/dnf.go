@@ -27,6 +27,7 @@ const (
 	DnfUseBackendDnf5 DnfUseBackend = "dnf5"
 )
 
+// Convert a supported type to an optional (pointer) DnfUseBackend
 func OptionalDnfUseBackend[T interface {
 	*DnfUseBackend | DnfUseBackend | *string | string
 }](s T) *DnfUseBackend {
@@ -62,6 +63,7 @@ const (
 	DnfStateLatest    DnfState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) DnfState
 func OptionalDnfState[T interface {
 	*DnfState | DnfState | *string | string
 }](s T) *DnfState {
@@ -266,7 +268,7 @@ type DnfParameters struct {
 }
 
 // Wrap the `DnfParameters into an `rpc.RPCCall`.
-func (p *DnfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DnfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

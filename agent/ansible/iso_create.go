@@ -24,6 +24,7 @@ const (
 	IsoCreateInterchangeLevel4 IsoCreateInterchangeLevel = 4
 )
 
+// Convert a supported type to an optional (pointer) IsoCreateInterchangeLevel
 func OptionalIsoCreateInterchangeLevel[T interface {
 	*IsoCreateInterchangeLevel | IsoCreateInterchangeLevel | *int | int
 }](s T) *IsoCreateInterchangeLevel {
@@ -59,6 +60,7 @@ const (
 	IsoCreateRockRidge112 IsoCreateRockRidge = "1.12"
 )
 
+// Convert a supported type to an optional (pointer) IsoCreateRockRidge
 func OptionalIsoCreateRockRidge[T interface {
 	*IsoCreateRockRidge | IsoCreateRockRidge | *string | string
 }](s T) *IsoCreateRockRidge {
@@ -92,6 +94,7 @@ const (
 	IsoCreateJoliet3 IsoCreateJoliet = 3
 )
 
+// Convert a supported type to an optional (pointer) IsoCreateJoliet
 func OptionalIsoCreateJoliet[T interface {
 	*IsoCreateJoliet | IsoCreateJoliet | *int | int
 }](s T) *IsoCreateJoliet {
@@ -164,7 +167,7 @@ type IsoCreateParameters struct {
 }
 
 // Wrap the `IsoCreateParameters into an `rpc.RPCCall`.
-func (p *IsoCreateParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p IsoCreateParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

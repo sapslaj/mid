@@ -18,6 +18,7 @@ const (
 	LogentriesStateUnfollowed LogentriesState = "unfollowed"
 )
 
+// Convert a supported type to an optional (pointer) LogentriesState
 func OptionalLogentriesState[T interface {
 	*LogentriesState | LogentriesState | *string | string
 }](s T) *LogentriesState {
@@ -57,7 +58,7 @@ type LogentriesParameters struct {
 }
 
 // Wrap the `LogentriesParameters into an `rpc.RPCCall`.
-func (p *LogentriesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p LogentriesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

@@ -19,6 +19,7 @@ const (
 	Gconftool2ValueTypeString Gconftool2ValueType = "string"
 )
 
+// Convert a supported type to an optional (pointer) Gconftool2ValueType
 func OptionalGconftool2ValueType[T interface {
 	*Gconftool2ValueType | Gconftool2ValueType | *string | string
 }](s T) *Gconftool2ValueType {
@@ -75,7 +76,7 @@ type Gconftool2Parameters struct {
 }
 
 // Wrap the `Gconftool2Parameters into an `rpc.RPCCall`.
-func (p *Gconftool2Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p Gconftool2Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

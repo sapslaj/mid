@@ -19,6 +19,7 @@ const (
 	OpkgStateRemoved   OpkgState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) OpkgState
 func OptionalOpkgState[T interface {
 	*OpkgState | OpkgState | *string | string
 }](s T) *OpkgState {
@@ -57,6 +58,7 @@ const (
 	OpkgForceRemovalOfDependentPackages OpkgForce = "removal-of-dependent-packages"
 )
 
+// Convert a supported type to an optional (pointer) OpkgForce
 func OptionalOpkgForce[T interface {
 	*OpkgForce | OpkgForce | *string | string
 }](s T) *OpkgForce {
@@ -104,7 +106,7 @@ type OpkgParameters struct {
 }
 
 // Wrap the `OpkgParameters into an `rpc.RPCCall`.
-func (p *OpkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p OpkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

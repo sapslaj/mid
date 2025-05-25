@@ -26,6 +26,7 @@ const (
 	XattrStateRead    XattrState = "read"
 )
 
+// Convert a supported type to an optional (pointer) XattrState
 func OptionalXattrState[T interface {
 	*XattrState | XattrState | *string | string
 }](s T) *XattrState {
@@ -80,7 +81,7 @@ type XattrParameters struct {
 }
 
 // Wrap the `XattrParameters into an `rpc.RPCCall`.
-func (p *XattrParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p XattrParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

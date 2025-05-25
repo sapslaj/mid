@@ -26,6 +26,7 @@ const (
 	PacmanStateRemoved   PacmanState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) PacmanState
 func OptionalPacmanState[T interface {
 	*PacmanState | PacmanState | *string | string
 }](s T) *PacmanState {
@@ -56,6 +57,7 @@ const (
 	PacmanReasonExplicit   PacmanReason = "explicit"
 )
 
+// Convert a supported type to an optional (pointer) PacmanReason
 func OptionalPacmanReason[T interface {
 	*PacmanReason | PacmanReason | *string | string
 }](s T) *PacmanReason {
@@ -88,6 +90,7 @@ const (
 	PacmanReasonForNew PacmanReasonFor = "new"
 )
 
+// Convert a supported type to an optional (pointer) PacmanReasonFor
 func OptionalPacmanReasonFor[T interface {
 	*PacmanReasonFor | PacmanReasonFor | *string | string
 }](s T) *PacmanReasonFor {
@@ -184,7 +187,7 @@ type PacmanParameters struct {
 }
 
 // Wrap the `PacmanParameters into an `rpc.RPCCall`.
-func (p *PacmanParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PacmanParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

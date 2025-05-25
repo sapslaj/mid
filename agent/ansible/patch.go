@@ -16,6 +16,7 @@ const (
 	PatchStatePresent PatchState = "present"
 )
 
+// Convert a supported type to an optional (pointer) PatchState
 func OptionalPatchState[T interface {
 	*PatchState | PatchState | *string | string
 }](s T) *PatchState {
@@ -88,7 +89,7 @@ type PatchParameters struct {
 }
 
 // Wrap the `PatchParameters into an `rpc.RPCCall`.
-func (p *PatchParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PatchParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

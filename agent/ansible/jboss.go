@@ -16,6 +16,7 @@ const (
 	JbossStateAbsent  JbossState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) JbossState
 func OptionalJbossState[T interface {
 	*JbossState | JbossState | *string | string
 }](s T) *JbossState {
@@ -58,7 +59,7 @@ type JbossParameters struct {
 }
 
 // Wrap the `JbossParameters into an `rpc.RPCCall`.
-func (p *JbossParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p JbossParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

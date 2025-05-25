@@ -26,6 +26,7 @@ const (
 	IpmiPowerStateBoot     IpmiPowerState = "boot"
 )
 
+// Convert a supported type to an optional (pointer) IpmiPowerState
 func OptionalIpmiPowerState[T interface {
 	*IpmiPowerState | IpmiPowerState | *string | string
 }](s T) *IpmiPowerState {
@@ -90,7 +91,7 @@ type IpmiPowerParameters struct {
 }
 
 // Wrap the `IpmiPowerParameters into an `rpc.RPCCall`.
-func (p *IpmiPowerParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p IpmiPowerParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

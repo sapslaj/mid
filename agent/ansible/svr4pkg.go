@@ -34,6 +34,7 @@ const (
 	Svr4pkgZoneAll     Svr4pkgZone = "all"
 )
 
+// Convert a supported type to an optional (pointer) Svr4pkgZone
 func OptionalSvr4pkgZone[T interface {
 	*Svr4pkgZone | Svr4pkgZone | *string | string
 }](s T) *Svr4pkgZone {
@@ -95,7 +96,7 @@ type Svr4pkgParameters struct {
 }
 
 // Wrap the `Svr4pkgParameters into an `rpc.RPCCall`.
-func (p *Svr4pkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p Svr4pkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

@@ -20,6 +20,7 @@ const (
 	RhsmRepositoryStateDisabled RhsmRepositoryState = "disabled"
 )
 
+// Convert a supported type to an optional (pointer) RhsmRepositoryState
 func OptionalRhsmRepositoryState[T interface {
 	*RhsmRepositoryState | RhsmRepositoryState | *string | string
 }](s T) *RhsmRepositoryState {
@@ -65,7 +66,7 @@ type RhsmRepositoryParameters struct {
 }
 
 // Wrap the `RhsmRepositoryParameters into an `rpc.RPCCall`.
-func (p *RhsmRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p RhsmRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

@@ -18,6 +18,7 @@ const (
 	RpmOstreePkgStatePresent RpmOstreePkgState = "present"
 )
 
+// Convert a supported type to an optional (pointer) RpmOstreePkgState
 func OptionalRpmOstreePkgState[T interface {
 	*RpmOstreePkgState | RpmOstreePkgState | *string | string
 }](s T) *RpmOstreePkgState {
@@ -60,7 +61,7 @@ type RpmOstreePkgParameters struct {
 }
 
 // Wrap the `RpmOstreePkgParameters into an `rpc.RPCCall`.
-func (p *RpmOstreePkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p RpmOstreePkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

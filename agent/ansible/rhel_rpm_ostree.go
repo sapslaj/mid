@@ -29,6 +29,7 @@ const (
 	RhelRpmOstreeStateRemoved   RhelRpmOstreeState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) RhelRpmOstreeState
 func OptionalRhelRpmOstreeState[T interface {
 	*RhelRpmOstreeState | RhelRpmOstreeState | *string | string
 }](s T) *RhelRpmOstreeState {
@@ -81,7 +82,7 @@ type RhelRpmOstreeParameters struct {
 }
 
 // Wrap the `RhelRpmOstreeParameters into an `rpc.RPCCall`.
-func (p *RhelRpmOstreeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p RhelRpmOstreeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

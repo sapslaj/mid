@@ -16,6 +16,7 @@ const (
 	ModprobeStatePresent ModprobeState = "present"
 )
 
+// Convert a supported type to an optional (pointer) ModprobeState
 func OptionalModprobeState[T interface {
 	*ModprobeState | ModprobeState | *string | string
 }](s T) *ModprobeState {
@@ -63,6 +64,7 @@ const (
 	ModprobePersistentPresent  ModprobePersistent = "present"
 )
 
+// Convert a supported type to an optional (pointer) ModprobePersistent
 func OptionalModprobePersistent[T interface {
 	*ModprobePersistent | ModprobePersistent | *string | string
 }](s T) *ModprobePersistent {
@@ -120,7 +122,7 @@ type ModprobeParameters struct {
 }
 
 // Wrap the `ModprobeParameters into an `rpc.RPCCall`.
-func (p *ModprobeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ModprobeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

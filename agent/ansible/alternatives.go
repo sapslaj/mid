@@ -26,6 +26,7 @@ const (
 	AlternativesStateAbsent   AlternativesState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) AlternativesState
 func OptionalAlternativesState[T interface {
 	*AlternativesState | AlternativesState | *string | string
 }](s T) *AlternativesState {
@@ -92,7 +93,7 @@ type AlternativesParameters struct {
 }
 
 // Wrap the `AlternativesParameters into an `rpc.RPCCall`.
-func (p *AlternativesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AlternativesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

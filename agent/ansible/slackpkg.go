@@ -21,6 +21,7 @@ const (
 	SlackpkgStateRemoved   SlackpkgState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) SlackpkgState
 func OptionalSlackpkgState[T interface {
 	*SlackpkgState | SlackpkgState | *string | string
 }](s T) *SlackpkgState {
@@ -59,7 +60,7 @@ type SlackpkgParameters struct {
 }
 
 // Wrap the `SlackpkgParameters into an `rpc.RPCCall`.
-func (p *SlackpkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SlackpkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

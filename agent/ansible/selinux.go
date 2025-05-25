@@ -40,7 +40,7 @@ type SelinuxParameters struct {
 }
 
 // Wrap the `SelinuxParameters into an `rpc.RPCCall`.
-func (p *SelinuxParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SelinuxParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

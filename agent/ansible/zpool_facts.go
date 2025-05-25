@@ -25,7 +25,7 @@ type ZpoolFactsParameters struct {
 }
 
 // Wrap the `ZpoolFactsParameters into an `rpc.RPCCall`.
-func (p *ZpoolFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ZpoolFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

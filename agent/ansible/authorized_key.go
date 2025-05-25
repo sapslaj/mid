@@ -17,6 +17,7 @@ const (
 	AuthorizedKeyStatePresent AuthorizedKeyState = "present"
 )
 
+// Convert a supported type to an optional (pointer) AuthorizedKeyState
 func OptionalAuthorizedKeyState[T interface {
 	*AuthorizedKeyState | AuthorizedKeyState | *string | string
 }](s T) *AuthorizedKeyState {
@@ -108,7 +109,7 @@ type AuthorizedKeyParameters struct {
 }
 
 // Wrap the `AuthorizedKeyParameters into an `rpc.RPCCall`.
-func (p *AuthorizedKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AuthorizedKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

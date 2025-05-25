@@ -21,6 +21,7 @@ const (
 	TempfileStateFile      TempfileState = "file"
 )
 
+// Convert a supported type to an optional (pointer) TempfileState
 func OptionalTempfileState[T interface {
 	*TempfileState | TempfileState | *string | string
 }](s T) *TempfileState {
@@ -64,7 +65,7 @@ type TempfileParameters struct {
 }
 
 // Wrap the `TempfileParameters into an `rpc.RPCCall`.
-func (p *TempfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p TempfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

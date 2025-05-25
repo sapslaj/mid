@@ -28,7 +28,7 @@ type RpmOstreeUpgradeParameters struct {
 }
 
 // Wrap the `RpmOstreeUpgradeParameters into an `rpc.RPCCall`.
-func (p *RpmOstreeUpgradeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p RpmOstreeUpgradeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

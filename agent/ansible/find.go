@@ -25,6 +25,7 @@ const (
 	FindFileTypeLink      FindFileType = "link"
 )
 
+// Convert a supported type to an optional (pointer) FindFileType
 func OptionalFindFileType[T interface {
 	*FindFileType | FindFileType | *string | string
 }](s T) *FindFileType {
@@ -56,6 +57,7 @@ const (
 	FindAgeStampMtime FindAgeStamp = "mtime"
 )
 
+// Convert a supported type to an optional (pointer) FindAgeStamp
 func OptionalFindAgeStamp[T interface {
 	*FindAgeStamp | FindAgeStamp | *string | string
 }](s T) *FindAgeStamp {
@@ -197,7 +199,7 @@ type FindParameters struct {
 }
 
 // Wrap the `FindParameters into an `rpc.RPCCall`.
-func (p *FindParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p FindParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

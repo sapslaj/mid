@@ -17,6 +17,7 @@ const (
 	SysctlStateAbsent  SysctlState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) SysctlState
 func OptionalSysctlState[T interface {
 	*SysctlState | SysctlState | *string | string
 }](s T) *SysctlState {
@@ -70,7 +71,7 @@ type SysctlParameters struct {
 }
 
 // Wrap the `SysctlParameters into an `rpc.RPCCall`.
-func (p *SysctlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SysctlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

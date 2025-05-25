@@ -21,6 +21,7 @@ const (
 	YumRepositoryFailovermethodPriority   YumRepositoryFailovermethod = "priority"
 )
 
+// Convert a supported type to an optional (pointer) YumRepositoryFailovermethod
 func OptionalYumRepositoryFailovermethod[T interface {
 	*YumRepositoryFailovermethod | YumRepositoryFailovermethod | *string | string
 }](s T) *YumRepositoryFailovermethod {
@@ -59,6 +60,7 @@ const (
 	YumRepositoryHttpCachingNone     YumRepositoryHttpCaching = "none"
 )
 
+// Convert a supported type to an optional (pointer) YumRepositoryHttpCaching
 func OptionalYumRepositoryHttpCaching[T interface {
 	*YumRepositoryHttpCaching | YumRepositoryHttpCaching | *string | string
 }](s T) *YumRepositoryHttpCaching {
@@ -94,6 +96,7 @@ const (
 	YumRepositoryIpResolveWhatever YumRepositoryIpResolve = "whatever"
 )
 
+// Convert a supported type to an optional (pointer) YumRepositoryIpResolve
 func OptionalYumRepositoryIpResolve[T interface {
 	*YumRepositoryIpResolve | YumRepositoryIpResolve | *string | string
 }](s T) *YumRepositoryIpResolve {
@@ -127,6 +130,7 @@ const (
 	YumRepositoryKeepcache1 YumRepositoryKeepcache = "1"
 )
 
+// Convert a supported type to an optional (pointer) YumRepositoryKeepcache
 func OptionalYumRepositoryKeepcache[T interface {
 	*YumRepositoryKeepcache | YumRepositoryKeepcache | *string | string
 }](s T) *YumRepositoryKeepcache {
@@ -175,6 +179,7 @@ const (
 	YumRepositoryMetadataExpireFilterReadOnlyFuture  YumRepositoryMetadataExpireFilter = "read-only:future"
 )
 
+// Convert a supported type to an optional (pointer) YumRepositoryMetadataExpireFilter
 func OptionalYumRepositoryMetadataExpireFilter[T interface {
 	*YumRepositoryMetadataExpireFilter | YumRepositoryMetadataExpireFilter | *string | string
 }](s T) *YumRepositoryMetadataExpireFilter {
@@ -205,6 +210,7 @@ const (
 	YumRepositoryStatePresent YumRepositoryState = "present"
 )
 
+// Convert a supported type to an optional (pointer) YumRepositoryState
 func OptionalYumRepositoryState[T interface {
 	*YumRepositoryState | YumRepositoryState | *string | string
 }](s T) *YumRepositoryState {
@@ -585,7 +591,7 @@ type YumRepositoryParameters struct {
 }
 
 // Wrap the `YumRepositoryParameters into an `rpc.RPCCall`.
-func (p *YumRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p YumRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

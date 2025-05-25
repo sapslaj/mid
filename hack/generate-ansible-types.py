@@ -255,6 +255,9 @@ def process_module_file(module_file: str):
                     f.write(f"{choice_repred}\n")
                 f.write(")\n\n")
                 if not value.get("required", False):
+                    f.write(
+                        f"// Convert a supported type to an optional (pointer) {pascalcase_name}{pascalcase_key}\n"
+                    )
                     f.write(f"func Optional{pascalcase_name}{pascalcase_key}")
                     f.write("[T interface {\n\t")
                     f.write(f"*{pascalcase_name}{pascalcase_key} | ")
@@ -336,7 +339,7 @@ def process_module_file(module_file: str):
                 )
             )
             f.write(
-                f"func (p *{pascalcase_name}Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {'{'}\n"
+                f"func (p {pascalcase_name}Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {'{'}\n"
             )
             f.write("\targs, err := rpc.AnyToJSONT[map[string]any](p)\n")
             f.write("\tif err != nil {\n")

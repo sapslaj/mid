@@ -16,6 +16,7 @@ const (
 	HomectlStatePresent HomectlState = "present"
 )
 
+// Convert a supported type to an optional (pointer) HomectlState
 func OptionalHomectlState[T interface {
 	*HomectlState | HomectlState | *string | string
 }](s T) *HomectlState {
@@ -53,6 +54,7 @@ const (
 	HomectlStorageCifs      HomectlStorage = "cifs"
 )
 
+// Convert a supported type to an optional (pointer) HomectlStorage
 func OptionalHomectlStorage[T interface {
 	*HomectlStorage | HomectlStorage | *string | string
 }](s T) *HomectlStorage {
@@ -217,7 +219,7 @@ type HomectlParameters struct {
 }
 
 // Wrap the `HomectlParameters into an `rpc.RPCCall`.
-func (p *HomectlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p HomectlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

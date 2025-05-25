@@ -21,7 +21,7 @@ type LbuParameters struct {
 }
 
 // Wrap the `LbuParameters into an `rpc.RPCCall`.
-func (p *LbuParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p LbuParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

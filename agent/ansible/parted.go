@@ -22,6 +22,7 @@ const (
 	PartedAlignUndefined PartedAlign = "undefined"
 )
 
+// Convert a supported type to an optional (pointer) PartedAlign
 func OptionalPartedAlign[T interface {
 	*PartedAlign | PartedAlign | *string | string
 }](s T) *PartedAlign {
@@ -68,6 +69,7 @@ const (
 	PartedUnitCompact PartedUnit = "compact"
 )
 
+// Convert a supported type to an optional (pointer) PartedUnit
 func OptionalPartedUnit[T interface {
 	*PartedUnit | PartedUnit | *string | string
 }](s T) *PartedUnit {
@@ -109,6 +111,7 @@ const (
 	PartedLabelSun   PartedLabel = "sun"
 )
 
+// Convert a supported type to an optional (pointer) PartedLabel
 func OptionalPartedLabel[T interface {
 	*PartedLabel | PartedLabel | *string | string
 }](s T) *PartedLabel {
@@ -141,6 +144,7 @@ const (
 	PartedPartTypePrimary  PartedPartType = "primary"
 )
 
+// Convert a supported type to an optional (pointer) PartedPartType
 func OptionalPartedPartType[T interface {
 	*PartedPartType | PartedPartType | *string | string
 }](s T) *PartedPartType {
@@ -173,6 +177,7 @@ const (
 	PartedStateInfo    PartedState = "info"
 )
 
+// Convert a supported type to an optional (pointer) PartedState
 func OptionalPartedState[T interface {
 	*PartedState | PartedState | *string | string
 }](s T) *PartedState {
@@ -272,7 +277,7 @@ type PartedParameters struct {
 }
 
 // Wrap the `PartedParameters into an `rpc.RPCCall`.
-func (p *PartedParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PartedParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

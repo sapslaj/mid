@@ -17,6 +17,7 @@ const (
 	CapabilitiesStatePresent CapabilitiesState = "present"
 )
 
+// Convert a supported type to an optional (pointer) CapabilitiesState
 func OptionalCapabilitiesState[T interface {
 	*CapabilitiesState | CapabilitiesState | *string | string
 }](s T) *CapabilitiesState {
@@ -54,7 +55,7 @@ type CapabilitiesParameters struct {
 }
 
 // Wrap the `CapabilitiesParameters into an `rpc.RPCCall`.
-func (p *CapabilitiesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p CapabilitiesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

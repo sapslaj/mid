@@ -22,6 +22,7 @@ const (
 	AptStateFixed    AptState = "fixed"
 )
 
+// Convert a supported type to an optional (pointer) AptState
 func OptionalAptState[T interface {
 	*AptState | AptState | *string | string
 }](s T) *AptState {
@@ -59,6 +60,7 @@ const (
 	AptUpgradeYes  AptUpgrade = "yes"
 )
 
+// Convert a supported type to an optional (pointer) AptUpgrade
 func OptionalAptUpgrade[T interface {
 	*AptUpgrade | AptUpgrade | *string | string
 }](s T) *AptUpgrade {
@@ -241,7 +243,7 @@ type AptParameters struct {
 }
 
 // Wrap the `AptParameters into an `rpc.RPCCall`.
-func (p *AptParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AptParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

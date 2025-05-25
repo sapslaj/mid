@@ -34,6 +34,7 @@ const (
 	TimezoneHwclockUtc   TimezoneHwclock = "UTC"
 )
 
+// Convert a supported type to an optional (pointer) TimezoneHwclock
 func OptionalTimezoneHwclock[T interface {
 	*TimezoneHwclock | TimezoneHwclock | *string | string
 }](s T) *TimezoneHwclock {
@@ -73,7 +74,7 @@ type TimezoneParameters struct {
 }
 
 // Wrap the `TimezoneParameters into an `rpc.RPCCall`.
-func (p *TimezoneParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p TimezoneParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

@@ -255,7 +255,7 @@ type GetUrlParameters struct {
 }
 
 // Wrap the `GetUrlParameters into an `rpc.RPCCall`.
-func (p *GetUrlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p GetUrlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

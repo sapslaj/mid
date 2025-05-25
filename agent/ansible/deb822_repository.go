@@ -17,6 +17,7 @@ const (
 	Deb822RepositoryTypesDebSrc Deb822RepositoryTypes = "deb-src"
 )
 
+// Convert a supported type to an optional (pointer) Deb822RepositoryTypes
 func OptionalDeb822RepositoryTypes[T interface {
 	*Deb822RepositoryTypes | Deb822RepositoryTypes | *string | string
 }](s T) *Deb822RepositoryTypes {
@@ -47,6 +48,7 @@ const (
 	Deb822RepositoryStatePresent Deb822RepositoryState = "present"
 )
 
+// Convert a supported type to an optional (pointer) Deb822RepositoryState
 func OptionalDeb822RepositoryState[T interface {
 	*Deb822RepositoryState | Deb822RepositoryState | *string | string
 }](s T) *Deb822RepositoryState {
@@ -161,7 +163,7 @@ type Deb822RepositoryParameters struct {
 }
 
 // Wrap the `Deb822RepositoryParameters into an `rpc.RPCCall`.
-func (p *Deb822RepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p Deb822RepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

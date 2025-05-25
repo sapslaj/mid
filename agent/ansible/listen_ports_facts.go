@@ -20,6 +20,7 @@ const (
 	ListenPortsFactsCommandSs      ListenPortsFactsCommand = "ss"
 )
 
+// Convert a supported type to an optional (pointer) ListenPortsFactsCommand
 func OptionalListenPortsFactsCommand[T interface {
 	*ListenPortsFactsCommand | ListenPortsFactsCommand | *string | string
 }](s T) *ListenPortsFactsCommand {
@@ -60,7 +61,7 @@ type ListenPortsFactsParameters struct {
 }
 
 // Wrap the `ListenPortsFactsParameters into an `rpc.RPCCall`.
-func (p *ListenPortsFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ListenPortsFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

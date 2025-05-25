@@ -14,7 +14,7 @@ type RhelFactsParameters struct {
 }
 
 // Wrap the `RhelFactsParameters into an `rpc.RPCCall`.
-func (p *RhelFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p RhelFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

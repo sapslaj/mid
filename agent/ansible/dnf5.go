@@ -26,6 +26,7 @@ const (
 	Dnf5StateLatest    Dnf5State = "latest"
 )
 
+// Convert a supported type to an optional (pointer) Dnf5State
 func OptionalDnf5State[T interface {
 	*Dnf5State | Dnf5State | *string | string
 }](s T) *Dnf5State {
@@ -234,7 +235,7 @@ type Dnf5Parameters struct {
 }
 
 // Wrap the `Dnf5Parameters into an `rpc.RPCCall`.
-func (p *Dnf5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p Dnf5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

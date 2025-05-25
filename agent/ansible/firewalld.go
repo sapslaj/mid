@@ -34,6 +34,7 @@ const (
 	FirewalldTargetReject  FirewalldTarget = "%%REJECT%%"
 )
 
+// Convert a supported type to an optional (pointer) FirewalldTarget
 func OptionalFirewalldTarget[T interface {
 	*FirewalldTarget | FirewalldTarget | *string | string
 }](s T) *FirewalldTarget {
@@ -153,7 +154,7 @@ type FirewalldParameters struct {
 }
 
 // Wrap the `FirewalldParameters into an `rpc.RPCCall`.
-func (p *FirewalldParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p FirewalldParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

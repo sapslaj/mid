@@ -25,6 +25,7 @@ const (
 	VdoStatePresent VdoState = "present"
 )
 
+// Convert a supported type to an optional (pointer) VdoState
 func OptionalVdoState[T interface {
 	*VdoState | VdoState | *string | string
 }](s T) *VdoState {
@@ -57,6 +58,7 @@ const (
 	VdoDeduplicationEnabled  VdoDeduplication = "enabled"
 )
 
+// Convert a supported type to an optional (pointer) VdoDeduplication
 func OptionalVdoDeduplication[T interface {
 	*VdoDeduplication | VdoDeduplication | *string | string
 }](s T) *VdoDeduplication {
@@ -89,6 +91,7 @@ const (
 	VdoCompressionEnabled  VdoCompression = "enabled"
 )
 
+// Convert a supported type to an optional (pointer) VdoCompression
 func OptionalVdoCompression[T interface {
 	*VdoCompression | VdoCompression | *string | string
 }](s T) *VdoCompression {
@@ -124,6 +127,7 @@ const (
 	VdoReadcacheEnabled  VdoReadcache = "enabled"
 )
 
+// Convert a supported type to an optional (pointer) VdoReadcache
 func OptionalVdoReadcache[T interface {
 	*VdoReadcache | VdoReadcache | *string | string
 }](s T) *VdoReadcache {
@@ -164,6 +168,7 @@ const (
 	VdoWritepolicySync  VdoWritepolicy = "sync"
 )
 
+// Convert a supported type to an optional (pointer) VdoWritepolicy
 func OptionalVdoWritepolicy[T interface {
 	*VdoWritepolicy | VdoWritepolicy | *string | string
 }](s T) *VdoWritepolicy {
@@ -201,6 +206,7 @@ const (
 	VdoIndexmodeSparse VdoIndexmode = "sparse"
 )
 
+// Convert a supported type to an optional (pointer) VdoIndexmode
 func OptionalVdoIndexmode[T interface {
 	*VdoIndexmode | VdoIndexmode | *string | string
 }](s T) *VdoIndexmode {
@@ -404,7 +410,7 @@ type VdoParameters struct {
 }
 
 // Wrap the `VdoParameters into an `rpc.RPCCall`.
-func (p *VdoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p VdoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

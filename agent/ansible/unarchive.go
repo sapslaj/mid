@@ -177,7 +177,7 @@ type UnarchiveParameters struct {
 }
 
 // Wrap the `UnarchiveParameters into an `rpc.RPCCall`.
-func (p *UnarchiveParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p UnarchiveParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

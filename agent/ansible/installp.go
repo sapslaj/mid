@@ -16,6 +16,7 @@ const (
 	InstallpStatePresent InstallpState = "present"
 )
 
+// Convert a supported type to an optional (pointer) InstallpState
 func OptionalInstallpState[T interface {
 	*InstallpState | InstallpState | *string | string
 }](s T) *InstallpState {
@@ -57,7 +58,7 @@ type InstallpParameters struct {
 }
 
 // Wrap the `InstallpParameters into an `rpc.RPCCall`.
-func (p *InstallpParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p InstallpParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

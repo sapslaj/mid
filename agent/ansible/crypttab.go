@@ -57,7 +57,7 @@ type CrypttabParameters struct {
 }
 
 // Wrap the `CrypttabParameters into an `rpc.RPCCall`.
-func (p *CrypttabParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p CrypttabParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

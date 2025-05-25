@@ -27,6 +27,7 @@ const (
 	ZypperStateRemoved     ZypperState = "removed"
 )
 
+// Convert a supported type to an optional (pointer) ZypperState
 func OptionalZypperState[T interface {
 	*ZypperState | ZypperState | *string | string
 }](s T) *ZypperState {
@@ -61,6 +62,7 @@ const (
 	ZypperTypeApplication ZypperType = "application"
 )
 
+// Convert a supported type to an optional (pointer) ZypperType
 func OptionalZypperType[T interface {
 	*ZypperType | ZypperType | *string | string
 }](s T) *ZypperType {
@@ -175,7 +177,7 @@ type ZypperParameters struct {
 }
 
 // Wrap the `ZypperParameters into an `rpc.RPCCall`.
-func (p *ZypperParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ZypperParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

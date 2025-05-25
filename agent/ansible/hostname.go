@@ -33,6 +33,7 @@ const (
 	HostnameUseSystemd HostnameUse = "systemd"
 )
 
+// Convert a supported type to an optional (pointer) HostnameUse
 func OptionalHostnameUse[T interface {
 	*HostnameUse | HostnameUse | *string | string
 }](s T) *HostnameUse {
@@ -72,7 +73,7 @@ type HostnameParameters struct {
 }
 
 // Wrap the `HostnameParameters into an `rpc.RPCCall`.
-func (p *HostnameParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p HostnameParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

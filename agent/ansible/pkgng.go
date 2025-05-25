@@ -18,6 +18,7 @@ const (
 	PkgngStateAbsent  PkgngState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) PkgngState
 func OptionalPkgngState[T interface {
 	*PkgngState | PkgngState | *string | string
 }](s T) *PkgngState {
@@ -97,7 +98,7 @@ type PkgngParameters struct {
 }
 
 // Wrap the `PkgngParameters into an `rpc.RPCCall`.
-func (p *PkgngParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PkgngParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

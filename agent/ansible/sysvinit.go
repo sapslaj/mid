@@ -20,6 +20,7 @@ const (
 	SysvinitStateReloaded  SysvinitState = "reloaded"
 )
 
+// Convert a supported type to an optional (pointer) SysvinitState
 func OptionalSysvinitState[T interface {
 	*SysvinitState | SysvinitState | *string | string
 }](s T) *SysvinitState {
@@ -86,7 +87,7 @@ type SysvinitParameters struct {
 }
 
 // Wrap the `SysvinitParameters into an `rpc.RPCCall`.
-func (p *SysvinitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SysvinitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

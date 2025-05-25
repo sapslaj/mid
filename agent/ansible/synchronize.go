@@ -27,6 +27,7 @@ const (
 	SynchronizeModePush SynchronizeMode = "push"
 )
 
+// Convert a supported type to an optional (pointer) SynchronizeMode
 func OptionalSynchronizeMode[T interface {
 	*SynchronizeMode | SynchronizeMode | *string | string
 }](s T) *SynchronizeMode {
@@ -213,7 +214,7 @@ type SynchronizeParameters struct {
 }
 
 // Wrap the `SynchronizeParameters into an `rpc.RPCCall`.
-func (p *SynchronizeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SynchronizeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

@@ -20,6 +20,7 @@ const (
 	DjangoCreatecachetableVerbosity3 DjangoCreatecachetableVerbosity = 3
 )
 
+// Convert a supported type to an optional (pointer) DjangoCreatecachetableVerbosity
 func OptionalDjangoCreatecachetableVerbosity[T interface {
 	*DjangoCreatecachetableVerbosity | DjangoCreatecachetableVerbosity | *int | int
 }](s T) *DjangoCreatecachetableVerbosity {
@@ -75,7 +76,7 @@ type DjangoCreatecachetableParameters struct {
 }
 
 // Wrap the `DjangoCreatecachetableParameters into an `rpc.RPCCall`.
-func (p *DjangoCreatecachetableParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p DjangoCreatecachetableParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

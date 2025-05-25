@@ -17,6 +17,7 @@ const (
 	CargoStateLatest  CargoState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) CargoState
 func OptionalCargoState[T interface {
 	*CargoState | CargoState | *string | string
 }](s T) *CargoState {
@@ -71,7 +72,7 @@ type CargoParameters struct {
 }
 
 // Wrap the `CargoParameters into an `rpc.RPCCall`.
-func (p *CargoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p CargoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

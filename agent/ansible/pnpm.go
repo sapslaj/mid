@@ -18,6 +18,7 @@ const (
 	PnpmStateLatest  PnpmState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) PnpmState
 func OptionalPnpmState[T interface {
 	*PnpmState | PnpmState | *string | string
 }](s T) *PnpmState {
@@ -92,7 +93,7 @@ type PnpmParameters struct {
 }
 
 // Wrap the `PnpmParameters into an `rpc.RPCCall`.
-func (p *PnpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p PnpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

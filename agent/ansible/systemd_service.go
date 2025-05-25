@@ -25,6 +25,7 @@ const (
 	SystemdServiceStateStopped   SystemdServiceState = "stopped"
 )
 
+// Convert a supported type to an optional (pointer) SystemdServiceState
 func OptionalSystemdServiceState[T interface {
 	*SystemdServiceState | SystemdServiceState | *string | string
 }](s T) *SystemdServiceState {
@@ -65,6 +66,7 @@ const (
 	SystemdServiceScopeGlobal SystemdServiceScope = "global"
 )
 
+// Convert a supported type to an optional (pointer) SystemdServiceScope
 func OptionalSystemdServiceScope[T interface {
 	*SystemdServiceScope | SystemdServiceScope | *string | string
 }](s T) *SystemdServiceScope {
@@ -148,7 +150,7 @@ type SystemdServiceParameters struct {
 }
 
 // Wrap the `SystemdServiceParameters into an `rpc.RPCCall`.
-func (p *SystemdServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p SystemdServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

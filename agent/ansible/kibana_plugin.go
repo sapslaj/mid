@@ -16,6 +16,7 @@ const (
 	KibanaPluginStateAbsent  KibanaPluginState = "absent"
 )
 
+// Convert a supported type to an optional (pointer) KibanaPluginState
 func OptionalKibanaPluginState[T interface {
 	*KibanaPluginState | KibanaPluginState | *string | string
 }](s T) *KibanaPluginState {
@@ -79,7 +80,7 @@ type KibanaPluginParameters struct {
 }
 
 // Wrap the `KibanaPluginParameters into an `rpc.RPCCall`.
-func (p *KibanaPluginParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p KibanaPluginParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

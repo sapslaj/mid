@@ -17,6 +17,7 @@ const (
 	GroupStatePresent GroupState = "present"
 )
 
+// Convert a supported type to an optional (pointer) GroupState
 func OptionalGroupState[T interface {
 	*GroupState | GroupState | *string | string
 }](s T) *GroupState {
@@ -91,7 +92,7 @@ type GroupParameters struct {
 }
 
 // Wrap the `GroupParameters into an `rpc.RPCCall`.
-func (p *GroupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p GroupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

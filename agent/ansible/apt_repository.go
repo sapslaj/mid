@@ -16,6 +16,7 @@ const (
 	AptRepositoryStatePresent AptRepositoryState = "present"
 )
 
+// Convert a supported type to an optional (pointer) AptRepositoryState
 func OptionalAptRepositoryState[T interface {
 	*AptRepositoryState | AptRepositoryState | *string | string
 }](s T) *AptRepositoryState {
@@ -95,7 +96,7 @@ type AptRepositoryParameters struct {
 }
 
 // Wrap the `AptRepositoryParameters into an `rpc.RPCCall`.
-func (p *AptRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p AptRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

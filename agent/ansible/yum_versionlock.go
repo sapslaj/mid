@@ -18,6 +18,7 @@ const (
 	YumVersionlockStatePresent YumVersionlockState = "present"
 )
 
+// Convert a supported type to an optional (pointer) YumVersionlockState
 func OptionalYumVersionlockState[T interface {
 	*YumVersionlockState | YumVersionlockState | *string | string
 }](s T) *YumVersionlockState {
@@ -53,7 +54,7 @@ type YumVersionlockParameters struct {
 }
 
 // Wrap the `YumVersionlockParameters into an `rpc.RPCCall`.
-func (p *YumVersionlockParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p YumVersionlockParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

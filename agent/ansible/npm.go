@@ -17,6 +17,7 @@ const (
 	NpmStateLatest  NpmState = "latest"
 )
 
+// Convert a supported type to an optional (pointer) NpmState
 func OptionalNpmState[T interface {
 	*NpmState | NpmState | *string | string
 }](s T) *NpmState {
@@ -95,7 +96,7 @@ type NpmParameters struct {
 }
 
 // Wrap the `NpmParameters into an `rpc.RPCCall`.
-func (p *NpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p NpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err

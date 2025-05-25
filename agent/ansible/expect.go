@@ -46,7 +46,7 @@ type ExpectParameters struct {
 }
 
 // Wrap the `ExpectParameters into an `rpc.RPCCall`.
-func (p *ExpectParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
+func (p ExpectParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
 	args, err := rpc.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
