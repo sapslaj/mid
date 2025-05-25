@@ -40,6 +40,7 @@ jobs:
         run: |
           set -eux
           just provider
+          ls -lh ./bin/pulumi-resource-mid
           file ./bin/pulumi-resource-mid
 
   smoketest:
