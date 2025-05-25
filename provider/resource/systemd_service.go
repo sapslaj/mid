@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -13,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
@@ -136,45 +136,28 @@ func (r SystemdService) Create(
 		return id, state, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return id, state, nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
+	call, err := parameters.ToRPCCall()
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
+	call.Args.Check = preview
 
-	playOutput, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.systemd_service": parameters,
-				"ignore_errors":                   preview,
-			},
-		},
-	})
-	if err != nil {
-		if preview {
-			taskResult, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](playOutput, 0, 0)
-			if err == nil && taskResult.Msg != nil && strings.Contains(*taskResult.Msg, "Could not find the requested service") {
-				// the service not being available yet might be expected during a preview!
-				return id, state, nil
-			}
+	if preview {
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
+			return id, state, nil
 		}
+	}
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
+	if err != nil || !callResult.Result.Success {
+		err = fmt.Errorf(
+			"systemd service update failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
@@ -208,6 +191,13 @@ func (r SystemdService) Read(
 		return id, inputs, state, err
 	}
 
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return id, inputs, state, err
+	}
+	call.Args.Check = true
+
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
 
 	if !canConnect {
@@ -216,22 +206,19 @@ func (r SystemdService) Read(
 		}, nil
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       true,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.systemd_service": parameters,
-			},
-		},
-	})
-	if err != nil {
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
+	if err != nil || !callResult.Result.Success {
+		err = fmt.Errorf(
+			"systemd service read failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
 
-	result, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](output, 0, 0)
+	result, err := ansible.SystemdServiceReturnFromRPCResult(callResult)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
@@ -270,26 +257,6 @@ func (r SystemdService) Update(
 		return olds, err
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return olds, nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
 	refresh := false
 	triggerDiff := types.DiffTriggers(olds, news)
 	if triggerDiff.HasChanges {
@@ -300,29 +267,41 @@ func (r SystemdService) Update(
 		parameters.State = ansible.OptionalSystemdServiceState("restarted")
 	}
 
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       preview,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.systemd_service": parameters,
-				"ignore_errors":                   preview,
-			},
-		},
-	})
+	call, err := parameters.ToRPCCall()
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
+	call.Args.Check = preview
 
-	result, err := executor.GetTaskResult[*ansible.SystemdServiceReturn](output, 0, 0)
+	if preview {
+		call.Args.Check = true
+		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
+		if !canConnect {
+			return olds, nil
+		}
+	}
+
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
+	if err != nil || !callResult.Result.Success {
+		err = fmt.Errorf(
+			"service update failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
+		span.SetStatus(codes.Error, err.Error())
+		return olds, err
+	}
+
+	result, err := ansible.ServiceReturnFromRPCResult(callResult)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
 
 	state := r.updateState(olds, news, result.IsChanged())
+
 	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
@@ -376,6 +355,12 @@ func (r SystemdService) Delete(
 		return err
 	}
 
+	call, err := parameters.ToRPCCall()
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
 	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
 
 	if !canConnect {
@@ -392,17 +377,14 @@ func (r SystemdService) Delete(
 		return err
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       false,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.systemd_service": parameters,
-			},
-		},
-	})
-	if err != nil {
+	callResult, err := executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, config.Connection, call)
+	if err != nil || !callResult.Result.Success {
+		err = fmt.Errorf(
+			"service update failed: stderr=%s stdout=%s, err=%w",
+			callResult.Result.Stderr,
+			callResult.Result.Stdout,
+			err,
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
