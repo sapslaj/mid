@@ -1,0 +1,6 @@
+{
+  "resource": true,
+  "name": "mid",
+  "version": "0.0.6-alpha.0+dev",
+  "server": "github://api.github.com/sapslaj/mid"
+}

@@ -1,0 +1,26 @@
+[project]
+name = "pulumi_mid"
+description = "Pulumi-native configuration management"
+dependencies = [
+  "parver>=0.2.1",
+  "pulumi>=3.142.0,<4.0.0",
+  "semver>=2.8.1",
+  "typing-extensions>=4.11; python_version < \"3.11\"",
+]
+readme = "README.md"
+requires-python = ">=3.9"
+version = "0.0.6a0+dev"
+[project.license]
+text = "MIT"
+[project.urls]
+Homepage = "https://github.com/sapslaj/mid"
+Repository = "https://github.com/sapslaj/mid"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool]
+[tool.setuptools]
+[tool.setuptools.package-data]
+pulumi_mid = ["py.typed", "pulumi-plugin.json"]

@@ -91,6 +91,14 @@ sdk-nodejs: provider
   cp ../../README.md ../../LICENSE package.json package-lock.json bin/
 
 [group('sdk')]
+sdk-python: provider
+  #!/usr/bin/env sh
+  set -eu
+  rm -rf sdk/python
+  pulumi package gen-sdk ./bin/pulumi-resource-mid --language python
+  cp ./README.md ./sdk/python/
+
+[group('sdk')]
 sdk: sdk-go sdk-nodejs
 
 [group('examples')]
@@ -102,6 +110,11 @@ examples-go:
 examples-nodejs:
   rm -rf ./examples/nodejs
   pulumi convert --cwd ./examples/yaml --logtostderr --generate-only --non-interactive --language nodejs --out `pwd`/examples/nodejs
+
+[group('examples')]
+examples-python:
+  rm -rf ./examples/python
+  pulumi convert --cwd ./examples/yaml --logtostderr --generate-only --non-interactive --language python --out `pwd`/examples/python
 
 [group('examples')]
 examples: examples-go examples-nodejs

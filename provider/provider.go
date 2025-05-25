@@ -48,6 +48,12 @@ func Provider() p.Provider {
 					"respectSchemaVersion": true,
 					"packageName":          "@sapslaj/pulumi-mid",
 				},
+				"python": map[string]any{
+					"respectSchemaVersion": true,
+					"pyproject": map[string]any{
+						"enabled": true,
+					},
+				},
 			},
 		},
 		Resources: []infer.InferredResource{

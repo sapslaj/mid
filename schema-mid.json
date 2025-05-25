@@ -1,7 +1,7 @@
 {
   "name": "mid",
   "displayName": "mid",
-  "version": "v0.0.5-alpha.0+dev",
+  "version": "v0.0.6-alpha.0+dev",
   "description": "Pulumi-native configuration management",
   "homepage": "https://github.com/sapslaj/mid",
   "license": "MIT",
@@ -13,12 +13,20 @@
       "importBasePath": "github.com/sapslaj/mid/sdk/go/mid",
       "respectSchemaVersion": true
     },
-    "nodejs": { "packageName": "@sapslaj/pulumi-mid", "respectSchemaVersion": true }
+    "nodejs": { "packageName": "@sapslaj/pulumi-mid", "respectSchemaVersion": true },
+    "python": { "pyproject": { "enabled": true }, "respectSchemaVersion": true }
   },
   "config": {
     "variables": {
-      "connection": { "$ref": "#/types/mid:types:Connection", "secret": true },
-      "deleteUnreachable": { "type": "boolean" }
+      "connection": {
+        "$ref": "#/types/mid:types:Connection",
+        "description": "remote endpoint connection configuration",
+        "secret": true
+      },
+      "deleteUnreachable": {
+        "type": "boolean",
+        "description": "If present and set to true, the provider will delete resources associated\nwith an unreachable remote endpoint from Pulumi state. It can also be\nsourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`"
+      }
     },
     "defaults": ["connection"]
   },
@@ -126,52 +134,111 @@
       ]
     },
     "mid:types:Connection": {
+      "description": "Instructions for how to connect to a remote endpoint.",
       "properties": {
-        "host": { "type": "string" },
-        "password": { "type": "string", "secret": true },
-        "port": { "type": "number" },
-        "privateKey": { "type": "string", "secret": true },
-        "user": { "type": "string" }
+        "host": { "type": "string", "description": "The address of the resource to connect to." },
+        "password": {
+          "type": "string",
+          "description": "The password we should use for the connection.",
+          "secret": true
+        },
+        "port": { "type": "number", "description": "The port to connect to. Defaults to 22.", "default": 22 },
+        "privateKey": {
+          "type": "string",
+          "description": "The contents of an SSH key to use for the\nconnection. This takes preference over the password if provided.",
+          "secret": true
+        },
+        "user": {
+          "type": "string",
+          "description": "The user that we should use for the connection.",
+          "default": "root"
+        }
       },
       "type": "object",
       "required": ["host"]
     },
     "mid:types:ExecCommand": {
       "properties": {
-        "command": { "type": "array", "items": { "type": "string" } },
-        "dir": { "type": "string" },
-        "environment": { "type": "object", "additionalProperties": { "type": "string" } },
-        "stdin": { "type": "string" }
+        "command": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell"
+        },
+        "dir": {
+          "type": "string",
+          "description": "Directory path to chdir to before executing the command. Defaults to the\ndefault working directory for the SSH user and session, usually the user's\nhome."
+        },
+        "environment": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "description": "Key-value pairs of environment variables to pass to the process. These are\nmerged with any system-wide environment variables."
+        },
+        "stdin": { "type": "string", "description": "Pass a string to the command's process as standard in." }
       },
       "type": "object",
       "required": ["command"]
     },
     "mid:types:TriggersInput": {
       "properties": {
-        "refresh": { "type": "array", "items": { "$ref": "pulumi.json#/Any" } },
-        "replace": { "type": "array", "items": { "$ref": "pulumi.json#/Any" }, "replaceOnChanges": true }
+        "refresh": {
+          "type": "array",
+          "items": { "$ref": "pulumi.json#/Any" },
+          "description": "Run any \"refresh\" operations (e.g. service restarts, change diffs, etc) if\nany value in this list changes."
+        },
+        "replace": {
+          "type": "array",
+          "items": { "$ref": "pulumi.json#/Any" },
+          "description": "Completely delete and replace the resource if any value in this list\nchanges.",
+          "replaceOnChanges": true
+        }
       },
       "type": "object"
     },
     "mid:types:TriggersOutput": {
       "properties": {
-        "lastChanged": { "type": "string" },
-        "refresh": { "type": "array", "items": { "$ref": "pulumi.json#/Any" } },
-        "replace": { "type": "array", "items": { "$ref": "pulumi.json#/Any" } }
+        "lastChanged": {
+          "type": "string",
+          "description": "RFC 3339 timestamp of when this resource last changed. Use this property\nto chain into other resources' `refresh` and `replace` triggers."
+        },
+        "refresh": {
+          "type": "array",
+          "items": { "$ref": "pulumi.json#/Any" },
+          "description": "Run any \"refresh\" operations (e.g. service restarts, change diffs, etc) if\nany value in this list changes."
+        },
+        "replace": {
+          "type": "array",
+          "items": { "$ref": "pulumi.json#/Any" },
+          "description": "Completely delete and replace the resource if any value in this list\nchanges."
+        }
       },
       "type": "object",
       "required": ["lastChanged"]
     }
   },
   "provider": {
+    "description": "provider configuration",
     "properties": {
-      "connection": { "$ref": "#/types/mid:types:Connection", "secret": true },
-      "deleteUnreachable": { "type": "boolean" }
+      "connection": {
+        "$ref": "#/types/mid:types:Connection",
+        "description": "remote endpoint connection configuration",
+        "secret": true
+      },
+      "deleteUnreachable": {
+        "type": "boolean",
+        "description": "If present and set to true, the provider will delete resources associated\nwith an unreachable remote endpoint from Pulumi state. It can also be\nsourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`"
+      }
     },
     "required": ["connection"],
     "inputProperties": {
-      "connection": { "$ref": "#/types/mid:types:Connection", "secret": true },
-      "deleteUnreachable": { "type": "boolean" }
+      "connection": {
+        "$ref": "#/types/mid:types:Connection",
+        "description": "remote endpoint connection configuration",
+        "secret": true
+      },
+      "deleteUnreachable": {
+        "type": "boolean",
+        "description": "If present and set to true, the provider will delete resources associated\nwith an unreachable remote endpoint from Pulumi state. It can also be\nsourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`"
+      }
     },
     "requiredInputs": ["connection"]
   },
