@@ -225,8 +225,9 @@ func NewQEMU(t *testing.T, config Config) (*TestMachine, error) {
 				t.Log("KVM support detected, attempting to launch QEMU with KVM")
 				enableKvm = true
 			}
+		} else {
+			return tm, err
 		}
-		return tm, err
 	}
 
 	qemuOptions := &vmtest.QemuOptions{
