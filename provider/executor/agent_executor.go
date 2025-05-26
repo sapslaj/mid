@@ -244,12 +244,18 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 
 	callResult, err := CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, connection, call)
 	if err != nil {
+		span.SetAttributes(attribute.Bool("ansible.success", false))
 		span.SetStatus(codes.Error, err.Error())
 		return zero, err
 	}
 
+	span.SetAttributes(
+		attribute.Bool("ansible.success", callResult.Result.Success),
+		telemetry.OtelJSON("ansible.call_result", callResult),
+	)
+
 	if !callResult.Result.Success {
-		maybeReturn, _ := rpc.AnyToJSONT[O](callResult.Result.Result)
+		maybeReturn, maybeReturnErr := rpc.AnyToJSONT[O](callResult.Result.Result)
 		msg := maybeReturn.GetMsg()
 		if msg != "" {
 			err = fmt.Errorf("error running module %q: %s", call.Args.Name, msg)
@@ -261,12 +267,28 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 				callResult.Result.Stdout,
 			)
 		}
+		if maybeReturnErr != nil {
+			span.SetAttributes(
+				attribute.String("ansible.return.decode_error", maybeReturnErr.Error()),
+			)
+		}
+		span.SetAttributes(
+			attribute.String("ansible.msg", msg),
+			telemetry.OtelJSON("ansible.return", maybeReturn),
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return maybeReturn, err
 	}
 
 	returns, err := rpc.AnyToJSONT[O](callResult.Result.Result)
+	span.SetAttributes(
+		telemetry.OtelJSON("ansible.return", returns),
+		attribute.String("ansible.msg", returns.GetMsg()),
+	)
 	if err != nil {
+		span.SetAttributes(
+			attribute.String("ansible.return.decode_error", err.Error()),
+		)
 		err = fmt.Errorf("error decoding return value for module %q: %w", call.Args.Name, err)
 		span.SetStatus(codes.Error, err.Error())
 		return returns, err
