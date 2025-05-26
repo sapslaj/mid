@@ -22,7 +22,7 @@ type User struct{}
 
 type UserArgs struct {
 	// TODO: support more features
-	Name            *string              `pulumi:"name,optional"`
+	Name            string               `pulumi:"name"`
 	Ensure          *string              `pulumi:"ensure,optional"`
 	GroupsExclusive *bool                `pulumi:"groupsExclusive,optional"`
 	Comment         *string              `pulumi:"comment,optional"`
@@ -52,15 +52,12 @@ type UserState struct {
 }
 
 func (r User) argsToTaskParameters(input UserArgs) (ansible.UserParameters, error) {
-	if input.Name == nil {
-		return ansible.UserParameters{}, errors.New("someone forgot to set the auto-named input.Name")
-	}
 	groupsExclusive := false
 	if input.GroupsExclusive != nil {
 		groupsExclusive = *input.GroupsExclusive
 	}
 	return ansible.UserParameters{
-		Name:           *input.Name,
+		Name:           input.Name,
 		State:          ansible.OptionalUserState(input.Ensure),
 		Append:         ptr.Of(!groupsExclusive),
 		Comment:        input.Comment,
@@ -87,9 +84,6 @@ func (r User) argsToTaskParameters(input UserArgs) (ansible.UserParameters, erro
 
 func (r User) updateState(olds UserState, news UserArgs, changed bool) UserState {
 	olds.UserArgs = news
-	if news.Name != nil {
-		olds.Name = *news.Name
-	}
 	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
@@ -113,11 +107,9 @@ func (r User) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	if news.Name == nil {
-		news.Name = &olds.Name
-	} else if *news.Name != olds.Name {
+	if news.Name != olds.Name {
 		diff.HasChanges = true
-		diff.DetailedDiff["name"] = p.PropertyDiff{
+		diff.DetailedDiff["path"] = p.PropertyDiff{
 			Kind:      p.UpdateReplace,
 			InputDiff: true,
 		}
@@ -169,10 +161,6 @@ func (r User) Create(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if input.Name == nil {
-		input.Name = ptr.Of(name)
-	}
-
 	state := r.updateState(UserState{}, input, true)
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
@@ -221,10 +209,6 @@ func (r User) Read(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if inputs.Name == nil {
-		inputs.Name = ptr.Of(state.Name)
-	}
-
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -270,10 +254,6 @@ func (r User) Update(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if news.Name == nil {
-		news.Name = ptr.Of(olds.Name)
-	}
-
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -318,10 +298,7 @@ func (r User) Delete(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	args := props.UserArgs
-	args.Name = &props.Name
-
-	parameters, err := r.argsToTaskParameters(args)
+	parameters, err := r.argsToTaskParameters(props.UserArgs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err

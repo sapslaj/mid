@@ -10,7 +10,9 @@ provider = mid.Provider(
         "port": 2222,
     },
 )
-vim = mid.resource.Package("vim", opts=pulumi.ResourceOptions(provider=provider))
+vim = mid.resource.Package(
+    "vim", name="vim", ensure="present", opts=pulumi.ResourceOptions(provider=provider)
+)
 emacs = mid.resource.Package(
     "emacs",
     name="emacs",

@@ -156,10 +156,6 @@ func (r Package) Create(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if input.Name == nil && input.Names == nil {
-		input.Name = ptr.Of(name)
-	}
-
 	state := r.updateState(PackageState{}, input, true)
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
@@ -207,10 +203,6 @@ func (r Package) Read(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if inputs.Name == nil && inputs.Names == nil && state.Name != nil {
-		inputs.Name = state.Name
-	}
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
@@ -263,10 +255,6 @@ func (r Package) Update(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if news.Name == nil && news.Names == nil && olds.Name != nil {
-		news.Name = olds.Name
-	}
 
 	if news.Ensure != nil && *news.Ensure == "absent" {
 		parameters, err := r.argsToTaskParameters(news)

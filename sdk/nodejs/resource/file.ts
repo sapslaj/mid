@@ -70,10 +70,13 @@ export class File extends pulumi.CustomResource {
    * @param args The arguments to use to populate this resource's properties.
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, args?: FileArgs, opts?: pulumi.CustomResourceOptions) {
+  constructor(name: string, args: FileArgs, opts?: pulumi.CustomResourceOptions) {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
+      if ((!args || args.path === undefined) && !opts.urn) {
+        throw new Error("Missing required property 'path'");
+      }
       resourceInputs["accessTime"] = args ? args.accessTime : undefined;
       resourceInputs["accessTimeFormat"] = args ? args.accessTimeFormat : undefined;
       resourceInputs["attributes"] = args ? args.attributes : undefined;
@@ -159,7 +162,7 @@ export interface FileArgs {
   modificationTime?: pulumi.Input<string>;
   modificationTimeFormat?: pulumi.Input<string>;
   owner?: pulumi.Input<string>;
-  path?: pulumi.Input<string>;
+  path: pulumi.Input<string>;
   recurse?: pulumi.Input<boolean>;
   remoteSource?: pulumi.Input<string>;
   selevel?: pulumi.Input<string>;

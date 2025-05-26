@@ -391,7 +391,8 @@
         "triggers": { "$ref": "#/types/mid:types:TriggersInput" },
         "unsafeWrites": { "type": "boolean" },
         "validate": { "type": "string" }
-      }
+      },
+      "requiredInputs": ["path"]
     },
     "mid:resource:FileLine": {
       "properties": {
@@ -494,7 +495,8 @@
         "state": { "type": "string" },
         "triggers": { "$ref": "#/types/mid:types:TriggersInput" },
         "use": { "type": "string" }
-      }
+      },
+      "requiredInputs": ["name"]
     },
     "mid:resource:SystemdService": {
       "properties": {
@@ -570,7 +572,8 @@
         "uidMin": { "type": "integer" },
         "umask": { "type": "string" },
         "updatePassword": { "type": "string" }
-      }
+      },
+      "requiredInputs": ["name"]
     }
   },
   "functions": {

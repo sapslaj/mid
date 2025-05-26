@@ -62,10 +62,13 @@ export class User extends pulumi.CustomResource {
    * @param args The arguments to use to populate this resource's properties.
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, args?: UserArgs, opts?: pulumi.CustomResourceOptions) {
+  constructor(name: string, args: UserArgs, opts?: pulumi.CustomResourceOptions) {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
+      if ((!args || args.name === undefined) && !opts.urn) {
+        throw new Error("Missing required property 'name'");
+      }
       resourceInputs["comment"] = args ? args.comment : undefined;
       resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["force"] = args ? args.force : undefined;
@@ -128,7 +131,7 @@ export interface UserArgs {
   home?: pulumi.Input<string>;
   local?: pulumi.Input<boolean>;
   manageHome?: pulumi.Input<boolean>;
-  name?: pulumi.Input<string>;
+  name: pulumi.Input<string>;
   nonUnique?: pulumi.Input<boolean>;
   password?: pulumi.Input<string>;
   shell?: pulumi.Input<string>;

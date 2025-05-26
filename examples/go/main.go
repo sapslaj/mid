@@ -20,7 +20,10 @@ func main() {
 		if err != nil {
 			return err
 		}
-		_, err = resource.NewPackage(ctx, "vim", nil, pulumi.Provider(provider))
+		_, err = resource.NewPackage(ctx, "vim", &resource.PackageArgs{
+			Name:   pulumi.String("vim"),
+			Ensure: pulumi.String("present"),
+		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
 		}

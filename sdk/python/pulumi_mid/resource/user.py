@@ -24,6 +24,7 @@ class UserArgs:
     def __init__(
         __self__,
         *,
+        name: pulumi.Input[str],
         comment: Optional[pulumi.Input[str]] = None,
         ensure: Optional[pulumi.Input[str]] = None,
         force: Optional[pulumi.Input[bool]] = None,
@@ -33,7 +34,6 @@ class UserArgs:
         home: Optional[pulumi.Input[str]] = None,
         local: Optional[pulumi.Input[bool]] = None,
         manage_home: Optional[pulumi.Input[bool]] = None,
-        name: Optional[pulumi.Input[str]] = None,
         non_unique: Optional[pulumi.Input[bool]] = None,
         password: Optional[pulumi.Input[str]] = None,
         shell: Optional[pulumi.Input[str]] = None,
@@ -49,6 +49,7 @@ class UserArgs:
         """
         The set of arguments for constructing a User resource.
         """
+        pulumi.set(__self__, "name", name)
         if comment is not None:
             pulumi.set(__self__, "comment", comment)
         if ensure is not None:
@@ -67,8 +68,6 @@ class UserArgs:
             pulumi.set(__self__, "local", local)
         if manage_home is not None:
             pulumi.set(__self__, "manage_home", manage_home)
-        if name is not None:
-            pulumi.set(__self__, "name", name)
         if non_unique is not None:
             pulumi.set(__self__, "non_unique", non_unique)
         if password is not None:
@@ -91,6 +90,15 @@ class UserArgs:
             pulumi.set(__self__, "umask", umask)
         if update_password is not None:
             pulumi.set(__self__, "update_password", update_password)
+
+    @property
+    @pulumi.getter
+    def name(self) -> pulumi.Input[str]:
+        return pulumi.get(self, "name")
+
+    @name.setter
+    def name(self, value: pulumi.Input[str]):
+        pulumi.set(self, "name", value)
 
     @property
     @pulumi.getter
@@ -172,15 +180,6 @@ class UserArgs:
     @manage_home.setter
     def manage_home(self, value: Optional[pulumi.Input[bool]]):
         pulumi.set(self, "manage_home", value)
-
-    @property
-    @pulumi.getter
-    def name(self) -> Optional[pulumi.Input[str]]:
-        return pulumi.get(self, "name")
-
-    @name.setter
-    def name(self, value: Optional[pulumi.Input[str]]):
-        pulumi.set(self, "name", value)
 
     @property
     @pulumi.getter(name="nonUnique")
@@ -326,7 +325,7 @@ class User(pulumi.CustomResource):
     def __init__(
         __self__,
         resource_name: str,
-        args: Optional[UserArgs] = None,
+        args: UserArgs,
         opts: Optional[pulumi.ResourceOptions] = None,
     ):
         """
@@ -400,6 +399,8 @@ class User(pulumi.CustomResource):
             __props__.__dict__["home"] = home
             __props__.__dict__["local"] = local
             __props__.__dict__["manage_home"] = manage_home
+            if name is None and not opts.urn:
+                raise TypeError("Missing required property 'name'")
             __props__.__dict__["name"] = name
             __props__.__dict__["non_unique"] = non_unique
             __props__.__dict__["password"] = password

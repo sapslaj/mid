@@ -50,10 +50,13 @@ export class Service extends pulumi.CustomResource {
    * @param args The arguments to use to populate this resource's properties.
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, args?: ServiceArgs, opts?: pulumi.CustomResourceOptions) {
+  constructor(name: string, args: ServiceArgs, opts?: pulumi.CustomResourceOptions) {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
+      if ((!args || args.name === undefined) && !opts.urn) {
+        throw new Error("Missing required property 'name'");
+      }
       resourceInputs["arguments"] = args ? args.arguments : undefined;
       resourceInputs["enabled"] = args ? args.enabled : undefined;
       resourceInputs["name"] = args ? args.name : undefined;
@@ -85,7 +88,7 @@ export class Service extends pulumi.CustomResource {
 export interface ServiceArgs {
   arguments?: pulumi.Input<string>;
   enabled?: pulumi.Input<boolean>;
-  name?: pulumi.Input<string>;
+  name: pulumi.Input<string>;
   pattern?: pulumi.Input<string>;
   runlevel?: pulumi.Input<string>;
   sleep?: pulumi.Input<number>;

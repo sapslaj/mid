@@ -6,6 +6,9 @@ import * as inputs from "./types/input";
 import * as outputs from "./types/output";
 import * as utilities from "./utilities";
 
+/**
+ * provider configuration
+ */
 export class Provider extends pulumi.ProviderResource {
   /** @internal */
   public static readonly __pulumiType = "mid";
@@ -35,9 +38,15 @@ export class Provider extends pulumi.ProviderResource {
       if ((!args || args.connection === undefined) && !opts.urn) {
         throw new Error("Missing required property 'connection'");
       }
-      resourceInputs["connection"] = pulumi.output(args?.connection ? pulumi.secret(args.connection) : undefined).apply(
-        JSON.stringify,
-      );
+      resourceInputs["connection"] = pulumi.output(
+        args?.connection
+          ? pulumi.secret(
+            args.connection
+              ? pulumi.output(args.connection).apply(inputs.types.connectionArgsProvideDefaults)
+              : undefined,
+          )
+          : undefined,
+      ).apply(JSON.stringify);
       resourceInputs["deleteUnreachable"] = pulumi.output(args ? args.deleteUnreachable : undefined).apply(
         JSON.stringify,
       );
@@ -51,6 +60,14 @@ export class Provider extends pulumi.ProviderResource {
  * The set of arguments for constructing a Provider resource.
  */
 export interface ProviderArgs {
+  /**
+   * remote endpoint connection configuration
+   */
   connection: pulumi.Input<inputs.types.ConnectionArgs>;
+  /**
+   * If present and set to true, the provider will delete resources associated
+   * with an unreachable remote endpoint from Pulumi state. It can also be
+   * sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
+   */
   deleteUnreachable?: pulumi.Input<boolean>;
 }

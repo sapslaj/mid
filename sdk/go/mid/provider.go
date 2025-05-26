@@ -13,6 +13,7 @@ import (
 	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
+// provider configuration
 type Provider struct {
 	pulumi.ProviderResourceState
 }
@@ -27,6 +28,7 @@ func NewProvider(ctx *pulumi.Context,
 	if args.Connection == nil {
 		return nil, errors.New("invalid value for required argument 'Connection'")
 	}
+	args.Connection = args.Connection.ToConnectionOutput().ApplyT(func(v types.Connection) types.Connection { return *v.Defaults() }).(types.ConnectionOutput)
 	if args.Connection != nil {
 		args.Connection = pulumi.ToSecret(args.Connection).(types.ConnectionInput)
 	}
@@ -40,13 +42,21 @@ func NewProvider(ctx *pulumi.Context,
 }
 
 type providerArgs struct {
-	Connection        types.Connection `pulumi:"connection"`
-	DeleteUnreachable *bool            `pulumi:"deleteUnreachable"`
+	// remote endpoint connection configuration
+	Connection types.Connection `pulumi:"connection"`
+	// If present and set to true, the provider will delete resources associated
+	// with an unreachable remote endpoint from Pulumi state. It can also be
+	// sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
+	DeleteUnreachable *bool `pulumi:"deleteUnreachable"`
 }
 
 // The set of arguments for constructing a Provider resource.
 type ProviderArgs struct {
-	Connection        types.ConnectionInput
+	// remote endpoint connection configuration
+	Connection types.ConnectionInput
+	// If present and set to true, the provider will delete resources associated
+	// with an unreachable remote endpoint from Pulumi state. It can also be
+	// sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
 	DeleteUnreachable pulumi.BoolPtrInput
 }
 

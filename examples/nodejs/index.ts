@@ -9,7 +9,10 @@ const provider = new mid.Provider("provider", {
     port: 2222,
   },
 });
-const vim = new mid.resource.Package("vim", {}, {
+const vim = new mid.resource.Package("vim", {
+  name: "vim",
+  ensure: "present",
+}, {
   provider: provider,
 });
 const emacs = new mid.resource.Package("emacs", {

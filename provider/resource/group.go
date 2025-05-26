@@ -12,7 +12,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
-	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -21,7 +20,7 @@ import (
 type Group struct{}
 
 type GroupArgs struct {
-	Name      *string              `pulumi:"name,optional"`
+	Name      string               `pulumi:"name,optional"`
 	Ensure    *string              `pulumi:"ensure,optional"`
 	Force     *bool                `pulumi:"force,optional"`
 	Gid       *int                 `pulumi:"gid,optional"`
@@ -40,16 +39,13 @@ type GroupState struct {
 }
 
 func (r Group) argsToTaskParameters(input GroupArgs) (ansible.GroupParameters, error) {
-	if input.Name == nil {
-		return ansible.GroupParameters{}, errors.New("someone forgot to set the auto-named input.Name")
-	}
 	return ansible.GroupParameters{
 		Force:     input.Force,
 		Gid:       input.Gid,
 		GidMax:    input.GidMax,
 		GidMin:    input.GidMin,
 		Local:     input.Local,
-		Name:      *input.Name,
+		Name:      input.Name,
 		NonUnique: input.NonUnique,
 		State:     ansible.OptionalGroupState(input.Ensure),
 		System:    input.System,
@@ -58,9 +54,6 @@ func (r Group) argsToTaskParameters(input GroupArgs) (ansible.GroupParameters, e
 
 func (r Group) updateState(olds GroupState, news GroupArgs, changed bool) GroupState {
 	olds.GroupArgs = news
-	if news.Name != nil {
-		olds.Name = *news.Name
-	}
 	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
@@ -84,11 +77,9 @@ func (r Group) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	if news.Name == nil {
-		news.Name = &olds.Name
-	} else if *news.Name != olds.Name {
+	if news.Name != olds.Name {
 		diff.HasChanges = true
-		diff.DetailedDiff["name"] = p.PropertyDiff{
+		diff.DetailedDiff["path"] = p.PropertyDiff{
 			Kind:      p.UpdateReplace,
 			InputDiff: true,
 		}
@@ -128,10 +119,6 @@ func (r Group) Create(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if input.Name == nil {
-		input.Name = ptr.Of(name)
-	}
 
 	state := r.updateState(GroupState{}, input, true)
 
@@ -181,10 +168,6 @@ func (r Group) Read(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if inputs.Name == nil {
-		inputs.Name = ptr.Of(state.Name)
-	}
-
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -230,10 +213,6 @@ func (r Group) Update(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if news.Name == nil {
-		news.Name = ptr.Of(olds.Name)
-	}
-
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -278,10 +257,7 @@ func (r Group) Delete(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	args := props.GroupArgs
-	args.Name = &props.Name
-
-	parameters, err := r.argsToTaskParameters(args)
+	parameters, err := r.argsToTaskParameters(props.GroupArgs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err

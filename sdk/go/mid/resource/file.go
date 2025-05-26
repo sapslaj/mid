@@ -7,6 +7,7 @@ import (
 	"context"
 	"reflect"
 
+	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
 	"github.com/sapslaj/mid/sdk/go/mid/types"
@@ -50,9 +51,12 @@ type File struct {
 func NewFile(ctx *pulumi.Context,
 	name string, args *FileArgs, opts ...pulumi.ResourceOption) (*File, error) {
 	if args == nil {
-		args = &FileArgs{}
+		return nil, errors.New("missing one or more required arguments")
 	}
 
+	if args.Path == nil {
+		return nil, errors.New("invalid value for required argument 'Path'")
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource File
 	err := ctx.RegisterResource("mid:resource:File", name, args, &resource, opts...)
@@ -102,7 +106,7 @@ type fileArgs struct {
 	ModificationTime       *string               `pulumi:"modificationTime"`
 	ModificationTimeFormat *string               `pulumi:"modificationTimeFormat"`
 	Owner                  *string               `pulumi:"owner"`
-	Path                   *string               `pulumi:"path"`
+	Path                   string                `pulumi:"path"`
 	Recurse                *bool                 `pulumi:"recurse"`
 	RemoteSource           *string               `pulumi:"remoteSource"`
 	Selevel                *string               `pulumi:"selevel"`
@@ -133,7 +137,7 @@ type FileArgs struct {
 	ModificationTime       pulumi.StringPtrInput
 	ModificationTimeFormat pulumi.StringPtrInput
 	Owner                  pulumi.StringPtrInput
-	Path                   pulumi.StringPtrInput
+	Path                   pulumi.StringInput
 	Recurse                pulumi.BoolPtrInput
 	RemoteSource           pulumi.StringPtrInput
 	Selevel                pulumi.StringPtrInput

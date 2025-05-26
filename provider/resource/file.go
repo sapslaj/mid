@@ -51,7 +51,7 @@ type FileArgs struct {
 	ModificationTime       *string                `pulumi:"modificationTime,optional"`
 	ModificationTimeFormat *string                `pulumi:"modificationTimeFormat,optional"`
 	Owner                  *string                `pulumi:"owner,optional"`
-	Path                   *string                `pulumi:"path,optional"`
+	Path                   string                 `pulumi:"path"`
 	Recurse                *bool                  `pulumi:"recurse,optional"`
 	RemoteSource           *string                `pulumi:"remoteSource,optional"`
 	Selevel                *string                `pulumi:"selevel,optional"`
@@ -132,7 +132,7 @@ func (r File) argsToFileTaskParameters(input FileArgs) (*ansible.FileParameters,
 		ModificationTime:       input.ModificationTime,
 		ModificationTimeFormat: input.ModificationTimeFormat,
 		Owner:                  input.Owner,
-		Path:                   *input.Path,
+		Path:                   input.Path,
 		Recurse:                input.Recurse,
 		Selevel:                input.Selevel,
 		Serole:                 input.Serole,
@@ -181,7 +181,7 @@ func (r File) argsToCopyTaskParameters(input FileArgs) (*ansible.CopyParameters,
 		Backup:        input.Backup,
 		Checksum:      input.Checksum,
 		Content:       input.Content,
-		Dest:          *input.Path,
+		Dest:          input.Path,
 		DirectoryMode: ptr.ToAny(input.DirectoryMode),
 		Follow:        input.Follow,
 		Force:         input.Force,
@@ -203,15 +203,12 @@ func (r File) argsToCopyTaskParameters(input FileArgs) (*ansible.CopyParameters,
 func (r File) argsToStatTaskParameters(input FileArgs) (*ansible.StatParameters, error) {
 	return &ansible.StatParameters{
 		Follow: input.Follow,
-		Path:   *input.Path,
+		Path:   input.Path,
 	}, nil
 }
 
 func (r File) updateState(olds FileState, news FileArgs, changed bool) FileState {
 	olds.FileArgs = news
-	if news.Path != nil {
-		olds.Path = *news.Path
-	}
 	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
@@ -235,9 +232,7 @@ func (r File) Diff(
 		DeleteBeforeReplace: true,
 	}
 
-	if news.Path == nil {
-		news.Path = &olds.Path
-	} else if *news.Path != olds.Path {
+	if news.Path != olds.Path {
 		diff.HasChanges = true
 		diff.DetailedDiff["path"] = p.PropertyDiff{
 			Kind:      p.UpdateReplace,
@@ -264,7 +259,6 @@ func (r File) Diff(
 			"modificationTime",
 			"modificationTimeFormat",
 			"owner",
-			"path",
 			"recurse",
 			"remoteSource",
 			"selevel",
@@ -458,10 +452,6 @@ func (r File) Create(
 	))
 	defer span.End()
 
-	if input.Path == nil {
-		input.Path = ptr.Of(name)
-	}
-
 	state := r.updateState(FileState{}, input, true)
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
@@ -494,10 +484,6 @@ func (r File) Read(
 	))
 	defer span.End()
 
-	if inputs.Path == nil {
-		inputs.Path = &state.Path
-	}
-
 	state, err := r.runCreateUpdatePlay(ctx, state, inputs, true)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -522,10 +508,6 @@ func (r File) Update(
 		attribute.Bool("preview", preview),
 	))
 	defer span.End()
-
-	if news.Path == nil {
-		news.Path = &olds.Path
-	}
 
 	olds, err := r.runCreateUpdatePlay(ctx, olds, news, preview)
 	if err != nil {
@@ -569,7 +551,7 @@ func (r File) Delete(
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToFileTaskParameters(FileArgs{
-		Path:   &props.Path,
+		Path:   props.Path,
 		Ensure: (*FileEnsure)(ptr.Of(string(FileEnsureAbsent))),
 	})
 	if err != nil {

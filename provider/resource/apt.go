@@ -59,17 +59,6 @@ type AptState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-func (r Apt) taskParametersNeedsName(input AptArgs) bool {
-	return !ptr.AnyNonNils(
-		input.Autoclean,
-		input.Autoremove,
-		input.Clean,
-		input.Deb,
-		input.UpdateCache,
-		input.Upgrade,
-	)
-}
-
 func (r Apt) canAssumeEnsure(input AptArgs) bool {
 	if ptr.AnyNonNils(
 		input.Name,
@@ -79,7 +68,14 @@ func (r Apt) canAssumeEnsure(input AptArgs) bool {
 		return true
 	}
 
-	return r.taskParametersNeedsName(input)
+	return !ptr.AnyNonNils(
+		input.Autoclean,
+		input.Autoremove,
+		input.Clean,
+		input.Deb,
+		input.UpdateCache,
+		input.Upgrade,
+	)
 }
 
 func (r Apt) argsToTaskParameters(input AptArgs) (ansible.AptParameters, error) {
@@ -371,10 +367,6 @@ func (r Apt) Create(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if r.taskParametersNeedsName(input) && input.Name == nil && input.Names == nil {
-		input.Name = ptr.Of(name)
-	}
-
 	state := r.updateState(AptState{}, input, true)
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
@@ -414,10 +406,6 @@ func (r Apt) Read(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if r.taskParametersNeedsName(inputs) && inputs.Name == nil && inputs.Names == nil && state.Name != nil {
-		inputs.Name = state.Name
-	}
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
@@ -468,10 +456,6 @@ func (r Apt) Update(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if r.taskParametersNeedsName(news) && news.Name == nil && news.Names == nil && olds.Name != nil {
-		news.Name = olds.Name
-	}
 
 	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
 		parameters, err := r.argsToTaskParameters(news)
@@ -592,7 +576,7 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 	))
 	defer span.End()
 
-	if !r.taskParametersNeedsName(props.AptArgs) {
+	if !r.canAssumeEnsure(props.AptArgs) {
 		span.SetStatus(codes.Ok, "")
 		return nil
 	}

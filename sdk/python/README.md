@@ -57,9 +57,9 @@ with as minimal overhead as possible.
   in the future it would be nice to have this be more flexible.
 - Pluggable module system - Right now everything baked into the provider but it
   might be nice to be able to expand it somehow.
-- More language support - Only Go, TypeScript, and YAML are supported at the
-  moment since those are the only languages I use with Pulumi. Python support
-  will most likely be next, followed by C# and Java.
+- More language support - Only Go, TypeScript, Python, and YAML are supported
+  at the moment since those are the only languages I use with Pulumi. C# and Java
+  support will come eventually.
 
 [^1]: _Technically_ there is an "agent" that runs on the remote node, however
     it only runs for the duration that the Pulumi provider runs and
@@ -130,7 +130,7 @@ func main() {
 				User:     pulumi.String("root"),
 				Password: pulumi.String("hunter2"),
 				Host:     pulumi.String("localhost"),
-				Port:     pulumi.Float64(2222),
+				Port:     pulumi.Float64(22),
 			},
 		})
 		if err != nil {
@@ -193,7 +193,7 @@ const provider = new mid.Provider("provider", {
     user: "root",
     password: "hunter2",
     host: "localhost",
-    port: 2222,
+    port: 22,
   },
 });
 ```
@@ -205,6 +205,47 @@ Add some resources
 new mid.resource.Package("vim", {}, {
   provider: provider,
 });
+```
+
+Go!
+
+```shell
+pulumi up
+```
+
+### Python
+
+mid is not published on PyPI yet. Install the Pulumi provider package directly
+from GitHub. Note that you might want to replace `@main` with a release git
+tag.
+
+```shell
+pip install 'pulumi_mid @ git+https://github.com/sapslaj/mid.git@main#subdirectory=sdk/python'
+```
+
+Set up a provider instance
+
+```python
+# __main__.py
+import pulumi
+import pulumi_mid as mid
+
+provider = mid.Provider(
+    "provider",
+    # TODO: use ESC for this or something
+    connection={
+        "user": "root",
+        "password": "hunter2",
+        "host": "localhost",
+        "port": 22,
+    },
+)
+```
+
+Add some resources
+
+```python
+vim = mid.resource.Package("vim", opts=pulumi.ResourceOptions(provider=provider))
 ```
 
 Go!

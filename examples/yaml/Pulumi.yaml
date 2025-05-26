@@ -16,6 +16,9 @@ resources:
         port: 2222
   vim:
     type: mid:resource:Package
+    properties:
+      name: vim
+      ensure: present
     options:
       provider: ${provider}
   emacs:

@@ -13,12 +13,36 @@ import (
 
 var _ = internal.GetEnvOrDefault
 
+// Instructions for how to connect to a remote endpoint.
 type Connection struct {
-	Host       string   `pulumi:"host"`
-	Password   *string  `pulumi:"password"`
-	Port       *float64 `pulumi:"port"`
-	PrivateKey *string  `pulumi:"privateKey"`
-	User       *string  `pulumi:"user"`
+	// The address of the resource to connect to.
+	Host string `pulumi:"host"`
+	// The password we should use for the connection.
+	Password *string `pulumi:"password"`
+	// The port to connect to. Defaults to 22.
+	Port *float64 `pulumi:"port"`
+	// The contents of an SSH key to use for the
+	// connection. This takes preference over the password if provided.
+	PrivateKey *string `pulumi:"privateKey"`
+	// The user that we should use for the connection.
+	User *string `pulumi:"user"`
+}
+
+// Defaults sets the appropriate defaults for Connection
+func (val *Connection) Defaults() *Connection {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	if tmp.Port == nil {
+		port_ := 22.0
+		tmp.Port = &port_
+	}
+	if tmp.User == nil {
+		user_ := "root"
+		tmp.User = &user_
+	}
+	return &tmp
 }
 
 // ConnectionInput is an input type that accepts ConnectionArgs and ConnectionOutput values.
@@ -32,14 +56,35 @@ type ConnectionInput interface {
 	ToConnectionOutputWithContext(context.Context) ConnectionOutput
 }
 
+// Instructions for how to connect to a remote endpoint.
 type ConnectionArgs struct {
-	Host       pulumi.StringInput     `pulumi:"host"`
-	Password   pulumi.StringPtrInput  `pulumi:"password"`
-	Port       pulumi.Float64PtrInput `pulumi:"port"`
-	PrivateKey pulumi.StringPtrInput  `pulumi:"privateKey"`
-	User       pulumi.StringPtrInput  `pulumi:"user"`
+	// The address of the resource to connect to.
+	Host pulumi.StringInput `pulumi:"host"`
+	// The password we should use for the connection.
+	Password pulumi.StringPtrInput `pulumi:"password"`
+	// The port to connect to. Defaults to 22.
+	Port pulumi.Float64PtrInput `pulumi:"port"`
+	// The contents of an SSH key to use for the
+	// connection. This takes preference over the password if provided.
+	PrivateKey pulumi.StringPtrInput `pulumi:"privateKey"`
+	// The user that we should use for the connection.
+	User pulumi.StringPtrInput `pulumi:"user"`
 }
 
+// Defaults sets the appropriate defaults for ConnectionArgs
+func (val *ConnectionArgs) Defaults() *ConnectionArgs {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	if tmp.Port == nil {
+		tmp.Port = pulumi.Float64Ptr(22.0)
+	}
+	if tmp.User == nil {
+		tmp.User = pulumi.StringPtr("root")
+	}
+	return &tmp
+}
 func (ConnectionArgs) ElementType() reflect.Type {
 	return reflect.TypeOf((*Connection)(nil)).Elem()
 }
@@ -93,6 +138,7 @@ func (i *connectionPtrType) ToConnectionPtrOutputWithContext(ctx context.Context
 	return pulumi.ToOutputWithContext(ctx, i).(ConnectionPtrOutput)
 }
 
+// Instructions for how to connect to a remote endpoint.
 type ConnectionOutput struct{ *pulumi.OutputState }
 
 func (ConnectionOutput) ElementType() reflect.Type {
@@ -117,22 +163,28 @@ func (o ConnectionOutput) ToConnectionPtrOutputWithContext(ctx context.Context) 
 	}).(ConnectionPtrOutput)
 }
 
+// The address of the resource to connect to.
 func (o ConnectionOutput) Host() pulumi.StringOutput {
 	return o.ApplyT(func(v Connection) string { return v.Host }).(pulumi.StringOutput)
 }
 
+// The password we should use for the connection.
 func (o ConnectionOutput) Password() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v Connection) *string { return v.Password }).(pulumi.StringPtrOutput)
 }
 
+// The port to connect to. Defaults to 22.
 func (o ConnectionOutput) Port() pulumi.Float64PtrOutput {
 	return o.ApplyT(func(v Connection) *float64 { return v.Port }).(pulumi.Float64PtrOutput)
 }
 
+// The contents of an SSH key to use for the
+// connection. This takes preference over the password if provided.
 func (o ConnectionOutput) PrivateKey() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v Connection) *string { return v.PrivateKey }).(pulumi.StringPtrOutput)
 }
 
+// The user that we should use for the connection.
 func (o ConnectionOutput) User() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v Connection) *string { return v.User }).(pulumi.StringPtrOutput)
 }
@@ -161,6 +213,7 @@ func (o ConnectionPtrOutput) Elem() ConnectionOutput {
 	}).(ConnectionOutput)
 }
 
+// The address of the resource to connect to.
 func (o ConnectionPtrOutput) Host() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Connection) *string {
 		if v == nil {
@@ -170,6 +223,7 @@ func (o ConnectionPtrOutput) Host() pulumi.StringPtrOutput {
 	}).(pulumi.StringPtrOutput)
 }
 
+// The password we should use for the connection.
 func (o ConnectionPtrOutput) Password() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Connection) *string {
 		if v == nil {
@@ -179,6 +233,7 @@ func (o ConnectionPtrOutput) Password() pulumi.StringPtrOutput {
 	}).(pulumi.StringPtrOutput)
 }
 
+// The port to connect to. Defaults to 22.
 func (o ConnectionPtrOutput) Port() pulumi.Float64PtrOutput {
 	return o.ApplyT(func(v *Connection) *float64 {
 		if v == nil {
@@ -188,6 +243,8 @@ func (o ConnectionPtrOutput) Port() pulumi.Float64PtrOutput {
 	}).(pulumi.Float64PtrOutput)
 }
 
+// The contents of an SSH key to use for the
+// connection. This takes preference over the password if provided.
 func (o ConnectionPtrOutput) PrivateKey() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Connection) *string {
 		if v == nil {
@@ -197,6 +254,7 @@ func (o ConnectionPtrOutput) PrivateKey() pulumi.StringPtrOutput {
 	}).(pulumi.StringPtrOutput)
 }
 
+// The user that we should use for the connection.
 func (o ConnectionPtrOutput) User() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Connection) *string {
 		if v == nil {
@@ -207,10 +265,17 @@ func (o ConnectionPtrOutput) User() pulumi.StringPtrOutput {
 }
 
 type ExecCommand struct {
-	Command     []string          `pulumi:"command"`
-	Dir         *string           `pulumi:"dir"`
+	// List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
+	Command []string `pulumi:"command"`
+	// Directory path to chdir to before executing the command. Defaults to the
+	// default working directory for the SSH user and session, usually the user's
+	// home.
+	Dir *string `pulumi:"dir"`
+	// Key-value pairs of environment variables to pass to the process. These are
+	// merged with any system-wide environment variables.
 	Environment map[string]string `pulumi:"environment"`
-	Stdin       *string           `pulumi:"stdin"`
+	// Pass a string to the command's process as standard in.
+	Stdin *string `pulumi:"stdin"`
 }
 
 // ExecCommandInput is an input type that accepts ExecCommandArgs and ExecCommandOutput values.
@@ -225,10 +290,17 @@ type ExecCommandInput interface {
 }
 
 type ExecCommandArgs struct {
-	Command     pulumi.StringArrayInput `pulumi:"command"`
-	Dir         pulumi.StringPtrInput   `pulumi:"dir"`
-	Environment pulumi.StringMapInput   `pulumi:"environment"`
-	Stdin       pulumi.StringPtrInput   `pulumi:"stdin"`
+	// List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
+	Command pulumi.StringArrayInput `pulumi:"command"`
+	// Directory path to chdir to before executing the command. Defaults to the
+	// default working directory for the SSH user and session, usually the user's
+	// home.
+	Dir pulumi.StringPtrInput `pulumi:"dir"`
+	// Key-value pairs of environment variables to pass to the process. These are
+	// merged with any system-wide environment variables.
+	Environment pulumi.StringMapInput `pulumi:"environment"`
+	// Pass a string to the command's process as standard in.
+	Stdin pulumi.StringPtrInput `pulumi:"stdin"`
 }
 
 func (ExecCommandArgs) ElementType() reflect.Type {
@@ -308,18 +380,25 @@ func (o ExecCommandOutput) ToExecCommandPtrOutputWithContext(ctx context.Context
 	}).(ExecCommandPtrOutput)
 }
 
+// List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
 func (o ExecCommandOutput) Command() pulumi.StringArrayOutput {
 	return o.ApplyT(func(v ExecCommand) []string { return v.Command }).(pulumi.StringArrayOutput)
 }
 
+// Directory path to chdir to before executing the command. Defaults to the
+// default working directory for the SSH user and session, usually the user's
+// home.
 func (o ExecCommandOutput) Dir() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v ExecCommand) *string { return v.Dir }).(pulumi.StringPtrOutput)
 }
 
+// Key-value pairs of environment variables to pass to the process. These are
+// merged with any system-wide environment variables.
 func (o ExecCommandOutput) Environment() pulumi.StringMapOutput {
 	return o.ApplyT(func(v ExecCommand) map[string]string { return v.Environment }).(pulumi.StringMapOutput)
 }
 
+// Pass a string to the command's process as standard in.
 func (o ExecCommandOutput) Stdin() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v ExecCommand) *string { return v.Stdin }).(pulumi.StringPtrOutput)
 }
@@ -348,6 +427,7 @@ func (o ExecCommandPtrOutput) Elem() ExecCommandOutput {
 	}).(ExecCommandOutput)
 }
 
+// List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
 func (o ExecCommandPtrOutput) Command() pulumi.StringArrayOutput {
 	return o.ApplyT(func(v *ExecCommand) []string {
 		if v == nil {
@@ -357,6 +437,9 @@ func (o ExecCommandPtrOutput) Command() pulumi.StringArrayOutput {
 	}).(pulumi.StringArrayOutput)
 }
 
+// Directory path to chdir to before executing the command. Defaults to the
+// default working directory for the SSH user and session, usually the user's
+// home.
 func (o ExecCommandPtrOutput) Dir() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *ExecCommand) *string {
 		if v == nil {
@@ -366,6 +449,8 @@ func (o ExecCommandPtrOutput) Dir() pulumi.StringPtrOutput {
 	}).(pulumi.StringPtrOutput)
 }
 
+// Key-value pairs of environment variables to pass to the process. These are
+// merged with any system-wide environment variables.
 func (o ExecCommandPtrOutput) Environment() pulumi.StringMapOutput {
 	return o.ApplyT(func(v *ExecCommand) map[string]string {
 		if v == nil {
@@ -375,6 +460,7 @@ func (o ExecCommandPtrOutput) Environment() pulumi.StringMapOutput {
 	}).(pulumi.StringMapOutput)
 }
 
+// Pass a string to the command's process as standard in.
 func (o ExecCommandPtrOutput) Stdin() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *ExecCommand) *string {
 		if v == nil {
@@ -385,7 +471,11 @@ func (o ExecCommandPtrOutput) Stdin() pulumi.StringPtrOutput {
 }
 
 type TriggersInput struct {
+	// Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+	// any value in this list changes.
 	Refresh []interface{} `pulumi:"refresh"`
+	// Completely delete and replace the resource if any value in this list
+	// changes.
 	Replace []interface{} `pulumi:"replace"`
 }
 
@@ -401,7 +491,11 @@ type TriggersInputInput interface {
 }
 
 type TriggersInputArgs struct {
+	// Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+	// any value in this list changes.
 	Refresh pulumi.ArrayInput `pulumi:"refresh"`
+	// Completely delete and replace the resource if any value in this list
+	// changes.
 	Replace pulumi.ArrayInput `pulumi:"replace"`
 }
 
@@ -482,10 +576,14 @@ func (o TriggersInputOutput) ToTriggersInputPtrOutputWithContext(ctx context.Con
 	}).(TriggersInputPtrOutput)
 }
 
+// Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+// any value in this list changes.
 func (o TriggersInputOutput) Refresh() pulumi.ArrayOutput {
 	return o.ApplyT(func(v TriggersInput) []interface{} { return v.Refresh }).(pulumi.ArrayOutput)
 }
 
+// Completely delete and replace the resource if any value in this list
+// changes.
 func (o TriggersInputOutput) Replace() pulumi.ArrayOutput {
 	return o.ApplyT(func(v TriggersInput) []interface{} { return v.Replace }).(pulumi.ArrayOutput)
 }
@@ -514,6 +612,8 @@ func (o TriggersInputPtrOutput) Elem() TriggersInputOutput {
 	}).(TriggersInputOutput)
 }
 
+// Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+// any value in this list changes.
 func (o TriggersInputPtrOutput) Refresh() pulumi.ArrayOutput {
 	return o.ApplyT(func(v *TriggersInput) []interface{} {
 		if v == nil {
@@ -523,6 +623,8 @@ func (o TriggersInputPtrOutput) Refresh() pulumi.ArrayOutput {
 	}).(pulumi.ArrayOutput)
 }
 
+// Completely delete and replace the resource if any value in this list
+// changes.
 func (o TriggersInputPtrOutput) Replace() pulumi.ArrayOutput {
 	return o.ApplyT(func(v *TriggersInput) []interface{} {
 		if v == nil {
@@ -533,9 +635,15 @@ func (o TriggersInputPtrOutput) Replace() pulumi.ArrayOutput {
 }
 
 type TriggersOutput struct {
-	LastChanged string        `pulumi:"lastChanged"`
-	Refresh     []interface{} `pulumi:"refresh"`
-	Replace     []interface{} `pulumi:"replace"`
+	// RFC 3339 timestamp of when this resource last changed. Use this property
+	// to chain into other resources' `refresh` and `replace` triggers.
+	LastChanged string `pulumi:"lastChanged"`
+	// Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+	// any value in this list changes.
+	Refresh []interface{} `pulumi:"refresh"`
+	// Completely delete and replace the resource if any value in this list
+	// changes.
+	Replace []interface{} `pulumi:"replace"`
 }
 
 type TriggersOutputOutput struct{ *pulumi.OutputState }
@@ -552,14 +660,20 @@ func (o TriggersOutputOutput) ToTriggersOutputOutputWithContext(ctx context.Cont
 	return o
 }
 
+// RFC 3339 timestamp of when this resource last changed. Use this property
+// to chain into other resources' `refresh` and `replace` triggers.
 func (o TriggersOutputOutput) LastChanged() pulumi.StringOutput {
 	return o.ApplyT(func(v TriggersOutput) string { return v.LastChanged }).(pulumi.StringOutput)
 }
 
+// Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+// any value in this list changes.
 func (o TriggersOutputOutput) Refresh() pulumi.ArrayOutput {
 	return o.ApplyT(func(v TriggersOutput) []interface{} { return v.Refresh }).(pulumi.ArrayOutput)
 }
 
+// Completely delete and replace the resource if any value in this list
+// changes.
 func (o TriggersOutputOutput) Replace() pulumi.ArrayOutput {
 	return o.ApplyT(func(v TriggersOutput) []interface{} { return v.Replace }).(pulumi.ArrayOutput)
 }

@@ -24,9 +24,9 @@ class ServiceArgs:
     def __init__(
         __self__,
         *,
+        name: pulumi.Input[str],
         arguments: Optional[pulumi.Input[str]] = None,
         enabled: Optional[pulumi.Input[bool]] = None,
-        name: Optional[pulumi.Input[str]] = None,
         pattern: Optional[pulumi.Input[str]] = None,
         runlevel: Optional[pulumi.Input[str]] = None,
         sleep: Optional[pulumi.Input[int]] = None,
@@ -37,12 +37,11 @@ class ServiceArgs:
         """
         The set of arguments for constructing a Service resource.
         """
+        pulumi.set(__self__, "name", name)
         if arguments is not None:
             pulumi.set(__self__, "arguments", arguments)
         if enabled is not None:
             pulumi.set(__self__, "enabled", enabled)
-        if name is not None:
-            pulumi.set(__self__, "name", name)
         if pattern is not None:
             pulumi.set(__self__, "pattern", pattern)
         if runlevel is not None:
@@ -55,6 +54,15 @@ class ServiceArgs:
             pulumi.set(__self__, "triggers", triggers)
         if use is not None:
             pulumi.set(__self__, "use", use)
+
+    @property
+    @pulumi.getter
+    def name(self) -> pulumi.Input[str]:
+        return pulumi.get(self, "name")
+
+    @name.setter
+    def name(self, value: pulumi.Input[str]):
+        pulumi.set(self, "name", value)
 
     @property
     @pulumi.getter
@@ -73,15 +81,6 @@ class ServiceArgs:
     @enabled.setter
     def enabled(self, value: Optional[pulumi.Input[bool]]):
         pulumi.set(self, "enabled", value)
-
-    @property
-    @pulumi.getter
-    def name(self) -> Optional[pulumi.Input[str]]:
-        return pulumi.get(self, "name")
-
-    @name.setter
-    def name(self, value: Optional[pulumi.Input[str]]):
-        pulumi.set(self, "name", value)
 
     @property
     @pulumi.getter
@@ -170,7 +169,7 @@ class Service(pulumi.CustomResource):
     def __init__(
         __self__,
         resource_name: str,
-        args: Optional[ServiceArgs] = None,
+        args: ServiceArgs,
         opts: Optional[pulumi.ResourceOptions] = None,
     ):
         """
@@ -225,6 +224,8 @@ class Service(pulumi.CustomResource):
 
             __props__.__dict__["arguments"] = arguments
             __props__.__dict__["enabled"] = enabled
+            if name is None and not opts.urn:
+                raise TypeError("Missing required property 'name'")
             __props__.__dict__["name"] = name
             __props__.__dict__["pattern"] = pattern
             __props__.__dict__["runlevel"] = runlevel

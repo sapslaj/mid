@@ -25,6 +25,7 @@ class FileArgs:
     def __init__(
         __self__,
         *,
+        path: pulumi.Input[str],
         access_time: Optional[pulumi.Input[str]] = None,
         access_time_format: Optional[pulumi.Input[str]] = None,
         attributes: Optional[pulumi.Input[str]] = None,
@@ -41,7 +42,6 @@ class FileArgs:
         modification_time: Optional[pulumi.Input[str]] = None,
         modification_time_format: Optional[pulumi.Input[str]] = None,
         owner: Optional[pulumi.Input[str]] = None,
-        path: Optional[pulumi.Input[str]] = None,
         recurse: Optional[pulumi.Input[bool]] = None,
         remote_source: Optional[pulumi.Input[str]] = None,
         selevel: Optional[pulumi.Input[str]] = None,
@@ -56,6 +56,7 @@ class FileArgs:
         """
         The set of arguments for constructing a File resource.
         """
+        pulumi.set(__self__, "path", path)
         if access_time is not None:
             pulumi.set(__self__, "access_time", access_time)
         if access_time_format is not None:
@@ -88,8 +89,6 @@ class FileArgs:
             pulumi.set(__self__, "modification_time_format", modification_time_format)
         if owner is not None:
             pulumi.set(__self__, "owner", owner)
-        if path is not None:
-            pulumi.set(__self__, "path", path)
         if recurse is not None:
             pulumi.set(__self__, "recurse", recurse)
         if remote_source is not None:
@@ -110,6 +109,15 @@ class FileArgs:
             pulumi.set(__self__, "unsafe_writes", unsafe_writes)
         if validate is not None:
             pulumi.set(__self__, "validate", validate)
+
+    @property
+    @pulumi.getter
+    def path(self) -> pulumi.Input[str]:
+        return pulumi.get(self, "path")
+
+    @path.setter
+    def path(self, value: pulumi.Input[str]):
+        pulumi.set(self, "path", value)
 
     @property
     @pulumi.getter(name="accessTime")
@@ -257,15 +265,6 @@ class FileArgs:
 
     @property
     @pulumi.getter
-    def path(self) -> Optional[pulumi.Input[str]]:
-        return pulumi.get(self, "path")
-
-    @path.setter
-    def path(self, value: Optional[pulumi.Input[str]]):
-        pulumi.set(self, "path", value)
-
-    @property
-    @pulumi.getter
     def recurse(self) -> Optional[pulumi.Input[bool]]:
         return pulumi.get(self, "recurse")
 
@@ -407,7 +406,7 @@ class File(pulumi.CustomResource):
     def __init__(
         __self__,
         resource_name: str,
-        args: Optional[FileArgs] = None,
+        args: FileArgs,
         opts: Optional[pulumi.ResourceOptions] = None,
     ):
         """
@@ -494,6 +493,8 @@ class File(pulumi.CustomResource):
             __props__.__dict__["modification_time"] = modification_time
             __props__.__dict__["modification_time_format"] = modification_time_format
             __props__.__dict__["owner"] = owner
+            if path is None and not opts.urn:
+                raise TypeError("Missing required property 'path'")
             __props__.__dict__["path"] = path
             __props__.__dict__["recurse"] = recurse
             __props__.__dict__["remote_source"] = remote_source

@@ -7,6 +7,7 @@ import (
 	"context"
 	"reflect"
 
+	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
 	"github.com/sapslaj/mid/sdk/go/mid/types"
@@ -30,9 +31,12 @@ type Service struct {
 func NewService(ctx *pulumi.Context,
 	name string, args *ServiceArgs, opts ...pulumi.ResourceOption) (*Service, error) {
 	if args == nil {
-		args = &ServiceArgs{}
+		return nil, errors.New("missing one or more required arguments")
 	}
 
+	if args.Name == nil {
+		return nil, errors.New("invalid value for required argument 'Name'")
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Service
 	err := ctx.RegisterResource("mid:resource:Service", name, args, &resource, opts...)
@@ -68,7 +72,7 @@ func (ServiceState) ElementType() reflect.Type {
 type serviceArgs struct {
 	Arguments *string              `pulumi:"arguments"`
 	Enabled   *bool                `pulumi:"enabled"`
-	Name      *string              `pulumi:"name"`
+	Name      string               `pulumi:"name"`
 	Pattern   *string              `pulumi:"pattern"`
 	Runlevel  *string              `pulumi:"runlevel"`
 	Sleep     *int                 `pulumi:"sleep"`
@@ -81,7 +85,7 @@ type serviceArgs struct {
 type ServiceArgs struct {
 	Arguments pulumi.StringPtrInput
 	Enabled   pulumi.BoolPtrInput
-	Name      pulumi.StringPtrInput
+	Name      pulumi.StringInput
 	Pattern   pulumi.StringPtrInput
 	Runlevel  pulumi.StringPtrInput
 	Sleep     pulumi.IntPtrInput

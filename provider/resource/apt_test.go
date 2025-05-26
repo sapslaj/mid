@@ -13,10 +13,9 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		input                   AptArgs
-		expected                ansible.AptParameters
-		taskParametersNeedsName bool
-		canAssumeEnsure         bool
+		input           AptArgs
+		expected        ansible.AptParameters
+		canAssumeEnsure bool
 	}{
 		"install single package": {
 			input: AptArgs{
@@ -26,8 +25,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Name:        ptr.Of([]string{"vim"}),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"install single package but in a list": {
 			input: AptArgs{
@@ -37,8 +35,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Name:        ptr.Of([]string{"vim"}),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"install multiple packages": {
 			input: AptArgs{
@@ -48,8 +45,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Name:        ptr.Of([]string{"vim", "emacs"}),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"update repositories and install package": {
 			input: AptArgs{
@@ -61,8 +57,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				UpdateCache: ptr.Of(true),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"remove package": {
 			input: AptArgs{
@@ -74,8 +69,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				State:       ansible.OptionalAptState("absent"),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"allow downgrade": {
 			input: AptArgs{
@@ -87,8 +81,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				AllowDowngrade: ptr.Of(true),
 				LockTimeout:    ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"fail on autoremove": {
 			input: AptArgs{
@@ -100,8 +93,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				FailOnAutoremove: ptr.Of(true),
 				LockTimeout:      ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"install recommends": {
 			input: AptArgs{
@@ -113,8 +105,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				InstallRecommends: ptr.Of(false),
 				LockTimeout:       ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"update all packages": {
 			input: AptArgs{
@@ -126,8 +117,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				State:       ansible.OptionalAptState("latest"),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: true,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"apt dist-upgrade": {
 			input: AptArgs{
@@ -137,8 +127,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Upgrade:     ansible.OptionalAptUpgrade("dist"),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 		"apt update": {
 			input: AptArgs{
@@ -148,8 +137,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				UpdateCache: ptr.Of(true),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 		"apt update with cache valid time": {
 			input: AptArgs{
@@ -161,8 +149,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				CacheValidTime: ptr.Of(3600),
 				LockTimeout:    ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 		"update and upgrade with dpkg options": {
 			input: AptArgs{
@@ -176,8 +163,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				DpkgOptions: ptr.Of("force-confold,force-confdef"),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 		"install from URL": {
 			input: AptArgs{
@@ -187,8 +173,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Deb:         ptr.Of("https://ubuntu.pkgs.org/24.04/ubuntu-universe-amd64/neovim_0.9.5-6ubuntu2_amd64.deb.html"),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         true,
+			canAssumeEnsure: true,
 		},
 		"autoclean": {
 			input: AptArgs{
@@ -198,8 +183,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Autoclean:   ptr.Of(true),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 		"autoremove": {
 			input: AptArgs{
@@ -209,8 +193,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Autoremove:  ptr.Of(true),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 		"autoremove and purge": {
 			input: AptArgs{
@@ -222,8 +205,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Purge:       ptr.Of(true),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 		"clean": {
 			input: AptArgs{
@@ -233,8 +215,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 				Clean:       ptr.Of(true),
 				LockTimeout: ptr.Of(120),
 			},
-			taskParametersNeedsName: false,
-			canAssumeEnsure:         false,
+			canAssumeEnsure: false,
 		},
 	}
 
@@ -249,9 +230,6 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, got)
-
-			taskParametersNeedsName := r.taskParametersNeedsName(tc.input)
-			assert.Equal(t, tc.taskParametersNeedsName, taskParametersNeedsName)
 
 			canAssumeEnsure := r.canAssumeEnsure(tc.input)
 			assert.Equal(t, tc.canAssumeEnsure, canAssumeEnsure)

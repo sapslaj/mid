@@ -77,10 +77,6 @@ func (r SystemdService) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	if news.Name == nil && olds.Name != nil {
-		news.Name = olds.Name
-	}
-
 	diff = types.MergeDiffResponses(
 		diff,
 		types.DiffAttributes(olds, news, []string{
@@ -116,10 +112,6 @@ func (r SystemdService) Create(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if input.Name == nil && (input.Enabled != nil || input.Masked != nil || input.Ensure != nil) {
-		input.Name = ptr.Of(name)
-	}
 
 	state := r.updateState(SystemdServiceState{}, input, true)
 
@@ -197,10 +189,6 @@ func (r SystemdService) Read(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if inputs.Name == nil && state.Name != nil && (inputs.Enabled != nil || inputs.Masked != nil || inputs.Ensure != nil) {
-		inputs.Name = state.Name
-	}
-
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -245,10 +233,6 @@ func (r SystemdService) Update(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if news.Name == nil && olds.Name != nil && (news.Enabled != nil || news.Masked != nil || news.Ensure != nil) {
-		news.Name = olds.Name
-	}
 
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {

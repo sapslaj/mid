@@ -23,7 +23,7 @@ type Service struct{}
 type ServiceArgs struct {
 	Arguments *string              `pulumi:"arguments,optional"`
 	Enabled   *bool                `pulumi:"enabled,optional"`
-	Name      *string              `pulumi:"name,optional"`
+	Name      string               `pulumi:"name"`
 	Pattern   *string              `pulumi:"pattern,optional"`
 	Runlevel  *string              `pulumi:"runlevel,optional"`
 	Sleep     *int                 `pulumi:"sleep,optional"`
@@ -34,18 +34,14 @@ type ServiceArgs struct {
 
 type ServiceState struct {
 	ServiceArgs
-	Name     string               `pulumi:"name"`
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r Service) argsToTaskParameters(input ServiceArgs) (ansible.ServiceParameters, error) {
-	if input.Name == nil {
-		return ansible.ServiceParameters{}, errors.New("someone forgot to set the auto-named input.Name")
-	}
 	return ansible.ServiceParameters{
 		Arguments: input.Arguments,
 		Enabled:   input.Enabled,
-		Name:      *input.Name,
+		Name:      input.Name,
 		Pattern:   input.Pattern,
 		Runlevel:  input.Runlevel,
 		Sleep:     input.Sleep,
@@ -56,9 +52,6 @@ func (r Service) argsToTaskParameters(input ServiceArgs) (ansible.ServiceParamet
 
 func (r Service) updateState(olds ServiceState, news ServiceArgs, changed bool) ServiceState {
 	olds.ServiceArgs = news
-	if news.Name != nil {
-		olds.Name = *news.Name
-	}
 	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
@@ -82,21 +75,12 @@ func (r Service) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	if news.Name == nil {
-		news.Name = &olds.Name
-	} else if *news.Name != olds.Name {
-		diff.HasChanges = true
-		diff.DetailedDiff["name"] = p.PropertyDiff{
-			Kind:      p.UpdateReplace,
-			InputDiff: true,
-		}
-	}
-
 	diff = types.MergeDiffResponses(
 		diff,
 		types.DiffAttributes(olds, news, []string{
 			"arguments",
 			"enabled",
+			"name",
 			"pattern",
 			"runlevel",
 			"sleep",
@@ -125,10 +109,6 @@ func (r Service) Create(
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
-
-	if input.Name == nil {
-		input.Name = ptr.Of(name)
-	}
 
 	state := r.updateState(ServiceState{}, input, true)
 
@@ -178,10 +158,6 @@ func (r Service) Read(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if inputs.Name == nil {
-		inputs.Name = ptr.Of(state.Name)
-	}
-
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -227,10 +203,6 @@ func (r Service) Update(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if news.Name == nil {
-		news.Name = ptr.Of(olds.Name)
-	}
-
 	parameters, err := r.argsToTaskParameters(news)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -273,7 +245,7 @@ func (r Service) Delete(
 	args := ServiceArgs{
 		Arguments: props.Arguments,
 		Enabled:   props.Enabled,
-		Name:      &props.Name,
+		Name:      props.Name,
 		Pattern:   props.Pattern,
 		Runlevel:  props.Runlevel,
 		Sleep:     props.Sleep,

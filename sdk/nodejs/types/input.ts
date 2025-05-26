@@ -5,6 +5,8 @@ import * as pulumi from "@pulumi/pulumi";
 import * as inputs from "../types/input";
 import * as outputs from "../types/output";
 
+import * as utilities from "../utilities";
+
 export namespace agent {
 }
 
@@ -12,23 +14,75 @@ export namespace resource {
 }
 
 export namespace types {
+  /**
+   * Instructions for how to connect to a remote endpoint.
+   */
   export interface ConnectionArgs {
+    /**
+     * The address of the resource to connect to.
+     */
     host: pulumi.Input<string>;
+    /**
+     * The password we should use for the connection.
+     */
     password?: pulumi.Input<string>;
+    /**
+     * The port to connect to. Defaults to 22.
+     */
     port?: pulumi.Input<number>;
+    /**
+     * The contents of an SSH key to use for the
+     * connection. This takes preference over the password if provided.
+     */
     privateKey?: pulumi.Input<string>;
+    /**
+     * The user that we should use for the connection.
+     */
     user?: pulumi.Input<string>;
+  }
+  /**
+   * connectionArgsProvideDefaults sets the appropriate defaults for ConnectionArgs
+   */
+  export function connectionArgsProvideDefaults(val: ConnectionArgs): ConnectionArgs {
+    return {
+      ...val,
+      port: (val.port) ?? 22,
+      user: (val.user) ?? "root",
+    };
   }
 
   export interface ExecCommandArgs {
+    /**
+     * List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
+     */
     command: pulumi.Input<pulumi.Input<string>[]>;
+    /**
+     * Directory path to chdir to before executing the command. Defaults to the
+     * default working directory for the SSH user and session, usually the user's
+     * home.
+     */
     dir?: pulumi.Input<string>;
+    /**
+     * Key-value pairs of environment variables to pass to the process. These are
+     * merged with any system-wide environment variables.
+     */
     environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+    /**
+     * Pass a string to the command's process as standard in.
+     */
     stdin?: pulumi.Input<string>;
   }
 
   export interface TriggersInputArgs {
+    /**
+     * Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+     * any value in this list changes.
+     */
     refresh?: pulumi.Input<any[]>;
+    /**
+     * Completely delete and replace the resource if any value in this list
+     * changes.
+     */
     replace?: pulumi.Input<any[]>;
   }
 }

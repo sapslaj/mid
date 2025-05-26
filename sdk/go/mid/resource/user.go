@@ -7,6 +7,7 @@ import (
 	"context"
 	"reflect"
 
+	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
 	"github.com/sapslaj/mid/sdk/go/mid/types"
@@ -42,9 +43,12 @@ type User struct {
 func NewUser(ctx *pulumi.Context,
 	name string, args *UserArgs, opts ...pulumi.ResourceOption) (*User, error) {
 	if args == nil {
-		args = &UserArgs{}
+		return nil, errors.New("missing one or more required arguments")
 	}
 
+	if args.Name == nil {
+		return nil, errors.New("invalid value for required argument 'Name'")
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource User
 	err := ctx.RegisterResource("mid:resource:User", name, args, &resource, opts...)
@@ -87,7 +91,7 @@ type userArgs struct {
 	Home            *string              `pulumi:"home"`
 	Local           *bool                `pulumi:"local"`
 	ManageHome      *bool                `pulumi:"manageHome"`
-	Name            *string              `pulumi:"name"`
+	Name            string               `pulumi:"name"`
 	NonUnique       *bool                `pulumi:"nonUnique"`
 	Password        *string              `pulumi:"password"`
 	Shell           *string              `pulumi:"shell"`
@@ -112,7 +116,7 @@ type UserArgs struct {
 	Home            pulumi.StringPtrInput
 	Local           pulumi.BoolPtrInput
 	ManageHome      pulumi.BoolPtrInput
-	Name            pulumi.StringPtrInput
+	Name            pulumi.StringInput
 	NonUnique       pulumi.BoolPtrInput
 	Password        pulumi.StringPtrInput
 	Shell           pulumi.StringPtrInput
