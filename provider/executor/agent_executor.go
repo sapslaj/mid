@@ -327,7 +327,7 @@ func PreviewUnreachable(ctx context.Context, connection *types.Connection, previ
 		return false
 	}
 
-	return canConnect
+	return !canConnect
 }
 
 func CallAgent[I any, O any](
