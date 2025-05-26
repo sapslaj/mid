@@ -14,11 +14,12 @@ func TestResourceFileLine(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		props  resource.PropertyMap
-		before string
-		create string
-		update string
-		delete string
+		props        resource.PropertyMap
+		before       string
+		beforeCreate string
+		create       string
+		update       string
+		delete       string
 	}{
 		"line modification in existing file": {
 			props: resource.PropertyMap{
@@ -52,9 +53,42 @@ EOF
 			update: "grep -q ^ENABLED=0 /etc/default/motd-news",
 			// delete: "grep -q ^ENABLED=1 /etc/default/motd-news", // FIXME: revert on delete
 		},
+		"line addition to new file": {
+			props: resource.PropertyMap{
+				"path":   resource.NewStringProperty("/etc/default/motd-news"),
+				"line":   resource.NewStringProperty("ENABLED=0"),
+				"regexp": resource.NewStringProperty("^ENABLED"),
+			},
+			before: "rm -f /etc/default/motd-news",
+			beforeCreate: `cat << EOF | sudo tee /etc/default/motd-news
+# Enable/disable the dynamic MOTD news service
+# This is a useful way to provide dynamic, informative
+# information pertinent to the users and administrators
+# of the local system
+ENABLED=1
+
+# Configure the source of dynamic MOTD news
+# White space separated list of 0 to many news services
+# For security reasons, these must be https
+# and have a valid certificate
+# Canonical runs a service at motd.ubuntu.com, and you
+# can easily run one too
+URLS=""
+
+# Specify the time in seconds, you're willing to wait for
+# dynamic MOTD news
+# Note that news messages are fetched in the background by
+# a systemd timer, so this should never block boot or login
+WAIT=5
+EOF
+`,
+			create: "grep -q ^ENABLED=0 /etc/default/motd-news",
+			update: "grep -q ^ENABLED=0 /etc/default/motd-news",
+			// delete: "grep -q ^ENABLED=1 /etc/default/motd-news", // FIXME: revert on delete
+		},
+		// TODO: "line addition to new file with create=true"
 		// TODO: "line addition in existing file"
 		// TODO: "line deletion in existing file"
-		// TODO: "line addition to new file"
 	}
 
 	for name, tc := range tests {
@@ -82,6 +116,13 @@ EOF
 			})
 			if !assert.NoError(t, err) {
 				return
+			}
+
+			if tc.beforeCreate != "" {
+				t.Logf("%s: running before create commands", name)
+				if !harness.AssertCommand(t, tc.beforeCreate) {
+					return
+				}
 			}
 
 			t.Logf("%s: sending create request", name)

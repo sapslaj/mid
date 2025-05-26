@@ -56,8 +56,8 @@ func TestResourceSystemdService(t *testing.T) {
 		},
 		"service unit not defined during create preview": {
 			props: resource.PropertyMap{
-				"name":   resource.NewStringProperty("mid-systemd-service-test.service"),
-				"ensure": resource.NewStringProperty("started"),
+				"name":    resource.NewStringProperty("mid-systemd-service-test.service"),
+				"ensure":  resource.NewStringProperty("started"),
 				"enabled": resource.NewBoolProperty(true),
 			},
 			before: "sudo rm -f /etc/systemd/system/mid-systemd-service-test.service ; sudo systemctl daemon-reload",

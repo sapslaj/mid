@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -146,6 +147,25 @@ func (r FileLine) Create(
 		if !canConnect {
 			return id, state, nil
 		}
+
+		stat, err := executor.CallAgent[
+			rpc.FileStatArgs,
+			rpc.FileStatResult,
+		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+			RPCFunction: rpc.RPCFileStat,
+			Args: rpc.FileStatArgs{
+				Path: input.Path,
+			},
+		})
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return id, state, err
+		}
+		if !stat.Result.Exists {
+			// file doesn't exist yet during preview
+			span.SetStatus(codes.Ok, "")
+			return id, state, nil
+		}
 	}
 
 	_, err = executor.AnsibleExecute[
@@ -232,6 +252,26 @@ func (r FileLine) Update(
 		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
 		if !canConnect {
 			return olds, nil
+		}
+
+		stat, err := executor.CallAgent[
+			rpc.FileStatArgs,
+			rpc.FileStatResult,
+		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+			RPCFunction: rpc.RPCFileStat,
+			Args: rpc.FileStatArgs{
+				Path: news.Path,
+			},
+		})
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return olds, err
+		}
+		if !stat.Result.Exists {
+			// file doesn't exist yet during preview
+			state := r.updateState(olds, news, true)
+			span.SetStatus(codes.Ok, "")
+			return state, nil
 		}
 	}
 
