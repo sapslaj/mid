@@ -16,10 +16,15 @@ import (
 
 	"github.com/bramvdbogaerde/go-scp"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/syncmap"
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/version"
 )
 
@@ -33,6 +38,8 @@ var (
 	ErrStagingFile            = errors.New("error staging file")
 )
 
+var Tracer = otel.Tracer("mid/agent")
+
 type Agent struct {
 	Mutex     sync.Mutex
 	Client    *ssh.Client
@@ -42,40 +49,113 @@ type Agent struct {
 	Running   *atomic.Bool
 	WaitGroup *sync.WaitGroup
 	InFlight  *syncmap.Map[string, chan rpc.RPCResult[any]]
-	Logger    *slog.Logger
 }
 
-func AddLogger(agent *Agent) *slog.Logger {
-	if agent.Logger == nil {
-		agent.Logger = slog.New(
-			slog.NewTextHandler(
-				os.Stdout,
-				&slog.HandlerOptions{
-					AddSource: true,
-					Level:     slog.LevelDebug,
-				},
-			),
-		).With(slog.String("side", "local"))
+func (agent *Agent) GetLogger(ctx context.Context) *slog.Logger {
+	return telemetry.LoggerFromContext(ctx).With(slog.String("side", "local"))
+}
+
+func (agent *Agent) RunLocal() {
+	logger := agent.GetLogger(context.Background())
+	defer agent.WaitGroup.Done()
+	defer func() {
+		for uuid, ch := range agent.InFlight.Items() {
+			ch <- rpc.RPCResult[any]{
+				UUID:  uuid,
+				Error: ErrAgentShutDown.Error(),
+			}
+			close(ch)
+		}
+	}()
+	defer logger.Info("shutting down decoder loop")
+	for agent.Running.Load() {
+		logger.Info("waiting for next result")
+		var res rpc.RPCResult[any]
+		err := agent.Decoder.Decode(&res)
+		if err != nil {
+			if res.Error == "" {
+				res.Error = errors.Join(ErrCallingRPCSystem, err).Error()
+			} else {
+				res.Error = errors.Join(ErrCallingRPCSystem, err, errors.New(res.Error)).Error()
+			}
+			if errors.Is(err, io.EOF) && !agent.Running.Load() {
+				// we're supposed to be shutting down, don't log an error
+				return
+			}
+			logger.Error("error decoding", slog.String("error", res.Error))
+			if errors.Is(err, io.EOF) {
+				// not supposed to be shutting down so probably an error (hence the
+				// logging above)
+				return
+			}
+			if res.UUID == "" {
+				continue
+			}
+		}
+
+		decoderLogger := logger.With(
+			slog.Any("name", res.RPCFunction),
+			rpc.SlogJSON("result", res.Result),
+			slog.String("error", res.Error),
+		)
+
+		if res.UUID == "" {
+			decoderLogger.Error("UUID is empty")
+			continue
+		}
+
+		decoderLogger.Info("got result")
+
+		ch, loaded := agent.InFlight.LoadAndDelete(res.UUID)
+		if !loaded {
+			decoderLogger.Warn("UUID not found in InFlight map")
+		}
+		if ch == nil {
+			decoderLogger.Error("result channel is nil, cannot send result")
+			continue
+		}
+
+		decoderLogger.Info("channeling result")
+		ch <- res
 	}
-
-	return agent.Logger
 }
 
-func RunRemoteCommand(agent *Agent, cmd string) ([]byte, error) {
+func RunRemoteCommand(ctx context.Context, agent *Agent, cmd string) ([]byte, error) {
+	ctx, span := Tracer.Start(ctx, "mid/agent.RunRemoteCommand", trace.WithAttributes(
+		attribute.String("cmd", cmd),
+	))
+	defer span.End()
+
 	session, err := agent.Client.NewSession()
 	if err != nil {
-		return nil, errors.Join(ErrRunningRemoteCommand, err)
+		err = errors.Join(ErrRunningRemoteCommand, err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
 	}
 	defer session.Close()
-	return session.Output(cmd)
+	b, err := session.Output(cmd)
+	if b != nil {
+		span.SetAttributes(attribute.String("stdout", string(b)))
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return b, err
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return b, nil
 }
 
-func InstallAgent(agent *Agent) error {
-	initOutput, err := RunRemoteCommand(agent, "touch .mid/install.lock && uname -m")
+func InstallAgent(ctx context.Context, agent *Agent) error {
+	ctx, span := Tracer.Start(ctx, "mid/agent.InstallAgent")
+	defer span.End()
+
+	initOutput, err := RunRemoteCommand(ctx, agent, "touch .mid/install.lock && uname -m")
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	defer RunRemoteCommand(agent, "rm -f .mid/install.lock")
+	defer RunRemoteCommand(ctx, agent, "rm -f .mid/install.lock")
 
 	// only support linux for now
 	goos := "linux"
@@ -86,39 +166,57 @@ func InstallAgent(agent *Agent) error {
 	case "x86_64":
 		goarch = "amd64"
 	default:
-		return fmt.Errorf("%w: unexpected output while initializing agent: %q", ErrInstallingAgent, string(initOutput))
+		err = fmt.Errorf("%w: unexpected output while initializing agent: %q", ErrInstallingAgent, string(initOutput))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
+
+	span.SetAttributes(
+		attribute.String("goos", goos),
+		attribute.String("goarch", goarch),
+	)
 
 	agentBinary, err := GetAgentBinary(goos, goarch)
 	if err != nil {
-		return errors.Join(ErrInstallingAgent, err)
+		err = errors.Join(ErrInstallingAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	scpClient, err := scp.NewClientBySSH(agent.Client)
 	if err != nil {
-		return errors.Join(ErrInstallingAgent, err)
+		err = errors.Join(ErrInstallingAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	defer scpClient.Close()
 
-	err = scpClient.CopyFile(context.Background(), bytes.NewReader(agentBinary), ".mid/mid-agent", "0700")
+	err = scpClient.CopyFile(ctx, bytes.NewReader(agentBinary), ".mid/mid-agent", "0700")
 	if err != nil {
-		return errors.Join(ErrInstallingAgent, err)
+		err = errors.Join(ErrInstallingAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	return nil
 }
 
-func Connect(agent *Agent) error {
-	logger := AddLogger(agent)
+func Connect(ctx context.Context, agent *Agent) error {
+	ctx, span := Tracer.Start(ctx, "mid/agent.Connect")
+	defer span.End()
+
+	logger := agent.GetLogger(ctx)
 	logger.Info("connecting agent")
-	initOutput, err := RunRemoteCommand(agent, "mkdir -p .mid")
+	initOutput, err := RunRemoteCommand(ctx, agent, "mkdir -p .mid")
 	if err != nil {
 		logger.Error(
 			"error creating .mid directory on remote",
 			slog.Any("error", err),
 			slog.String("stdout", string(initOutput)),
 		)
-		return errors.Join(ErrConnectingToAgent, err)
+		err = errors.Join(ErrConnectingToAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	agentNotInstalled := true
@@ -127,17 +225,19 @@ func Connect(agent *Agent) error {
 	for i := 0; i <= 10; i++ {
 		if i == 10 {
 			logger.Error(fmt.Sprintf("agent installation still in progress but should be finished by now; bailing"))
-			return errors.Join(ErrConnectingToAgent, fmt.Errorf("another agent installation is in progress"))
+			err = errors.Join(ErrConnectingToAgent, fmt.Errorf("another agent installation is in progress"))
+			span.SetStatus(codes.Error, err.Error())
+			return err
 		}
 
 		// check for lock file
-		installLockOutput, err := RunRemoteCommand(agent, "/bin/sh -c 'test ! -f .mid/install.lock ; echo $?'")
+		installLockOutput, err := RunRemoteCommand(ctx, agent, "/bin/sh -c 'test ! -f .mid/install.lock ; echo $?'")
 		if strings.TrimSpace(string(installLockOutput)) == "0" {
 			break
 		}
 
 		// try it and see what happens
-		initOutput, err = RunRemoteCommand(agent, "file .mid/mid-agent && .mid/mid-agent --version")
+		initOutput, err = RunRemoteCommand(ctx, agent, "file .mid/mid-agent && .mid/mid-agent --version")
 		if err == nil {
 			break
 		}
@@ -152,31 +252,41 @@ func Connect(agent *Agent) error {
 
 	if agentNotInstalled || agentVersionMismatch {
 		logger.Info("copying agent")
-		err = InstallAgent(agent)
+		err = InstallAgent(ctx, agent)
 		if err != nil {
-			return errors.Join(ErrConnectingToAgent, fmt.Errorf("error installing agent: %w", err))
+			err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error installing agent: %w", err))
+			span.SetStatus(codes.Error, err.Error())
+			return err
 		}
 	}
 
 	logger.Info("starting SSH session")
 	agent.Session, err = agent.Client.NewSession()
 	if err != nil {
-		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent session: %w", err))
+		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent session: %w", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	stderr, err := agent.Session.StderrPipe()
 	if err != nil {
-		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stderr pipe: %w", err))
+		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stderr pipe: %w", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	go io.Copy(os.Stdout, stderr)
 
 	stdin, err := agent.Session.StdinPipe()
 	if err != nil {
-		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stdin pipe: %w", err))
+		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stdin pipe: %w", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	stdout, err := agent.Session.StdoutPipe()
 	if err != nil {
-		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stdout pipe: %w", err))
+		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error creating agent stdout pipe: %w", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	agent.Encoder = json.NewEncoder(stdin)
 	agent.Decoder = json.NewDecoder(stdout)
@@ -185,9 +295,11 @@ func Connect(agent *Agent) error {
 
 	// for some reason Ansible doesn't like Docker containers with sudo installed
 	// so have to jump through some hoops to not use sudo if we don't have to.
-	idOutput, err := RunRemoteCommand(agent, "id")
+	idOutput, err := RunRemoteCommand(ctx, agent, "id")
 	if err != nil {
-		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error getting UID: %w", err))
+		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error getting UID: %w", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	useSudo := true
 	if strings.Contains(string(idOutput), "uid=0(") {
@@ -203,7 +315,9 @@ func Connect(agent *Agent) error {
 	// TODO: more extensible sudo configuration
 	err = agent.Session.Start(sessionStartCmd)
 	if err != nil {
-		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error starting agent session: %w", err))
+		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error starting agent session: %w", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
 	agent.Running = &atomic.Bool{}
@@ -212,106 +326,59 @@ func Connect(agent *Agent) error {
 	agent.WaitGroup.Add(1)
 	agent.InFlight = &syncmap.Map[string, chan rpc.RPCResult[any]]{}
 
-	go func() {
-		defer agent.WaitGroup.Done()
-		defer func() {
-			for uuid, ch := range agent.InFlight.Items() {
-				ch <- rpc.RPCResult[any]{
-					UUID:  uuid,
-					Error: ErrAgentShutDown.Error(),
-				}
-				close(ch)
-			}
-		}()
-		defer logger.Info("shutting down decoder loop")
-		for agent.Running.Load() {
-			logger.Info("waiting for next result")
-			var res rpc.RPCResult[any]
-			err = agent.Decoder.Decode(&res)
-			if err != nil {
-				if res.Error == "" {
-					res.Error = errors.Join(ErrCallingRPCSystem, err).Error()
-				} else {
-					res.Error = errors.Join(ErrCallingRPCSystem, err, errors.New(res.Error)).Error()
-				}
-				if errors.Is(err, io.EOF) && !agent.Running.Load() {
-					// we're supposed to be shutting down, don't log an error
-					return
-				}
-				logger.Error("error decoding", slog.String("error", res.Error))
-				if errors.Is(err, io.EOF) {
-					// not supposed to be shutting down so probably an error (hence the
-					// logging above)
-					return
-				}
-				if res.UUID == "" {
-					continue
-				}
-			}
-
-			decoderLogger := logger.With(
-				slog.Any("name", res.RPCFunction),
-				rpc.SlogJSON("result", res.Result),
-				slog.String("error", res.Error),
-			)
-
-			if res.UUID == "" {
-				decoderLogger.Error("UUID is empty")
-				continue
-			}
-
-			decoderLogger.Info("got result")
-
-			ch, loaded := agent.InFlight.LoadAndDelete(res.UUID)
-			if !loaded {
-				decoderLogger.Warn("UUID not found in InFlight map")
-			}
-			if ch == nil {
-				decoderLogger.Error("result channel is nil, cannot send result")
-				continue
-			}
-
-			decoderLogger.Info("channeling result")
-			ch <- res
-		}
-	}()
+	go agent.RunLocal()
 
 	logger.Info("pinging agent")
-	pingResult, err := Call[rpc.AgentPingArgs, rpc.AgentPingResult](agent, rpc.RPCCall[rpc.AgentPingArgs]{
+	pingResult, err := Call[rpc.AgentPingArgs, rpc.AgentPingResult](ctx, agent, rpc.RPCCall[rpc.AgentPingArgs]{
 		RPCFunction: rpc.RPCAgentPing,
 		Args: rpc.AgentPingArgs{
 			Ping: "ping",
 		},
 	})
 	if err != nil {
-		return errors.Join(ErrConnectingToAgent, fmt.Errorf("error sending ping RPC: %w", err))
+		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error sending ping RPC: %w", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 	if pingResult.Error != "" {
-		return errors.Join(
+		err = errors.Join(
 			ErrConnectingToAgent,
 			fmt.Errorf("error received from ping RPC: %w", errors.New(pingResult.Error)),
 		)
+		span.SetStatus(codes.Error, err.Error())
+		return err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return nil
 }
 
-func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
+func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], error) {
+	ctx, span := Tracer.Start(ctx, "mid/agent.Call", trace.WithAttributes(
+		telemetry.OtelJSON("rpc.call", call),
+		attribute.String("rpc.function", string(call.RPCFunction)),
+		telemetry.OtelJSON("rpc.args", call.Args),
+	))
+	defer span.End()
+
 	uuid, err := uuid.NewRandom()
 	if err != nil {
 		err = errors.Join(ErrCallingRPCSystem, err)
+		span.SetStatus(codes.Error, err.Error())
 		return rpc.RPCResult[O]{
 			RPCFunction: call.RPCFunction,
 			Error:       err.Error(),
 		}, err
 	}
 	call.UUID = uuid.String()
+	span.SetAttributes(attribute.String("rpc.uuid", call.UUID))
 
 	agent.Mutex.Lock()
 	err = agent.Encoder.Encode(call)
 	agent.Mutex.Unlock()
 	if err != nil {
 		err = errors.Join(ErrCallingRPCSystem, err)
+		span.SetStatus(codes.Error, err.Error())
 		return rpc.RPCResult[O]{
 			RPCFunction: call.RPCFunction,
 			Error:       err.Error(),
@@ -320,6 +387,7 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 
 	// special case for "Close" since no response is expected
 	if call.RPCFunction == rpc.RPCClose {
+		span.SetStatus(codes.Ok, "")
 		return rpc.RPCResult[O]{
 			UUID:        call.UUID,
 			RPCFunction: call.RPCFunction,
@@ -330,7 +398,9 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 	agent.InFlight.Store(call.UUID, ch)
 
 	rawResult := <-ch
+	span.SetAttributes(telemetry.OtelJSON("rpc.raw_result", rawResult))
 	res, err := rpc.AnyToJSONT[rpc.RPCResult[O]](rawResult)
+	span.SetAttributes(telemetry.OtelJSON("rpc.result", res))
 	if err != nil {
 		err = errors.Join(ErrCallingRPCSystem, err)
 		if res.Error == "" {
@@ -338,52 +408,70 @@ func Call[I any, O any](agent *Agent, call rpc.RPCCall[I]) (rpc.RPCResult[O], er
 		} else {
 			res.Error = errors.Join(errors.New(res.Error), err).Error()
 		}
+		span.SetStatus(codes.Error, err.Error())
 		return res, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return res, nil
 }
 
-func StageFile(agent *Agent, f io.Reader) (string, error) {
-	_, err := RunRemoteCommand(agent, "mkdir -p .mid/staging")
+func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
+	ctx, span := Tracer.Start(ctx, "mid/agent.StageFile")
+	defer span.End()
+
+	_, err := RunRemoteCommand(ctx, agent, "mkdir -p .mid/staging")
 	if err != nil {
-		return "", errors.Join(ErrStagingFile, err)
+		err = errors.Join(ErrStagingFile, err)
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
 	}
 
 	scpClient, err := scp.NewClientBySSH(agent.Client)
 	if err != nil {
-		return "", errors.Join(ErrStagingFile, err)
+		err = errors.Join(ErrStagingFile, err)
+		span.SetStatus(codes.Error, err.Error())
+		return "", err
 	}
 	defer scpClient.Close()
 
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		err = errors.Join(ErrStagingFile, err)
+		span.SetStatus(codes.Error, err.Error())
 		return "", err
 	}
 	remotePath := "mid/staging/" + strings.ToLower(uid.String())
+	span.SetAttributes(attribute.String("rpc.stage_file.remote_path", remotePath))
 
-	realPathOutput, err := RunRemoteCommand(agent, "realpath "+remotePath)
+	realPathOutput, err := RunRemoteCommand(ctx, agent, "realpath "+remotePath)
 	if err != nil {
 		err = errors.Join(ErrStagingFile, err)
+		span.SetStatus(codes.Error, err.Error())
 		return remotePath, err
 	}
 
 	remotePath = strings.TrimSpace(string(realPathOutput))
+	span.SetAttributes(attribute.String("rpc.stage_file.absolute_remote_path", remotePath))
 
-	err = scpClient.CopyFile(context.Background(), f, remotePath, "0400")
+	err = scpClient.CopyFile(ctx, f, remotePath, "0400")
 	if err != nil {
 		err = errors.Join(ErrStagingFile, err)
+		span.SetStatus(codes.Error, err.Error())
 		return remotePath, err
 	}
 
+	span.SetStatus(codes.Ok, "")
 	return remotePath, nil
 }
 
-func Disconnect(agent *Agent) error {
+func Disconnect(ctx context.Context, agent *Agent) error {
+	ctx, span := Tracer.Start(ctx, "mid/agent.Disconnect")
+	defer span.End()
+
 	agent.Running.Store(false)
 
-	_, err := Call[any, any](agent, rpc.RPCCall[any]{RPCFunction: rpc.RPCClose})
+	_, err := Call[any, any](ctx, agent, rpc.RPCCall[any]{RPCFunction: rpc.RPCClose})
 
 	err = errors.Join(
 		err,
@@ -399,11 +487,19 @@ func Disconnect(agent *Agent) error {
 
 	if err != nil {
 		err = errors.Join(ErrDisconnectingFromAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	if err == nil {
+		span.SetStatus(codes.Ok, "")
 	}
 
 	return err
 }
 
-func (agent *Agent) Disconnect() error {
-	return Disconnect(agent)
+func (agent *Agent) Disconnect(ctx context.Context) error {
+	ctx, span := Tracer.Start(ctx, "mid/agent.Agent.Disconnect")
+	defer span.End()
+
+	return Disconnect(ctx, agent)
 }

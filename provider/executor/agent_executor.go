@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"os/user"
 	"sync"
@@ -30,11 +31,13 @@ var (
 )
 
 type ConnectionState struct {
-	ID         uint64
-	Reachable  bool
-	Mutex      sync.Mutex
-	Agent      *midagent.Agent
-	Connection *types.Connection
+	ID              uint64
+	Reachable       bool
+	Unreachable     bool
+	SetupAgentMutex sync.Mutex
+	CanConnectMutex sync.Mutex
+	Agent           *midagent.Agent
+	Connection      *types.Connection
 }
 
 var AgentPool = syncmap.Map[uint64, *ConnectionState]{}
@@ -45,11 +48,19 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 		attribute.String("connection.host", *cs.Connection.Host),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *cs.Connection.Host),
+	)
 
-	cs.Mutex.Lock()
-	defer cs.Mutex.Unlock()
+	logger.InfoContext(ctx, "SetupAgent: waiting for lock")
+	p.GetLogger(ctx).InfoStatus("waiting for existing connection attempts to finish...")
+	cs.SetupAgentMutex.Lock()
+	logger.InfoContext(ctx, "SetupAgent: lock acquired")
+	p.GetLogger(ctx).InfoStatus("") // clear info line
+	defer cs.SetupAgentMutex.Unlock()
 
 	if cs.Agent != nil && cs.Agent.Running.Load() {
+		logger.With(slog.Bool("agent.already_running", true)).InfoContext(ctx, "SetupAgent: agent is already running")
 		span.SetAttributes(attribute.Bool("agent.already_running", true))
 		span.SetStatus(codes.Ok, "")
 		return nil
@@ -57,31 +68,60 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 
 	span.SetAttributes(
 		attribute.Bool("agent.already_running", false),
-		attribute.Bool("agent.can_connect", cs.Reachable),
+		attribute.Bool("agent.reachable", cs.Reachable),
+		attribute.Bool("agent.unreachable", cs.Unreachable),
 	)
 
-	a, err := StartAgent(ctx, cs.Connection)
-	if err != nil {
-		if errors.Is(err, midagent.ErrConnectingToAgent) {
-			cs.Reachable = false
-			err = errors.Join(ErrUnreachable, err)
-		}
+	logger = logger.With(
+		slog.Bool("agent.already_running", false),
+		slog.Bool("agent.reachable", cs.Reachable),
+		slog.Bool("agent.unreachable", cs.Unreachable),
+	)
+
+	if cs.Unreachable {
+		logger.WarnContext(ctx, "SetupAgent: remote previously deemed unreachable")
+		err := ErrUnreachable
 		span.SetStatus(codes.Error, err.Error())
-		span.SetAttributes(
-			attribute.Bool("agent.running", false),
-			attribute.Bool("agent.can_connect", cs.Reachable),
-		)
+		return err
+	}
+
+	sshConfig, endpoint, err := ConnectionToSSHClientConfig(cs.Connection)
+	if err != nil {
+		logger.ErrorContext(ctx, "SetupAgent: error building SSH config", slog.Any("error", err))
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	sshClient, err := DialWithRetry(ctx, "Dial", 10, func() (*ssh.Client, error) {
+		return ssh.Dial("tcp", endpoint, sshConfig)
+	})
+	if err != nil {
+		logger.ErrorContext(ctx, "SetupAgent: error dialing", slog.Any("error", err))
+		cs.Reachable = false
+		cs.Unreachable = true
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	cs.Agent = &midagent.Agent{
+		Client: sshClient,
+	}
+
+	err = midagent.Connect(ctx, cs.Agent)
+	if err != nil {
+		logger.ErrorContext(ctx, "SetupAgent: error setting up agent", slog.Any("error", err))
+		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
 
 	cs.Reachable = true
-	cs.Agent = a
 	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(
 		attribute.Bool("agent.running", true),
 		attribute.Bool("agent.can_connect", cs.Reachable),
 	)
 
+	logger.InfoContext(ctx, "SetupAgent: finished agent setup")
 	return nil
 }
 
@@ -91,21 +131,30 @@ func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionStat
 		attribute.String("connection.host", *connection.Host),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *connection.Host),
+	)
 
+	logger.InfoContext(ctx, "Acquire: calculating connection ID")
 	id, err := hashstructure.Hash(connection, hashstructure.FormatV2, nil)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	span.SetAttributes(attribute.Float64("agent.connection_id", float64(id)))
+	logger = logger.With(slog.Uint64("agent.connection_id", id))
 
+	logger.InfoContext(ctx, "Acquire: querying pool")
 	cs, loaded := AgentPool.LoadOrStore(id, &ConnectionState{
 		ID:         id,
 		Connection: connection,
 	})
 
+	logger = logger.With(slog.Bool("agent.loaded", loaded))
 	span.SetAttributes(attribute.Bool("agent.loaded", loaded))
 	span.SetStatus(codes.Ok, "")
+
+	logger.InfoContext(ctx, "Acquire: returning ConnectionState handle")
 
 	return cs, nil
 }
@@ -117,52 +166,168 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 		attribute.Int("retry.max_attempts", maxAttempts),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *connection.Host),
+	)
 
+	logger.InfoContext(ctx, "CanConnect: acquiring ConnectionState handle")
 	cs, err := Acquire(ctx, connection)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
 
+	logger.InfoContext(ctx, "CanConnect: waiting for lock")
+	p.GetLogger(ctx).InfoStatus("waiting for existing connection attempts to finish...")
+	cs.CanConnectMutex.Lock()
+	logger.InfoContext(ctx, "CanConnect: lock acquired")
+	p.GetLogger(ctx).InfoStatus("") // clear info line
+	defer cs.CanConnectMutex.Unlock()
+
+	if cs.Unreachable {
+		span.SetAttributes(
+			attribute.Bool("agent.can_connect", false),
+			attribute.Bool("agent.can_connect.cached", true),
+		)
+		logger.With(
+			slog.Bool("agent.can_connect", false),
+			slog.Bool("agent.can_connect.cached", true),
+		).ErrorContext(ctx, "CanConnect: remote previously deemed unreachable")
+		return false, ErrUnreachable
+	}
+
 	if cs.Reachable {
-		span.SetAttributes(attribute.Bool("agent.can_connect", true))
-		span.SetAttributes(attribute.Bool("agent.can_connect.cached", true))
+		span.SetAttributes(
+			attribute.Bool("agent.can_connect", true),
+			attribute.Bool("agent.can_connect.cached", true),
+		)
+		logger.With(
+			slog.Bool("agent.can_connect", true),
+			slog.Bool("agent.can_connect.cached", true),
+		).InfoContext(ctx, "CanConnect: remote previously deemed reachable")
 		return true, nil
 	}
 
-	span.SetAttributes(attribute.Bool("agent.can_connect", false))
-	span.SetAttributes(attribute.Bool("agent.can_connect.cached", false))
+	span.SetAttributes(
+		attribute.Bool("agent.can_connect", false),
+		attribute.Bool("agent.can_connect.cached", false),
+	)
+	logger = logger.With(slog.Bool("agent.can_connect.cached", false))
 
 	if cs.Connection.Host == nil {
+		cs.Reachable = false
+		cs.Unreachable = true
+		logger.With(
+			slog.Bool("agent.can_connect", false),
+		).ErrorContext(ctx, "CanConnect: host is nil")
 		return false, nil
 	}
 	if *cs.Connection.Host == "" {
+		cs.Reachable = false
+		cs.Unreachable = true
+		logger.With(
+			slog.Bool("agent.can_connect", false),
+		).ErrorContext(ctx, "CanConnect: host is empty")
 		return false, nil
 	}
+
+	logger.InfoContext(ctx, "CanConnect: attempting connection")
+	p.GetLogger(ctx).InfoStatus("attempting connection...")
+
 	sshConfig, endpoint, err := ConnectionToSSHClientConfig(cs.Connection)
 	if err != nil {
+		logger.With(
+			slog.Bool("agent.can_connect", false),
+		).ErrorContext(ctx, "CanConnect: error building SSH config", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
+		cs.Reachable = false
+		cs.Unreachable = true
 		return false, err
 	}
 	sshClient, err := DialWithRetry(ctx, "Dial", maxAttempts, func() (*ssh.Client, error) {
 		return ssh.Dial("tcp", endpoint, sshConfig)
 	})
 	if err != nil {
+		logger.With(
+			slog.Bool("agent.can_connect", false),
+		).ErrorContext(ctx, "CanConnect: error dialing", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
+		cs.Reachable = false
+		cs.Unreachable = true
 		return false, err
 	}
 	defer sshClient.Close()
 	session, err := sshClient.NewSession()
 	if err != nil {
+		logger.With(
+			slog.Bool("agent.can_connect", false),
+		).ErrorContext(ctx, "CanConnect: error creating agent session", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
+		cs.Reachable = false
+		cs.Unreachable = true
 		return false, err
 	}
 	defer session.Close()
 
+	logger.With(
+		slog.Bool("agent.can_connect", true),
+	).InfoContext(ctx, "CanConnect: agent is reachable", slog.Any("error", err))
 	span.SetStatus(codes.Ok, "")
 	cs.Reachable = true
+	cs.Unreachable = false
 	span.SetAttributes(attribute.Bool("agent.can_connect", cs.Reachable))
 	return cs.Reachable, nil
+}
+
+func PreviewUnreachable(ctx context.Context, connection *types.Connection, preview bool) bool {
+	ctx, span := Tracer.Start(ctx, "mid/provider/executor.PreviewUnreachable", trace.WithAttributes(
+		attribute.String("exec.strategy", "rpc"),
+		attribute.String("connection.host", *connection.Host),
+		attribute.Bool("preview", preview),
+	))
+	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *connection.Host),
+		slog.Bool("preview", preview),
+	)
+
+	// if preview: attempt connection and return false if unreachable but true if reachable
+	// if not preview: attempt connection but always return false
+
+	connectAttempts := 10
+	if preview {
+		connectAttempts = 4
+	}
+
+	logger.InfoContext(
+		ctx,
+		fmt.Sprintf("PreviewUnreachable: using connection attempts: %d", connectAttempts),
+		slog.Int("connection_attempts", connectAttempts),
+	)
+
+	canConnect, err := CanConnect(ctx, connection, connectAttempts)
+
+	span.SetAttributes(attribute.Bool("agent.can_connect", canConnect))
+
+	if err != nil {
+		span.SetAttributes(attribute.String("agent.can_connect.error", err.Error()))
+	}
+
+	span.SetStatus(codes.Ok, "")
+
+	if canConnect {
+		logger.InfoContext(ctx, "PreviewUnreachable: connection attempt succeeded")
+	} else if preview {
+		logger.WarnContext(ctx, "PreviewUnreachable: connection attempt failed")
+	} else {
+		logger.ErrorContext(ctx, "PreviewUnreachable: connection attempt failed")
+	}
+
+	if !preview {
+		return false
+	}
+
+	return canConnect
 }
 
 func CallAgent[I any, O any](
@@ -176,11 +341,26 @@ func CallAgent[I any, O any](
 		telemetry.OtelJSON("rpc.args", call.Args),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("rpc.function", string(call.RPCFunction)),
+	)
+
+	logger.InfoContext(
+		ctx,
+		fmt.Sprintf("CallAgent: calling RPC function %q", string(call.RPCFunction)),
+		telemetry.SlogJSON("call", call),
+	)
 
 	var zero rpc.RPCResult[O]
 
 	cs, err := Acquire(ctx, connection)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return zero, err
+	}
+
+	if cs.Unreachable {
+		err = ErrUnreachable
 		span.SetStatus(codes.Error, err.Error())
 		return zero, err
 	}
@@ -191,7 +371,7 @@ func CallAgent[I any, O any](
 		return zero, err
 	}
 
-	res, err := midagent.Call[I, O](cs.Agent, call)
+	res, err := midagent.Call[I, O](ctx, cs.Agent, call)
 	if err == nil {
 		span.SetStatus(codes.Ok, "")
 	} else {
@@ -202,6 +382,22 @@ func CallAgent[I any, O any](
 		attribute.String("rpc.uuid", res.UUID),
 		telemetry.OtelJSON("rpc.result", res.Result),
 	)
+
+	if res.Error != "" || err != nil {
+		logger.ErrorContext(
+			ctx,
+			"CallAgent: got result",
+			slog.Any("error", err),
+			slog.String("rpc.error", res.Error),
+			telemetry.SlogJSON("rpc.result", res),
+		)
+	} else {
+		logger.InfoContext(
+			ctx,
+			"CallAgent: got result",
+			telemetry.SlogJSON("rpc.result", res),
+		)
+	}
 
 	if res.Error != "" {
 		span.SetAttributes(attribute.String("rpc.error", res.Error))
@@ -232,20 +428,41 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 		attribute.Bool("preview", preview),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *connection.Host),
+		slog.Bool("preview", preview),
+	)
+
+	logger.InfoContext(
+		ctx,
+		"AnsibleExecute: executing task",
+		telemetry.SlogJSON("args", args),
+	)
 
 	var zero O
 
 	call, err := args.ToRPCCall()
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
+		logger.ErrorContext(ctx, "AnsibleExecute: failed to convert args to RPC call", slog.Any("error", err))
 		return zero, err
 	}
 	call.Args.Check = preview
+
+	if PreviewUnreachable(ctx, connection, preview) {
+		err = ErrUnreachable
+		span.SetAttributes(attribute.Bool("unreachable", true))
+		span.SetAttributes(attribute.Bool("ansible.success", false))
+		span.SetStatus(codes.Error, err.Error())
+		logger.WarnContext(ctx, "AnsibleExecute: bailing early due to unreachable host")
+		return zero, err
+	}
 
 	callResult, err := CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, connection, call)
 	if err != nil {
 		span.SetAttributes(attribute.Bool("ansible.success", false))
 		span.SetStatus(codes.Error, err.Error())
+		logger.ErrorContext(ctx, "AnsibleExecute: failed to call agent", slog.Any("error", err))
 		return zero, err
 	}
 
@@ -255,9 +472,18 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 	)
 
 	if !callResult.Result.Success {
+		logger.WarnContext(ctx, "AnsibleExecute: not successful, extracting error information")
 		maybeReturn, maybeReturnErr := rpc.AnyToJSONT[O](callResult.Result.Result)
+		if maybeReturnErr != nil {
+			span.SetAttributes(
+				attribute.String("ansible.return.decode_error", maybeReturnErr.Error()),
+			)
+			logger.WarnContext(ctx, "AnsibleExecute: call result conversion failed", slog.Any("error", err))
+		}
+
 		msg := maybeReturn.GetMsg()
 		if msg != "" {
+			logger.InfoContext(ctx, "AnsibleExecute: using msg for error string", slog.String("msg", msg))
 			err = fmt.Errorf("error running module %q: %s", call.Args.Name, msg)
 		} else {
 			err = fmt.Errorf(
@@ -266,17 +492,25 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 				callResult.Result.Stderr,
 				callResult.Result.Stdout,
 			)
-		}
-		if maybeReturnErr != nil {
-			span.SetAttributes(
-				attribute.String("ansible.return.decode_error", maybeReturnErr.Error()),
+			logger.WarnContext(
+				ctx,
+				"AnsibleExecute: no msg found, using stderr and stdout",
+				slog.String("stderr", string(callResult.Result.Stderr)),
+				slog.String("stdout", string(callResult.Result.Stdout)),
 			)
 		}
+
 		span.SetAttributes(
 			attribute.String("ansible.msg", msg),
 			telemetry.OtelJSON("ansible.return", maybeReturn),
 		)
 		span.SetStatus(codes.Error, err.Error())
+		logger.InfoContext(
+			ctx,
+			"AnsibleExecute: returning errored result",
+			slog.Any("error", err),
+			telemetry.SlogJSON("return", maybeReturn),
+		)
 		return maybeReturn, err
 	}
 
@@ -286,6 +520,12 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 		attribute.String("ansible.msg", returns.GetMsg()),
 	)
 	if err != nil {
+		logger.ErrorContext(
+			ctx,
+			"AnsibleExecute: error decoding result",
+			slog.Any("error", err),
+			telemetry.SlogJSON("return", returns),
+		)
 		span.SetAttributes(
 			attribute.String("ansible.return.decode_error", err.Error()),
 		)
@@ -294,6 +534,11 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 		return returns, err
 	}
 
+	logger.InfoContext(
+		ctx,
+		"AnsibleExecute: returning result",
+		telemetry.SlogJSON("return", returns),
+	)
 	span.SetStatus(codes.Ok, "")
 	return returns, nil
 }
@@ -303,24 +548,34 @@ func DisconnectAll(ctx context.Context) error {
 		attribute.String("exec.strategy", "rpc"),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx)
 
-	var err error
+	var multierr error
 
 	for id, cs := range AgentPool.Items() {
-		cs.Mutex.Lock()
-		err = errors.Join(err, cs.Agent.Disconnect())
+		logger.InfoContext(ctx, fmt.Sprintf("DisconnectAll: disconnecting %d", id))
+		cs.SetupAgentMutex.Lock()
+		cs.CanConnectMutex.Lock()
+		err := cs.Agent.Disconnect(ctx)
+		multierr = errors.Join(multierr, err)
 		cs.Agent = nil
 		cs.Reachable = false
-		cs.Mutex.Unlock()
+		cs.SetupAgentMutex.Unlock()
+		cs.CanConnectMutex.Unlock()
 		AgentPool.Delete(id)
+		logger.InfoContext(ctx, fmt.Sprintf("DisconnectAll: disconnected %d", id), slog.Any("error", err))
 	}
 
-	return err
+	logger.InfoContext(ctx, "DisconnectAll: finished disconnecting all", slog.Any("error", multierr))
+	return multierr
 }
 
 func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (string, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.StageFile")
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *connection.Host),
+	)
 
 	cs, err := Acquire(ctx, connection)
 	if err != nil {
@@ -334,13 +589,16 @@ func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (
 		return "", err
 	}
 
-	remotePath, err := midagent.StageFile(cs.Agent, f)
+	logger.InfoContext(ctx, "StageFile: staging file")
+	remotePath, err := midagent.StageFile(ctx, cs.Agent, f)
 	span.SetAttributes(attribute.String("remote_path", remotePath))
 	if err != nil {
+		logger.ErrorContext(ctx, "StageFile: error staging file", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
 		return remotePath, err
 	}
 
+	logger.InfoContext(ctx, "StageFile: finished staging file", slog.String("remote_path", remotePath))
 	span.SetStatus(codes.Ok, "")
 	return remotePath, nil
 }
@@ -403,10 +661,17 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 				attribute.Int("retry.attempt", try),
 			))
 			defer subspan.End()
+			logger := telemetry.LoggerFromContext(ctx).With(
+				slog.Int("retry.attempt", try),
+				slog.Int("retry.max_attempts", maxAttempts),
+			)
+
+			logger.InfoContext(ctx, "DialWithRetry.Attempt: starting attempt")
 
 			var result T
 			result, userError = f()
 			if userError == nil {
+				logger.InfoContext(ctx, "DialWithRetry.Attempt: success")
 				subspan.SetStatus(codes.Ok, "")
 				return true, result, nil
 			}
@@ -417,7 +682,9 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 					try,
 					userError,
 				)
+				p.GetLogger(ctx).ErrorStatus(err.Error())
 				subspan.SetStatus(codes.Error, err.Error())
+				logger.ErrorContext(ctx, "DialWithRetry.Attempt: giving up", slog.Any("error", err))
 				return true, nil, err
 			}
 			var limit string
@@ -426,16 +693,20 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 			} else {
 				limit = fmt.Sprintf("%d", maxAttempts)
 			}
-			p.GetLogger(ctx).InfoStatusf(
+			msg := fmt.Sprintf(
 				"%s %d/%s failed: retrying",
 				msg,
 				dials,
 				limit,
 			)
+			subspan.SetStatus(codes.Error, msg)
+			p.GetLogger(ctx).InfoStatus(msg)
+			logger.InfoContext(ctx, fmt.Sprintf("DialWithRetry.Attempt: %s", msg))
 			return false, nil, nil
 		},
 	})
 	if ok && err == nil {
+		p.GetLogger(ctx).InfoStatusf("%s: success", msg)
 		span.SetStatus(codes.Ok, "")
 		return data.(T), nil
 	}
@@ -451,39 +722,4 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 
 	span.SetStatus(codes.Ok, "")
 	return t, nil
-}
-
-func StartAgent(ctx context.Context, connection *types.Connection) (*midagent.Agent, error) {
-	ctx, span := Tracer.Start(ctx, "mid/provider/executor.StartAgent", trace.WithAttributes(
-		attribute.String("exec.strategy", "rpc"),
-		attribute.String("connection.host", *connection.Host),
-	))
-	defer span.End()
-
-	sshConfig, endpoint, err := ConnectionToSSHClientConfig(connection)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-
-	sshClient, err := DialWithRetry(ctx, "Dial", 10, func() (*ssh.Client, error) {
-		return ssh.Dial("tcp", endpoint, sshConfig)
-	})
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-
-	a := &midagent.Agent{
-		Client: sshClient,
-	}
-
-	err = midagent.Connect(a)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return nil, err
-	}
-
-	span.SetStatus(codes.Ok, "")
-	return a, nil
 }

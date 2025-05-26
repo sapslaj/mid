@@ -143,13 +143,41 @@ func (r Apt) runApt(
 	))
 	defer span.End()
 
+	returnFailed := func(err error) ansible.AptReturn {
+		return ansible.AptReturn{
+			AnsibleCommonReturns: ansible.AnsibleCommonReturns{
+				Changed: true,
+				Failed:  true,
+				Msg:     ptr.Of(err.Error()),
+			},
+		}
+	}
+	returnUnreachable := func(err error) ansible.AptReturn {
+		if err == nil {
+			err = executor.ErrUnreachable
+		}
+		return ansible.AptReturn{
+			AnsibleCommonReturns: ansible.AnsibleCommonReturns{
+				Changed: true,
+				Failed:  false,
+				Msg:     ptr.Of(err.Error()),
+			},
+		}
+	}
+
 	var err error
 	call, err := parameters.ToRPCCall()
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return ansible.AptReturn{}, err
+		return returnFailed(err), err
 	}
 	call.Args.Check = preview
+
+	if executor.PreviewUnreachable(ctx, connection, preview) {
+		span.SetAttributes(attribute.Bool("unreachable", true))
+		span.SetStatus(codes.Ok, "")
+		return returnUnreachable(err), nil
+	}
 
 	var callResult rpc.RPCResult[rpc.AnsibleExecuteResult]
 	var result ansible.AptReturn
@@ -168,18 +196,12 @@ func (r Apt) runApt(
 			if errors.Is(err, executor.ErrUnreachable) && preview {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
-				return ansible.AptReturn{
-					AnsibleCommonReturns: ansible.AnsibleCommonReturns{
-						Changed: true,
-						Failed:  false,
-						Msg:     ptr.Of(err.Error()),
-					},
-				}, nil
+				return returnUnreachable(err), nil
 			}
 			attemptSpan.SetStatus(codes.Error, err.Error())
 			span.SetStatus(codes.Error, err.Error())
 			attemptSpan.End()
-			return ansible.AptReturn{}, err
+			return returnFailed(err), err
 		}
 
 		result, err = ansible.AptReturnFromRPCResult(callResult)
@@ -187,7 +209,7 @@ func (r Apt) runApt(
 			attemptSpan.SetStatus(codes.Error, err.Error())
 			span.SetStatus(codes.Error, err.Error())
 			attemptSpan.End()
-			return ansible.AptReturn{}, err
+			return returnFailed(err), err
 		}
 
 		shouldRetry := false
@@ -329,6 +351,7 @@ func (r Apt) Diff(
 		types.DiffTriggers(olds, news),
 	)
 
+	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
 	span.SetStatus(codes.Ok, "")
 	return diff, nil
 }

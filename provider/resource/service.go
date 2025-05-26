@@ -107,6 +107,7 @@ func (r Service) Diff(
 	)
 
 	span.SetStatus(codes.Ok, "")
+	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
 	return diff, nil
 }
 

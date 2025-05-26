@@ -137,6 +137,7 @@ func (r Package) Diff(
 	diff = types.MergeDiffResponses(diff, types.DiffTriggers(olds, news))
 
 	span.SetStatus(codes.Ok, "")
+	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
 	return diff, nil
 }
 

@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"os"
 	"time"
 
+	"github.com/go-slog/otelslog"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -16,19 +18,59 @@ import (
 	"github.com/sapslaj/mid/pkg/env"
 )
 
+type ContextKey string
+
+const LoggerContextKey ContextKey = "sapslaj.mid.logger"
+
+func NewLogger() *slog.Logger {
+	return slog.New(
+		otelslog.NewHandler(
+			slog.NewTextHandler(
+				os.Stdout,
+				&slog.HandlerOptions{
+					AddSource: true,
+					Level:     slog.LevelDebug,
+				},
+			),
+		),
+	)
+}
+
+func ContextWithLogger(ctx context.Context, logger *slog.Logger) context.Context {
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	if logger == nil {
+		logger = NewLogger()
+	}
+	return context.WithValue(ctx, LoggerContextKey, logger)
+}
+
+func LoggerFromContext(ctx context.Context) *slog.Logger {
+	if ctx == nil {
+		ctx = context.TODO()
+	}
+	logger, ok := ctx.Value(LoggerContextKey).(*slog.Logger)
+	if !ok || logger == nil {
+		return NewLogger()
+	}
+	return logger
+}
+
 func StartTelemetry() func() {
 	// NOTE: Telemetry is _ONLY_ set up if `PULUMI_MID_OTLP_ENDPOINT` is set.
 	// There is _NO_ default value for this. This means that this telemetry is
 	// *OPT-IN* and only if you have an OTLP endpoint to send things to.
 	// I (@sapslaj) vow to never do opt-out telemetry of my own will.
 
+	logger := NewLogger()
 	endpoint, err := env.GetDefault("PULUMI_MID_OTLP_ENDPOINT", "")
 	if err != nil {
-		slog.Error("error getting otel OTLP endpoint", slog.Any("error", err))
+		logger.Error("error getting otel OTLP endpoint", slog.Any("error", err))
 		return func() {}
 	}
 	if endpoint == "" {
-		slog.Info("telemetry disabled")
+		logger.Info("telemetry disabled")
 		return func() {}
 	}
 
@@ -41,7 +83,7 @@ func StartTelemetry() func() {
 		),
 	)
 	if err != nil {
-		slog.Error("error setting up otlptrace", slog.Any("error", err))
+		logger.Error("error setting up otlptrace", slog.Any("error", err))
 		return func() {}
 	}
 
@@ -53,7 +95,7 @@ func StartTelemetry() func() {
 		),
 	)
 	if err != nil {
-		slog.Error("error setting up otel resource", slog.Any("error", err))
+		logger.Error("error setting up otel resource", slog.Any("error", err))
 		return func() {}
 	}
 
@@ -65,13 +107,13 @@ func StartTelemetry() func() {
 		),
 	)
 
-	slog.Info("started telemetry", slog.String("otel_endpoint", endpoint))
+	logger.Info("started telemetry", slog.String("otel_endpoint", endpoint))
 
 	return func() {
-		slog.Info("stopping telemetry", slog.String("otel_endpoint", endpoint))
+		logger.Info("stopping telemetry", slog.String("otel_endpoint", endpoint))
 		time.Sleep(10 * time.Second)
 		exporter.Shutdown(ctx)
-		slog.Info("telemetry stopped", slog.String("otel_endpoint", endpoint))
+		logger.Info("telemetry stopped", slog.String("otel_endpoint", endpoint))
 	}
 }
 
