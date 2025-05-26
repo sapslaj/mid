@@ -26,7 +26,7 @@ func NewLogger() *slog.Logger {
 	return slog.New(
 		otelslog.NewHandler(
 			slog.NewTextHandler(
-				os.Stdout,
+				os.Stderr,
 				&slog.HandlerOptions{
 					AddSource: true,
 					Level:     slog.LevelDebug,
