@@ -19,11 +19,12 @@ func TestResourceSystemdService(t *testing.T) {
 	defer harness.Close()
 
 	tests := map[string]struct {
-		props  resource.PropertyMap
-		before string
-		create string
-		update string
-		delete string
+		props        resource.PropertyMap
+		before       string
+		beforeCreate string
+		create       string
+		update       string
+		delete       string
 	}{
 		"start service": {
 			props: resource.PropertyMap{
@@ -53,6 +54,27 @@ func TestResourceSystemdService(t *testing.T) {
 			create: "systemctl status cron.service | grep 'cron.service; enabled' && systemctl status cron.service | grep 'inactive (dead)'",
 			delete: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 		},
+		"service unit not defined during create preview": {
+			props: resource.PropertyMap{
+				"name":   resource.NewStringProperty("mid-systemd-service-test.service"),
+				"ensure": resource.NewStringProperty("started"),
+				"enabled": resource.NewBoolProperty(true),
+			},
+			before: "sudo rm -f /etc/systemd/system/mid-systemd-service-test.service ; sudo systemctl daemon-reload",
+			beforeCreate: `cat << EOF | sudo tee /etc/systemd/system/mid-systemd-service-test.service
+[Unit]
+Description=systemd service test
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/echo test
+[Install]
+WantedBy=multi-user.target
+EOF
+sudo systemctl daemon-reload
+sudo systemctl disable --now mid-systemd-service-test.service
+`,
+			create: "systemctl status mid-systemd-service-test.service ; systemctl status mid-systemd-service-test.service | grep 'mid-systemd-service-test.service; enabled' && systemctl status mid-systemd-service-test.service | grep 'inactive (dead)'",
+		},
 	}
 
 	for name, tc := range tests {
@@ -75,6 +97,13 @@ func TestResourceSystemdService(t *testing.T) {
 			})
 			if !assert.NoError(t, err) {
 				return
+			}
+
+			if tc.beforeCreate != "" {
+				t.Logf("%s: running before create commands", name)
+				if !harness.AssertCommand(t, tc.beforeCreate) {
+					return
+				}
 			}
 
 			t.Logf("%s: sending create request", name)

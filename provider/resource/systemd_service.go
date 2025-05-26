@@ -140,6 +140,27 @@ func (r SystemdService) Create(
 		if !canConnect {
 			return id, state, nil
 		}
+
+		systemdInfo, err := executor.AnsibleExecute[
+			ansible.SystemdInfoParameters,
+			ansible.SystemdInfoReturn,
+		](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return id, state, err
+		}
+		if systemdInfo.Units == nil {
+			// some reason couldn't get unit list, assume that it will be fine.
+			// TODO: log warning?
+			span.SetStatus(codes.Ok, "")
+			return id, state, nil
+		}
+		_, unitPresent := (*systemdInfo.Units)[*input.Name]
+		if !unitPresent {
+			// Unit isn't present during preview, which might be expected.
+			span.SetStatus(codes.Ok, "")
+			return id, state, nil
+		}
 	}
 
 	_, err = executor.AnsibleExecute[
@@ -245,6 +266,29 @@ func (r SystemdService) Update(
 		if !canConnect {
 			return olds, nil
 		}
+
+		systemdInfo, err := executor.AnsibleExecute[
+			ansible.SystemdInfoParameters,
+			ansible.SystemdInfoReturn,
+		](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return olds, err
+		}
+		if systemdInfo.Units == nil {
+			// some reason couldn't get unit list, assume that it will be fine.
+			// TODO: log warning?
+			state := r.updateState(olds, news, true)
+			span.SetStatus(codes.Ok, "")
+			return state, nil
+		}
+		_, unitPresent := (*systemdInfo.Units)[*news.Name]
+		if !unitPresent {
+			// Unit isn't present during preview, which might be expected.
+			span.SetStatus(codes.Ok, "")
+			state := r.updateState(olds, news, true)
+			return state, nil
+		}
 	}
 
 	result, err := executor.AnsibleExecute[
@@ -325,6 +369,28 @@ func (r SystemdService) Delete(
 		}
 		span.SetStatus(codes.Error, err.Error())
 		return err
+	}
+
+	systemdInfo, err := executor.AnsibleExecute[
+		ansible.SystemdInfoParameters,
+		ansible.SystemdInfoReturn,
+	](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	if systemdInfo.Units == nil {
+		// some reason couldn't get unit list, assume that it will be fine.
+		// TODO: log warning?
+		span.SetStatus(codes.Ok, "")
+		return nil
+	}
+	_, unitPresent := (*systemdInfo.Units)[*props.Name]
+	if !unitPresent {
+		// Unit might have been removed from system. In this case it is okay to
+		// delete from state.
+		span.SetStatus(codes.Ok, "")
+		return nil
 	}
 
 	_, err = executor.AnsibleExecute[
