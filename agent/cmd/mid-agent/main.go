@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/log"
 	"github.com/sapslaj/mid/version"
 )
 
@@ -30,7 +31,7 @@ func main() {
 			),
 			&slog.HandlerOptions{
 				AddSource: true,
-				Level:     slog.LevelDebug,
+				Level:     log.LogLevelFromEnv(),
 			},
 		),
 	).With(slog.String("side", "remote"))

@@ -16,12 +16,11 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/sapslaj/mid/pkg/env"
+	"github.com/sapslaj/mid/pkg/log"
 )
 
-type ContextKey string
-
-const LoggerContextKey ContextKey = "sapslaj.mid.logger"
-
+// NewLogger is very similar to `log.NewLogger` except that it includes an
+// otelslog handler.
 func NewLogger() *slog.Logger {
 	return slog.New(
 		otelslog.NewHandler(
@@ -29,13 +28,15 @@ func NewLogger() *slog.Logger {
 				os.Stderr,
 				&slog.HandlerOptions{
 					AddSource: true,
-					Level:     slog.LevelDebug,
+					Level:     log.LogLevelFromEnv(),
 				},
 			),
 		),
 	)
 }
 
+// ContextWithLogger is very similar to `log.ContextWithLogger` except that it
+// uses an otelslog log handler by default.
 func ContextWithLogger(ctx context.Context, logger *slog.Logger) context.Context {
 	if ctx == nil {
 		ctx = context.TODO()
@@ -43,20 +44,28 @@ func ContextWithLogger(ctx context.Context, logger *slog.Logger) context.Context
 	if logger == nil {
 		logger = NewLogger()
 	}
-	return context.WithValue(ctx, LoggerContextKey, logger)
+	return context.WithValue(ctx, log.LoggerContextKey, logger)
 }
 
+// LoggerFromContext is very similar to `log.LoggerFromContext` except that it
+// uses an otelslog log handler by default.
 func LoggerFromContext(ctx context.Context) *slog.Logger {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
-	logger, ok := ctx.Value(LoggerContextKey).(*slog.Logger)
+	logger, ok := ctx.Value(log.LoggerContextKey).(*slog.Logger)
 	if !ok || logger == nil {
 		return NewLogger()
 	}
 	return logger
 }
 
+// SlogJSON JSON marshals any value into a slog.Attr.
+var SlogJSON = log.SlogJSON
+
+// StartTelemetry starts OpenTelemetry if PULUMI_MID_OTLP_ENDPOINT is set and
+// returns a shutdown function. If PULUMI_MID_OTLP_ENDPOINT is not set it will
+// do nothing and return an no-op function.
 func StartTelemetry() func() {
 	// NOTE: Telemetry is _ONLY_ set up if `PULUMI_MID_OTLP_ENDPOINT` is set.
 	// There is _NO_ default value for this. This means that this telemetry is
@@ -117,14 +126,7 @@ func StartTelemetry() func() {
 	}
 }
 
-func SlogJSON(key string, value any) slog.Attr {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return slog.String(key, "err!"+err.Error())
-	}
-	return slog.String(key, string(data))
-}
-
+// OtelJSON JSON marshals any value into an otel attribute.KeyValue
 func OtelJSON(key string, value any) attribute.KeyValue {
 	data, err := json.Marshal(value)
 	if err != nil {

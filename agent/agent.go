@@ -67,9 +67,10 @@ func (agent *Agent) RunLocal() {
 			close(ch)
 		}
 	}()
+	logger.Info("starting local decoder loop")
 	defer logger.Info("shutting down decoder loop")
 	for agent.Running.Load() {
-		logger.Info("waiting for next result")
+		logger.Debug("waiting for next result")
 		var res rpc.RPCResult[any]
 		err := agent.Decoder.Decode(&res)
 		if err != nil {
@@ -104,7 +105,7 @@ func (agent *Agent) RunLocal() {
 			continue
 		}
 
-		decoderLogger.Info("got result")
+		decoderLogger.Debug("got result")
 
 		ch, loaded := agent.InFlight.LoadAndDelete(res.UUID)
 		if !loaded {
@@ -115,7 +116,7 @@ func (agent *Agent) RunLocal() {
 			continue
 		}
 
-		decoderLogger.Info("channeling result")
+		decoderLogger.Debug("channeling result")
 		ch <- res
 	}
 }
@@ -306,11 +307,40 @@ func Connect(ctx context.Context, agent *Agent) error {
 		useSudo = false
 	}
 
+	envvars := []string{}
+	for _, envvar := range os.Environ() {
+		if !strings.HasPrefix(envvar, "PULUMI_MID_") {
+			continue
+		}
+		envvars = append(envvars, envvar)
+	}
+
+	logger.DebugContext(ctx, "passing through environment environment variables", telemetry.SlogJSON("env", envvars))
+
 	sessionStartCmd := ""
+	if len(envvars) > 0 {
+		sessionStartCmd += "env "
+		for _, envvar := range envvars {
+			sessionStartCmd += "'"
+			sessionStartCmd += envvar
+			sessionStartCmd += "' "
+		}
+	}
 	if useSudo {
 		sessionStartCmd += "sudo "
+		if len(envvars) > 0 {
+			sessionStartCmd += "--preserve-env="
+			for _, envvar := range envvars {
+				parts := strings.SplitN(envvar, "=", 2)
+				sessionStartCmd += parts[0]
+				sessionStartCmd += ","
+			}
+			sessionStartCmd += " "
+		}
 	}
 	sessionStartCmd += ".mid/mid-agent"
+
+	logger.DebugContext(ctx, "starting session", slog.String("cmd", sessionStartCmd))
 
 	// TODO: more extensible sudo configuration
 	err = agent.Session.Start(sessionStartCmd)

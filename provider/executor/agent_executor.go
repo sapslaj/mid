@@ -52,15 +52,15 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 		slog.String("connection.host", *cs.Connection.Host),
 	)
 
-	logger.InfoContext(ctx, "SetupAgent: waiting for lock")
+	logger.DebugContext(ctx, "SetupAgent: waiting for lock")
 	p.GetLogger(ctx).InfoStatus("waiting for existing connection attempts to finish...")
 	cs.SetupAgentMutex.Lock()
-	logger.InfoContext(ctx, "SetupAgent: lock acquired")
+	logger.DebugContext(ctx, "SetupAgent: lock acquired")
 	p.GetLogger(ctx).InfoStatus("") // clear info line
 	defer cs.SetupAgentMutex.Unlock()
 
 	if cs.Agent != nil && cs.Agent.Running.Load() {
-		logger.With(slog.Bool("agent.already_running", true)).InfoContext(ctx, "SetupAgent: agent is already running")
+		logger.With(slog.Bool("agent.already_running", true)).DebugContext(ctx, "SetupAgent: agent is already running")
 		span.SetAttributes(attribute.Bool("agent.already_running", true))
 		span.SetStatus(codes.Ok, "")
 		return nil
@@ -121,7 +121,7 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 		attribute.Bool("agent.can_connect", cs.Reachable),
 	)
 
-	logger.InfoContext(ctx, "SetupAgent: finished agent setup")
+	logger.DebugContext(ctx, "SetupAgent: finished agent setup")
 	return nil
 }
 
@@ -135,7 +135,7 @@ func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionStat
 		slog.String("connection.host", *connection.Host),
 	)
 
-	logger.InfoContext(ctx, "Acquire: calculating connection ID")
+	logger.DebugContext(ctx, "Acquire: calculating connection ID")
 	id, err := hashstructure.Hash(connection, hashstructure.FormatV2, nil)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -144,7 +144,7 @@ func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionStat
 	span.SetAttributes(attribute.Float64("agent.connection_id", float64(id)))
 	logger = logger.With(slog.Uint64("agent.connection_id", id))
 
-	logger.InfoContext(ctx, "Acquire: querying pool")
+	logger.DebugContext(ctx, "Acquire: querying pool")
 	cs, loaded := AgentPool.LoadOrStore(id, &ConnectionState{
 		ID:         id,
 		Connection: connection,
@@ -154,7 +154,7 @@ func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionStat
 	span.SetAttributes(attribute.Bool("agent.loaded", loaded))
 	span.SetStatus(codes.Ok, "")
 
-	logger.InfoContext(ctx, "Acquire: returning ConnectionState handle")
+	logger.DebugContext(ctx, "Acquire: returning ConnectionState handle")
 
 	return cs, nil
 }
@@ -170,17 +170,17 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 		slog.String("connection.host", *connection.Host),
 	)
 
-	logger.InfoContext(ctx, "CanConnect: acquiring ConnectionState handle")
+	logger.DebugContext(ctx, "CanConnect: acquiring ConnectionState handle")
 	cs, err := Acquire(ctx, connection)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
 
-	logger.InfoContext(ctx, "CanConnect: waiting for lock")
+	logger.DebugContext(ctx, "CanConnect: waiting for lock")
 	p.GetLogger(ctx).InfoStatus("waiting for existing connection attempts to finish...")
 	cs.CanConnectMutex.Lock()
-	logger.InfoContext(ctx, "CanConnect: lock acquired")
+	logger.DebugContext(ctx, "CanConnect: lock acquired")
 	p.GetLogger(ctx).InfoStatus("") // clear info line
 	defer cs.CanConnectMutex.Unlock()
 
@@ -204,7 +204,7 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 		logger.With(
 			slog.Bool("agent.can_connect", true),
 			slog.Bool("agent.can_connect.cached", true),
-		).InfoContext(ctx, "CanConnect: remote previously deemed reachable")
+		).DebugContext(ctx, "CanConnect: remote previously deemed reachable")
 		return true, nil
 	}
 
@@ -231,7 +231,7 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 		return false, nil
 	}
 
-	logger.InfoContext(ctx, "CanConnect: attempting connection")
+	logger.DebugContext(ctx, "CanConnect: attempting connection")
 	p.GetLogger(ctx).InfoStatus("attempting connection...")
 
 	sshConfig, endpoint, err := ConnectionToSSHClientConfig(cs.Connection)
@@ -271,7 +271,7 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 
 	logger.With(
 		slog.Bool("agent.can_connect", true),
-	).InfoContext(ctx, "CanConnect: agent is reachable", slog.Any("error", err))
+	).DebugContext(ctx, "CanConnect: agent is reachable", slog.Any("error", err))
 	span.SetStatus(codes.Ok, "")
 	cs.Reachable = true
 	cs.Unreachable = false
@@ -299,7 +299,7 @@ func PreviewUnreachable(ctx context.Context, connection *types.Connection, previ
 		connectAttempts = 4
 	}
 
-	logger.InfoContext(
+	logger.DebugContext(
 		ctx,
 		fmt.Sprintf("PreviewUnreachable: using connection attempts: %d", connectAttempts),
 		slog.Int("connection_attempts", connectAttempts),
@@ -316,7 +316,7 @@ func PreviewUnreachable(ctx context.Context, connection *types.Connection, previ
 	span.SetStatus(codes.Ok, "")
 
 	if canConnect {
-		logger.InfoContext(ctx, "PreviewUnreachable: connection attempt succeeded")
+		logger.DebugContext(ctx, "PreviewUnreachable: connection attempt succeeded")
 	} else if preview {
 		logger.WarnContext(ctx, "PreviewUnreachable: connection attempt failed")
 	} else {
@@ -345,7 +345,7 @@ func CallAgent[I any, O any](
 		slog.String("rpc.function", string(call.RPCFunction)),
 	)
 
-	logger.InfoContext(
+	logger.DebugContext(
 		ctx,
 		fmt.Sprintf("CallAgent: calling RPC function %q", string(call.RPCFunction)),
 		telemetry.SlogJSON("call", call),
@@ -392,7 +392,7 @@ func CallAgent[I any, O any](
 			telemetry.SlogJSON("rpc.result", res),
 		)
 	} else {
-		logger.InfoContext(
+		logger.DebugContext(
 			ctx,
 			"CallAgent: got result",
 			telemetry.SlogJSON("rpc.result", res),
@@ -433,7 +433,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 		slog.Bool("preview", preview),
 	)
 
-	logger.InfoContext(
+	logger.DebugContext(
 		ctx,
 		"AnsibleExecute: executing task",
 		telemetry.SlogJSON("args", args),
@@ -483,7 +483,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 
 		msg := maybeReturn.GetMsg()
 		if msg != "" {
-			logger.InfoContext(ctx, "AnsibleExecute: using msg for error string", slog.String("msg", msg))
+			logger.DebugContext(ctx, "AnsibleExecute: using msg for error string", slog.String("msg", msg))
 			err = fmt.Errorf("error running module %q: %s", call.Args.Name, msg)
 		} else {
 			err = fmt.Errorf(
@@ -505,7 +505,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 			telemetry.OtelJSON("ansible.return", maybeReturn),
 		)
 		span.SetStatus(codes.Error, err.Error())
-		logger.InfoContext(
+		logger.DebugContext(
 			ctx,
 			"AnsibleExecute: returning errored result",
 			slog.Any("error", err),
@@ -534,7 +534,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 		return returns, err
 	}
 
-	logger.InfoContext(
+	logger.DebugContext(
 		ctx,
 		"AnsibleExecute: returning result",
 		telemetry.SlogJSON("return", returns),
@@ -553,7 +553,7 @@ func DisconnectAll(ctx context.Context) error {
 	var multierr error
 
 	for id, cs := range AgentPool.Items() {
-		logger.InfoContext(ctx, fmt.Sprintf("DisconnectAll: disconnecting %d", id))
+		logger.DebugContext(ctx, fmt.Sprintf("DisconnectAll: disconnecting %d", id))
 		cs.SetupAgentMutex.Lock()
 		cs.CanConnectMutex.Lock()
 		err := cs.Agent.Disconnect(ctx)
@@ -563,10 +563,10 @@ func DisconnectAll(ctx context.Context) error {
 		cs.SetupAgentMutex.Unlock()
 		cs.CanConnectMutex.Unlock()
 		AgentPool.Delete(id)
-		logger.InfoContext(ctx, fmt.Sprintf("DisconnectAll: disconnected %d", id), slog.Any("error", err))
+		logger.DebugContext(ctx, fmt.Sprintf("DisconnectAll: disconnected %d", id), slog.Any("error", err))
 	}
 
-	logger.InfoContext(ctx, "DisconnectAll: finished disconnecting all", slog.Any("error", multierr))
+	logger.DebugContext(ctx, "DisconnectAll: finished disconnecting all", slog.Any("error", multierr))
 	return multierr
 }
 
@@ -589,7 +589,7 @@ func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (
 		return "", err
 	}
 
-	logger.InfoContext(ctx, "StageFile: staging file")
+	logger.DebugContext(ctx, "StageFile: staging file")
 	remotePath, err := midagent.StageFile(ctx, cs.Agent, f)
 	span.SetAttributes(attribute.String("remote_path", remotePath))
 	if err != nil {
@@ -598,7 +598,7 @@ func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (
 		return remotePath, err
 	}
 
-	logger.InfoContext(ctx, "StageFile: finished staging file", slog.String("remote_path", remotePath))
+	logger.DebugContext(ctx, "StageFile: finished staging file", slog.String("remote_path", remotePath))
 	span.SetStatus(codes.Ok, "")
 	return remotePath, nil
 }
@@ -666,12 +666,12 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 				slog.Int("retry.max_attempts", maxAttempts),
 			)
 
-			logger.InfoContext(ctx, "DialWithRetry.Attempt: starting attempt")
+			logger.DebugContext(ctx, "DialWithRetry.Attempt: starting attempt")
 
 			var result T
 			result, userError = f()
 			if userError == nil {
-				logger.InfoContext(ctx, "DialWithRetry.Attempt: success")
+				logger.DebugContext(ctx, "DialWithRetry.Attempt: success")
 				subspan.SetStatus(codes.Ok, "")
 				return true, result, nil
 			}
@@ -701,7 +701,7 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 			)
 			subspan.SetStatus(codes.Error, msg)
 			p.GetLogger(ctx).InfoStatus(msg)
-			logger.InfoContext(ctx, fmt.Sprintf("DialWithRetry.Attempt: %s", msg))
+			logger.DebugContext(ctx, fmt.Sprintf("DialWithRetry.Attempt: %s", msg))
 			return false, nil, nil
 		},
 	})
