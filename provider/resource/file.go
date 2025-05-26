@@ -2,7 +2,7 @@ package resource
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"path/filepath"
 
 	p "github.com/pulumi/pulumi-go-provider"
@@ -385,26 +385,6 @@ func (r File) runCreateUpdatePlay(
 		"ignore_errors":        preview,
 	})
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		if preview {
-			return state, nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return state, err
-	}
-
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
@@ -412,6 +392,11 @@ func (r File) runCreateUpdatePlay(
 		Tasks:       tasks,
 	})
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && preview {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return state, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
@@ -590,22 +575,6 @@ func (r File) Delete(
 		return err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
-
-	if !canConnect {
-		if config.GetDeleteUnreachable() {
-			return nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
@@ -617,6 +586,12 @@ func (r File) Delete(
 		},
 	})
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
+			span.SetStatus(codes.Ok, "")
+			return nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}

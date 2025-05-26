@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 
@@ -504,31 +505,19 @@ func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
 		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
-
-	if !canConnect {
-		if config.GetDeleteUnreachable() {
-			span.SetStatus(codes.Ok, "")
-			return nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
-	}
-
+	var err error
 	if r.canUseRPC(props.ExecArgs) {
 		_, err = r.runRPCExec(ctx, config.Connection, props, props.ExecArgs, "delete")
 	} else {
 		_, err = r.runRPCAnsibleExecute(ctx, config.Connection, props, props.ExecArgs, "delete")
 	}
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
+			span.SetStatus(codes.Ok, "")
+			return nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}

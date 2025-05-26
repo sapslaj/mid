@@ -2,7 +2,7 @@ package resource
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -136,16 +136,16 @@ func (r SystemdService) Create(
 	}
 
 	if preview {
-		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
-		if !canConnect {
-			return id, state, nil
-		}
-
 		systemdInfo, err := executor.AnsibleExecute[
 			ansible.SystemdInfoParameters,
 			ansible.SystemdInfoReturn,
 		](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return id, state, nil
+			}
 			span.SetStatus(codes.Error, err.Error())
 			return id, state, err
 		}
@@ -168,6 +168,11 @@ func (r SystemdService) Create(
 		ansible.SystemdServiceReturn,
 	](ctx, config.Connection, parameters, preview)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && preview {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return id, state, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
@@ -201,19 +206,18 @@ func (r SystemdService) Read(
 		return id, inputs, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
-
-	if !canConnect {
-		return id, inputs, SystemdServiceState{
-			SystemdServiceArgs: inputs,
-		}, nil
-	}
-
 	result, err := executor.AnsibleExecute[
 		ansible.SystemdServiceParameters,
 		ansible.SystemdServiceReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return id, inputs, SystemdServiceState{
+				SystemdServiceArgs: inputs,
+			}, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
@@ -262,16 +266,16 @@ func (r SystemdService) Update(
 	}
 
 	if preview {
-		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
-		if !canConnect {
-			return olds, nil
-		}
-
 		systemdInfo, err := executor.AnsibleExecute[
 			ansible.SystemdInfoParameters,
 			ansible.SystemdInfoReturn,
 		](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return olds, nil
+			}
 			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
@@ -296,6 +300,11 @@ func (r SystemdService) Update(
 		ansible.SystemdServiceReturn,
 	](ctx, config.Connection, parameters, preview)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && preview {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return olds, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
@@ -355,27 +364,17 @@ func (r SystemdService) Delete(
 		return err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
-
-	if !canConnect {
-		if config.GetDeleteUnreachable() {
-			return nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
 	systemdInfo, err := executor.AnsibleExecute[
 		ansible.SystemdInfoParameters,
 		ansible.SystemdInfoReturn,
 	](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
+			span.SetStatus(codes.Ok, "")
+			return nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
@@ -398,6 +397,12 @@ func (r SystemdService) Delete(
 		ansible.SystemdServiceReturn,
 	](ctx, config.Connection, parameters, false)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
+			span.SetStatus(codes.Ok, "")
+			return nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}

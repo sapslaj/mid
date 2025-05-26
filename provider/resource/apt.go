@@ -162,8 +162,20 @@ func (r Apt) runApt(
 			attribute.Int("retry.attempt", attempt),
 		))
 
+		// TODO: maybe refactor this to use executor.AnsibleExecute?
 		callResult, err = executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](attemptCtx, connection, call)
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return ansible.AptReturn{
+					AnsibleCommonReturns: ansible.AnsibleCommonReturns{
+						Changed: true,
+						Failed:  false,
+						Msg:     ptr.Of(err.Error()),
+					},
+				}, nil
+			}
 			attemptSpan.SetStatus(codes.Error, err.Error())
 			span.SetStatus(codes.Error, err.Error())
 			attemptSpan.End()
@@ -355,13 +367,6 @@ func (r Apt) Create(
 		return id, state, err
 	}
 
-	if preview {
-		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
-		if !canConnect {
-			return id, state, nil
-		}
-	}
-
 	_, err = r.runApt(ctx, config.Connection, parameters, preview)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -397,17 +402,15 @@ func (r Apt) Read(
 		return id, inputs, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
-
-	if !canConnect {
-		span.SetStatus(codes.Ok, "")
-		return id, inputs, AptState{
-			AptArgs: inputs,
-		}, nil
-	}
-
 	result, err := r.runApt(ctx, config.Connection, parameters, true)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return id, inputs, AptState{
+				AptArgs: inputs,
+			}, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
@@ -445,13 +448,6 @@ func (r Apt) Update(
 
 	if r.taskParametersNeedsName(news) && news.Name == nil && news.Names == nil && olds.Name != nil {
 		news.Name = olds.Name
-	}
-
-	if preview {
-		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
-		if !canConnect {
-			return olds, nil
-		}
 	}
 
 	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
@@ -592,26 +588,14 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 		return err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
-
-	if !canConnect {
-		if config.GetDeleteUnreachable() {
-			return nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
-	}
-
 	_, err = r.runApt(ctx, config.Connection, parameters, false)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
+			span.SetStatus(codes.Ok, "")
+			return nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}

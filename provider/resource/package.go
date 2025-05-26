@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
 
 	p "github.com/pulumi/pulumi-go-provider"
@@ -182,6 +181,7 @@ func (r Package) Create(
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && preview {
 			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
 			return id, state, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
@@ -217,13 +217,6 @@ func (r Package) Read(
 		return id, inputs, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
-
-	if !canConnect {
-		span.SetAttributes(attribute.Bool("unreachable", true))
-		return id, inputs, state, nil
-	}
-
 	result, err := executor.AnsibleExecute[
 		ansible.PackageParameters,
 		ansible.PackageReturn,
@@ -231,7 +224,8 @@ func (r Package) Read(
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
-			return id, inputs, state, nil
+			span.SetStatus(codes.Ok, "")
+			return id, inputs, PackageState{}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
@@ -273,27 +267,6 @@ func (r Package) Update(
 		news.Name = olds.Name
 	}
 
-	connectAttempts := 10
-	if preview {
-		connectAttempts = 4
-	}
-	canConnect, err := executor.CanConnect(ctx, config.Connection, connectAttempts)
-
-	if !canConnect {
-		span.SetAttributes(attribute.Bool("unreachable", true))
-		if preview {
-			return olds, nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return olds, err
-	}
-
 	if news.Ensure != nil && *news.Ensure == "absent" {
 		parameters, err := r.argsToTaskParameters(news)
 		if err != nil {
@@ -308,6 +281,7 @@ func (r Package) Update(
 		if err != nil {
 			if errors.Is(err, executor.ErrUnreachable) && preview {
 				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
 				return olds, nil
 			}
 			span.SetStatus(codes.Error, err.Error())
@@ -340,7 +314,7 @@ func (r Package) Update(
 			packageStateMap[name] = newState
 		}
 	} else {
-		err = errors.New("we somehow forgot the package name, oops")
+		err := errors.New("we somehow forgot the package name, oops")
 		span.SetStatus(codes.Error, err.Error())
 		return PackageState{}, err
 	}
@@ -380,6 +354,11 @@ func (r Package) Update(
 			ansible.PackageReturn,
 		](ctx, config.Connection, parameters, preview)
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return olds, nil
+			}
 			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
@@ -398,6 +377,11 @@ func (r Package) Update(
 			ansible.PackageReturn,
 		](ctx, config.Connection, parameters, preview)
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return olds, nil
+			}
 			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
@@ -430,25 +414,6 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 		Ensure: ptr.Of("absent"),
 	})
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
-
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
-
-	if !canConnect {
-		if config.GetDeleteUnreachable() {
-			span.SetAttributes(attribute.Bool("unreachable", true))
-			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
-			span.SetStatus(codes.Ok, "")
-			return nil
-		}
-
-		if err == nil {
-			err = fmt.Errorf("cannot connect to host")
-		} else {
-			err = fmt.Errorf("cannot connect to host: %w", err)
-		}
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}

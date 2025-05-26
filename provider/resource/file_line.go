@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -143,11 +144,6 @@ func (r FileLine) Create(
 	}
 
 	if preview {
-		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
-		if !canConnect {
-			return id, state, nil
-		}
-
 		stat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
@@ -158,6 +154,11 @@ func (r FileLine) Create(
 			},
 		})
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return id, state, nil
+			}
 			span.SetStatus(codes.Error, err.Error())
 			return id, state, err
 		}
@@ -173,6 +174,11 @@ func (r FileLine) Create(
 		ansible.LineinfileReturn,
 	](ctx, config.Connection, parameters, preview)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && preview {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return id, state, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
 	}
@@ -202,19 +208,18 @@ func (r FileLine) Read(
 		return id, inputs, state, err
 	}
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 4)
-
-	if !canConnect {
-		return id, inputs, FileLineState{
-			FileLineArgs: inputs,
-		}, nil
-	}
-
 	result, err := executor.AnsibleExecute[
 		ansible.LineinfileParameters,
 		ansible.LineinfileReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return id, inputs, FileLineState{
+				FileLineArgs: inputs,
+			}, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
@@ -249,11 +254,6 @@ func (r FileLine) Update(
 	}
 
 	if preview {
-		canConnect, _ := executor.CanConnect(ctx, config.Connection, 4)
-		if !canConnect {
-			return olds, nil
-		}
-
 		stat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
@@ -264,6 +264,11 @@ func (r FileLine) Update(
 			},
 		})
 		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && preview {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return olds, nil
+			}
 			span.SetStatus(codes.Error, err.Error())
 			return olds, err
 		}
@@ -280,6 +285,11 @@ func (r FileLine) Update(
 		ansible.LineinfileReturn,
 	](ctx, config.Connection, parameters, preview)
 	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && preview {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return olds, nil
+		}
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err
 	}
