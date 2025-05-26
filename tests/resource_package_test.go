@@ -14,7 +14,7 @@ func TestResourcePackage(t *testing.T) {
 	t.Parallel()
 
 	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.QEMUBackend,
+		Backend: testmachine.DockerBackend,
 	})
 	defer harness.Close()
 
