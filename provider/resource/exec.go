@@ -427,6 +427,7 @@ func (r Exec) Create(
 	}
 
 	if preview {
+		span.SetAttributes(telemetry.OtelJSON("state", state))
 		return id, state, nil
 	}
 
@@ -435,6 +436,7 @@ func (r Exec) Create(
 	} else {
 		state, err = r.runRPCAnsibleExecute(ctx, config.Connection, state, input, "create")
 	}
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
@@ -477,6 +479,7 @@ func (r Exec) Update(
 	} else {
 		olds, err = r.runRPCAnsibleExecute(ctx, config.Connection, olds, news, "update")
 	}
+	span.SetAttributes(telemetry.OtelJSON("state", olds))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err

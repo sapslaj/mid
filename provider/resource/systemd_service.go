@@ -114,6 +114,7 @@ func (r SystemdService) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(SystemdServiceState{}, input, true)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
@@ -200,6 +201,7 @@ func (r SystemdService) Read(
 		ansible.SystemdServiceReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
+		span.SetAttributes(telemetry.OtelJSON("state", state))
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
@@ -212,6 +214,7 @@ func (r SystemdService) Read(
 	}
 
 	state = r.updateState(state, inputs, result.IsChanged())
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
@@ -256,6 +259,7 @@ func (r SystemdService) Update(
 			ansible.SystemdInfoReturn,
 		](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
 		if err != nil {
+			span.SetAttributes(telemetry.OtelJSON("state", olds))
 			if errors.Is(err, executor.ErrUnreachable) && preview {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
@@ -268,6 +272,7 @@ func (r SystemdService) Update(
 			// some reason couldn't get unit list, assume that it will be fine.
 			// TODO: log warning?
 			state := r.updateState(olds, news, true)
+			span.SetAttributes(telemetry.OtelJSON("state", state))
 			span.SetStatus(codes.Ok, "")
 			return state, nil
 		}
@@ -276,6 +281,7 @@ func (r SystemdService) Update(
 			// Unit isn't present during preview, which might be expected.
 			span.SetStatus(codes.Ok, "")
 			state := r.updateState(olds, news, true)
+			span.SetAttributes(telemetry.OtelJSON("state", state))
 			return state, nil
 		}
 	}
@@ -285,6 +291,7 @@ func (r SystemdService) Update(
 		ansible.SystemdServiceReturn,
 	](ctx, config.Connection, parameters, preview)
 	if err != nil {
+		span.SetAttributes(telemetry.OtelJSON("state", olds))
 		if errors.Is(err, executor.ErrUnreachable) && preview {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
@@ -295,6 +302,7 @@ func (r SystemdService) Update(
 	}
 
 	state := r.updateState(olds, news, result.IsChanged())
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	span.SetStatus(codes.Ok, "")
 	return state, nil

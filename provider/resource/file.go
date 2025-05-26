@@ -456,11 +456,13 @@ func (r File) Create(
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
+		span.SetAttributes(telemetry.OtelJSON("state", state))
 		return "", state, err
 	}
 	span.SetAttributes(attribute.String("id", id))
 
 	state, err = r.runCreateUpdatePlay(ctx, state, input, preview)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, state, err
@@ -484,6 +486,7 @@ func (r File) Read(
 	defer span.End()
 
 	state, err := r.runCreateUpdatePlay(ctx, state, inputs, true)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
@@ -509,6 +512,7 @@ func (r File) Update(
 	defer span.End()
 
 	olds, err := r.runCreateUpdatePlay(ctx, olds, news, preview)
+	span.SetAttributes(telemetry.OtelJSON("state", olds))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return olds, err

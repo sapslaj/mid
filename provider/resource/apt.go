@@ -368,6 +368,7 @@ func (r Apt) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(AptState{}, input, true)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {

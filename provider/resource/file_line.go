@@ -130,6 +130,7 @@ func (r FileLine) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(FileLineState{}, input, true)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
@@ -205,6 +206,7 @@ func (r FileLine) Read(
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
+		span.SetAttributes(telemetry.OtelJSON("state", state))
 		span.SetStatus(codes.Error, err.Error())
 		return id, inputs, state, err
 	}
@@ -214,6 +216,7 @@ func (r FileLine) Read(
 		ansible.LineinfileReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
+		span.SetAttributes(telemetry.OtelJSON("state", state))
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
@@ -226,6 +229,7 @@ func (r FileLine) Read(
 	}
 
 	state = r.updateState(state, inputs, result.IsChanged())
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
@@ -276,6 +280,7 @@ func (r FileLine) Update(
 		if !stat.Result.Exists {
 			// file doesn't exist yet during preview
 			state := r.updateState(olds, news, true)
+			span.SetAttributes(telemetry.OtelJSON("state", state))
 			span.SetStatus(codes.Ok, "")
 			return state, nil
 		}
@@ -296,6 +301,7 @@ func (r FileLine) Update(
 	}
 
 	state := r.updateState(olds, news, result.IsChanged())
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	span.SetStatus(codes.Ok, "")
 	return state, nil

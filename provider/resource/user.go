@@ -161,6 +161,7 @@ func (r User) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(UserState{}, input, true)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
@@ -219,6 +220,7 @@ func (r User) Read(
 		ansible.UserReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
+		span.SetAttributes(telemetry.OtelJSON("state", state))
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
@@ -231,6 +233,7 @@ func (r User) Read(
 	}
 
 	state = r.updateState(state, inputs, result.IsChanged())
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	span.SetStatus(codes.Ok, "")
 	return id, inputs, state, nil
@@ -264,6 +267,7 @@ func (r User) Update(
 		ansible.UserReturn,
 	](ctx, config.Connection, parameters, preview)
 	if err != nil {
+		span.SetAttributes(telemetry.OtelJSON("state", olds))
 		if errors.Is(err, executor.ErrUnreachable) && preview {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
@@ -274,6 +278,7 @@ func (r User) Update(
 	}
 
 	state := r.updateState(olds, news, result.IsChanged())
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	span.SetStatus(codes.Ok, "")
 	return state, nil

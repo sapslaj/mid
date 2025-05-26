@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
-	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -55,6 +54,7 @@ func (r Package) argsToTaskParameters(input PackageArgs) (ansible.PackageParamet
 }
 
 func (r Package) updateState(olds PackageState, news PackageArgs, changed bool) PackageState {
+	olds.PackageArgs = news
 	if news.Ensure != nil {
 		olds.Ensure = *news.Ensure
 	} else {
@@ -152,6 +152,7 @@ func (r Package) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(PackageState{}, input, true)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 
 	id, err := resource.NewUniqueHex(name, 8, 0)
 	if err != nil {
@@ -231,6 +232,7 @@ func (r Package) Read(
 	}
 
 	span.SetStatus(codes.Ok, "")
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 	return id, inputs, state, nil
 }
 
@@ -307,7 +309,7 @@ func (r Package) Update(
 		if _, exists := packageStateMap[*olds.Name]; !exists {
 			packageStateMap[*olds.Name] = "absent"
 		}
-	} else {
+	} else if olds.Names != nil {
 		for _, name := range *olds.Names {
 			if _, exists := packageStateMap[name]; !exists {
 				packageStateMap[name] = "absent"
@@ -375,6 +377,7 @@ func (r Package) Update(
 	}
 
 	state := r.updateState(olds, news, changed)
+	span.SetAttributes(telemetry.OtelJSON("state", state))
 	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
@@ -392,15 +395,12 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(PackageArgs{
-		Name:   props.Name,
-		Names:  props.Names,
-		Ensure: ptr.Of("absent"),
-	})
+	parameters, err := r.argsToTaskParameters(props.PackageArgs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+	parameters.State = "absent"
 
 	_, err = executor.AnsibleExecute[
 		ansible.PackageParameters,
