@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
 
+	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -24,20 +26,34 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 		attribute.String("ansible.playbook", string(playbook)),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *connection.Host),
+	)
 
+	logger.InfoContext(ctx, "RunPlaybook: creating temp dir")
 	dir, err := os.MkdirTemp("", "pulumi-mid")
 	if err != nil {
+		logger.ErrorContext(ctx, "RunPlaybook: error creating temp dir", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
 	defer os.RemoveAll(dir)
+	logger.InfoContext(ctx, "RunPlaybook: created temp dir", slog.String("dir", dir))
 
 	playbookPath := filepath.Join(dir, "play.yaml")
+	logger.InfoContext(ctx, "RunPlaybook: writing playbook", slog.String("playbook_path", playbookPath))
 	err = os.WriteFile(playbookPath, playbook, 0600)
 	if err != nil {
+		logger.ErrorContext(
+			ctx,
+			"RunPlaybook: error writing playbook",
+			slog.String("playbook_path", playbookPath),
+			slog.Any("error", err),
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
+	logger.InfoContext(ctx, "RunPlaybook: wrote playbook playbook", slog.String("playbook_path", playbookPath))
 
 	inventoryVars := map[string]any{
 		"ansible_host":            *connection.Host,
@@ -54,8 +70,15 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	}
 	if connection.PrivateKey != nil {
 		privateKeyPath := filepath.Join(dir, "private-key.pem")
+		logger.InfoContext(ctx, "RunPlaybook: writing private key file", slog.String("private_key_path", privateKeyPath))
 		err = os.WriteFile(privateKeyPath, []byte(*connection.PrivateKey), 0400)
 		if err != nil {
+			logger.ErrorContext(
+				ctx,
+				"RunPlaybook: error writing private key file",
+				slog.String("private_key_path", privateKeyPath),
+				slog.Any("error", err),
+			)
 			return nil, err
 		}
 		inventoryVars["ansible_ssh_private_key_file"] = privateKeyPath
@@ -68,6 +91,7 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	// TODO: perDialTimeout support?
 	// TODO: privateKeyPassword support?
 
+	logger.InfoContext(ctx, "RunPlaybook: building inventory data")
 	inventoryData, err := json.Marshal(map[string]any{
 		"all": map[string]any{
 			"hosts": map[string]any{
@@ -77,17 +101,34 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 		},
 	})
 	if err != nil {
-		return nil, err
-	}
-	span.SetAttributes(attribute.String("ansible.inventory", string(inventoryData)))
-
-	inventoryPath := filepath.Join(dir, "inventory.yaml")
-	err = os.WriteFile(inventoryPath, inventoryData, 0600)
-	if err != nil {
+		logger.ErrorContext(
+			ctx,
+			"RunPlaybook: error building inventory data",
+			slog.String("inventory_data", string(inventoryData)),
+			slog.Any("error", err),
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return nil, err
 	}
+	span.SetAttributes(attribute.String("ansible.inventory", string(inventoryData)))
+	logger.InfoContext(ctx, "RunPlaybook: built inventory data", slog.String("inventory_data", string(inventoryData)))
 
+	inventoryPath := filepath.Join(dir, "inventory.yaml")
+	logger.InfoContext(ctx, "RunPlaybook: writing inventory file", slog.String("inventory_path", inventoryPath))
+	err = os.WriteFile(inventoryPath, inventoryData, 0600)
+	if err != nil {
+		logger.ErrorContext(
+			ctx,
+			"RunPlaybook: error writing inventory file",
+			slog.String("inventory_path", string(inventoryPath)),
+			slog.Any("error", err),
+		)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+	logger.InfoContext(ctx, "RunPlaybook: wrote inventory file", slog.String("inventory_path", inventoryPath))
+
+	logger.InfoContext(ctx, "RunPlaybook: building ansible-playbook command")
 	cmd := exec.CommandContext(ctx, "ansible-playbook", "-i", inventoryPath, playbookPath, "--diff")
 	cmd.Env = append(os.Environ(),
 		"ANSIBLE_CALLBACK_WHITELIST=json",
@@ -100,6 +141,13 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 	cmd.Stderr = stderrBuffer
 	stdoutBuffer := &bytes.Buffer{}
 	cmd.Stdout = stdoutBuffer
+
+	logger.InfoContext(
+		ctx,
+		"running ansible-playbook command",
+		telemetry.SlogJSON("cmd_args", cmd.Args),
+		slog.String("cmd_dir", cmd.Dir),
+	)
 
 	err = cmd.Run()
 
@@ -121,12 +169,31 @@ func RunPlaybook(ctx context.Context, connection *types.Connection, playbook []b
 			stdout,
 			err,
 		)
+		logger.ErrorContext(
+			ctx,
+			"RunPlaybook: ansible-playbook command failed",
+			telemetry.SlogJSON("cmd_args", cmd.Args),
+			slog.String("cmd_dir", cmd.Dir),
+			slog.Int("cmd_exit_code", exitCode),
+			slog.String("cmd_stderr", stderr),
+			slog.String("cmd_stdout", stdout),
+			slog.Any("error", err),
+		)
 		span.SetStatus(codes.Error, err.Error())
 		return stdoutBuffer.Bytes(), err
 	}
 
+	logger.InfoContext(
+		ctx,
+		"RunPlaybook: ansible-playbook command succeeded",
+		telemetry.SlogJSON("cmd_args", cmd.Args),
+		slog.String("cmd_dir", cmd.Dir),
+		slog.Int("cmd_exit_code", exitCode),
+		slog.String("cmd_stderr", stderr),
+		slog.String("cmd_stdout", stdout),
+	)
 	span.SetStatus(codes.Ok, "")
-	return stdoutBuffer.Bytes(), nil
+	return []byte(stdout), nil
 }
 
 type PlayOutputItemMetadataDuration struct {
@@ -211,6 +278,9 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 		attribute.String("connection.host", *connection.Host),
 	))
 	defer span.End()
+	logger := telemetry.LoggerFromContext(ctx).With(
+		slog.String("connection.host", *connection.Host),
+	)
 
 	var playOutput PlayOutput
 
@@ -221,6 +291,7 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 		}
 	}
 
+	logger.InfoContext(ctx, "RunPlay: doing connection attempt", slog.Int("connection_attempts", connectAttempts))
 	canConnect, err := CanConnect(ctx, connection, connectAttempts)
 	if !canConnect || err != nil {
 		if err == nil {
@@ -229,9 +300,11 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 			err = errors.Join(ErrUnreachable, fmt.Errorf("cannot connect to host: %w", err))
 		}
 		span.SetStatus(codes.Error, err.Error())
+		logger.ErrorContext(ctx, "RunPlay: host unreachable", slog.Any("error", err))
 		return playOutput, err
 	}
 
+	logger.InfoContext(ctx, "RunPlay: building playbook")
 	playbook := []map[string]any{}
 	for _, play := range plays {
 		playbook = append(playbook, map[string]any{
@@ -243,22 +316,29 @@ func RunPlay(ctx context.Context, connection *types.Connection, plays ...Play) (
 			"tasks":        play.Tasks,
 		})
 	}
+	logger.InfoContext(ctx, "RunPlay: built playbook", telemetry.SlogJSON("playbook", playbook))
 
 	playbookData, err := json.Marshal(playbook)
 	if err != nil {
+		logger.ErrorContext(ctx, "RunPlay: error marshalling playbook", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
 		return playOutput, err
 	}
 
+	logger.InfoContext(ctx, "RunPlay: running playbook")
 	resultData, err := RunPlaybook(ctx, connection, playbookData)
+	logger.InfoContext(ctx, "RunPlay: finished running playbook", slog.String("result_data", string(resultData)))
 
 	playOutputErr := json.Unmarshal(resultData, &playOutput)
 	if playOutputErr != nil {
+		logger.ErrorContext(ctx, "RunPlay: error unmarshalling result", slog.Any("error", playOutputErr))
 		err = errors.Join(err, playOutputErr)
 	}
 	if err == nil {
 		span.SetStatus(codes.Ok, "")
+		logger.InfoContext(ctx, "RunPlay: got result", telemetry.SlogJSON("result", playOutput))
 	} else {
+		logger.ErrorContext(ctx, "RunPlay: got result", telemetry.SlogJSON("result", playOutput), slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
 	}
 	return playOutput, err
