@@ -7,6 +7,7 @@ import (
 	"context"
 	"reflect"
 
+	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
 	"github.com/sapslaj/mid/sdk/go/mid/types"
@@ -31,9 +32,12 @@ type Group struct {
 func NewGroup(ctx *pulumi.Context,
 	name string, args *GroupArgs, opts ...pulumi.ResourceOption) (*Group, error) {
 	if args == nil {
-		args = &GroupArgs{}
+		return nil, errors.New("missing one or more required arguments")
 	}
 
+	if args.Name == nil {
+		return nil, errors.New("invalid value for required argument 'Name'")
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Group
 	err := ctx.RegisterResource("mid:resource:Group", name, args, &resource, opts...)
@@ -73,7 +77,7 @@ type groupArgs struct {
 	GidMax    *int                 `pulumi:"gidMax"`
 	GidMin    *int                 `pulumi:"gidMin"`
 	Local     *bool                `pulumi:"local"`
-	Name      *string              `pulumi:"name"`
+	Name      string               `pulumi:"name"`
 	NonUnique *bool                `pulumi:"nonUnique"`
 	System    *bool                `pulumi:"system"`
 	Triggers  *types.TriggersInput `pulumi:"triggers"`
@@ -87,7 +91,7 @@ type GroupArgs struct {
 	GidMax    pulumi.IntPtrInput
 	GidMin    pulumi.IntPtrInput
 	Local     pulumi.BoolPtrInput
-	Name      pulumi.StringPtrInput
+	Name      pulumi.StringInput
 	NonUnique pulumi.BoolPtrInput
 	System    pulumi.BoolPtrInput
 	Triggers  types.TriggersInputPtrInput

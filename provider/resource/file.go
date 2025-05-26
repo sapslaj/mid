@@ -111,7 +111,6 @@ type FileStateStat struct {
 
 type FileState struct {
 	FileArgs
-	Path       string               `pulumi:"path"`
 	BackupFile *string              `pulumi:"backupFile,optional"`
 	Stat       FileStateStat        `pulumi:"stat"`
 	Triggers   types.TriggersOutput `pulumi:"triggers"`

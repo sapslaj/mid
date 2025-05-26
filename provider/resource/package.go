@@ -29,8 +29,7 @@ type PackageArgs struct {
 }
 
 type PackageState struct {
-	Name     *string              `pulumi:"name,optional"`
-	Names    *[]string            `pulumi:"names,optional"`
+	PackageArgs
 	Ensure   string               `pulumi:"ensure"`
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
@@ -56,10 +55,6 @@ func (r Package) argsToTaskParameters(input PackageArgs) (ansible.PackageParamet
 }
 
 func (r Package) updateState(olds PackageState, news PackageArgs, changed bool) PackageState {
-	if news.Name != nil || news.Names != nil {
-		olds.Name = news.Name
-		olds.Names = news.Names
-	}
 	if news.Ensure != nil {
 		olds.Ensure = *news.Ensure
 	} else {

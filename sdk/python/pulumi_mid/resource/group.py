@@ -24,13 +24,13 @@ class GroupArgs:
     def __init__(
         __self__,
         *,
+        name: pulumi.Input[str],
         ensure: Optional[pulumi.Input[str]] = None,
         force: Optional[pulumi.Input[bool]] = None,
         gid: Optional[pulumi.Input[int]] = None,
         gid_max: Optional[pulumi.Input[int]] = None,
         gid_min: Optional[pulumi.Input[int]] = None,
         local: Optional[pulumi.Input[bool]] = None,
-        name: Optional[pulumi.Input[str]] = None,
         non_unique: Optional[pulumi.Input[bool]] = None,
         system: Optional[pulumi.Input[bool]] = None,
         triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
@@ -38,6 +38,7 @@ class GroupArgs:
         """
         The set of arguments for constructing a Group resource.
         """
+        pulumi.set(__self__, "name", name)
         if ensure is not None:
             pulumi.set(__self__, "ensure", ensure)
         if force is not None:
@@ -50,14 +51,21 @@ class GroupArgs:
             pulumi.set(__self__, "gid_min", gid_min)
         if local is not None:
             pulumi.set(__self__, "local", local)
-        if name is not None:
-            pulumi.set(__self__, "name", name)
         if non_unique is not None:
             pulumi.set(__self__, "non_unique", non_unique)
         if system is not None:
             pulumi.set(__self__, "system", system)
         if triggers is not None:
             pulumi.set(__self__, "triggers", triggers)
+
+    @property
+    @pulumi.getter
+    def name(self) -> pulumi.Input[str]:
+        return pulumi.get(self, "name")
+
+    @name.setter
+    def name(self, value: pulumi.Input[str]):
+        pulumi.set(self, "name", value)
 
     @property
     @pulumi.getter
@@ -112,15 +120,6 @@ class GroupArgs:
     @local.setter
     def local(self, value: Optional[pulumi.Input[bool]]):
         pulumi.set(self, "local", value)
-
-    @property
-    @pulumi.getter
-    def name(self) -> Optional[pulumi.Input[str]]:
-        return pulumi.get(self, "name")
-
-    @name.setter
-    def name(self, value: Optional[pulumi.Input[str]]):
-        pulumi.set(self, "name", value)
 
     @property
     @pulumi.getter(name="nonUnique")
@@ -183,7 +182,7 @@ class Group(pulumi.CustomResource):
     def __init__(
         __self__,
         resource_name: str,
-        args: Optional[GroupArgs] = None,
+        args: GroupArgs,
         opts: Optional[pulumi.ResourceOptions] = None,
     ):
         """
@@ -243,6 +242,8 @@ class Group(pulumi.CustomResource):
             __props__.__dict__["gid_max"] = gid_max
             __props__.__dict__["gid_min"] = gid_min
             __props__.__dict__["local"] = local
+            if name is None and not opts.urn:
+                raise TypeError("Missing required property 'name'")
             __props__.__dict__["name"] = name
             __props__.__dict__["non_unique"] = non_unique
             __props__.__dict__["system"] = system

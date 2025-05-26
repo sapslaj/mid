@@ -51,10 +51,13 @@ export class Group extends pulumi.CustomResource {
    * @param args The arguments to use to populate this resource's properties.
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, args?: GroupArgs, opts?: pulumi.CustomResourceOptions) {
+  constructor(name: string, args: GroupArgs, opts?: pulumi.CustomResourceOptions) {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
+      if ((!args || args.name === undefined) && !opts.urn) {
+        throw new Error("Missing required property 'name'");
+      }
       resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["force"] = args ? args.force : undefined;
       resourceInputs["gid"] = args ? args.gid : undefined;
@@ -92,7 +95,7 @@ export interface GroupArgs {
   gidMax?: pulumi.Input<number>;
   gidMin?: pulumi.Input<number>;
   local?: pulumi.Input<boolean>;
-  name?: pulumi.Input<string>;
+  name: pulumi.Input<string>;
   nonUnique?: pulumi.Input<boolean>;
   system?: pulumi.Input<boolean>;
   triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;

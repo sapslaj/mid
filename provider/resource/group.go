@@ -20,7 +20,7 @@ import (
 type Group struct{}
 
 type GroupArgs struct {
-	Name      string               `pulumi:"name,optional"`
+	Name      string               `pulumi:"name"`
 	Ensure    *string              `pulumi:"ensure,optional"`
 	Force     *bool                `pulumi:"force,optional"`
 	Gid       *int                 `pulumi:"gid,optional"`
@@ -34,7 +34,6 @@ type GroupArgs struct {
 
 type GroupState struct {
 	GroupArgs
-	Name     string               `pulumi:"name"`
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 

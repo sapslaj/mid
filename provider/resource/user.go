@@ -47,7 +47,6 @@ type UserArgs struct {
 
 type UserState struct {
 	UserArgs
-	Name     string               `pulumi:"name"`
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 

@@ -151,7 +151,10 @@ func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		// ...
 
-		_, err = resource.NewPackage(ctx, "vim", nil, pulumi.Provider(provider))
+		_, err = resource.NewPackage(ctx, "vim", &resource.PackageArgs{
+			Name:   pulumi.String("vim"),
+			Ensure: pulumi.String("present"),
+		}, pulumi.Provider(provider))
 		if err != nil {
 			return err
 		}
@@ -202,7 +205,10 @@ Add some resources
 
 ```typescript
 // ...
-new mid.resource.Package("vim", {}, {
+new mid.resource.Package("vim", {
+  name: "vim",
+  ensure: "present",
+}, {
   provider: provider,
 });
 ```
@@ -245,7 +251,12 @@ provider = mid.Provider(
 Add some resources
 
 ```python
-vim = mid.resource.Package("vim", opts=pulumi.ResourceOptions(provider=provider))
+vim = mid.resource.Package(
+    "vim",
+    name="vim",
+    ensure="present",
+    opts=pulumi.ResourceOptions(provider=provider),
+)
 ```
 
 Go!
