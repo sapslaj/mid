@@ -5,7 +5,7 @@ testparallelism := "4"
 
 [group('sdk')]
 [group('provider')]
-build: provider sdk-go sdk-nodejs
+build: provider sdk-go sdk-nodejs sdk-python
 
 [group('sdk')]
 [group('provider')]
@@ -99,7 +99,7 @@ sdk-python: provider
   cp ./README.md ./sdk/python/
 
 [group('sdk')]
-sdk: sdk-go sdk-nodejs
+sdk: sdk-go sdk-nodejs sdk-python
 
 [group('examples')]
 examples-go:
@@ -117,7 +117,7 @@ examples-python:
   pulumi convert --cwd ./examples/yaml --logtostderr --generate-only --non-interactive --language python --out `pwd`/examples/python
 
 [group('examples')]
-examples: examples-go examples-nodejs
+examples: examples-go examples-nodejs examples-python
 
 [group('examples')]
 [group('test')]
