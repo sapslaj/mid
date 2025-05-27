@@ -27,8 +27,10 @@ import (
 
 // Serve the provider against Pulumi's Provider protocol.
 func main() {
-	shutdownTelemetry := telemetry.StartTelemetry()
-	defer shutdownTelemetry()
+	ts := telemetry.StartTelemetry()
+	defer ts.Shutdown()
+
 	defer executor.DisconnectAll(context.Background())
+
 	p.RunProvider(mid.Name, version.Version, mid.Provider())
 }

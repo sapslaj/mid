@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
+	"runtime"
+	"runtime/pprof"
 	"time"
 
 	"github.com/go-slog/otelslog"
@@ -63,67 +65,150 @@ func LoggerFromContext(ctx context.Context) *slog.Logger {
 // SlogJSON JSON marshals any value into a slog.Attr.
 var SlogJSON = log.SlogJSON
 
+type TelemetryStuff struct {
+	Context        context.Context
+	Logger         *slog.Logger
+	CpuprofileFile *os.File
+	MemprofileFile *os.File
+	OtlpExporter   *otlptrace.Exporter
+}
+
+func (ts *TelemetryStuff) Shutdown() {
+	ts.Logger.Debug("stopping telemetry")
+	if ts.OtlpExporter != nil {
+		ts.Logger.Debug("stopping OTLP exporter")
+		time.Sleep(10 * time.Second)
+		err := ts.OtlpExporter.Shutdown(ts.Context)
+		if err != nil {
+			ts.Logger.Error("error shutting down OTLP exporter", slog.Any("error", err))
+		}
+		ts.Logger.Debug("OTLP exporter stopped")
+	}
+
+	if ts.MemprofileFile != nil {
+		ts.Logger.Debug("running final GC")
+		runtime.GC()
+		ts.Logger.Debug("writting allocs to memprofile file")
+		err := pprof.Lookup("allocs").WriteTo(ts.MemprofileFile, 0)
+		if err != nil {
+			ts.Logger.Error("error writing memprofile", slog.Any("error", err))
+		}
+		err = ts.MemprofileFile.Close()
+		if err != nil {
+			ts.Logger.Error("error closing memprofile file", slog.Any("error", err))
+		}
+	}
+
+	if ts.CpuprofileFile != nil {
+		pprof.StopCPUProfile()
+		ts.CpuprofileFile.Close()
+	}
+}
+
 // StartTelemetry starts OpenTelemetry if PULUMI_MID_OTLP_ENDPOINT is set and
 // returns a shutdown function. If PULUMI_MID_OTLP_ENDPOINT is not set it will
 // do nothing and return an no-op function.
-func StartTelemetry() func() {
+func StartTelemetry() *TelemetryStuff {
 	// NOTE: Telemetry is _ONLY_ set up if `PULUMI_MID_OTLP_ENDPOINT` is set.
 	// There is _NO_ default value for this. This means that this telemetry is
 	// *OPT-IN* and only if you have an OTLP endpoint to send things to.
 	// I (@sapslaj) vow to never do opt-out telemetry of my own will.
 
-	logger := NewLogger()
-	endpoint, err := env.GetDefault("PULUMI_MID_OTLP_ENDPOINT", "")
+	ts := &TelemetryStuff{
+		Context: context.Background(),
+		Logger:  NewLogger(),
+	}
+
+	cpuprofilePath, err := env.GetDefault("PULUMI_MID_CPUPROFILE_PATH", "")
 	if err != nil {
-		logger.Error("error getting otel OTLP endpoint", slog.Any("error", err))
-		return func() {}
+		ts.Logger.Error("error getting cpuprofile path", slog.Any("error", err))
 	}
-	if endpoint == "" {
-		logger.Info("telemetry disabled")
-		return func() {}
+	if cpuprofilePath == "" {
+		ts.Logger.Debug("cpu profiling disabled")
+	} else {
+		ts.Logger = ts.Logger.With(slog.String("cpuprofile_path", cpuprofilePath))
+		ts.Logger.Info("cpu profiling enabled")
+		cpuprofileFile, err := os.Create(cpuprofilePath)
+		if err != nil {
+			ts.Logger.Error("error opening cpuprofile path", slog.Any("error", err))
+			goto memprofile
+		}
+		err = pprof.StartCPUProfile(cpuprofileFile)
+		if err != nil {
+			ts.Logger.Error("error starting CPU profiling", slog.Any("error", err))
+			goto memprofile
+		}
+		ts.CpuprofileFile = cpuprofileFile
 	}
 
-	ctx := context.Background()
-	exporter, err := otlptrace.New(
-		ctx,
-		otlptracegrpc.NewClient(
-			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(endpoint),
-		),
-	)
+memprofile:
+	memprofilePath, err := env.GetDefault("PULUMI_MID_MEMPROFILE_PATH", "")
 	if err != nil {
-		logger.Error("error setting up otlptrace", slog.Any("error", err))
-		return func() {}
+		ts.Logger.Error("error getting memprofile path", slog.Any("error", err))
+	}
+	if memprofilePath == "" {
+		ts.Logger.Debug("memory profiling disabled")
+	} else {
+		ts.Logger = ts.Logger.With(slog.String("memprofile_path", memprofilePath))
+		ts.Logger.Info("memory profiling enabled")
+		memprofileFile, err := os.Create(memprofilePath)
+		if err != nil {
+			ts.Logger.Error(
+				"error opening memprofile path",
+				slog.String("memprofile_path", memprofilePath),
+				slog.Any("error", err),
+			)
+			goto otel
+		}
+		ts.MemprofileFile = memprofileFile
 	}
 
-	res, err := resource.New(
-		context.Background(),
-		resource.WithAttributes(
-			attribute.String("service.name", "pulumi-resource-mid"),
-			attribute.String("library.language", "go"),
-		),
-	)
+otel:
+	otlpEndpoint, err := env.GetDefault("PULUMI_MID_OTLP_ENDPOINT", "")
 	if err != nil {
-		logger.Error("error setting up otel resource", slog.Any("error", err))
-		return func() {}
+		ts.Logger.Error("error getting otel OTLP endpoint", slog.Any("error", err))
+	}
+	if otlpEndpoint == "" {
+		ts.Logger.Debug("telemetry disabled")
+	} else {
+		ts.Logger = ts.Logger.With(slog.String("otlp_endpoint", otlpEndpoint))
+		ts.Logger.Info("telemetry enabled")
+		exporter, err := otlptrace.New(
+			ts.Context,
+			otlptracegrpc.NewClient(
+				otlptracegrpc.WithInsecure(),
+				otlptracegrpc.WithEndpoint(otlpEndpoint),
+			),
+		)
+		if err != nil {
+			ts.Logger.Error("error setting up otlptrace", slog.Any("error", err))
+			goto end
+		}
+
+		res, err := resource.New(
+			context.Background(),
+			resource.WithAttributes(
+				attribute.String("service.name", "pulumi-resource-mid"),
+				attribute.String("library.language", "go"),
+			),
+		)
+		if err != nil {
+			ts.Logger.Error("error setting up otel resource", slog.Any("error", err))
+			goto end
+		}
+
+		otel.SetTracerProvider(
+			sdktrace.NewTracerProvider(
+				sdktrace.WithSampler(sdktrace.AlwaysSample()),
+				sdktrace.WithBatcher(exporter),
+				sdktrace.WithResource(res),
+			),
+		)
 	}
 
-	otel.SetTracerProvider(
-		sdktrace.NewTracerProvider(
-			sdktrace.WithSampler(sdktrace.AlwaysSample()),
-			sdktrace.WithBatcher(exporter),
-			sdktrace.WithResource(res),
-		),
-	)
-
-	logger.Info("started telemetry", slog.String("otel_endpoint", endpoint))
-
-	return func() {
-		logger.Info("stopping telemetry", slog.String("otel_endpoint", endpoint))
-		time.Sleep(10 * time.Second)
-		exporter.Shutdown(ctx)
-		logger.Info("telemetry stopped", slog.String("otel_endpoint", endpoint))
-	}
+end:
+	ts.Logger.Debug("started telemetry")
+	return ts
 }
 
 // OtelJSON JSON marshals any value into an otel attribute.KeyValue

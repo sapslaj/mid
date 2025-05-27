@@ -33,9 +33,9 @@ func Must1[A any](a A, err error) A {
 }
 
 type ProviderTestHarness struct {
-	TestMachine   *testmachine.TestMachine
-	Provider      integration.Server
-	StopTelemetry func()
+	TestMachine *testmachine.TestMachine
+	Provider    integration.Server
+	Telemetry   *telemetry.TelemetryStuff
 }
 
 func NewProviderTestHarness(t *testing.T, tmConfig testmachine.Config) *ProviderTestHarness {
@@ -45,7 +45,7 @@ func NewProviderTestHarness(t *testing.T, tmConfig testmachine.Config) *Provider
 	harness := &ProviderTestHarness{}
 
 	t.Log("starting telemetry")
-	harness.StopTelemetry = telemetry.StartTelemetry()
+	harness.Telemetry = telemetry.StartTelemetry()
 
 	t.Log("creating new test machine")
 	harness.TestMachine, err = testmachine.New(t, tmConfig)
@@ -70,7 +70,7 @@ func NewProviderTestHarness(t *testing.T, tmConfig testmachine.Config) *Provider
 
 func (harness *ProviderTestHarness) Close() {
 	harness.TestMachine.Close()
-	harness.StopTelemetry()
+	harness.Telemetry.Shutdown()
 }
 
 func (harness *ProviderTestHarness) AssertCommand(t *testing.T, cmd string) bool {
