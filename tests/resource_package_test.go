@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sapslaj/mid/tests/testmachine"
@@ -19,25 +19,25 @@ func TestResourcePackage(t *testing.T) {
 	defer harness.Close()
 
 	tests := map[string]struct {
-		props  resource.PropertyMap
+		props  map[string]property.Value
 		create string
 		update string
 		delete string
 	}{
 		"installs vim": {
-			props: resource.PropertyMap{
-				"name": resource.NewStringProperty("vim"),
+			props: map[string]property.Value{
+				"name": property.New("vim"),
 			},
 			create: "test -f /usr/bin/vim",
 			delete: "test ! -f /usr/bin/vim",
 		},
 		"installs multiple packages": {
-			props: resource.PropertyMap{
-				"names": resource.NewArrayProperty([]resource.PropertyValue{
-					resource.NewStringProperty("curl"),
-					resource.NewStringProperty("wget"),
+			props: map[string]property.Value{
+				"names": property.New([]property.Value{
+					property.New("curl"),
+					property.New("wget"),
 				}),
-				"ensure": resource.NewStringProperty("latest"),
+				"ensure": property.New("latest"),
 			},
 			create: "test -f /usr/bin/curl && test -f /usr/bin/wget",
 			delete: "test ! -f /usr/bin/curl && test ! -f /usr/bin/wget",
@@ -50,19 +50,19 @@ func TestResourcePackage(t *testing.T) {
 			// WARN: do not use t.Parallel() here
 
 			t.Logf("%s: sending preview create request", name)
-			_, err := harness.Provider.Create(p.CreateRequest{
+			_, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:Package"),
-				Properties: tc.props,
-				Preview:    true,
+				Properties: property.NewMap(tc.props),
+				DryRun:     true,
 			})
 			if !assert.NoError(t, err) {
 				return
 			}
 
 			t.Logf("%s: sending create request", name)
-			createResponse, err := harness.Provider.Create(p.CreateRequest{
+			createResponse, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:Package"),
-				Properties: tc.props,
+				Properties: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -74,21 +74,21 @@ func TestResourcePackage(t *testing.T) {
 			}
 
 			t.Logf("%s: sending preview update request", name)
-			_, err = harness.Provider.Update(p.UpdateRequest{
-				Urn:     MakeURN("mid:resource:Package"),
-				Olds:    createResponse.Properties,
-				News:    tc.props,
-				Preview: true,
+			_, err = harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:Package"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
+				DryRun: true,
 			})
 			if !assert.NoError(t, err) {
 				return
 			}
 
 			t.Logf("%s: sending update request", name)
-			updateResponse, err := harness.Provider.Update(p.UpdateRequest{
-				Urn:  MakeURN("mid:resource:Package"),
-				Olds: createResponse.Properties,
-				News: tc.props,
+			updateResponse, err := harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:Package"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -104,7 +104,7 @@ func TestResourcePackage(t *testing.T) {
 			}
 
 			t.Logf("%s: sending delete request", name)
-			err = harness.Provider.Delete(p.DeleteRequest{
+			err = harness.Server.Delete(p.DeleteRequest{
 				Urn:        MakeURN("mid:resource:Package"),
 				Properties: updateResponse.Properties,
 			})

@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
@@ -16,7 +17,7 @@ import (
 
 type FileStat struct{}
 
-type FileStatInputs struct {
+type FileStatInput struct {
 	Path              string `pulumi:"path"`
 	FollowSymlinks    bool   `pulumi:"followSymlinks,optional"`
 	CalculateChecksum bool   `pulumi:"calculateChecksum,optional"`
@@ -30,8 +31,8 @@ type FileStatFileMode struct {
 	String    string `pulumi:"string"`
 }
 
-type FileStatOutputs struct {
-	FileStatInputs
+type FileStatOutput struct {
+	FileStatInput
 	Path           string            `pulumi:"path"`
 	Exists         bool              `pulumi:"exists"`
 	BaseName       *string           `pulumi:"baseName,optional"`
@@ -50,17 +51,20 @@ type FileStatOutputs struct {
 	SHA256Checksum *string           `pulumi:"sha256Checksum,optional"`
 }
 
-func (f FileStat) Call(ctx context.Context, input FileStatInputs) (FileStatOutputs, error) {
-	ctx, span := Tracer.Start(ctx, "mid:agent:fileStat.Call", trace.WithAttributes(
-		attribute.String("pulumi.function.token", "mid:agent:fileStat"),
-		telemetry.OtelJSON("pulumi.function.inputs", input),
+func (f FileStat) Invoke(
+	ctx context.Context,
+	req infer.FunctionRequest[FileStatInput],
+) (infer.FunctionResponse[FileStatOutput], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/agent/fileStat.Call", trace.WithAttributes(
+		attribute.String("pulumi.function", "mid:agent:fileStat"),
+		telemetry.OtelJSON("pulumi.input", req.Input),
 	))
 	defer span.End()
 
 	out, err := CallAgent[rpc.FileStatArgs, rpc.FileStatResult](ctx, rpc.RPCFileStat, rpc.FileStatArgs{
-		Path:              input.Path,
-		FollowSymlinks:    input.FollowSymlinks,
-		CalculateChecksum: input.CalculateChecksum,
+		Path:              req.Input.Path,
+		FollowSymlinks:    req.Input.FollowSymlinks,
+		CalculateChecksum: req.Input.CalculateChecksum,
 	})
 
 	if err == nil {
@@ -69,8 +73,8 @@ func (f FileStat) Call(ctx context.Context, input FileStatInputs) (FileStatOutpu
 		span.SetStatus(codes.Error, err.Error())
 	}
 
-	outputs := FileStatOutputs{
-		FileStatInputs: input,
+	output := FileStatOutput{
+		FileStatInput:  req.Input,
 		Path:           out.Path,
 		Exists:         out.Exists,
 		BaseName:       out.BaseName,
@@ -81,7 +85,7 @@ func (f FileStat) Call(ctx context.Context, input FileStatInputs) (FileStatOutpu
 	}
 
 	if out.FileMode != nil {
-		outputs.FileMode = &FileStatFileMode{
+		output.FileMode = &FileStatFileMode{
 			IsDir:     out.FileMode.IsDir(),
 			IsRegular: out.FileMode.IsRegular(),
 			Int:       int(*out.FileMode),
@@ -90,31 +94,33 @@ func (f FileStat) Call(ctx context.Context, input FileStatInputs) (FileStatOutpu
 		}
 	}
 	if out.ModifiedTime != nil {
-		outputs.ModifiedTime = ptr.Of(out.ModifiedTime.Format(time.RFC3339Nano))
+		output.ModifiedTime = ptr.Of(out.ModifiedTime.Format(time.RFC3339Nano))
 	}
 	if out.AccessTime != nil {
-		outputs.AccessTime = ptr.Of(out.AccessTime.Format(time.RFC3339Nano))
+		output.AccessTime = ptr.Of(out.AccessTime.Format(time.RFC3339Nano))
 	}
 	if out.CreateTime != nil {
-		outputs.CreateTime = ptr.Of(out.CreateTime.Format(time.RFC3339Nano))
+		output.CreateTime = ptr.Of(out.CreateTime.Format(time.RFC3339Nano))
 	}
 	if out.Dev != nil {
-		outputs.Dev = ptr.Of(int(*out.Dev))
+		output.Dev = ptr.Of(int(*out.Dev))
 	}
 	if out.Gid != nil {
-		outputs.Gid = ptr.Of(int(*out.Gid))
+		output.Gid = ptr.Of(int(*out.Gid))
 	}
 	if out.Inode != nil {
-		outputs.Inode = ptr.Of(int(*out.Inode))
+		output.Inode = ptr.Of(int(*out.Inode))
 	}
 	if out.Nlink != nil {
-		outputs.Nlink = ptr.Of(int(*out.Nlink))
+		output.Nlink = ptr.Of(int(*out.Nlink))
 	}
 	if out.Uid != nil {
-		outputs.Uid = ptr.Of(int(*out.Uid))
+		output.Uid = ptr.Of(int(*out.Uid))
 	}
 
-	span.SetAttributes(telemetry.OtelJSON("pulumi.function.outputs", outputs))
+	span.SetAttributes(telemetry.OtelJSON("pulumi.output", output))
 
-	return outputs, err
+	return infer.FunctionResponse[FileStatOutput]{
+		Output: output,
+	}, err
 }

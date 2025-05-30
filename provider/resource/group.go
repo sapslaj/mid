@@ -51,22 +51,19 @@ func (r Group) argsToTaskParameters(input GroupArgs) (ansible.GroupParameters, e
 	}, nil
 }
 
-func (r Group) updateState(olds GroupState, news GroupArgs, changed bool) GroupState {
-	olds.GroupArgs = news
-	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
-	return olds
+func (r Group) updateState(inputs GroupArgs, state GroupState, changed bool) GroupState {
+	state.GroupArgs = inputs
+	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	return state
 }
 
-func (r Group) Diff(
-	ctx context.Context,
-	id string,
-	olds GroupState,
-	news GroupArgs,
-) (p.DiffResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Group.Diff", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
+func (r Group) Diff(ctx context.Context, req infer.DiffRequest[GroupArgs, GroupState]) (infer.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Group.Diff", trace.WithAttributes(
+		attribute.String("pulumi.operation", "diff"),
+		attribute.String("pulumi.type", "mid:resource:Group"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
@@ -76,7 +73,7 @@ func (r Group) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	if news.Name != olds.Name {
+	if req.Inputs.Name != req.State.Name {
 		diff.HasChanges = true
 		diff.DetailedDiff["path"] = p.PropertyDiff{
 			Kind:      p.UpdateReplace,
@@ -86,7 +83,7 @@ func (r Group) Diff(
 
 	diff = types.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(olds, news, []string{
+		types.DiffAttributes(req.State, req.Inputs, []string{
 			"ensure",
 			"force",
 			"gid",
@@ -96,7 +93,7 @@ func (r Group) Diff(
 			"nonUnique",
 			"system",
 		}),
-		types.DiffTriggers(olds, news),
+		types.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -106,73 +103,94 @@ func (r Group) Diff(
 
 func (r Group) Create(
 	ctx context.Context,
-	name string,
-	input GroupArgs,
-	preview bool,
-) (string, GroupState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Group.Create", trace.WithAttributes(
-		attribute.String("name", name),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+	req infer.CreateRequest[GroupArgs],
+) (infer.CreateResponse[GroupState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Group.Create", trace.WithAttributes(
+		attribute.String("pulumi.operation", "create"),
+		attribute.String("pulumi.type", "mid:resource:Group"),
+		attribute.String("pulumi.name", req.Name),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	state := r.updateState(GroupState{}, input, true)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state := r.updateState(req.Inputs, GroupState{}, true)
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(name, 8, 0)
+	id, err := resource.NewUniqueHex(req.Name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return "", state, err
+		return infer.CreateResponse[GroupState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
-	span.SetAttributes(attribute.String("id", id))
+	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	parameters, err := r.argsToTaskParameters(input)
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[GroupState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	_, err = executor.AnsibleExecute[
 		ansible.GroupParameters,
 		ansible.GroupReturn,
-	](ctx, config.Connection, parameters, preview)
+	](ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, state, nil
+			return infer.CreateResponse[GroupState]{
+				ID:     id,
+				Output: state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[GroupState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, state, nil
+	return infer.CreateResponse[GroupState]{
+		ID:     id,
+		Output: state,
+	}, nil
 }
 
 func (r Group) Read(
 	ctx context.Context,
-	id string,
-	inputs GroupArgs,
-	state GroupState,
-) (string, GroupArgs, GroupState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Group.Read", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("inputs", inputs),
-		telemetry.OtelJSON("state", state),
+	req infer.ReadRequest[GroupArgs, GroupState],
+) (infer.ReadResponse[GroupArgs, GroupState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Group.Read", trace.WithAttributes(
+		attribute.String("pulumi.operation", "read"),
+		attribute.String("pulumi.type", "mid:resource:Group"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(inputs)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
-		span.SetAttributes(telemetry.OtelJSON("state", state))
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[GroupArgs, GroupState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
 	result, err := executor.AnsibleExecute[
@@ -180,92 +198,106 @@ func (r Group) Read(
 		ansible.GroupReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
-		span.SetAttributes(telemetry.OtelJSON("state", state))
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, inputs, GroupState{
-				GroupArgs: inputs,
+			return infer.ReadResponse[GroupArgs, GroupState]{
+				ID:     req.ID,
+				Inputs: req.Inputs,
+				State:  state,
 			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[GroupArgs, GroupState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
-	state = r.updateState(state, inputs, result.IsChanged())
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
-	return id, inputs, state, nil
+	return infer.ReadResponse[GroupArgs, GroupState]{
+		ID:     req.ID,
+		Inputs: req.Inputs,
+		State:  state,
+	}, nil
 }
 
 func (r Group) Update(
 	ctx context.Context,
-	id string,
-	olds GroupState,
-	news GroupArgs,
-	preview bool,
-) (GroupState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Group.Update", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
-		attribute.Bool("preview", preview),
+	req infer.UpdateRequest[GroupArgs, GroupState],
+) (infer.UpdateResponse[GroupState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Group.Update", trace.WithAttributes(
+		attribute.String("pulumi.operation", "update"),
+		attribute.String("pulumi.type", "mid:resource:Group"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(news)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[GroupState]{
+			Output: state,
+		}, err
 	}
 
 	result, err := executor.AnsibleExecute[
 		ansible.GroupParameters,
 		ansible.GroupReturn,
-	](ctx, config.Connection, parameters, preview)
+	](ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
-		span.SetAttributes(telemetry.OtelJSON("state", olds))
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return olds, nil
+			return infer.UpdateResponse[GroupState]{
+				Output: state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[GroupState]{
+			Output: state,
+		}, err
 	}
 
-	state := r.updateState(olds, news, result.IsChanged())
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
-	return state, nil
+	return infer.UpdateResponse[GroupState]{
+		Output: state,
+	}, nil
 }
 
-func (r Group) Delete(
-	ctx context.Context,
-	id string,
-	props GroupState,
-) error {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Group.Delete", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("props", props),
+func (r Group) Delete(ctx context.Context, req infer.DeleteRequest[GroupState]) (infer.DeleteResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Group.Delete", trace.WithAttributes(
+		attribute.String("pulumi.operation", "delete"),
+		attribute.String("pulumi.type", "mid:resource:Group"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
-	if props.Ensure != nil && *props.Ensure == "absent" {
+	if req.State.Ensure != nil && *req.State.Ensure == "absent" {
 		span.SetStatus(codes.Ok, "")
-		return nil
+		return infer.DeleteResponse{}, nil
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(props.GroupArgs)
+	parameters, err := r.argsToTaskParameters(req.State.GroupArgs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 	parameters.State = ansible.OptionalGroupState("absent")
 
@@ -278,12 +310,12 @@ func (r Group) Delete(
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
 			span.SetStatus(codes.Ok, "")
-			return nil
+			return infer.DeleteResponse{}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return nil
+	return infer.DeleteResponse{}, nil
 }

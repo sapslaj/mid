@@ -7,30 +7,34 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
 )
 
 type AgentPing struct{}
 
-type AgentPingInputs struct {
+type AgentPingInput struct {
 	Ping string `pulumi:"ping,optional"`
 }
 
-type AgentPingOutputs struct {
+type AgentPingOutput struct {
 	Ping string `pulumi:"ping"`
 	Pong string `pulumi:"pong"`
 }
 
-func (f AgentPing) Call(ctx context.Context, input AgentPingInputs) (AgentPingOutputs, error) {
-	ctx, span := Tracer.Start(ctx, "mid:agent:agentPing.Call", trace.WithAttributes(
-		attribute.String("pulumi.function.token", "mid:agent:agentPing"),
-		telemetry.OtelJSON("pulumi.function.inputs", input),
+func (f AgentPing) Invoke(
+	ctx context.Context,
+	req infer.FunctionRequest[AgentPingInput],
+) (infer.FunctionResponse[AgentPingOutput], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/agent/agentPing.Call", trace.WithAttributes(
+		attribute.String("pulumi.function", "mid:agent:agentPing"),
+		telemetry.OtelJSON("pulumi.input", req.Input),
 	))
 	defer span.End()
 
 	out, err := CallAgent[rpc.AgentPingArgs, rpc.AgentPingResult](ctx, rpc.RPCAgentPing, rpc.AgentPingArgs{
-		Ping: input.Ping,
+		Ping: req.Input.Ping,
 	})
 	if err == nil {
 		span.SetStatus(codes.Ok, "")
@@ -38,11 +42,13 @@ func (f AgentPing) Call(ctx context.Context, input AgentPingInputs) (AgentPingOu
 		span.SetStatus(codes.Error, err.Error())
 	}
 
-	outputs := AgentPingOutputs{
+	output := AgentPingOutput{
 		Ping: out.Ping,
 		Pong: out.Pong,
 	}
-	span.SetAttributes(telemetry.OtelJSON("pulumi.function.outputs", outputs))
+	span.SetAttributes(telemetry.OtelJSON("pulumi.output", output))
 
-	return outputs, err
+	return infer.FunctionResponse[AgentPingOutput]{
+		Output: output,
+	}, err
 }

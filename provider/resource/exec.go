@@ -104,7 +104,10 @@ func (r Exec) argsToRPCCall(input ExecArgs, lifecycle string) (rpc.RPCCall[rpc.E
 	}, nil
 }
 
-func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (ansible.CommandParameters, map[string]string, error) {
+func (r Exec) argsToTaskParameters(
+	input ExecArgs,
+	lifecycle string,
+) (ansible.CommandParameters, map[string]string, error) {
 	environment := map[string]string{}
 
 	var execCommand types.ExecCommand
@@ -151,37 +154,41 @@ func (r Exec) argsToTaskParameters(input ExecArgs, lifecycle string) (ansible.Co
 	}, environment, nil
 }
 
-func (r Exec) updateState(olds ExecState, news ExecArgs, changed bool) ExecState {
-	olds.ExecArgs = news
-	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
-	return olds
+func (r Exec) updateState(inputs ExecArgs, state ExecState, changed bool) ExecState {
+	state.ExecArgs = inputs
+	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	return state
 }
 
-func (r Exec) updateStateFromRPCResult(olds ExecState, news ExecArgs, result rpc.RPCResult[rpc.ExecResult]) ExecState {
+func (r Exec) updateStateFromRPCResult(
+	inputs ExecArgs,
+	state ExecState,
+	result rpc.RPCResult[rpc.ExecResult],
+) ExecState {
 	logging := types.ExecLoggingStdoutAndStderr
-	if news.Logging != nil {
-		logging = *news.Logging
+	if inputs.Logging != nil {
+		logging = *inputs.Logging
 	}
 	switch logging {
 	case types.ExecLoggingNone:
-		olds.Stderr = ""
-		olds.Stdout = ""
+		state.Stderr = ""
+		state.Stdout = ""
 	case types.ExecLoggingStderr:
-		olds.Stderr = string(result.Result.Stderr)
-		olds.Stdout = ""
+		state.Stderr = string(result.Result.Stderr)
+		state.Stdout = ""
 	case types.ExecLoggingStdout:
-		olds.Stderr = ""
-		olds.Stdout = string(result.Result.Stdout)
+		state.Stderr = ""
+		state.Stdout = string(result.Result.Stdout)
 	case types.ExecLoggingStdoutAndStderr:
-		olds.Stderr = string(result.Result.Stderr)
-		olds.Stdout = string(result.Result.Stdout)
+		state.Stderr = string(result.Result.Stderr)
+		state.Stdout = string(result.Result.Stdout)
 	default:
 		panic("unknown logging: " + logging)
 	}
-	return olds
+	return state
 }
 
-func (r Exec) updateStateFromOutput(olds ExecState, news ExecArgs, output ansible.CommandReturn) ExecState {
+func (r Exec) updateStateFromOutput(news ExecArgs, olds ExecState, output ansible.CommandReturn) ExecState {
 	logging := types.ExecLoggingStdoutAndStderr
 	if news.Logging != nil {
 		logging = *news.Logging
@@ -216,19 +223,19 @@ func (r Exec) updateStateFromOutput(olds ExecState, news ExecArgs, output ansibl
 func (r Exec) runRPCExec(
 	ctx context.Context,
 	connection *types.Connection,
+	inputs ExecArgs,
 	state ExecState,
-	input ExecArgs,
 	lifecycle string,
 ) (ExecState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.runRPCExec", trace.WithAttributes(
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Exec.runRPCExec", trace.WithAttributes(
 		attribute.String("connection.host", *connection.Host),
 		telemetry.OtelJSON("state", state),
-		telemetry.OtelJSON("input", input),
+		telemetry.OtelJSON("inputs", inputs),
 		attribute.String("lifecycle", lifecycle),
 	))
 	defer span.End()
 
-	call, err := r.argsToRPCCall(input, lifecycle)
+	call, err := r.argsToRPCCall(inputs, lifecycle)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
@@ -262,7 +269,7 @@ func (r Exec) runRPCExec(
 		return state, err
 	}
 
-	state = r.updateStateFromRPCResult(state, input, result)
+	state = r.updateStateFromRPCResult(inputs, state, result)
 	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
@@ -270,19 +277,19 @@ func (r Exec) runRPCExec(
 func (r Exec) runRPCAnsibleExecute(
 	ctx context.Context,
 	connection *types.Connection,
+	inputs ExecArgs,
 	state ExecState,
-	input ExecArgs,
 	lifecycle string,
 ) (ExecState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.runRPCAnsibleExecute", trace.WithAttributes(
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Exec.runRPCAnsibleExecute", trace.WithAttributes(
 		attribute.String("connection.host", *connection.Host),
 		telemetry.OtelJSON("state", state),
-		telemetry.OtelJSON("input", input),
+		telemetry.OtelJSON("inputs", inputs),
 		attribute.String("lifecycle", lifecycle),
 	))
 	defer span.End()
 
-	parameters, environment, err := r.argsToTaskParameters(input, lifecycle)
+	parameters, environment, err := r.argsToTaskParameters(inputs, lifecycle)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
@@ -349,21 +356,18 @@ func (r Exec) runRPCAnsibleExecute(
 		return state, err
 	}
 
-	state = r.updateStateFromOutput(state, input, result)
+	state = r.updateStateFromOutput(inputs, state, result)
 	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
-func (r Exec) Diff(
-	ctx context.Context,
-	id string,
-	olds ExecState,
-	news ExecArgs,
-) (p.DiffResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Diff", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
+func (r Exec) Diff(ctx context.Context, req infer.DiffRequest[ExecArgs, ExecState]) (infer.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Exec.Diff", trace.WithAttributes(
+		attribute.String("pulumi.operation", "diff"),
+		attribute.String("pulumi.type", "mid:resource:Exec"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
@@ -373,13 +377,13 @@ func (r Exec) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	if news.DeleteBeforeReplace != nil {
-		diff.DeleteBeforeReplace = *news.DeleteBeforeReplace
+	if req.Inputs.DeleteBeforeReplace != nil {
+		diff.DeleteBeforeReplace = *req.Inputs.DeleteBeforeReplace
 	}
 
 	diff = types.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(olds, news, []string{
+		types.DiffAttributes(req.State, req.Inputs, []string{
 			"create",
 			"update",
 			"delete",
@@ -388,7 +392,7 @@ func (r Exec) Diff(
 			"environment",
 			"logging",
 		}),
-		types.DiffTriggers(olds, news),
+		types.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -398,134 +402,154 @@ func (r Exec) Diff(
 
 func (r Exec) Create(
 	ctx context.Context,
-	name string,
-	input ExecArgs,
-	preview bool,
-) (string, ExecState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Create", trace.WithAttributes(
-		attribute.String("name", name),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+	req infer.CreateRequest[ExecArgs],
+) (infer.CreateResponse[ExecState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Exec.Create", trace.WithAttributes(
+		attribute.String("pulumi.operation", "create"),
+		attribute.String("pulumi.type", "mid:resource:Exec"),
+		attribute.String("pulumi.name", req.Name),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	state := r.updateState(ExecState{}, input, true)
+	state := r.updateState(req.Inputs, ExecState{}, true)
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(name, 8, 0)
+	id, err := resource.NewUniqueHex(req.Name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return "", state, err
+		return infer.CreateResponse[ExecState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
-	span.SetAttributes(attribute.String("id", id))
+	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	if r.canUseRPC(input) {
+	if r.canUseRPC(req.Inputs) {
 		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
 	} else {
 		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
 	}
 
-	if preview {
-		span.SetAttributes(telemetry.OtelJSON("state", state))
-		return id, state, nil
+	if req.DryRun {
+		return infer.CreateResponse[ExecState]{
+			ID:     id,
+			Output: state,
+		}, nil
 	}
 
-	if r.canUseRPC(input) {
-		state, err = r.runRPCExec(ctx, config.Connection, state, input, "create")
+	if r.canUseRPC(req.Inputs) {
+		state, err = r.runRPCExec(ctx, config.Connection, req.Inputs, state, "create")
 	} else {
-		state, err = r.runRPCAnsibleExecute(ctx, config.Connection, state, input, "create")
+		state, err = r.runRPCAnsibleExecute(ctx, config.Connection, req.Inputs, state, "create")
 	}
-	span.SetAttributes(telemetry.OtelJSON("state", state))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[ExecState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, state, nil
+	return infer.CreateResponse[ExecState]{
+		ID:     id,
+		Output: state,
+	}, nil
 }
 
 func (r Exec) Update(
 	ctx context.Context,
-	id string,
-	olds ExecState,
-	news ExecArgs,
-	preview bool,
-) (ExecState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Update", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
-		attribute.Bool("preview", preview),
+	req infer.UpdateRequest[ExecArgs, ExecState],
+) (infer.UpdateResponse[ExecState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Exec.Update", trace.WithAttributes(
+		attribute.String("pulumi.operation", "update"),
+		attribute.String("pulumi.type", "mid:resource:Exec"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if r.canUseRPC(news) {
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	if r.canUseRPC(req.Inputs) {
 		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
 	} else {
 		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
 	}
 
-	if preview {
-		return olds, nil
+	if req.DryRun {
+		return infer.UpdateResponse[ExecState]{
+			Output: state,
+		}, nil
 	}
 
 	var err error
-	if r.canUseRPC(news) {
-		olds, err = r.runRPCExec(ctx, config.Connection, olds, news, "update")
+	if r.canUseRPC(req.Inputs) {
+		state, err = r.runRPCExec(ctx, config.Connection, req.Inputs, state, "update")
 	} else {
-		olds, err = r.runRPCAnsibleExecute(ctx, config.Connection, olds, news, "update")
+		state, err = r.runRPCAnsibleExecute(ctx, config.Connection, req.Inputs, state, "update")
 	}
-	span.SetAttributes(telemetry.OtelJSON("state", olds))
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[ExecState]{
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return olds, nil
+	return infer.UpdateResponse[ExecState]{
+		Output: state,
+	}, nil
 }
 
-func (r Exec) Delete(ctx context.Context, id string, props ExecState) error {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Exec.Delete", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("props", props),
+func (r Exec) Delete(ctx context.Context, req infer.DeleteRequest[ExecState]) (infer.DeleteResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Exec.Delete", trace.WithAttributes(
+		attribute.String("pulumi.operation", "delete"),
+		attribute.String("pulumi.type", "mid:resource:Exec"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
-	if props.Delete == nil {
+	if req.State.Delete == nil {
 		span.SetStatus(codes.Ok, "")
-		return nil
+		return infer.DeleteResponse{}, nil
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if r.canUseRPC(props.ExecArgs) {
+	if r.canUseRPC(req.State.ExecArgs) {
 		span.SetAttributes(attribute.String("exec.strategy", "rpc"))
 	} else {
 		span.SetAttributes(attribute.String("exec.strategy", "ansible"))
 	}
 
 	var err error
-	if r.canUseRPC(props.ExecArgs) {
-		_, err = r.runRPCExec(ctx, config.Connection, props, props.ExecArgs, "delete")
+	if r.canUseRPC(req.State.ExecArgs) {
+		_, err = r.runRPCExec(ctx, config.Connection, req.State.ExecArgs, req.State, "delete")
 	} else {
-		_, err = r.runRPCAnsibleExecute(ctx, config.Connection, props, props.ExecArgs, "delete")
+		_, err = r.runRPCAnsibleExecute(ctx, config.Connection, req.State.ExecArgs, req.State, "delete")
 	}
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
 			span.SetStatus(codes.Ok, "")
-			return nil
+			return infer.DeleteResponse{}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return nil
+	return infer.DeleteResponse{}, nil
 }

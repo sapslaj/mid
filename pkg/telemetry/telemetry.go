@@ -108,14 +108,14 @@ func (ts *TelemetryStuff) Shutdown() {
 // StartTelemetry starts OpenTelemetry if PULUMI_MID_OTLP_ENDPOINT is set and
 // returns a shutdown function. If PULUMI_MID_OTLP_ENDPOINT is not set it will
 // do nothing and return an no-op function.
-func StartTelemetry() *TelemetryStuff {
+func StartTelemetry(ctx context.Context) *TelemetryStuff {
 	// NOTE: Telemetry is _ONLY_ set up if `PULUMI_MID_OTLP_ENDPOINT` is set.
 	// There is _NO_ default value for this. This means that this telemetry is
 	// *OPT-IN* and only if you have an OTLP endpoint to send things to.
 	// I (@sapslaj) vow to never do opt-out telemetry of my own will.
 
 	ts := &TelemetryStuff{
-		Context: context.Background(),
+		Context: ctx,
 		Logger:  NewLogger(),
 	}
 

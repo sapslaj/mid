@@ -116,49 +116,49 @@ type FileState struct {
 	Triggers   types.TriggersOutput `pulumi:"triggers"`
 }
 
-func (r File) argsToFileTaskParameters(input FileArgs) (*ansible.FileParameters, error) {
+func (r File) argsToFileTaskParameters(inputs FileArgs) (*ansible.FileParameters, error) {
 	var state *ansible.FileState
-	if input.Ensure != nil {
-		state = ansible.OptionalFileState(string(*input.Ensure))
+	if inputs.Ensure != nil {
+		state = ansible.OptionalFileState(string(*inputs.Ensure))
 	}
 	return &ansible.FileParameters{
-		AccessTime:             input.AccessTime,
-		AccessTimeFormat:       input.AccessTimeFormat,
-		Attributes:             input.Attributes,
-		Follow:                 input.Follow,
-		Group:                  input.Group,
-		Mode:                   ptr.ToAny(input.Mode),
-		ModificationTime:       input.ModificationTime,
-		ModificationTimeFormat: input.ModificationTimeFormat,
-		Owner:                  input.Owner,
-		Path:                   input.Path,
-		Recurse:                input.Recurse,
-		Selevel:                input.Selevel,
-		Serole:                 input.Serole,
-		Setype:                 input.Setype,
-		Seuser:                 input.Seuser,
-		Src:                    input.RemoteSource,
+		AccessTime:             inputs.AccessTime,
+		AccessTimeFormat:       inputs.AccessTimeFormat,
+		Attributes:             inputs.Attributes,
+		Follow:                 inputs.Follow,
+		Group:                  inputs.Group,
+		Mode:                   ptr.ToAny(inputs.Mode),
+		ModificationTime:       inputs.ModificationTime,
+		ModificationTimeFormat: inputs.ModificationTimeFormat,
+		Owner:                  inputs.Owner,
+		Path:                   inputs.Path,
+		Recurse:                inputs.Recurse,
+		Selevel:                inputs.Selevel,
+		Serole:                 inputs.Serole,
+		Setype:                 inputs.Setype,
+		Seuser:                 inputs.Seuser,
+		Src:                    inputs.RemoteSource,
 		State:                  state,
-		UnsafeWrites:           input.UnsafeWrites,
+		UnsafeWrites:           inputs.UnsafeWrites,
 	}, nil
 }
 
-func (r File) argsToSource(input FileArgs) (*string, error) {
-	if input.RemoteSource != nil {
-		return input.RemoteSource, nil
-	} else if input.Source != nil {
-		if input.Source.Asset != nil {
-			if input.Source.Asset.Text != "" {
-				return &input.Source.Asset.Text, nil
-			} else if input.Source.Asset.Path != "" {
-				abs, err := filepath.Abs(input.Source.Asset.Path)
+func (r File) argsToSource(inputs FileArgs) (*string, error) {
+	if inputs.RemoteSource != nil {
+		return inputs.RemoteSource, nil
+	} else if inputs.Source != nil {
+		if inputs.Source.Asset != nil {
+			if inputs.Source.Asset.Text != "" {
+				return &inputs.Source.Asset.Text, nil
+			} else if inputs.Source.Asset.Path != "" {
+				abs, err := filepath.Abs(inputs.Source.Asset.Path)
 				if err != nil {
 					return nil, err
 				}
 				return &abs, nil
 			}
-		} else if input.Source.Archive != nil {
-			abs, err := filepath.Abs(input.Source.Archive.Path)
+		} else if inputs.Source.Archive != nil {
+			abs, err := filepath.Abs(inputs.Source.Archive.Path)
 			if err != nil {
 				return nil, err
 			}
@@ -168,60 +168,57 @@ func (r File) argsToSource(input FileArgs) (*string, error) {
 	return nil, nil
 }
 
-func (r File) argsToCopyTaskParameters(input FileArgs) (*ansible.CopyParameters, error) {
-	isRemoteSource := input.RemoteSource != nil
-	source, err := r.argsToSource(input)
+func (r File) argsToCopyTaskParameters(inputs FileArgs) (*ansible.CopyParameters, error) {
+	isRemoteSource := inputs.RemoteSource != nil
+	source, err := r.argsToSource(inputs)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ansible.CopyParameters{
-		Attributes:    input.Attributes,
-		Backup:        input.Backup,
-		Checksum:      input.Checksum,
-		Content:       input.Content,
-		Dest:          input.Path,
-		DirectoryMode: ptr.ToAny(input.DirectoryMode),
-		Follow:        input.Follow,
-		Force:         input.Force,
-		Group:         input.Group,
-		LocalFollow:   input.LocalFollow,
-		Mode:          ptr.ToAny(input.Mode),
-		Owner:         input.Owner,
+		Attributes:    inputs.Attributes,
+		Backup:        inputs.Backup,
+		Checksum:      inputs.Checksum,
+		Content:       inputs.Content,
+		Dest:          inputs.Path,
+		DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
+		Follow:        inputs.Follow,
+		Force:         inputs.Force,
+		Group:         inputs.Group,
+		LocalFollow:   inputs.LocalFollow,
+		Mode:          ptr.ToAny(inputs.Mode),
+		Owner:         inputs.Owner,
 		RemoteSrc:     ptr.Of(isRemoteSource),
-		Selevel:       input.Selevel,
-		Serole:        input.Serole,
-		Setype:        input.Setype,
-		Seuser:        input.Seuser,
+		Selevel:       inputs.Selevel,
+		Serole:        inputs.Serole,
+		Setype:        inputs.Setype,
+		Seuser:        inputs.Seuser,
 		Src:           source,
-		UnsafeWrites:  input.UnsafeWrites,
-		Validate:      input.Validate,
+		UnsafeWrites:  inputs.UnsafeWrites,
+		Validate:      inputs.Validate,
 	}, nil
 }
 
-func (r File) argsToStatTaskParameters(input FileArgs) (*ansible.StatParameters, error) {
+func (r File) argsToStatTaskParameters(inputs FileArgs) (*ansible.StatParameters, error) {
 	return &ansible.StatParameters{
-		Follow: input.Follow,
-		Path:   input.Path,
+		Follow: inputs.Follow,
+		Path:   inputs.Path,
 	}, nil
 }
 
-func (r File) updateState(olds FileState, news FileArgs, changed bool) FileState {
-	olds.FileArgs = news
-	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
-	return olds
+func (r File) updateState(inputs FileArgs, state FileState, changed bool) FileState {
+	state.FileArgs = inputs
+	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	return state
 }
 
-func (r File) Diff(
-	ctx context.Context,
-	id string,
-	olds FileState,
-	news FileArgs,
-) (p.DiffResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:File.Diff", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
+func (r File) Diff(ctx context.Context, req infer.DiffRequest[FileArgs, FileState]) (infer.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.Diff", trace.WithAttributes(
+		attribute.String("pulumi.operation", "diff"),
+		attribute.String("pulumi.type", "mid:resource:File"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
@@ -231,7 +228,7 @@ func (r File) Diff(
 		DeleteBeforeReplace: true,
 	}
 
-	if news.Path != olds.Path {
+	if req.Inputs.Path != req.State.Path {
 		diff.HasChanges = true
 		diff.DetailedDiff["path"] = p.PropertyDiff{
 			Kind:      p.UpdateReplace,
@@ -241,7 +238,7 @@ func (r File) Diff(
 
 	diff = types.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(olds, news, []string{
+		types.DiffAttributes(req.State, req.Inputs, []string{
 			"accessTime",
 			"accessTimeFormat",
 			"attributes",
@@ -268,7 +265,7 @@ func (r File) Diff(
 			"unsafeWrites",
 			"validate",
 		}),
-		types.DiffTriggers(olds, news),
+		types.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -278,14 +275,14 @@ func (r File) Diff(
 
 func (r File) runCreateUpdatePlay(
 	ctx context.Context,
+	inputs FileArgs,
 	state FileState,
-	input FileArgs,
-	preview bool,
+	dryRun bool,
 ) (FileState, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:File.runCreateUpdatePlay", trace.WithAttributes(
 		telemetry.OtelJSON("state", state),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+		telemetry.OtelJSON("inputs", inputs),
+		attribute.Bool("dry_run", dryRun),
 	))
 	defer span.End()
 
@@ -309,17 +306,17 @@ func (r File) runCreateUpdatePlay(
 	statTaskIndex := -1
 
 	copyNeeded := ptr.AnyNonNils(
-		input.Source,
-		input.Content,
+		inputs.Source,
+		inputs.Content,
 	)
 
 	fileNeeded := ptr.AnyNonNils(
-		input.AccessTime,
-		input.AccessTimeFormat,
-		input.ModificationTime,
-		input.ModificationTimeFormat,
-		input.Recurse,
-		input.Ensure,
+		inputs.AccessTime,
+		inputs.AccessTimeFormat,
+		inputs.ModificationTime,
+		inputs.ModificationTimeFormat,
+		inputs.Recurse,
+		inputs.Ensure,
 	)
 
 	defer func() {
@@ -332,8 +329,8 @@ func (r File) runCreateUpdatePlay(
 		)
 	}()
 
-	if preview && copyNeeded {
-		source, err := r.argsToSource(input)
+	if dryRun && copyNeeded {
+		source, err := r.argsToSource(inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
@@ -345,7 +342,7 @@ func (r File) runCreateUpdatePlay(
 	}
 
 	if copyNeeded {
-		params, err := r.argsToCopyTaskParameters(input)
+		params, err := r.argsToCopyTaskParameters(inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
@@ -357,7 +354,7 @@ func (r File) runCreateUpdatePlay(
 	}
 
 	if fileNeeded {
-		params, err := r.argsToFileTaskParameters(input)
+		params, err := r.argsToFileTaskParameters(inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
@@ -365,11 +362,11 @@ func (r File) runCreateUpdatePlay(
 		fileTaskIndex = len(tasks)
 		tasks = append(tasks, map[string]any{
 			"ansible.builtin.file": params,
-			"ignore_errors":        copyNeeded || preview,
+			"ignore_errors":        copyNeeded || dryRun,
 		})
 	}
 
-	statParams, err := r.argsToStatTaskParameters(input)
+	statParams, err := r.argsToStatTaskParameters(inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
@@ -377,17 +374,17 @@ func (r File) runCreateUpdatePlay(
 	statTaskIndex = len(tasks)
 	tasks = append(tasks, map[string]any{
 		"ansible.builtin.stat": statParams,
-		"ignore_errors":        preview,
+		"ignore_errors":        dryRun,
 	})
 
 	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
 		GatherFacts: false,
 		Become:      true,
-		Check:       preview,
+		Check:       dryRun,
 		Tasks:       tasks,
 	})
 	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && dryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
 			return state, nil
@@ -432,134 +429,152 @@ func (r File) runCreateUpdatePlay(
 		return state, err
 	}
 
-	state = r.updateState(state, input, changed)
+	state = r.updateState(inputs, state, changed)
 
 	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 
-func (r File) Create(
-	ctx context.Context,
-	name string,
-	input FileArgs,
-	preview bool,
-) (string, FileState, error) {
+func (r File) Create(ctx context.Context, req infer.CreateRequest[FileArgs]) (infer.CreateResponse[FileState], error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:File.Create", trace.WithAttributes(
-		attribute.String("name", name),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+		attribute.String("pulumi.operation", "create"),
+		attribute.String("pulumi.type", "mid:resource:File"),
+		attribute.String("pulumi.name", req.Name),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
-	state := r.updateState(FileState{}, input, true)
+	state := r.updateState(req.Inputs, FileState{}, true)
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(name, 8, 0)
+	id, err := resource.NewUniqueHex(req.Name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		span.SetAttributes(telemetry.OtelJSON("state", state))
-		return "", state, err
+		return infer.CreateResponse[FileState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
-	span.SetAttributes(attribute.String("id", id))
+	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	state, err = r.runCreateUpdatePlay(ctx, state, input, preview)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state, err = r.runCreateUpdatePlay(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[FileState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, state, nil
+	return infer.CreateResponse[FileState]{
+		ID:     id,
+		Output: state,
+	}, nil
 }
 
 func (r File) Read(
 	ctx context.Context,
-	id string,
-	inputs FileArgs,
-	state FileState,
-) (string, FileArgs, FileState, error) {
+	req infer.ReadRequest[FileArgs, FileState],
+) (infer.ReadResponse[FileArgs, FileState], error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:File.Read", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("inputs", inputs),
-		telemetry.OtelJSON("state", state),
+		attribute.String("pulumi.operation", "read"),
+		attribute.String("pulumi.type", "mid:resource:File"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
-	state, err := r.runCreateUpdatePlay(ctx, state, inputs, true)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	state, err := r.runCreateUpdatePlay(ctx, req.Inputs, state, true)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[FileArgs, FileState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, inputs, state, nil
+	return infer.ReadResponse[FileArgs, FileState]{
+		ID:     req.ID,
+		Inputs: req.Inputs,
+		State:  state,
+	}, nil
 }
 
 func (r File) Update(
 	ctx context.Context,
-	id string,
-	olds FileState,
-	news FileArgs,
-	preview bool,
-) (FileState, error) {
+	req infer.UpdateRequest[FileArgs, FileState],
+) (infer.UpdateResponse[FileState], error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:File.Update", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
-		attribute.Bool("preview", preview),
+		attribute.String("pulumi.operation", "update"),
+		attribute.String("pulumi.type", "mid:resource:File"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
-	olds, err := r.runCreateUpdatePlay(ctx, olds, news, preview)
-	span.SetAttributes(telemetry.OtelJSON("state", olds))
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	state, err := r.runCreateUpdatePlay(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[FileState]{
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return olds, nil
+	return infer.UpdateResponse[FileState]{
+		Output: state,
+	}, nil
 }
 
-func (r File) Delete(
-	ctx context.Context,
-	id string,
-	props FileState,
-) error {
+func (r File) Delete(ctx context.Context, req infer.DeleteRequest[FileState]) (infer.DeleteResponse, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:File.Delete", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("props", props),
+		attribute.String("pulumi.operation", "delete"),
+		attribute.String("pulumi.type", "mid:resource:File"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
 	shouldDelete := ptr.AnyNonNils(
-		props.Source,
-		props.Content,
-		props.AccessTime,
-		props.AccessTimeFormat,
-		props.ModificationTime,
-		props.ModificationTimeFormat,
-		props.Recurse,
-		props.Ensure,
+		req.State.Source,
+		req.State.Content,
+		req.State.AccessTime,
+		req.State.AccessTimeFormat,
+		req.State.ModificationTime,
+		req.State.ModificationTimeFormat,
+		req.State.Recurse,
+		req.State.Ensure,
 	)
 
 	span.SetAttributes(attribute.Bool("should_delete", shouldDelete))
 
 	if !shouldDelete {
 		span.SetStatus(codes.Ok, "")
-		return nil
+		return infer.DeleteResponse{}, nil
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToFileTaskParameters(FileArgs{
-		Path:   props.Path,
+		Path:   req.State.Path,
 		Ensure: (*FileEnsure)(ptr.Of(string(FileEnsureAbsent))),
 	})
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
@@ -577,12 +592,12 @@ func (r File) Delete(
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
 			span.SetStatus(codes.Ok, "")
-			return nil
+			return infer.DeleteResponse{}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return nil
+	return infer.DeleteResponse{}, nil
 }

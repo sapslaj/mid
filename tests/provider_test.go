@@ -9,6 +9,7 @@ import (
 	"github.com/pulumi/pulumi-go-provider/integration"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,10 +22,6 @@ func MakeURN(typ string) resource.URN {
 	return resource.NewURN("stack", "proj", "", tokens.Type(typ), "name")
 }
 
-func NewProvider() integration.Server {
-	return integration.NewServer(mid.Name, semver.MustParse("1.0.0"), mid.Provider())
-}
-
 func Must1[A any](a A, err error) A {
 	if err != nil {
 		panic(err)
@@ -34,7 +31,8 @@ func Must1[A any](a A, err error) A {
 
 type ProviderTestHarness struct {
 	TestMachine *testmachine.TestMachine
-	Provider    integration.Server
+	Provider    p.Provider
+	Server      integration.Server
 	Telemetry   *telemetry.TelemetryStuff
 }
 
@@ -45,23 +43,32 @@ func NewProviderTestHarness(t *testing.T, tmConfig testmachine.Config) *Provider
 	harness := &ProviderTestHarness{}
 
 	t.Log("starting telemetry")
-	harness.Telemetry = telemetry.StartTelemetry()
+	harness.Telemetry = telemetry.StartTelemetry(t.Context())
 
 	t.Log("creating new test machine")
 	harness.TestMachine, err = testmachine.New(t, tmConfig)
 	require.NoError(t, err)
 
 	t.Log("creating and configuring provider")
-	harness.Provider = NewProvider()
-	err = harness.Provider.Configure(p.ConfigureRequest{
-		Args: resource.PropertyMap{
-			"connection": resource.NewObjectProperty(resource.PropertyMap{
-				"user":     resource.NewStringProperty(harness.TestMachine.SSHUsername),
-				"password": resource.NewStringProperty(harness.TestMachine.SSHPassword),
-				"host":     resource.NewStringProperty(harness.TestMachine.SSHHost),
-				"port":     resource.NewNumberProperty(float64(harness.TestMachine.SSHPort)),
+	harness.Provider, err = mid.Provider()
+	require.NoError(t, err)
+
+	harness.Server, err = integration.NewServer(
+		t.Context(),
+		mid.Name,
+		semver.MustParse("1.0.0"),
+		integration.WithProvider(harness.Provider),
+	)
+	require.NoError(t, err)
+	err = harness.Server.Configure(p.ConfigureRequest{
+		Args: property.NewMap(map[string]property.Value{
+			"connection": property.New(map[string]property.Value{
+				"user":     property.New(harness.TestMachine.SSHUsername),
+				"password": property.New(harness.TestMachine.SSHPassword),
+				"host":     property.New(harness.TestMachine.SSHHost),
+				"port":     property.New(float64(harness.TestMachine.SSHPort)),
 			}),
-		},
+		}),
 	})
 	require.NoError(t, err)
 

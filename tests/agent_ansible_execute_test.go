@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,20 +20,20 @@ func TestAgentAnsibleExecute_happypath(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:ansibleExecute"),
-		Args: resource.PropertyMap{
-			"name": resource.NewStringProperty("command"),
-			"args": resource.NewObjectProperty(resource.PropertyMap{
-				"argv": resource.NewArrayProperty([]resource.PropertyValue{
-					resource.NewStringProperty("echo"),
-					resource.NewStringProperty("$THING"),
+		Args: property.NewMap(map[string]property.Value{
+			"name": property.New("command"),
+			"args": property.New(map[string]property.Value{
+				"argv": property.New([]property.Value{
+					property.New("echo"),
+					property.New("$THING"),
 				}),
 			}),
-			"environment": resource.NewObjectProperty(resource.PropertyMap{
-				"THING": resource.NewStringProperty("foo"),
+			"environment": property.New(map[string]property.Value{
+				"THING": property.New("foo"),
 			}),
-		},
+		}),
 	})
 	require.NoError(t, err)
 
@@ -41,48 +41,48 @@ func TestAgentAnsibleExecute_happypath(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewStringProperty("command"),
-		res.Return["name"],
+		property.New("command"),
+		res.Return.Get("name"),
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"argv": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("echo"),
-				resource.NewStringProperty("$THING"),
+		property.New(map[string]property.Value{
+			"argv": property.New([]property.Value{
+				property.New("echo"),
+				property.New("$THING"),
 			}),
 		}),
-		res.Return["args"],
+		res.Return.Get("args"),
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"THING": resource.NewStringProperty("foo"),
+		property.New(map[string]property.Value{
+			"THING": property.New("foo"),
 		}),
-		res.Return["environment"],
+		res.Return.Get("environment"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["exitCode"],
+		property.New(float64(0)),
+		res.Return.Get("exitCode"),
 	)
 
-	result := res.Return["result"].ObjectValue()
+	result := res.Return.Get("result").AsMap()
 
 	assert.Equal(
 		t,
-		resource.NewStringProperty(""),
-		result["stderr"],
+		property.New(""),
+		result.Get("stderr"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("foo"),
-		result["stdout"],
+		property.New("foo"),
+		result.Get("stdout"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		result["rc"],
+		property.New(float64(0)),
+		result.Get("rc"),
 	)
 }
 
@@ -94,14 +94,14 @@ func TestAgentAnsibleExecute_invalidModuleName(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:ansibleExecute"),
-		Args: resource.PropertyMap{
-			"name": resource.NewStringProperty("404"),
-			"args": resource.NewObjectProperty(resource.PropertyMap{
-				"foo": resource.NewStringProperty("bar"),
+		Args: property.NewMap(map[string]property.Value{
+			"name": property.New("404"),
+			"args": property.New(map[string]property.Value{
+				"foo": property.New("bar"),
 			}),
-		},
+		}),
 	})
 
 	require.Error(t, err)
@@ -117,14 +117,14 @@ func TestAgentAnsibleExecute_invalidArguments(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:ansibleExecute"),
-		Args: resource.PropertyMap{
-			"name": resource.NewStringProperty("file"),
-			"args": resource.NewObjectProperty(resource.PropertyMap{
-				"foo": resource.NewStringProperty("bar"),
+		Args: property.NewMap(map[string]property.Value{
+			"name": property.New("file"),
+			"args": property.New(map[string]property.Value{
+				"foo": property.New("bar"),
 			}),
-		},
+		}),
 	})
 
 	require.NoError(t, err)
@@ -133,32 +133,32 @@ func TestAgentAnsibleExecute_invalidArguments(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewStringProperty("file"),
-		res.Return["name"],
+		property.New("file"),
+		res.Return.Get("name"),
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"foo": resource.NewStringProperty("bar"),
+		property.New(map[string]property.Value{
+			"foo": property.New("bar"),
 		}),
-		res.Return["args"],
+		res.Return.Get("args"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(1),
-		res.Return["exitCode"],
+		property.New(float64(1)),
+		res.Return.Get("exitCode"),
 	)
 
-	result := res.Return["result"].ObjectValue()
+	result := res.Return.Get("result").AsMap()
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		result["failed"],
+		property.New(true),
+		result.Get("failed"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("missing required arguments: path"),
-		result["msg"],
+		property.New("missing required arguments: path"),
+		result.Get("msg"),
 	)
 }
 
@@ -170,17 +170,17 @@ func TestAgentAnsibleExecute_failed(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:ansibleExecute"),
-		Args: resource.PropertyMap{
-			"name": resource.NewStringProperty("apt"),
-			"args": resource.NewObjectProperty(resource.PropertyMap{
-				"name": resource.NewArrayProperty([]resource.PropertyValue{
-					resource.NewStringProperty("this-package-doesnt-exist"),
+		Args: property.NewMap(map[string]property.Value{
+			"name": property.New("apt"),
+			"args": property.New(map[string]property.Value{
+				"name": property.New([]property.Value{
+					property.New("this-package-doesnt-exist"),
 				}),
-				"state": resource.NewStringProperty("latest"),
+				"state": property.New("latest"),
 			}),
-		},
+		}),
 	})
 
 	require.NoError(t, err)
@@ -189,34 +189,34 @@ func TestAgentAnsibleExecute_failed(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewStringProperty("apt"),
-		res.Return["name"],
+		property.New("apt"),
+		res.Return.Get("name"),
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"name": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("this-package-doesnt-exist"),
+		property.New(map[string]property.Value{
+			"name": property.New([]property.Value{
+				property.New("this-package-doesnt-exist"),
 			}),
-			"state": resource.NewStringProperty("latest"),
+			"state": property.New("latest"),
 		}),
-		res.Return["args"],
+		res.Return.Get("args"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(1),
-		res.Return["exitCode"],
+		property.New(float64(1)),
+		res.Return.Get("exitCode"),
 	)
 
-	result := res.Return["result"].ObjectValue()
+	result := res.Return.Get("result").AsMap()
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		result["failed"],
+		property.New(true),
+		result.Get("failed"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("No package matching 'this-package-doesnt-exist' is available"),
-		result["msg"],
+		property.New("No package matching 'this-package-doesnt-exist' is available"),
+		result.Get("msg"),
 	)
 }

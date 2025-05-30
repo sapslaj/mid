@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,13 +20,13 @@ func TestAgentExec_success(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:exec"),
-		Args: resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("true"),
+		Args: property.NewMap(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("true"),
 			}),
-		},
+		}),
 	})
 	require.NoError(t, err)
 
@@ -34,15 +34,15 @@ func TestAgentExec_success(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewArrayProperty([]resource.PropertyValue{
-			resource.NewStringProperty("true"),
+		property.New([]property.Value{
+			property.New("true"),
 		}),
-		res.Return["command"],
+		res.Return.Get("command"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["exitCode"],
+		property.New(float64(0)),
+		res.Return.Get("exitCode"),
 	)
 }
 
@@ -54,13 +54,13 @@ func TestAgentExec_failure(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:exec"),
-		Args: resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("false"),
+		Args: property.NewMap(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("false"),
 			}),
-		},
+		}),
 	})
 	require.NoError(t, err)
 
@@ -68,15 +68,15 @@ func TestAgentExec_failure(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewArrayProperty([]resource.PropertyValue{
-			resource.NewStringProperty("false"),
+		property.New([]property.Value{
+			property.New("false"),
 		}),
-		res.Return["command"],
+		res.Return.Get("command"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(1),
-		res.Return["exitCode"],
+		property.New(float64(1)),
+		res.Return.Get("exitCode"),
 	)
 }
 
@@ -88,15 +88,15 @@ func TestAgentExec_dir(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:exec"),
-		Args: resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("touch"),
-				resource.NewStringProperty("create"),
+		Args: property.NewMap(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("touch"),
+				property.New("create"),
 			}),
-			"dir": resource.NewStringProperty("/tmp"),
-		},
+			"dir": property.New("/tmp"),
+		}),
 	})
 	require.NoError(t, err)
 
@@ -104,21 +104,21 @@ func TestAgentExec_dir(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewArrayProperty([]resource.PropertyValue{
-			resource.NewStringProperty("touch"),
-			resource.NewStringProperty("create"),
+		property.New([]property.Value{
+			property.New("touch"),
+			property.New("create"),
 		}),
-		res.Return["command"],
+		res.Return.Get("command"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("/tmp"),
-		res.Return["dir"],
+		property.New("/tmp"),
+		res.Return.Get("dir"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["exitCode"],
+		property.New(float64(0)),
+		res.Return.Get("exitCode"),
 	)
 
 	harness.AssertCommand(t, "test -f /tmp/create")
@@ -132,19 +132,19 @@ func TestAgentExec_environment(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:exec"),
-		Args: resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("/bin/sh"),
-				resource.NewStringProperty("-c"),
-				resource.NewStringProperty("echo $OP > $FILE"),
+		Args: property.NewMap(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("/bin/sh"),
+				property.New("-c"),
+				property.New("echo $OP > $FILE"),
 			}),
-			"environment": resource.NewObjectProperty(resource.PropertyMap{
-				"FILE": resource.NewStringProperty("/tmp/environment"),
-				"OP":   resource.NewStringProperty("create"),
+			"environment": property.New(map[string]property.Value{
+				"FILE": property.New("/tmp/environment"),
+				"OP":   property.New("create"),
 			}),
-		},
+		}),
 	})
 	require.NoError(t, err)
 
@@ -152,25 +152,25 @@ func TestAgentExec_environment(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewArrayProperty([]resource.PropertyValue{
-			resource.NewStringProperty("/bin/sh"),
-			resource.NewStringProperty("-c"),
-			resource.NewStringProperty("echo $OP > $FILE"),
+		property.New([]property.Value{
+			property.New("/bin/sh"),
+			property.New("-c"),
+			property.New("echo $OP > $FILE"),
 		}),
-		res.Return["command"],
+		res.Return.Get("command"),
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"FILE": resource.NewStringProperty("/tmp/environment"),
-			"OP":   resource.NewStringProperty("create"),
+		property.New(map[string]property.Value{
+			"FILE": property.New("/tmp/environment"),
+			"OP":   property.New("create"),
 		}),
-		res.Return["environment"],
+		res.Return.Get("environment"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["exitCode"],
+		property.New(float64(0)),
+		res.Return.Get("exitCode"),
 	)
 
 	harness.AssertCommand(t, "grep -q create /tmp/environment")
@@ -184,15 +184,15 @@ func TestAgentExec_stderrstdout(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:exec"),
-		Args: resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("/bin/sh"),
-				resource.NewStringProperty("-c"),
-				resource.NewStringProperty("echo this is create stdout\necho this is create stderr 1>&2\n"),
+		Args: property.NewMap(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("/bin/sh"),
+				property.New("-c"),
+				property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
 			}),
-		},
+		}),
 	})
 	require.NoError(t, err)
 
@@ -200,27 +200,27 @@ func TestAgentExec_stderrstdout(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewArrayProperty([]resource.PropertyValue{
-			resource.NewStringProperty("/bin/sh"),
-			resource.NewStringProperty("-c"),
-			resource.NewStringProperty("echo this is create stdout\necho this is create stderr 1>&2\n"),
+		property.New([]property.Value{
+			property.New("/bin/sh"),
+			property.New("-c"),
+			property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
 		}),
-		res.Return["command"],
+		res.Return.Get("command"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["exitCode"],
+		property.New(float64(0)),
+		res.Return.Get("exitCode"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("this is create stderr\n"),
-		res.Return["stderr"],
+		property.New("this is create stderr\n"),
+		res.Return.Get("stderr"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("this is create stdout\n"),
-		res.Return["stdout"],
+		property.New("this is create stdout\n"),
+		res.Return.Get("stdout"),
 	)
 }
 
@@ -232,15 +232,15 @@ func TestAgentExec_stdin(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:exec"),
-		Args: resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("tee"),
-				resource.NewStringProperty("/tmp/tee-stdin"),
+		Args: property.NewMap(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("tee"),
+				property.New("/tmp/tee-stdin"),
 			}),
-			"stdin": resource.NewStringProperty("this is stdin\n"),
-		},
+			"stdin": property.New("this is stdin\n"),
+		}),
 	})
 	require.NoError(t, err)
 
@@ -248,26 +248,26 @@ func TestAgentExec_stdin(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewArrayProperty([]resource.PropertyValue{
-			resource.NewStringProperty("tee"),
-			resource.NewStringProperty("/tmp/tee-stdin"),
+		property.New([]property.Value{
+			property.New("tee"),
+			property.New("/tmp/tee-stdin"),
 		}),
-		res.Return["command"],
+		res.Return.Get("command"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("this is stdin\n"),
-		res.Return["stdin"],
+		property.New("this is stdin\n"),
+		res.Return.Get("stdin"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["exitCode"],
+		property.New(float64(0)),
+		res.Return.Get("exitCode"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("this is stdin\n"),
-		res.Return["stdout"],
+		property.New("this is stdin\n"),
+		res.Return.Get("stdout"),
 	)
 
 	harness.AssertCommand(t, "grep -q 'this is stdin' /tmp/tee-stdin")

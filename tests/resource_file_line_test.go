@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sapslaj/mid/tests/testmachine"
@@ -14,7 +14,7 @@ func TestResourceFileLine(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		props        resource.PropertyMap
+		props        map[string]property.Value
 		before       string
 		beforeCreate string
 		create       string
@@ -22,10 +22,10 @@ func TestResourceFileLine(t *testing.T) {
 		delete       string
 	}{
 		"line modification in existing file": {
-			props: resource.PropertyMap{
-				"path":   resource.NewStringProperty("/etc/default/motd-news"),
-				"line":   resource.NewStringProperty("ENABLED=0"),
-				"regexp": resource.NewStringProperty("^ENABLED"),
+			props: map[string]property.Value{
+				"path":   property.New("/etc/default/motd-news"),
+				"line":   property.New("ENABLED=0"),
+				"regexp": property.New("^ENABLED"),
 			},
 			before: `cat << EOF | sudo tee /etc/default/motd-news
 # Enable/disable the dynamic MOTD news service
@@ -54,10 +54,10 @@ EOF
 			// delete: "grep -q ^ENABLED=1 /etc/default/motd-news", // FIXME: revert on delete
 		},
 		"line addition to new file": {
-			props: resource.PropertyMap{
-				"path":   resource.NewStringProperty("/etc/default/motd-news"),
-				"line":   resource.NewStringProperty("ENABLED=0"),
-				"regexp": resource.NewStringProperty("^ENABLED"),
+			props: map[string]property.Value{
+				"path":   property.New("/etc/default/motd-news"),
+				"line":   property.New("ENABLED=0"),
+				"regexp": property.New("^ENABLED"),
 			},
 			before: "rm -f /etc/default/motd-news",
 			beforeCreate: `cat << EOF | sudo tee /etc/default/motd-news
@@ -109,10 +109,10 @@ EOF
 			}
 
 			t.Logf("%s: sending preview create request", name)
-			_, err := harness.Provider.Create(p.CreateRequest{
+			_, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:FileLine"),
-				Properties: tc.props,
-				Preview:    true,
+				Properties: property.NewMap(tc.props),
+				DryRun:     true,
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -126,9 +126,9 @@ EOF
 			}
 
 			t.Logf("%s: sending create request", name)
-			createResponse, err := harness.Provider.Create(p.CreateRequest{
+			createResponse, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:FileLine"),
-				Properties: tc.props,
+				Properties: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -140,21 +140,21 @@ EOF
 			}
 
 			t.Logf("%s: sending preview update request", name)
-			_, err = harness.Provider.Update(p.UpdateRequest{
-				Urn:     MakeURN("mid:resource:FileLine"),
-				Olds:    createResponse.Properties,
-				News:    tc.props,
-				Preview: true,
+			_, err = harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:FileLine"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
+				DryRun: true,
 			})
 			if !assert.NoError(t, err) {
 				return
 			}
 
 			t.Logf("%s: sending update request", name)
-			updateResponse, err := harness.Provider.Update(p.UpdateRequest{
-				Urn:  MakeURN("mid:resource:FileLine"),
-				Olds: createResponse.Properties,
-				News: tc.props,
+			updateResponse, err := harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:FileLine"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -170,7 +170,7 @@ EOF
 			}
 
 			t.Logf("%s: sending delete request", name)
-			err = harness.Provider.Delete(p.DeleteRequest{
+			err = harness.Server.Delete(p.DeleteRequest{
 				Urn:        MakeURN("mid:resource:FileLine"),
 				Properties: updateResponse.Properties,
 			})

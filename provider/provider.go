@@ -17,7 +17,6 @@ package provider
 import (
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
-	"github.com/pulumi/pulumi-go-provider/middleware/schema"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 
 	"github.com/sapslaj/mid/provider/agent"
@@ -27,55 +26,51 @@ import (
 
 const Name string = "mid"
 
-func Provider() p.Provider {
-	// We tell the provider what resources it needs to support.
-	// In this case, a single resource and component
-	return infer.Provider(infer.Options{
-		Metadata: schema.Metadata{
-			DisplayName:       "mid",
-			Description:       "Pulumi-native configuration management",
-			Homepage:          "https://github.com/sapslaj/mid",
-			Repository:        "https://github.com/sapslaj/mid",
-			License:           "MIT",
-			PluginDownloadURL: "github://api.github.com/sapslaj/mid",
-			LanguageMap: map[string]any{
-				"go": map[string]any{
-					"respectSchemaVersion":           true,
-					"generateResourceContainerTypes": true,
-					"importBasePath":                 "github.com/sapslaj/mid/sdk/go/mid",
-				},
-				"nodejs": map[string]any{
-					"respectSchemaVersion": true,
-					"packageName":          "@sapslaj/pulumi-mid",
-				},
-				"python": map[string]any{
-					"respectSchemaVersion": true,
-					"pyproject": map[string]any{
-						"enabled": true,
-					},
+func Provider() (p.Provider, error) {
+	return infer.NewProviderBuilder().
+		WithDisplayName("mid").
+		WithDescription("Pulumi-native configuration management").
+		WithHomepage("https://github.com/sapslaj/mid").
+		WithRepository("https://github.com/sapslaj/mid").
+		WithLicense("MIT").
+		WithPluginDownloadURL("github://api.github.com/sapslaj/mid").
+		WithLanguageMap(map[string]any{
+			"go": map[string]any{
+				"respectSchemaVersion":           true,
+				"generateResourceContainerTypes": true,
+				"importBasePath":                 "github.com/sapslaj/mid/sdk/go/mid",
+			},
+			"nodejs": map[string]any{
+				"respectSchemaVersion": true,
+				"packageName":          "@sapslaj/pulumi-mid",
+			},
+			"python": map[string]any{
+				"respectSchemaVersion": true,
+				"pyproject": map[string]any{
+					"enabled": true,
 				},
 			},
-		},
-		Resources: []infer.InferredResource{
-			infer.Resource[resource.Apt, resource.AptArgs, resource.AptState](),
-			infer.Resource[resource.Exec, resource.ExecArgs, resource.ExecState](),
-			infer.Resource[resource.File, resource.FileArgs, resource.FileState](),
-			infer.Resource[resource.FileLine, resource.FileLineArgs, resource.FileLineState](),
-			infer.Resource[resource.Group, resource.GroupArgs, resource.GroupState](),
-			infer.Resource[resource.Package, resource.PackageArgs, resource.PackageState](),
-			infer.Resource[resource.Service, resource.ServiceArgs, resource.ServiceState](),
-			infer.Resource[resource.SystemdService, resource.SystemdServiceArgs, resource.SystemdServiceState](),
-			infer.Resource[resource.User, resource.UserArgs, resource.UserState](),
-		},
-		Functions: []infer.InferredFunction{
-			infer.Function[agent.AgentPing](),
-			infer.Function[agent.AnsibleExecute](),
-			infer.Function[agent.Exec](),
-			infer.Function[agent.FileStat](),
-		},
-		Config: infer.Config[types.Config](),
-		ModuleMap: map[tokens.ModuleName]tokens.ModuleName{
+		}).
+		WithModuleMap(map[tokens.ModuleName]tokens.ModuleName{
 			"provider": "index",
-		},
-	})
+		}).
+		WithConfig(infer.Config(&types.Config{})).
+		WithResources(
+			infer.Resource(&resource.Apt{}),
+			infer.Resource(&resource.Exec{}),
+			infer.Resource(&resource.File{}),
+			infer.Resource(&resource.FileLine{}),
+			infer.Resource(&resource.Group{}),
+			infer.Resource(&resource.Package{}),
+			infer.Resource(&resource.Service{}),
+			infer.Resource(&resource.SystemdService{}),
+			infer.Resource(&resource.User{}),
+		).
+		WithFunctions(
+			infer.Function(&agent.AgentPing{}),
+			infer.Function(&agent.AnsibleExecute{}),
+			infer.Function(&agent.Exec{}),
+			infer.Function(&agent.FileStat{}),
+		).
+		Build()
 }

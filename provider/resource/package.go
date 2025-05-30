@@ -53,27 +53,27 @@ func (r Package) argsToTaskParameters(input PackageArgs) (ansible.PackageParamet
 	return parameters, nil
 }
 
-func (r Package) updateState(olds PackageState, news PackageArgs, changed bool) PackageState {
-	olds.PackageArgs = news
-	if news.Ensure != nil {
-		olds.Ensure = *news.Ensure
+func (r Package) updateState(inputs PackageArgs, state PackageState, changed bool) PackageState {
+	state.PackageArgs = inputs
+	if inputs.Ensure != nil {
+		state.Ensure = *inputs.Ensure
 	} else {
-		olds.Ensure = "present"
+		state.Ensure = "present"
 	}
-	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
-	return olds
+	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	return state
 }
 
 func (r Package) Diff(
 	ctx context.Context,
-	id string,
-	olds PackageState,
-	news PackageArgs,
-) (p.DiffResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Package.Diff", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
+	req infer.DiffRequest[PackageArgs, PackageState],
+) (infer.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Package.Diff", trace.WithAttributes(
+		attribute.String("pulumi.operation", "diff"),
+		attribute.String("pulumi.type", "mid:resource:Package"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
@@ -83,14 +83,14 @@ func (r Package) Diff(
 		DeleteBeforeReplace: true,
 	}
 
-	if news.Name != nil {
-		if olds.Name == nil {
+	if req.Inputs.Name != nil {
+		if req.State.Name == nil {
 			diff.HasChanges = true
 			diff.DetailedDiff["name"] = p.PropertyDiff{
 				Kind:      p.Add,
 				InputDiff: true,
 			}
-		} else if *news.Name != *olds.Name {
+		} else if *req.Inputs.Name != *req.State.Name {
 			diff.HasChanges = true
 			diff.DetailedDiff["name"] = p.PropertyDiff{
 				Kind:      p.Update,
@@ -99,21 +99,21 @@ func (r Package) Diff(
 		}
 	}
 
-	if news.Names != nil {
-		if olds.Names == nil {
+	if req.Inputs.Names != nil {
+		if req.State.Names == nil {
 			diff.HasChanges = true
 			diff.DetailedDiff["names"] = p.PropertyDiff{
 				Kind:      p.Add,
 				InputDiff: true,
 			}
-		} else if !slices.Equal(*olds.Names, *news.Names) {
+		} else if !slices.Equal(*req.State.Names, *req.Inputs.Names) {
 			diff.HasChanges = true
 			diff.DetailedDiff["names"] = p.PropertyDiff{
 				Kind:      p.Update,
 				InputDiff: true,
 			}
 		}
-	} else if olds.Names != nil && !slices.Equal(*olds.Names, *news.Names) {
+	} else if req.State.Names != nil && !slices.Equal(*req.State.Names, *req.Inputs.Names) {
 		diff.HasChanges = true
 		diff.DetailedDiff["names"] = p.PropertyDiff{
 			Kind:      p.Update,
@@ -121,7 +121,7 @@ func (r Package) Diff(
 		}
 	}
 
-	if news.Ensure != nil && *news.Ensure != olds.Ensure {
+	if req.Inputs.Ensure != nil && *req.Inputs.Ensure != req.State.Ensure {
 		diff.HasChanges = true
 		diff.DetailedDiff["ensure"] = p.PropertyDiff{
 			Kind:      p.Update,
@@ -129,7 +129,7 @@ func (r Package) Diff(
 		}
 	}
 
-	diff = types.MergeDiffResponses(diff, types.DiffTriggers(olds, news))
+	diff = types.MergeDiffResponses(diff, types.DiffTriggers(req.State, req.Inputs))
 
 	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
@@ -138,72 +138,94 @@ func (r Package) Diff(
 
 func (r Package) Create(
 	ctx context.Context,
-	name string,
-	input PackageArgs,
-	preview bool,
-) (string, PackageState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Package.Create", trace.WithAttributes(
-		attribute.String("name", name),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+	req infer.CreateRequest[PackageArgs],
+) (infer.CreateResponse[PackageState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Package.Create", trace.WithAttributes(
+		attribute.String("pulumi.operation", "create"),
+		attribute.String("pulumi.type", "mid:resource:Package"),
+		attribute.String("pulumi.name", req.Name),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	state := r.updateState(PackageState{}, input, true)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state := r.updateState(req.Inputs, PackageState{}, true)
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(name, 8, 0)
+	id, err := resource.NewUniqueHex(req.Name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return "", state, err
+		return infer.CreateResponse[PackageState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
-	span.SetAttributes(attribute.String("id", id))
+	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	parameters, err := r.argsToTaskParameters(input)
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[PackageState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	_, err = executor.AnsibleExecute[
 		ansible.PackageParameters,
 		ansible.PackageReturn,
-	](ctx, config.Connection, parameters, preview)
+	](ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, state, nil
+			return infer.CreateResponse[PackageState]{
+				ID:     id,
+				Output: state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[PackageState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, state, nil
+	return infer.CreateResponse[PackageState]{
+		ID:     id,
+		Output: state,
+	}, nil
 }
 
 func (r Package) Read(
 	ctx context.Context,
-	id string,
-	inputs PackageArgs,
-	state PackageState,
-) (string, PackageArgs, PackageState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Package.Read", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("inputs", inputs),
-		telemetry.OtelJSON("state", state),
+	req infer.ReadRequest[PackageArgs, PackageState],
+) (infer.ReadResponse[PackageArgs, PackageState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Package.Read", trace.WithAttributes(
+		attribute.String("pulumi.operation", "read"),
+		attribute.String("pulumi.type", "mid:resource:Pacakge"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(inputs)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[PackageArgs, PackageState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
 	result, err := executor.AnsibleExecute[
@@ -214,16 +236,24 @@ func (r Package) Read(
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, inputs, PackageState{}, nil
+			return infer.ReadResponse[PackageArgs, PackageState]{
+				ID:     req.ID,
+				Inputs: req.Inputs,
+				State:  state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[PackageArgs, PackageState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
-	state = r.updateState(state, inputs, result.IsChanged())
+	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	if result.IsChanged() {
-		if *inputs.Ensure == "absent" {
+		if *req.Inputs.Ensure == "absent" {
 			// we're going from present? to absent
 			if state.Ensure == "absent" {
 				state.Ensure = "present"
@@ -232,85 +262,100 @@ func (r Package) Read(
 	}
 
 	span.SetStatus(codes.Ok, "")
-	span.SetAttributes(telemetry.OtelJSON("state", state))
-	return id, inputs, state, nil
+	return infer.ReadResponse[PackageArgs, PackageState]{
+		ID:     req.ID,
+		Inputs: req.Inputs,
+		State:  state,
+	}, nil
 }
 
 func (r Package) Update(
 	ctx context.Context,
-	id string,
-	olds PackageState,
-	news PackageArgs,
-	preview bool,
-) (PackageState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Package.Update", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
-		attribute.Bool("preview", preview),
+	req infer.UpdateRequest[PackageArgs, PackageState],
+) (infer.UpdateResponse[PackageState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Package.Update", trace.WithAttributes(
+		attribute.String("pulumi.operation", "update"),
+		attribute.String("pulumi.type", "mid:resource:Package"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if news.Ensure != nil && *news.Ensure == "absent" {
-		parameters, err := r.argsToTaskParameters(news)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	if req.Inputs.Ensure != nil && *req.Inputs.Ensure == "absent" {
+		parameters, err := r.argsToTaskParameters(req.Inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return infer.UpdateResponse[PackageState]{
+				Output: state,
+			}, err
 		}
 
 		result, err := executor.AnsibleExecute[
 			ansible.PackageParameters,
 			ansible.PackageReturn,
-		](ctx, config.Connection, parameters, preview)
+		](ctx, config.Connection, parameters, req.DryRun)
 		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && preview {
+			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
-				return olds, nil
+				return infer.UpdateResponse[PackageState]{
+					Output: state,
+				}, nil
 			}
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return infer.UpdateResponse[PackageState]{
+				Output: state,
+			}, err
 		}
 
-		state := r.updateState(olds, news, result.IsChanged())
+		state = r.updateState(req.Inputs, state, result.IsChanged())
 
 		span.SetStatus(codes.Ok, "")
-		return state, nil
+		return infer.UpdateResponse[PackageState]{
+			Output: state,
+		}, nil
 	}
 
 	packageStateMap := map[string]string{}
 
-	newState := olds.Ensure
-	if news.Ensure != nil {
-		newState = *news.Ensure
+	newState := state.Ensure
+	if req.Inputs.Ensure != nil {
+		newState = *req.Inputs.Ensure
 	}
 
-	if news.Name != nil {
-		packageStateMap[*news.Name] = newState
-	} else if news.Names != nil {
-		for _, name := range *news.Names {
+	if req.Inputs.Name != nil {
+		packageStateMap[*req.Inputs.Name] = newState
+	} else if req.Inputs.Names != nil {
+		for _, name := range *req.Inputs.Names {
 			packageStateMap[name] = newState
 		}
-	} else if olds.Name != nil {
-		packageStateMap[*olds.Name] = newState
-	} else if olds.Names != nil {
-		for _, name := range *olds.Names {
+	} else if state.Name != nil {
+		packageStateMap[*state.Name] = newState
+	} else if state.Names != nil {
+		for _, name := range *state.Names {
 			packageStateMap[name] = newState
 		}
 	} else {
 		err := errors.New("we somehow forgot the package name, oops")
 		span.SetStatus(codes.Error, err.Error())
-		return PackageState{}, err
+		return infer.UpdateResponse[PackageState]{
+			Output: state,
+		}, err
 	}
 
-	if olds.Name != nil {
-		if _, exists := packageStateMap[*olds.Name]; !exists {
-			packageStateMap[*olds.Name] = "absent"
+	if state.Name != nil {
+		if _, exists := packageStateMap[*state.Name]; !exists {
+			packageStateMap[*state.Name] = "absent"
 		}
-	} else if olds.Names != nil {
-		for _, name := range *olds.Names {
+	} else if state.Names != nil {
+		for _, name := range *state.Names {
 			if _, exists := packageStateMap[name]; !exists {
 				packageStateMap[name] = "absent"
 			}
@@ -320,8 +365,8 @@ func (r Package) Update(
 	absents := []string{}
 	presents := []string{}
 
-	for name, state := range packageStateMap {
-		if state == "absent" {
+	for name, packageState := range packageStateMap {
+		if packageState == "absent" {
 			absents = append(absents, name)
 		} else {
 			presents = append(presents, name)
@@ -338,15 +383,19 @@ func (r Package) Update(
 		result, err := executor.AnsibleExecute[
 			ansible.PackageParameters,
 			ansible.PackageReturn,
-		](ctx, config.Connection, parameters, preview)
+		](ctx, config.Connection, parameters, req.DryRun)
 		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && preview {
+			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
-				return olds, nil
+				return infer.UpdateResponse[PackageState]{
+					Output: state,
+				}, nil
 			}
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return infer.UpdateResponse[PackageState]{
+				Output: state,
+			}, err
 		}
 		if result.IsChanged() {
 			changed = true
@@ -361,44 +410,51 @@ func (r Package) Update(
 		result, err := executor.AnsibleExecute[
 			ansible.PackageParameters,
 			ansible.PackageReturn,
-		](ctx, config.Connection, parameters, preview)
+		](ctx, config.Connection, parameters, req.DryRun)
 		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && preview {
+			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
-				return olds, nil
+				return infer.UpdateResponse[PackageState]{
+					Output: state,
+				}, nil
 			}
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return infer.UpdateResponse[PackageState]{
+				Output: state,
+			}, err
 		}
 		if result.IsChanged() {
 			changed = true
 		}
 	}
 
-	state := r.updateState(olds, news, changed)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state = r.updateState(req.Inputs, state, changed)
 	span.SetStatus(codes.Ok, "")
-	return state, nil
+	return infer.UpdateResponse[PackageState]{
+		Output: state,
+	}, nil
 }
 
-func (r Package) Delete(ctx context.Context, id string, props PackageState) error {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Package.Delete", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("props", props),
+func (r Package) Delete(ctx context.Context, req infer.DeleteRequest[PackageState]) (infer.DeleteResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Package.Delete", trace.WithAttributes(
+		attribute.String("pulumi.operation", "delete"),
+		attribute.String("pulumi.type", "mid:resource:Package"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
-	if props.Ensure == "absent" {
-		return nil
+	if req.State.Ensure == "absent" {
+		return infer.DeleteResponse{}, nil
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(props.PackageArgs)
+	parameters, err := r.argsToTaskParameters(req.State.PackageArgs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 	parameters.State = "absent"
 
@@ -411,12 +467,12 @@ func (r Package) Delete(ctx context.Context, id string, props PackageState) erro
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
 			span.SetStatus(codes.Ok, "")
-			return nil
+			return infer.DeleteResponse{}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return nil
+	return infer.DeleteResponse{}, nil
 }

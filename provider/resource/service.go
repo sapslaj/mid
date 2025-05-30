@@ -50,22 +50,22 @@ func (r Service) argsToTaskParameters(input ServiceArgs) (ansible.ServiceParamet
 	}, nil
 }
 
-func (r Service) updateState(olds ServiceState, news ServiceArgs, changed bool) ServiceState {
-	olds.ServiceArgs = news
-	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
-	return olds
+func (r Service) updateState(inputs ServiceArgs, state ServiceState, changed bool) ServiceState {
+	state.ServiceArgs = inputs
+	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	return state
 }
 
 func (r Service) Diff(
 	ctx context.Context,
-	id string,
-	olds ServiceState,
-	news ServiceArgs,
-) (p.DiffResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Service.Diff", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
+	req infer.DiffRequest[ServiceArgs, ServiceState],
+) (infer.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Service.Diff", trace.WithAttributes(
+		attribute.String("pulumi.operation", "diff"),
+		attribute.String("pulumi.type", "mid:resource:Service"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
@@ -77,7 +77,7 @@ func (r Service) Diff(
 
 	diff = types.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(olds, news, []string{
+		types.DiffAttributes(req.State, req.Inputs, []string{
 			"arguments",
 			"enabled",
 			"name",
@@ -87,7 +87,7 @@ func (r Service) Diff(
 			"state",
 			"use",
 		}),
-		types.DiffTriggers(olds, news),
+		types.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -97,72 +97,94 @@ func (r Service) Diff(
 
 func (r Service) Create(
 	ctx context.Context,
-	name string,
-	input ServiceArgs,
-	preview bool,
-) (string, ServiceState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Service.Create", trace.WithAttributes(
-		attribute.String("name", name),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+	req infer.CreateRequest[ServiceArgs],
+) (infer.CreateResponse[ServiceState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Service.Create", trace.WithAttributes(
+		attribute.String("pulumi.operation", "create"),
+		attribute.String("pulumi.type", "mid:resource:Service"),
+		attribute.String("pulumi.name", req.Name),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	state := r.updateState(ServiceState{}, input, true)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state := r.updateState(req.Inputs, ServiceState{}, true)
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(name, 8, 0)
+	id, err := resource.NewUniqueHex(req.Name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return "", state, err
+		return infer.CreateResponse[ServiceState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
-	span.SetAttributes(attribute.String("id", id))
+	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	parameters, err := r.argsToTaskParameters(input)
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[ServiceState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	_, err = executor.AnsibleExecute[
 		ansible.ServiceParameters,
 		ansible.ServiceReturn,
-	](ctx, config.Connection, parameters, preview)
+	](ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, state, nil
+			return infer.CreateResponse[ServiceState]{
+				ID:     id,
+				Output: state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[ServiceState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, state, nil
+	return infer.CreateResponse[ServiceState]{
+		ID:     id,
+		Output: state,
+	}, nil
 }
 
 func (r Service) Read(
 	ctx context.Context,
-	id string,
-	inputs ServiceArgs,
-	state ServiceState,
-) (string, ServiceArgs, ServiceState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Service.Read", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("inputs", inputs),
-		telemetry.OtelJSON("state", state),
+	req infer.ReadRequest[ServiceArgs, ServiceState],
+) (infer.ReadResponse[ServiceArgs, ServiceState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Service.Read", trace.WithAttributes(
+		attribute.String("pulumi.operation", "read"),
+		attribute.String("pulumi.type", "mid:resource:Service"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(inputs)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[ServiceArgs, ServiceState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
 	result, err := executor.AnsibleExecute[
@@ -170,92 +192,106 @@ func (r Service) Read(
 		ansible.ServiceReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
-		span.SetAttributes(telemetry.OtelJSON("state", state))
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, inputs, ServiceState{
-				ServiceArgs: inputs,
+			return infer.ReadResponse[ServiceArgs, ServiceState]{
+				ID:     req.ID,
+				Inputs: req.Inputs,
+				State:  state,
 			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[ServiceArgs, ServiceState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
-	state = r.updateState(state, inputs, result.IsChanged())
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
-	return id, inputs, state, nil
+	return infer.ReadResponse[ServiceArgs, ServiceState]{
+		ID:     req.ID,
+		Inputs: req.Inputs,
+		State:  state,
+	}, nil
 }
 
 func (r Service) Update(
 	ctx context.Context,
-	id string,
-	olds ServiceState,
-	news ServiceArgs,
-	preview bool,
-) (ServiceState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Service.Update", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
-		attribute.Bool("preview", preview),
+	req infer.UpdateRequest[ServiceArgs, ServiceState],
+) (infer.UpdateResponse[ServiceState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Service.Update", trace.WithAttributes(
+		attribute.String("pulumi.operation", "update"),
+		attribute.String("pulumi.type", "mid:resource:Service"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(news)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[ServiceState]{
+			Output: state,
+		}, err
 	}
 
 	result, err := executor.AnsibleExecute[
 		ansible.ServiceParameters,
 		ansible.ServiceReturn,
-	](ctx, config.Connection, parameters, preview)
+	](ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
-		span.SetAttributes(telemetry.OtelJSON("state", olds))
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return olds, nil
+			return infer.UpdateResponse[ServiceState]{
+				Output: state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[ServiceState]{
+			Output: state,
+		}, err
 	}
 
-	state := r.updateState(olds, news, result.IsChanged())
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
-	return state, nil
+	return infer.UpdateResponse[ServiceState]{
+		Output: state,
+	}, nil
 }
 
-func (r Service) Delete(
-	ctx context.Context,
-	id string,
-	props ServiceState,
-) error {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Service.Delete", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("props", props),
+func (r Service) Delete(ctx context.Context, req infer.DeleteRequest[ServiceState]) (infer.DeleteResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Service.Delete", trace.WithAttributes(
+		attribute.String("pulumi.operation", "delete"),
+		attribute.String("pulumi.type", "mid:resource:Service"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
 	args := ServiceArgs{
-		Arguments: props.Arguments,
-		Enabled:   props.Enabled,
-		Name:      props.Name,
-		Pattern:   props.Pattern,
-		Runlevel:  props.Runlevel,
-		Sleep:     props.Sleep,
-		State:     props.State,
-		Use:       props.Use,
+		Arguments: req.State.Arguments,
+		Enabled:   req.State.Enabled,
+		Name:      req.State.Name,
+		Pattern:   req.State.Pattern,
+		Runlevel:  req.State.Runlevel,
+		Sleep:     req.State.Sleep,
+		State:     req.State.State,
+		Use:       req.State.Use,
 	}
 
 	runPlay := false
@@ -273,13 +309,13 @@ func (r Service) Delete(
 
 	if !runPlay {
 		span.SetStatus(codes.Ok, "")
-		return nil
+		return infer.DeleteResponse{}, nil
 	}
 
 	parameters, err := r.argsToTaskParameters(args)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	_, err = executor.AnsibleExecute[
@@ -291,12 +327,12 @@ func (r Service) Delete(
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
 			span.SetStatus(codes.Ok, "")
-			return nil
+			return infer.DeleteResponse{}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return nil
+	return infer.DeleteResponse{}, nil
 }

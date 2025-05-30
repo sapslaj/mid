@@ -59,55 +59,55 @@ type AptState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-func (r Apt) canAssumeEnsure(input AptArgs) bool {
+func (r Apt) canAssumeEnsure(inputs AptArgs) bool {
 	if ptr.AnyNonNils(
-		input.Name,
-		input.Names,
-		input.Deb,
+		inputs.Name,
+		inputs.Names,
+		inputs.Deb,
 	) {
 		return true
 	}
 
 	return !ptr.AnyNonNils(
-		input.Autoclean,
-		input.Autoremove,
-		input.Clean,
-		input.Deb,
-		input.UpdateCache,
-		input.Upgrade,
+		inputs.Autoclean,
+		inputs.Autoremove,
+		inputs.Clean,
+		inputs.Deb,
+		inputs.UpdateCache,
+		inputs.Upgrade,
 	)
 }
 
-func (r Apt) argsToTaskParameters(input AptArgs) (ansible.AptParameters, error) {
+func (r Apt) argsToTaskParameters(inputs AptArgs) (ansible.AptParameters, error) {
 	parameters := ansible.AptParameters{
-		AllowChangeHeldPackages:  input.AllowChangeHeldPackages,
-		AllowDowngrade:           input.AllowDowngrade,
-		AllowUnauthenticated:     input.AllowUnauthenticated,
-		Autoclean:                input.Autoclean,
-		Autoremove:               input.Autoremove,
-		CacheValidTime:           input.CacheValidTime,
-		Clean:                    input.Clean,
-		Deb:                      input.Deb,
-		DefaultRelease:           input.DefaultRelease,
-		DpkgOptions:              input.DpkgOptions,
-		FailOnAutoremove:         input.FailOnAutoremove,
-		Force:                    input.Force,
-		ForceAptGet:              input.ForceAptGet,
-		InstallRecommends:        input.InstallRecommends,
-		LockTimeout:              input.LockTimeout,
-		Name:                     input.Names,
-		OnlyUpgrade:              input.OnlyUpgrade,
-		PolicyRcD:                input.PolicyRcD,
-		Purge:                    input.Purge,
-		State:                    ansible.OptionalAptState(input.Ensure),
-		UpdateCache:              input.UpdateCache,
-		UpdateCacheRetries:       input.UpdateCacheRetries,
-		UpdateCacheRetryMaxDelay: input.UpdateCacheRetryMaxDelay,
-		Upgrade:                  ansible.OptionalAptUpgrade(input.Upgrade),
+		AllowChangeHeldPackages:  inputs.AllowChangeHeldPackages,
+		AllowDowngrade:           inputs.AllowDowngrade,
+		AllowUnauthenticated:     inputs.AllowUnauthenticated,
+		Autoclean:                inputs.Autoclean,
+		Autoremove:               inputs.Autoremove,
+		CacheValidTime:           inputs.CacheValidTime,
+		Clean:                    inputs.Clean,
+		Deb:                      inputs.Deb,
+		DefaultRelease:           inputs.DefaultRelease,
+		DpkgOptions:              inputs.DpkgOptions,
+		FailOnAutoremove:         inputs.FailOnAutoremove,
+		Force:                    inputs.Force,
+		ForceAptGet:              inputs.ForceAptGet,
+		InstallRecommends:        inputs.InstallRecommends,
+		LockTimeout:              inputs.LockTimeout,
+		Name:                     inputs.Names,
+		OnlyUpgrade:              inputs.OnlyUpgrade,
+		PolicyRcD:                inputs.PolicyRcD,
+		Purge:                    inputs.Purge,
+		State:                    ansible.OptionalAptState(inputs.Ensure),
+		UpdateCache:              inputs.UpdateCache,
+		UpdateCacheRetries:       inputs.UpdateCacheRetries,
+		UpdateCacheRetryMaxDelay: inputs.UpdateCacheRetryMaxDelay,
+		Upgrade:                  ansible.OptionalAptUpgrade(inputs.Upgrade),
 	}
 
-	if input.Name != nil && parameters.Name == nil {
-		parameters.Name = ptr.Of([]string{*input.Name})
+	if inputs.Name != nil && parameters.Name == nil {
+		parameters.Name = ptr.Of([]string{*inputs.Name})
 	}
 
 	if parameters.LockTimeout == nil {
@@ -130,12 +130,12 @@ func (r Apt) runApt(
 	ctx context.Context,
 	connection *types.Connection,
 	parameters ansible.AptParameters,
-	preview bool,
+	dryRun bool,
 ) (ansible.AptReturn, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.runApt", trace.WithAttributes(
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Apt.runApt", trace.WithAttributes(
 		attribute.String("connection.host", *connection.Host),
 		telemetry.OtelJSON("parameters", parameters),
-		attribute.Bool("preview", preview),
+		attribute.Bool("dry_run", dryRun),
 	))
 	defer span.End()
 
@@ -167,9 +167,9 @@ func (r Apt) runApt(
 		span.SetStatus(codes.Error, err.Error())
 		return returnFailed(err), err
 	}
-	call.Args.Check = preview
+	call.Args.Check = dryRun
 
-	if executor.PreviewUnreachable(ctx, connection, preview) {
+	if executor.PreviewUnreachable(ctx, connection, dryRun) {
 		span.SetAttributes(attribute.Bool("unreachable", true))
 		span.SetStatus(codes.Ok, "")
 		return returnUnreachable(err), nil
@@ -182,14 +182,17 @@ func (r Apt) runApt(
 			break
 		}
 
-		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid:resource:Apt.runApt:Attempt", trace.WithAttributes(
+		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid/provider/resource/Apt.runApt:Attempt", trace.WithAttributes(
 			attribute.Int("retry.attempt", attempt),
 		))
 
 		// TODO: maybe refactor this to use executor.AnsibleExecute?
-		callResult, err = executor.CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](attemptCtx, connection, call)
+		callResult, err = executor.CallAgent[
+			rpc.AnsibleExecuteArgs,
+			rpc.AnsibleExecuteResult,
+		](attemptCtx, connection, call)
 		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && preview {
+			if errors.Is(err, executor.ErrUnreachable) && dryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
 				return returnUnreachable(err), nil
@@ -247,16 +250,13 @@ func (r Apt) runApt(
 	return result, err
 }
 
-func (r Apt) Diff(
-	ctx context.Context,
-	id string,
-	olds AptState,
-	news AptArgs,
-) (p.DiffResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Diff", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
+func (r Apt) Diff(ctx context.Context, req infer.DiffRequest[AptArgs, AptState]) (infer.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Apt.Diff", trace.WithAttributes(
+		attribute.String("pulumi.operation", "diff"),
+		attribute.String("pulumi.type", "mid:resource:Apt"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
@@ -266,14 +266,14 @@ func (r Apt) Diff(
 		DeleteBeforeReplace: true,
 	}
 
-	if news.Name != nil {
-		if olds.Name == nil {
+	if req.Inputs.Name != nil {
+		if req.State.Name == nil {
 			diff.HasChanges = true
 			diff.DetailedDiff["name"] = p.PropertyDiff{
 				Kind:      p.Add,
 				InputDiff: true,
 			}
-		} else if *news.Name != *olds.Name {
+		} else if *req.Inputs.Name != *req.State.Name {
 			diff.HasChanges = true
 			diff.DetailedDiff["name"] = p.PropertyDiff{
 				Kind:      p.Update,
@@ -282,21 +282,21 @@ func (r Apt) Diff(
 		}
 	}
 
-	if news.Names != nil {
-		if olds.Names == nil {
+	if req.Inputs.Names != nil {
+		if req.State.Names == nil {
 			diff.HasChanges = true
 			diff.DetailedDiff["names"] = p.PropertyDiff{
 				Kind:      p.Add,
 				InputDiff: true,
 			}
-		} else if !slices.Equal(*olds.Names, *news.Names) {
+		} else if !slices.Equal(*req.State.Names, *req.Inputs.Names) {
 			diff.HasChanges = true
 			diff.DetailedDiff["names"] = p.PropertyDiff{
 				Kind:      p.Update,
 				InputDiff: true,
 			}
 		}
-	} else if olds.Names != nil && !slices.Equal(*olds.Names, *news.Names) {
+	} else if req.State.Names != nil && !slices.Equal(*req.State.Names, *req.Inputs.Names) {
 		diff.HasChanges = true
 		diff.DetailedDiff["names"] = p.PropertyDiff{
 			Kind:      p.Update,
@@ -328,10 +328,10 @@ func (r Apt) Diff(
 		"updateCacheRetryMaxDelay",
 		"upgrade",
 	}
-	if news.Ensure == nil && r.canAssumeEnsure(news) && olds.Ensure != nil {
+	if req.Inputs.Ensure == nil && r.canAssumeEnsure(req.Inputs) && req.State.Ensure != nil {
 		// special diff for "ensure" since we compute it dynamically sometimes
-		news.Ensure = ptr.Of("present")
-		pdiff := types.DiffAttribute(olds.Ensure, news.Ensure)
+		req.Inputs.Ensure = ptr.Of("present")
+		pdiff := types.DiffAttribute(req.State.Ensure, req.Inputs.Ensure)
 		if pdiff != nil {
 			diff.HasChanges = true
 			diff.DetailedDiff["ensure"] = *pdiff
@@ -343,8 +343,8 @@ func (r Apt) Diff(
 
 	diff = types.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(olds, news, attrs),
-		types.DiffTriggers(olds, news),
+		types.DiffAttributes(req.State, req.Inputs, attrs),
+		types.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
@@ -352,66 +352,82 @@ func (r Apt) Diff(
 	return diff, nil
 }
 
-func (r Apt) Create(
-	ctx context.Context,
-	name string,
-	input AptArgs,
-	preview bool,
-) (string, AptState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Create", trace.WithAttributes(
-		attribute.String("name", name),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infer.CreateResponse[AptState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Apt.Create", trace.WithAttributes(
+		attribute.String("pulumi.operation", "create"),
+		attribute.String("pulumi.type", "mid:resource:Apt"),
+		attribute.String("pulumi.name", req.Name),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	state := r.updateState(AptState{}, input, true)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state := r.updateState(AptState{}, req.Inputs, true)
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(name, 8, 0)
+	id, err := resource.NewUniqueHex(req.Name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return "", state, err
+		return infer.CreateResponse[AptState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
-	span.SetAttributes(attribute.String("id", id))
+	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	parameters, err := r.argsToTaskParameters(input)
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[AptState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
-	_, err = r.runApt(ctx, config.Connection, parameters, preview)
+	_, err = r.runApt(ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[AptState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, state, nil
+	return infer.CreateResponse[AptState]{
+		ID:     id,
+		Output: state,
+	}, nil
 }
 
 func (r Apt) Read(
 	ctx context.Context,
-	id string,
-	inputs AptArgs,
-	state AptState,
-) (string, AptArgs, AptState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Read", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("inputs", inputs),
-		telemetry.OtelJSON("state", state),
+	req infer.ReadRequest[AptArgs, AptState],
+) (infer.ReadResponse[AptArgs, AptState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Apt.Read", trace.WithAttributes(
+		attribute.String("pulumi.operation", "read"),
+		attribute.String("pulumi.type", "mid:resource:Apt"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(inputs)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[AptArgs, AptState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
 	result, err := r.runApt(ctx, config.Connection, parameters, true)
@@ -419,18 +435,20 @@ func (r Apt) Read(
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, inputs, AptState{
-				AptArgs: inputs,
-			}, nil
+			return infer.ReadResponse[AptArgs, AptState]{
+				ID:     req.ID,
+				Inputs: req.Inputs,
+				State:  state,
+			}, err
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[AptArgs, AptState]{}, err
 	}
 
-	state = r.updateState(state, inputs, result.IsChanged())
+	state = r.updateState(state, req.Inputs, result.IsChanged())
 
-	if result.IsChanged() && r.canAssumeEnsure(inputs) {
-		if inputs.Ensure != nil && *inputs.Ensure == "absent" {
+	if result.IsChanged() && r.canAssumeEnsure(req.Inputs) {
+		if req.Inputs.Ensure != nil && *req.Inputs.Ensure == "absent" {
 			if state.Ensure == nil || *state.Ensure == "absent" {
 				state.Ensure = ptr.Of("present")
 			}
@@ -438,78 +456,92 @@ func (r Apt) Read(
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, inputs, state, nil
+	return infer.ReadResponse[AptArgs, AptState]{
+		ID:     req.ID,
+		Inputs: req.Inputs,
+		State:  state,
+	}, nil
 }
 
 func (r Apt) Update(
 	ctx context.Context,
-	id string,
-	olds AptState,
-	news AptArgs,
-	preview bool,
-) (AptState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Update", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
-		attribute.Bool("preview", preview),
+	req infer.UpdateRequest[AptArgs, AptState],
+) (infer.UpdateResponse[AptState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Apt.Update", trace.WithAttributes(
+		attribute.String("pulumi.operation", "update"),
+		attribute.String("pulumi.type", "mid:resource:Apt"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	if (news.Ensure != nil && *news.Ensure == "absent") || !r.canAssumeEnsure(news) {
-		parameters, err := r.argsToTaskParameters(news)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	if (req.Inputs.Ensure != nil && *req.Inputs.Ensure == "absent") || !r.canAssumeEnsure(req.Inputs) {
+		parameters, err := r.argsToTaskParameters(req.Inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
 		}
 
-		result, err := r.runApt(ctx, config.Connection, parameters, preview)
+		result, err := r.runApt(ctx, config.Connection, parameters, req.DryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
 		}
 
-		state := r.updateState(olds, news, result.IsChanged())
+		state := r.updateState(state, req.Inputs, result.IsChanged())
 		span.SetStatus(codes.Ok, "")
-		return state, nil
+		return infer.UpdateResponse[AptState]{
+			Output: state,
+		}, nil
 	}
 
 	aptStateMap := map[string]string{}
 
 	newState := "present"
-	if olds.Ensure != nil {
-		newState = *olds.Ensure
+	if state.Ensure != nil {
+		newState = *state.Ensure
 	}
-	if news.Ensure != nil {
-		newState = *news.Ensure
+	if req.Inputs.Ensure != nil {
+		newState = *req.Inputs.Ensure
 	}
 
-	if news.Name != nil {
-		aptStateMap[*news.Name] = newState
-	} else if news.Names != nil {
-		for _, name := range *news.Names {
+	if req.Inputs.Name != nil {
+		aptStateMap[*req.Inputs.Name] = newState
+	} else if req.Inputs.Names != nil {
+		for _, name := range *req.Inputs.Names {
 			aptStateMap[name] = newState
 		}
-	} else if olds.Name != nil {
-		aptStateMap[*olds.Name] = newState
-	} else if olds.Names != nil {
-		for _, name := range *olds.Names {
+	} else if state.Name != nil {
+		aptStateMap[*state.Name] = newState
+	} else if state.Names != nil {
+		for _, name := range *state.Names {
 			aptStateMap[name] = newState
 		}
 	} else {
 		err := errors.New("we somehow forgot the apt name, oops")
 		span.SetStatus(codes.Error, err.Error())
-		return AptState{}, err
+		return infer.UpdateResponse[AptState]{
+			Output: state,
+		}, err
 	}
 
-	if olds.Name != nil {
-		if _, exists := aptStateMap[*olds.Name]; !exists {
-			aptStateMap[*olds.Name] = "absent"
+	if state.Name != nil {
+		if _, exists := aptStateMap[*state.Name]; !exists {
+			aptStateMap[*state.Name] = "absent"
 		}
 	} else {
-		for _, name := range *olds.Names {
+		for _, name := range *state.Names {
 			if _, exists := aptStateMap[name]; !exists {
 				aptStateMap[name] = "absent"
 			}
@@ -530,17 +562,21 @@ func (r Apt) Update(
 	changed := false
 
 	if len(absents) > 0 {
-		parameters, err := r.argsToTaskParameters(news)
+		parameters, err := r.argsToTaskParameters(req.Inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return AptState{}, err
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
 		}
 		parameters.Name = &absents
 		parameters.State = ansible.OptionalAptState("absent")
-		result, err := r.runApt(ctx, config.Connection, parameters, preview)
+		result, err := r.runApt(ctx, config.Connection, parameters, req.DryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return AptState{}, err
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
 		}
 		if result.IsChanged() {
 			changed = true
@@ -548,52 +584,60 @@ func (r Apt) Update(
 	}
 
 	if len(presents) > 0 {
-		parameters, err := r.argsToTaskParameters(news)
+		parameters, err := r.argsToTaskParameters(req.Inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return AptState{}, err
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
 		}
 		parameters.Name = &presents
 		parameters.State = ansible.OptionalAptState(newState)
-		result, err := r.runApt(ctx, config.Connection, parameters, preview)
+		result, err := r.runApt(ctx, config.Connection, parameters, req.DryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
-			return AptState{}, err
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
 		}
 		if result.IsChanged() {
 			changed = true
 		}
 	}
 
-	state := r.updateState(olds, news, changed)
+	state = r.updateState(state, req.Inputs, changed)
 	span.SetStatus(codes.Ok, "")
-	return state, nil
+	return infer.UpdateResponse[AptState]{
+		Output: state,
+	}, nil
 }
 
-func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
-	ctx, span := Tracer.Start(ctx, "mid:resource:Apt.Delete", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("props", props),
+func (r Apt) Delete(ctx context.Context, req infer.DeleteRequest[AptState]) (infer.DeleteResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Apt.Delete", trace.WithAttributes(
+		attribute.String("pulumi.operation", "delete"),
+		attribute.String("pulumi.type", "mid:resource:Apt"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
-	if !r.canAssumeEnsure(props.AptArgs) {
+	if !r.canAssumeEnsure(req.State.AptArgs) {
 		span.SetStatus(codes.Ok, "")
-		return nil
+		return infer.DeleteResponse{}, nil
 	}
 
-	if props.Ensure != nil && *props.Ensure == "absent" {
+	if req.State.Ensure != nil && *req.State.Ensure == "absent" {
 		span.SetStatus(codes.Ok, "")
-		return nil
+		return infer.DeleteResponse{}, nil
 	}
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(props.AptArgs)
+	parameters, err := r.argsToTaskParameters(req.State.AptArgs)
 	parameters.State = ansible.OptionalAptState("absent")
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	_, err = r.runApt(ctx, config.Connection, parameters, false)
@@ -602,12 +646,12 @@ func (r Apt) Delete(ctx context.Context, id string, props AptState) error {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetAttributes(attribute.Bool("unreachable.deleted", true))
 			span.SetStatus(codes.Ok, "")
-			return nil
+			return infer.DeleteResponse{}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return infer.DeleteResponse{}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return nil
+	return infer.DeleteResponse{}, nil
 }

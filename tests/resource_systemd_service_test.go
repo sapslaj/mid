@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sapslaj/mid/tests/testmachine"
@@ -19,7 +19,7 @@ func TestResourceSystemdService(t *testing.T) {
 	defer harness.Close()
 
 	tests := map[string]struct {
-		props        resource.PropertyMap
+		props        map[string]property.Value
 		before       string
 		beforeCreate string
 		create       string
@@ -27,38 +27,38 @@ func TestResourceSystemdService(t *testing.T) {
 		delete       string
 	}{
 		"start service": {
-			props: resource.PropertyMap{
-				"name":   resource.NewStringProperty("cron.service"),
-				"ensure": resource.NewStringProperty("started"),
+			props: map[string]property.Value{
+				"name":   property.New("cron.service"),
+				"ensure": property.New("started"),
 			},
 			before: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 			create: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'active (running)'",
 			delete: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 		},
 		"start and enable service": {
-			props: resource.PropertyMap{
-				"name":    resource.NewStringProperty("cron.service"),
-				"ensure":  resource.NewStringProperty("started"),
-				"enabled": resource.NewBoolProperty(true),
+			props: map[string]property.Value{
+				"name":    property.New("cron.service"),
+				"ensure":  property.New("started"),
+				"enabled": property.New(true),
 			},
 			before: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 			create: "systemctl status cron.service | grep 'cron.service; enabled' && systemctl status cron.service | grep 'active (running)'",
 			delete: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 		},
 		"enable service without start": {
-			props: resource.PropertyMap{
-				"name":    resource.NewStringProperty("cron.service"),
-				"enabled": resource.NewBoolProperty(true),
+			props: map[string]property.Value{
+				"name":    property.New("cron.service"),
+				"enabled": property.New(true),
 			},
 			before: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 			create: "systemctl status cron.service | grep 'cron.service; enabled' && systemctl status cron.service | grep 'inactive (dead)'",
 			delete: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 		},
 		"service unit not defined during create preview": {
-			props: resource.PropertyMap{
-				"name":    resource.NewStringProperty("mid-systemd-service-test.service"),
-				"ensure":  resource.NewStringProperty("started"),
-				"enabled": resource.NewBoolProperty(true),
+			props: map[string]property.Value{
+				"name":    property.New("mid-systemd-service-test.service"),
+				"ensure":  property.New("started"),
+				"enabled": property.New(true),
 			},
 			before: "sudo rm -f /etc/systemd/system/mid-systemd-service-test.service ; sudo systemctl daemon-reload",
 			beforeCreate: `cat << EOF | sudo tee /etc/systemd/system/mid-systemd-service-test.service
@@ -90,10 +90,10 @@ sudo systemctl disable --now mid-systemd-service-test.service
 			}
 
 			t.Logf("%s: sending preview create request", name)
-			_, err := harness.Provider.Create(p.CreateRequest{
+			_, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:SystemdService"),
-				Properties: tc.props,
-				Preview:    true,
+				Properties: property.NewMap(tc.props),
+				DryRun:     true,
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -107,9 +107,9 @@ sudo systemctl disable --now mid-systemd-service-test.service
 			}
 
 			t.Logf("%s: sending create request", name)
-			createResponse, err := harness.Provider.Create(p.CreateRequest{
+			createResponse, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:SystemdService"),
-				Properties: tc.props,
+				Properties: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -121,21 +121,21 @@ sudo systemctl disable --now mid-systemd-service-test.service
 			}
 
 			t.Logf("%s: sending preview update request", name)
-			_, err = harness.Provider.Update(p.UpdateRequest{
-				Urn:     MakeURN("mid:resource:SystemdService"),
-				Olds:    createResponse.Properties,
-				News:    tc.props,
-				Preview: true,
+			_, err = harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:SystemdService"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
+				DryRun: true,
 			})
 			if !assert.NoError(t, err) {
 				return
 			}
 
 			t.Logf("%s: sending update request", name)
-			updateResponse, err := harness.Provider.Update(p.UpdateRequest{
-				Urn:  MakeURN("mid:resource:SystemdService"),
-				Olds: createResponse.Properties,
-				News: tc.props,
+			updateResponse, err := harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:SystemdService"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -151,7 +151,7 @@ sudo systemctl disable --now mid-systemd-service-test.service
 			}
 
 			t.Logf("%s: sending delete request", name)
-			err = harness.Provider.Delete(p.DeleteRequest{
+			err = harness.Server.Delete(p.DeleteRequest{
 				Urn:        MakeURN("mid:resource:SystemdService"),
 				Properties: updateResponse.Properties,
 			})

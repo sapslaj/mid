@@ -42,44 +42,40 @@ type FileLineState struct {
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
-func (r FileLine) argsToTaskParameters(input FileLineArgs) (ansible.LineinfileParameters, error) {
-	var state *ansible.LineinfileState
-	if input.Ensure != nil {
-		state = ansible.OptionalLineinfileState(string(*input.Ensure))
-	}
+func (r FileLine) argsToTaskParameters(inputs FileLineArgs) (ansible.LineinfileParameters, error) {
 	return ansible.LineinfileParameters{
-		State:        state,
-		Path:         input.Path,
-		Backrefs:     input.Backrefs,
-		Backup:       input.Backup,
-		Create:       input.Create,
-		Firstmatch:   input.FirstMatch,
-		Insertbefore: input.InsertBefore,
-		Insertafter:  input.InsertAfter,
-		Line:         input.Line,
-		Regexp:       input.Regexp,
-		SearchString: input.SearchString,
-		UnsafeWrites: input.UnsafeWrites,
-		Validate:     input.Validate,
+		State:        ansible.OptionalLineinfileState(inputs.Ensure),
+		Path:         inputs.Path,
+		Backrefs:     inputs.Backrefs,
+		Backup:       inputs.Backup,
+		Create:       inputs.Create,
+		Firstmatch:   inputs.FirstMatch,
+		Insertbefore: inputs.InsertBefore,
+		Insertafter:  inputs.InsertAfter,
+		Line:         inputs.Line,
+		Regexp:       inputs.Regexp,
+		SearchString: inputs.SearchString,
+		UnsafeWrites: inputs.UnsafeWrites,
+		Validate:     inputs.Validate,
 	}, nil
 }
 
-func (r FileLine) updateState(olds FileLineState, news FileLineArgs, changed bool) FileLineState {
-	olds.FileLineArgs = news
-	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
-	return olds
+func (r FileLine) updateState(inputs FileLineArgs, state FileLineState, changed bool) FileLineState {
+	state.FileLineArgs = inputs
+	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	return state
 }
 
 func (r FileLine) Diff(
 	ctx context.Context,
-	id string,
-	olds FileLineState,
-	news FileLineArgs,
-) (p.DiffResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Diff", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
+	req infer.DiffRequest[FileLineArgs, FileLineState],
+) (infer.DiffResponse, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/FileLine.Diff", trace.WithAttributes(
+		attribute.String("pulumi.operation", "diff"),
+		attribute.String("pulumi.type", "mid:resource:FileLine"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
@@ -91,7 +87,7 @@ func (r FileLine) Diff(
 
 	diff = types.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(olds, news, []string{
+		types.DiffAttributes(req.State, req.Inputs, []string{
 			"ensure",
 			"path",
 			"backrefs",
@@ -106,7 +102,7 @@ func (r FileLine) Diff(
 			"unsafeWrites",
 			"validate",
 		}),
-		types.DiffTriggers(olds, news),
+		types.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -116,99 +112,129 @@ func (r FileLine) Diff(
 
 func (r FileLine) Create(
 	ctx context.Context,
-	name string,
-	input FileLineArgs,
-	preview bool,
-) (string, FileLineState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Create", trace.WithAttributes(
-		attribute.String("name", name),
-		telemetry.OtelJSON("input", input),
-		attribute.Bool("preview", preview),
+	req infer.CreateRequest[FileLineArgs],
+) (infer.CreateResponse[FileLineState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/FileLine.Create", trace.WithAttributes(
+		attribute.String("pulumi.operation", "create"),
+		attribute.String("pulumi.type", "mid:resource:FileLine"),
+		attribute.String("pulumi.name", req.Name),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	state := r.updateState(FileLineState{}, input, true)
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state := r.updateState(req.Inputs, FileLineState{}, true)
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(name, 8, 0)
+	id, err := resource.NewUniqueHex(req.Name, 8, 0)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return "", state, err
+		return infer.CreateResponse[FileLineState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
-	span.SetAttributes(attribute.String("id", id))
+	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	parameters, err := r.argsToTaskParameters(input)
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[FileLineState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
-	if preview {
+	if req.DryRun {
 		stat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
 		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
 			RPCFunction: rpc.RPCFileStat,
 			Args: rpc.FileStatArgs{
-				Path: input.Path,
+				Path: req.Inputs.Path,
 			},
 		})
 		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && preview {
+			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
-				return id, state, nil
+				return infer.CreateResponse[FileLineState]{
+					ID:     id,
+					Output: state,
+				}, nil
 			}
 			span.SetStatus(codes.Error, err.Error())
-			return id, state, err
+			return infer.CreateResponse[FileLineState]{
+				ID:     id,
+				Output: state,
+			}, err
 		}
 		if !stat.Result.Exists {
-			// file doesn't exist yet during preview
+			// file doesn't exist yet during req.DryRun
 			span.SetStatus(codes.Ok, "")
-			return id, state, nil
+			return infer.CreateResponse[FileLineState]{
+				ID:     id,
+				Output: state,
+			}, nil
 		}
 	}
 
 	_, err = executor.AnsibleExecute[
 		ansible.LineinfileParameters,
 		ansible.LineinfileReturn,
-	](ctx, config.Connection, parameters, preview)
+	](ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, state, nil
+			return infer.CreateResponse[FileLineState]{
+				ID:     id,
+				Output: state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, state, err
+		return infer.CreateResponse[FileLineState]{
+			ID:     id,
+			Output: state,
+		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
-	return id, state, nil
+	return infer.CreateResponse[FileLineState]{
+		ID:     id,
+		Output: state,
+	}, nil
 }
 
 func (r FileLine) Read(
 	ctx context.Context,
-	id string,
-	inputs FileLineArgs,
-	state FileLineState,
-) (string, FileLineArgs, FileLineState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Read", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("inputs", inputs),
-		telemetry.OtelJSON("state", state),
+	req infer.ReadRequest[FileLineArgs, FileLineState],
+) (infer.ReadResponse[FileLineArgs, FileLineState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/FileLine.Read", trace.WithAttributes(
+		attribute.String("pulumi.operation", "read"),
+		attribute.String("pulumi.type", "mid:resource:FileLine"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(inputs)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
-		span.SetAttributes(telemetry.OtelJSON("state", state))
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[FileLineArgs, FileLineState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
 	result, err := executor.AnsibleExecute[
@@ -216,93 +242,115 @@ func (r FileLine) Read(
 		ansible.LineinfileReturn,
 	](ctx, config.Connection, parameters, true)
 	if err != nil {
-		span.SetAttributes(telemetry.OtelJSON("state", state))
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return id, inputs, FileLineState{
-				FileLineArgs: inputs,
+			return infer.ReadResponse[FileLineArgs, FileLineState]{
+				ID:     req.ID,
+				Inputs: req.Inputs,
+				State:  state,
 			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return id, inputs, state, err
+		return infer.ReadResponse[FileLineArgs, FileLineState]{
+			ID:     req.ID,
+			Inputs: req.Inputs,
+			State:  state,
+		}, err
 	}
 
-	state = r.updateState(state, inputs, result.IsChanged())
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
-	return id, inputs, state, nil
+	return infer.ReadResponse[FileLineArgs, FileLineState]{
+		ID:     req.ID,
+		Inputs: req.Inputs,
+		State:  state,
+	}, nil
 }
 
 func (r FileLine) Update(
 	ctx context.Context,
-	id string,
-	olds FileLineState,
-	news FileLineArgs,
-	preview bool,
-) (FileLineState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:FileLine.Update", trace.WithAttributes(
-		attribute.String("id", id),
-		telemetry.OtelJSON("olds", olds),
-		telemetry.OtelJSON("news", news),
-		attribute.Bool("preview", preview),
+	req infer.UpdateRequest[FileLineArgs, FileLineState],
+) (infer.UpdateResponse[FileLineState], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/FileLine.Update", trace.WithAttributes(
+		attribute.String("pulumi.operation", "update"),
+		attribute.String("pulumi.type", "mid:resource:FileLine"),
+		attribute.String("pulumi.id", req.ID),
+		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
+		telemetry.OtelJSON("pulumi.state", req.State),
+		attribute.Bool("pulumi.dry_run", req.DryRun),
 	))
 	defer span.End()
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToTaskParameters(news)
+	state := req.State
+	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[FileLineState]{
+			Output: state,
+		}, err
 	}
 
-	if preview {
+	if req.DryRun {
 		stat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
 		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
 			RPCFunction: rpc.RPCFileStat,
 			Args: rpc.FileStatArgs{
-				Path: news.Path,
+				Path: req.Inputs.Path,
 			},
 		})
 		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && preview {
+			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
-				return olds, nil
+				return infer.UpdateResponse[FileLineState]{
+					Output: state,
+				}, nil
 			}
 			span.SetStatus(codes.Error, err.Error())
-			return olds, err
+			return infer.UpdateResponse[FileLineState]{
+				Output: state,
+			}, err
 		}
 		if !stat.Result.Exists {
 			// file doesn't exist yet during preview
-			state := r.updateState(olds, news, true)
-			span.SetAttributes(telemetry.OtelJSON("state", state))
+			state := r.updateState(req.Inputs, state, true)
 			span.SetStatus(codes.Ok, "")
-			return state, nil
+			return infer.UpdateResponse[FileLineState]{
+				Output: state,
+			}, nil
 		}
 	}
 
 	result, err := executor.AnsibleExecute[
 		ansible.LineinfileParameters,
 		ansible.LineinfileReturn,
-	](ctx, config.Connection, parameters, preview)
+	](ctx, config.Connection, parameters, req.DryRun)
 	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && preview {
+		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
-			return olds, nil
+			return infer.UpdateResponse[FileLineState]{
+				Output: state,
+			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
-		return olds, err
+		return infer.UpdateResponse[FileLineState]{
+			Output: state,
+		}, err
 	}
 
-	state := r.updateState(olds, news, result.IsChanged())
-	span.SetAttributes(telemetry.OtelJSON("state", state))
+	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
-	return state, nil
+	return infer.UpdateResponse[FileLineState]{
+		Output: state,
+	}, nil
 }

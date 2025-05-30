@@ -280,7 +280,7 @@ func TestExec_updateStateFromOutput(t *testing.T) {
 
 			r := Exec{}
 
-			state := r.updateStateFromOutput(ExecState{}, ExecArgs{Logging: &tc.logging}, tc.output)
+			state := r.updateStateFromOutput(ExecArgs{Logging: &tc.logging}, ExecState{}, tc.output)
 
 			assert.Equal(t, tc.stderr, state.Stderr)
 			assert.Equal(t, tc.stdout, state.Stdout)

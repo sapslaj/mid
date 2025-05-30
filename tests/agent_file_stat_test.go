@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,11 +20,11 @@ func TestAgentFileStat_regfile(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:fileStat"),
-		Args: resource.PropertyMap{
-			"path": resource.NewStringProperty("/etc/shadow"),
-		},
+		Args: property.NewMap(map[string]property.Value{
+			"path": property.New("/etc/shadow"),
+		}),
 	})
 	require.NoError(t, err)
 
@@ -32,82 +32,82 @@ func TestAgentFileStat_regfile(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["followSymlinks"],
+		property.New(false),
+		res.Return.Get("followSymlinks"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["calculateChecksum"],
+		property.New(false),
+		res.Return.Get("calculateChecksum"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("/etc/shadow"),
-		res.Return["path"],
+		property.New("/etc/shadow"),
+		res.Return.Get("path"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		res.Return["exists"],
+		property.New(true),
+		res.Return.Get("exists"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("shadow"),
-		res.Return["baseName"],
+		property.New("shadow"),
+		res.Return.Get("baseName"),
 	)
 	assert.Greater(
 		t,
-		res.Return["size"].NumberValue(),
+		res.Return.Get("size").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"isDir":     resource.NewBoolProperty(false),
-			"isRegular": resource.NewBoolProperty(true),
-			"int":       resource.NewNumberProperty(416),
-			"octal":     resource.NewStringProperty("640"),
-			"string":    resource.NewStringProperty("-rw-r-----"),
+		property.New(map[string]property.Value{
+			"isDir":     property.New(false),
+			"isRegular": property.New(true),
+			"int":       property.New(float64(416)),
+			"octal":     property.New("640"),
+			"string":    property.New("-rw-r-----"),
 		}),
-		res.Return["fileMode"],
+		res.Return.Get("fileMode"),
 	)
-	assert.True(t, res.Return["modifiedTime"].HasValue())
-	assert.True(t, res.Return["accessTime"].HasValue())
-	assert.True(t, res.Return["createTime"].HasValue())
+	assert.True(t, res.Return.Get("modifiedTime").IsString())
+	assert.True(t, res.Return.Get("accessTime").IsString())
+	assert.True(t, res.Return.Get("createTime").IsString())
 	assert.Greater(
 		t,
-		res.Return["dev"].NumberValue(),
+		res.Return.Get("dev").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(42),
-		res.Return["gid"],
+		property.New(float64(42)),
+		res.Return.Get("gid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("shadow"),
-		res.Return["groupName"],
+		property.New("shadow"),
+		res.Return.Get("groupName"),
 	)
 	assert.Greater(
 		t,
-		res.Return["inode"].NumberValue(),
+		res.Return.Get("inode").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(1),
-		res.Return["nlink"],
+		property.New(float64(1)),
+		res.Return.Get("nlink"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["uid"],
+		property.New(float64(0)),
+		res.Return.Get("uid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("root"),
-		res.Return["userName"],
+		property.New("root"),
+		res.Return.Get("userName"),
 	)
 }
 
@@ -119,11 +119,11 @@ func TestAgentFileStat_symlinks(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:fileStat"),
-		Args: resource.PropertyMap{
-			"path": resource.NewStringProperty("/bin"),
-		},
+		Args: property.NewMap(map[string]property.Value{
+			"path": property.New("/bin"),
+		}),
 	})
 	require.NoError(t, err)
 
@@ -131,90 +131,90 @@ func TestAgentFileStat_symlinks(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["followSymlinks"],
+		property.New(false),
+		res.Return.Get("followSymlinks"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["calculateChecksum"],
+		property.New(false),
+		res.Return.Get("calculateChecksum"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("/bin"),
-		res.Return["path"],
+		property.New("/bin"),
+		res.Return.Get("path"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		res.Return["exists"],
+		property.New(true),
+		res.Return.Get("exists"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("bin"),
-		res.Return["baseName"],
+		property.New("bin"),
+		res.Return.Get("baseName"),
 	)
 	assert.Greater(
 		t,
-		res.Return["size"].NumberValue(),
+		res.Return.Get("size").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"isDir":     resource.NewBoolProperty(false),
-			"isRegular": resource.NewBoolProperty(false),
-			"int":       resource.NewNumberProperty(134218239),
-			"octal":     resource.NewStringProperty("1000000777"),
-			"string":    resource.NewStringProperty("Lrwxrwxrwx"),
+		property.New(map[string]property.Value{
+			"isDir":     property.New(false),
+			"isRegular": property.New(false),
+			"int":       property.New(float64(134218239)),
+			"octal":     property.New("1000000777"),
+			"string":    property.New("Lrwxrwxrwx"),
 		}),
-		res.Return["fileMode"],
+		res.Return.Get("fileMode"),
 	)
-	assert.True(t, res.Return["modifiedTime"].HasValue())
-	assert.True(t, res.Return["accessTime"].HasValue())
-	assert.True(t, res.Return["createTime"].HasValue())
+	assert.True(t, res.Return.Get("modifiedTime").IsString())
+	assert.True(t, res.Return.Get("accessTime").IsString())
+	assert.True(t, res.Return.Get("createTime").IsString())
 	assert.Greater(
 		t,
-		res.Return["dev"].NumberValue(),
+		res.Return.Get("dev").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["gid"],
+		property.New(float64(0)),
+		res.Return.Get("gid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("root"),
-		res.Return["groupName"],
+		property.New("root"),
+		res.Return.Get("groupName"),
 	)
 	assert.Greater(
 		t,
-		res.Return["inode"].NumberValue(),
+		res.Return.Get("inode").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(1),
-		res.Return["nlink"],
+		property.New(float64(1)),
+		res.Return.Get("nlink"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["uid"],
+		property.New(float64(0)),
+		res.Return.Get("uid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("root"),
-		res.Return["userName"],
+		property.New("root"),
+		res.Return.Get("userName"),
 	)
 
-	res, err = harness.Provider.Invoke(p.InvokeRequest{
+	res, err = harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:fileStat"),
-		Args: resource.PropertyMap{
-			"path":           resource.NewStringProperty("/bin"),
-			"followSymlinks": resource.NewBoolProperty(true),
-		},
+		Args: property.NewMap(map[string]property.Value{
+			"path":           property.New("/bin"),
+			"followSymlinks": property.New(true),
+		}),
 	})
 	require.NoError(t, err)
 
@@ -222,82 +222,82 @@ func TestAgentFileStat_symlinks(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		res.Return["followSymlinks"],
+		property.New(true),
+		res.Return.Get("followSymlinks"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["calculateChecksum"],
+		property.New(false),
+		res.Return.Get("calculateChecksum"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("/bin"),
-		res.Return["path"],
+		property.New("/bin"),
+		res.Return.Get("path"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		res.Return["exists"],
+		property.New(true),
+		res.Return.Get("exists"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("bin"),
-		res.Return["baseName"],
+		property.New("bin"),
+		res.Return.Get("baseName"),
 	)
 	assert.Greater(
 		t,
-		res.Return["size"].NumberValue(),
+		res.Return.Get("size").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"isDir":     resource.NewBoolProperty(true),
-			"isRegular": resource.NewBoolProperty(false),
-			"int":       resource.NewNumberProperty(2147484141),
-			"octal":     resource.NewStringProperty("20000000755"),
-			"string":    resource.NewStringProperty("drwxr-xr-x"),
+		property.New(map[string]property.Value{
+			"isDir":     property.New(true),
+			"isRegular": property.New(false),
+			"int":       property.New(float64(2147484141)),
+			"octal":     property.New("20000000755"),
+			"string":    property.New("drwxr-xr-x"),
 		}),
-		res.Return["fileMode"],
+		res.Return.Get("fileMode"),
 	)
-	assert.True(t, res.Return["modifiedTime"].HasValue())
-	assert.True(t, res.Return["accessTime"].HasValue())
-	assert.True(t, res.Return["createTime"].HasValue())
+	assert.True(t, res.Return.Get("modifiedTime").IsString())
+	assert.True(t, res.Return.Get("accessTime").IsString())
+	assert.True(t, res.Return.Get("createTime").IsString())
 	assert.Greater(
 		t,
-		res.Return["dev"].NumberValue(),
+		res.Return.Get("dev").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["gid"],
+		property.New(float64(0)),
+		res.Return.Get("gid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("root"),
-		res.Return["groupName"],
+		property.New("root"),
+		res.Return.Get("groupName"),
 	)
 	assert.Greater(
 		t,
-		res.Return["inode"].NumberValue(),
+		res.Return.Get("inode").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(1),
-		res.Return["nlink"],
+		property.New(float64(1)),
+		res.Return.Get("nlink"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["uid"],
+		property.New(float64(0)),
+		res.Return.Get("uid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("root"),
-		res.Return["userName"],
+		property.New("root"),
+		res.Return.Get("userName"),
 	)
 }
 
@@ -309,11 +309,11 @@ func TestAgentFileStat_nonexistant(t *testing.T) {
 	})
 	defer harness.Close()
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:fileStat"),
-		Args: resource.PropertyMap{
-			"path": resource.NewStringProperty("/404-not-found"),
-		},
+		Args: property.NewMap(map[string]property.Value{
+			"path": property.New("/404-not-found"),
+		}),
 	})
 	require.NoError(t, err)
 
@@ -321,37 +321,37 @@ func TestAgentFileStat_nonexistant(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["followSymlinks"],
+		property.New(false),
+		res.Return.Get("followSymlinks"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["calculateChecksum"],
+		property.New(false),
+		res.Return.Get("calculateChecksum"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("/404-not-found"),
-		res.Return["path"],
+		property.New("/404-not-found"),
+		res.Return.Get("path"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["exists"],
+		property.New(false),
+		res.Return.Get("exists"),
 	)
-	assert.True(t, res.Return["baseName"].IsNull())
-	assert.True(t, res.Return["size"].IsNull())
-	assert.True(t, res.Return["fileMode"].IsNull())
-	assert.True(t, res.Return["modifiedTime"].IsNull())
-	assert.True(t, res.Return["accessTime"].IsNull())
-	assert.True(t, res.Return["createTime"].IsNull())
-	assert.True(t, res.Return["dev"].IsNull())
-	assert.True(t, res.Return["gid"].IsNull())
-	assert.True(t, res.Return["groupName"].IsNull())
-	assert.True(t, res.Return["inode"].IsNull())
-	assert.True(t, res.Return["nlink"].IsNull())
-	assert.True(t, res.Return["uid"].IsNull())
-	assert.True(t, res.Return["userName"].IsNull())
+	assert.True(t, res.Return.Get("baseName").IsNull())
+	assert.True(t, res.Return.Get("size").IsNull())
+	assert.True(t, res.Return.Get("fileMode").IsNull())
+	assert.True(t, res.Return.Get("modifiedTime").IsNull())
+	assert.True(t, res.Return.Get("accessTime").IsNull())
+	assert.True(t, res.Return.Get("createTime").IsNull())
+	assert.True(t, res.Return.Get("dev").IsNull())
+	assert.True(t, res.Return.Get("gid").IsNull())
+	assert.True(t, res.Return.Get("groupName").IsNull())
+	assert.True(t, res.Return.Get("inode").IsNull())
+	assert.True(t, res.Return.Get("nlink").IsNull())
+	assert.True(t, res.Return.Get("uid").IsNull())
+	assert.True(t, res.Return.Get("userName").IsNull())
 }
 
 func TestAgentFileStat_checksum(t *testing.T) {
@@ -364,12 +364,12 @@ func TestAgentFileStat_checksum(t *testing.T) {
 
 	require.True(t, harness.AssertCommand(t, "echo foo | sudo tee /foo"))
 
-	res, err := harness.Provider.Invoke(p.InvokeRequest{
+	res, err := harness.Server.Invoke(p.InvokeRequest{
 		Token: tokens.Type("mid:agent:fileStat"),
-		Args: resource.PropertyMap{
-			"path":              resource.NewStringProperty("/foo"),
-			"calculateChecksum": resource.NewBoolProperty(true),
-		},
+		Args: property.NewMap(map[string]property.Value{
+			"path":              property.New("/foo"),
+			"calculateChecksum": property.New(true),
+		}),
 	})
 	require.NoError(t, err)
 
@@ -377,86 +377,86 @@ func TestAgentFileStat_checksum(t *testing.T) {
 
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(false),
-		res.Return["followSymlinks"],
+		property.New(false),
+		res.Return.Get("followSymlinks"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		res.Return["calculateChecksum"],
+		property.New(true),
+		res.Return.Get("calculateChecksum"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("/foo"),
-		res.Return["path"],
+		property.New("/foo"),
+		res.Return.Get("path"),
 	)
 	assert.Equal(
 		t,
-		resource.NewBoolProperty(true),
-		res.Return["exists"],
+		property.New(true),
+		res.Return.Get("exists"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("foo"),
-		res.Return["baseName"],
+		property.New("foo"),
+		res.Return.Get("baseName"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(4),
-		res.Return["size"],
+		property.New(float64(4)),
+		res.Return.Get("size"),
 	)
 	assert.Equal(
 		t,
-		resource.NewObjectProperty(resource.PropertyMap{
-			"isDir":     resource.NewBoolProperty(false),
-			"isRegular": resource.NewBoolProperty(true),
-			"int":       resource.NewNumberProperty(420),
-			"octal":     resource.NewStringProperty("644"),
-			"string":    resource.NewStringProperty("-rw-r--r--"),
+		property.New(map[string]property.Value{
+			"isDir":     property.New(false),
+			"isRegular": property.New(true),
+			"int":       property.New(float64(420)),
+			"octal":     property.New("644"),
+			"string":    property.New("-rw-r--r--"),
 		}),
-		res.Return["fileMode"],
+		res.Return.Get("fileMode"),
 	)
-	assert.True(t, res.Return["modifiedTime"].HasValue())
-	assert.True(t, res.Return["accessTime"].HasValue())
-	assert.True(t, res.Return["createTime"].HasValue())
+	assert.True(t, res.Return.Get("modifiedTime").IsString())
+	assert.True(t, res.Return.Get("accessTime").IsString())
+	assert.True(t, res.Return.Get("createTime").IsString())
 	assert.Greater(
 		t,
-		res.Return["dev"].NumberValue(),
+		res.Return.Get("dev").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["gid"],
+		property.New(float64(0)),
+		res.Return.Get("gid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("root"),
-		res.Return["groupName"],
+		property.New("root"),
+		res.Return.Get("groupName"),
 	)
 	assert.Greater(
 		t,
-		res.Return["inode"].NumberValue(),
+		res.Return.Get("inode").AsNumber(),
 		1.0,
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(1),
-		res.Return["nlink"],
+		property.New(float64(1)),
+		res.Return.Get("nlink"),
 	)
 	assert.Equal(
 		t,
-		resource.NewNumberProperty(0),
-		res.Return["uid"],
+		property.New(float64(0)),
+		res.Return.Get("uid"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("root"),
-		res.Return["userName"],
+		property.New("root"),
+		res.Return.Get("userName"),
 	)
 	assert.Equal(
 		t,
-		resource.NewStringProperty("b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"),
-		res.Return["sha256Checksum"],
+		property.New("b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"),
+		res.Return.Get("sha256Checksum"),
 	)
 }

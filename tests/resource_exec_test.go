@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,31 +15,31 @@ func TestResourceExec(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		props  resource.PropertyMap
+		props  map[string]property.Value
 		create string
 		update string
 		delete string
 	}{
 		"lifecycle": {
-			props: resource.PropertyMap{
-				"create": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("touch"),
-						resource.NewStringProperty("/create"),
+			props: map[string]property.Value{
+				"create": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("touch"),
+						property.New("/create"),
 					}),
 				}),
-				"update": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("touch"),
-						resource.NewStringProperty("/update"),
+				"update": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("touch"),
+						property.New("/update"),
 					}),
 				}),
-				"delete": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("rm"),
-						resource.NewStringProperty("-rf"),
-						resource.NewStringProperty("/create"),
-						resource.NewStringProperty("/update"),
+				"delete": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("rm"),
+						property.New("-rf"),
+						property.New("/create"),
+						property.New("/update"),
 					}),
 				}),
 			},
@@ -48,65 +48,65 @@ func TestResourceExec(t *testing.T) {
 			delete: "test ! -f /create && test ! -f /update",
 		},
 		"dir": {
-			props: resource.PropertyMap{
-				"create": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("touch"),
-						resource.NewStringProperty("create"),
+			props: map[string]property.Value{
+				"create": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("touch"),
+						property.New("create"),
 					}),
 				}),
-				"update": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("touch"),
-						resource.NewStringProperty("./tmp/update"),
+				"update": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("touch"),
+						property.New("./tmp/update"),
 					}),
-					"dir": resource.NewStringProperty("/"),
+					"dir": property.New("/"),
 				}),
-				"delete": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("rm"),
-						resource.NewStringProperty("-rf"),
-						resource.NewStringProperty("create"),
-						resource.NewStringProperty("update"),
+				"delete": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("rm"),
+						property.New("-rf"),
+						property.New("create"),
+						property.New("update"),
 					}),
 				}),
-				"dir": resource.NewStringProperty("/tmp"),
+				"dir": property.New("/tmp"),
 			},
 			create: "test -f /tmp/create",
 			update: "test -f /tmp/update",
 			delete: "test ! -f /tmp/create && test ! -f /tmp/update",
 		},
 		"environment": {
-			props: resource.PropertyMap{
-				"create": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("/bin/sh"),
-						resource.NewStringProperty("-c"),
-						resource.NewStringProperty("echo $OP > $FILE"),
+			props: map[string]property.Value{
+				"create": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("/bin/sh"),
+						property.New("-c"),
+						property.New("echo $OP > $FILE"),
 					}),
-					"environment": resource.NewObjectProperty(resource.PropertyMap{
-						"OP": resource.NewStringProperty("create"),
-					}),
-				}),
-				"update": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("/bin/sh"),
-						resource.NewStringProperty("-c"),
-						resource.NewStringProperty("echo $OP > $FILE"),
-					}),
-					"environment": resource.NewObjectProperty(resource.PropertyMap{
-						"OP": resource.NewStringProperty("update"),
+					"environment": property.New(map[string]property.Value{
+						"OP": property.New("create"),
 					}),
 				}),
-				"delete": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("/bin/sh"),
-						resource.NewStringProperty("-c"),
-						resource.NewStringProperty("rm -f $FILE"),
+				"update": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("/bin/sh"),
+						property.New("-c"),
+						property.New("echo $OP > $FILE"),
+					}),
+					"environment": property.New(map[string]property.Value{
+						"OP": property.New("update"),
 					}),
 				}),
-				"environment": resource.NewObjectProperty(resource.PropertyMap{
-					"FILE": resource.NewStringProperty("/tmp/environment"),
+				"delete": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("/bin/sh"),
+						property.New("-c"),
+						property.New("rm -f $FILE"),
+					}),
+				}),
+				"environment": property.New(map[string]property.Value{
+					"FILE": property.New("/tmp/environment"),
 				}),
 			},
 			create: "grep -q create /tmp/environment",
@@ -114,34 +114,34 @@ func TestResourceExec(t *testing.T) {
 			delete: "test ! -f /tmp/environment",
 		},
 		"expandArgumentVars": {
-			props: resource.PropertyMap{
-				"create": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("touch"),
-						resource.NewStringProperty("$FILE"),
+			props: map[string]property.Value{
+				"create": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("touch"),
+						property.New("$FILE"),
 					}),
-					"environment": resource.NewObjectProperty(resource.PropertyMap{
-						"FILE": resource.NewStringProperty("/create"),
-					}),
-				}),
-				"update": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("touch"),
-						resource.NewStringProperty("$FILE"),
-					}),
-					"environment": resource.NewObjectProperty(resource.PropertyMap{
-						"FILE": resource.NewStringProperty("/update"),
+					"environment": property.New(map[string]property.Value{
+						"FILE": property.New("/create"),
 					}),
 				}),
-				"delete": resource.NewObjectProperty(resource.PropertyMap{
-					"command": resource.NewArrayProperty([]resource.PropertyValue{
-						resource.NewStringProperty("rm"),
-						resource.NewStringProperty("-rf"),
-						resource.NewStringProperty("/create"),
-						resource.NewStringProperty("/update"),
+				"update": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("touch"),
+						property.New("$FILE"),
+					}),
+					"environment": property.New(map[string]property.Value{
+						"FILE": property.New("/update"),
 					}),
 				}),
-				"expandArgumentVars": resource.NewBoolProperty(true),
+				"delete": property.New(map[string]property.Value{
+					"command": property.New([]property.Value{
+						property.New("rm"),
+						property.New("-rf"),
+						property.New("/create"),
+						property.New("/update"),
+					}),
+				}),
+				"expandArgumentVars": property.New(true),
 			},
 			create: "test -f /create",
 			update: "test -f /update",
@@ -160,19 +160,19 @@ func TestResourceExec(t *testing.T) {
 			defer harness.Close()
 
 			t.Logf("%s: sending preview create request", name)
-			_, err := harness.Provider.Create(p.CreateRequest{
+			_, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:Exec"),
-				Properties: tc.props,
-				Preview:    true,
+				Properties: property.NewMap(tc.props),
+				DryRun:     true,
 			})
 			if !assert.NoError(t, err) {
 				return
 			}
 
 			t.Logf("%s: sending create request", name)
-			createResponse, err := harness.Provider.Create(p.CreateRequest{
+			createResponse, err := harness.Server.Create(p.CreateRequest{
 				Urn:        MakeURN("mid:resource:Exec"),
-				Properties: tc.props,
+				Properties: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -184,21 +184,21 @@ func TestResourceExec(t *testing.T) {
 			}
 
 			t.Logf("%s: sending preview update request", name)
-			_, err = harness.Provider.Update(p.UpdateRequest{
-				Urn:     MakeURN("mid:resource:Exec"),
-				Olds:    createResponse.Properties,
-				News:    tc.props,
-				Preview: true,
+			_, err = harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:Exec"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
+				DryRun: true,
 			})
 			if !assert.NoError(t, err) {
 				return
 			}
 
 			t.Logf("%s: sending update request", name)
-			updateResponse, err := harness.Provider.Update(p.UpdateRequest{
-				Urn:  MakeURN("mid:resource:Exec"),
-				Olds: createResponse.Properties,
-				News: tc.props,
+			updateResponse, err := harness.Server.Update(p.UpdateRequest{
+				Urn:    MakeURN("mid:resource:Exec"),
+				State:  createResponse.Properties,
+				Inputs: property.NewMap(tc.props),
 			})
 			if !assert.NoError(t, err) {
 				return
@@ -214,7 +214,7 @@ func TestResourceExec(t *testing.T) {
 			}
 
 			t.Logf("%s: sending delete request", name)
-			err = harness.Provider.Delete(p.DeleteRequest{
+			err = harness.Server.Delete(p.DeleteRequest{
 				Urn:        MakeURN("mid:resource:Exec"),
 				Properties: updateResponse.Properties,
 			})
@@ -238,39 +238,39 @@ func TestResourceExec_logging(t *testing.T) {
 	})
 	defer harness.Close()
 
-	props := resource.PropertyMap{
-		"create": resource.NewObjectProperty(resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("/bin/sh"),
-				resource.NewStringProperty("-c"),
-				resource.NewStringProperty("echo this is create stdout\necho this is create stderr 1>&2\n"),
+	props := map[string]property.Value{
+		"create": property.New(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("/bin/sh"),
+				property.New("-c"),
+				property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
 			}),
 		}),
-		"update": resource.NewObjectProperty(resource.PropertyMap{
-			"command": resource.NewArrayProperty([]resource.PropertyValue{
-				resource.NewStringProperty("/bin/sh"),
-				resource.NewStringProperty("-c"),
-				resource.NewStringProperty("echo this is update stdout\necho this is update stderr 1>&2\n"),
+		"update": property.New(map[string]property.Value{
+			"command": property.New([]property.Value{
+				property.New("/bin/sh"),
+				property.New("-c"),
+				property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
 			}),
 		}),
 	}
 
-	createResponse, err := harness.Provider.Create(p.CreateRequest{
+	createResponse, err := harness.Server.Create(p.CreateRequest{
 		Urn:        MakeURN("mid:resource:Exec"),
-		Properties: props,
+		Properties: property.NewMap(props),
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, "this is create stdout\n", createResponse.Properties["stdout"].StringValue())
-	assert.Equal(t, "this is create stderr\n", createResponse.Properties["stderr"].StringValue())
+	assert.Equal(t, "this is create stdout\n", createResponse.Properties.Get("stdout").AsString())
+	assert.Equal(t, "this is create stderr\n", createResponse.Properties.Get("stderr").AsString())
 
-	updateResponse, err := harness.Provider.Update(p.UpdateRequest{
-		Urn:  MakeURN("mid:resource:Exec"),
-		Olds: createResponse.Properties,
-		News: props,
+	updateResponse, err := harness.Server.Update(p.UpdateRequest{
+		Urn:    MakeURN("mid:resource:Exec"),
+		State:  createResponse.Properties,
+		Inputs: property.NewMap(props),
 	})
 	require.NoError(t, err)
 
-	assert.Equal(t, "this is update stdout\n", updateResponse.Properties["stdout"].StringValue())
-	assert.Equal(t, "this is update stderr\n", updateResponse.Properties["stderr"].StringValue())
+	assert.Equal(t, "this is update stdout\n", updateResponse.Properties.Get("stdout").AsString())
+	assert.Equal(t, "this is update stderr\n", updateResponse.Properties.Get("stderr").AsString())
 }
