@@ -106,22 +106,24 @@ func TestResourceFile(t *testing.T) {
 		},
 		// FIXME: these tests are borked for some reason
 		// "source asset": {
-		// 	props: map[string]property.Value{
-		// 		"path": property.New("/foo"),
-		// 		"source": property.New(map[string]property.Value{
-		// 			"a9e28acb8ab501f883219e7c9f624fb6": resource.NewAssetProperty(Must1(asset.FromPath("./resource_file_test.go"))),
+		// 	Create: Operation{
+		// 		Inputs: property.NewMap(map[string]property.Value{
+		// 			"path":   property.New("/foo"),
+		// 			"source": property.New(must.Must1(asset.FromPath("./resource_file_test.go"))),
 		// 		}),
+		// 		AssertCommand: "grep -q 'package tests' /foo",
 		// 	},
-		// 	create: "grep -q 'package tests' /foo",
-		// 	delete: "test ! -d /foo",
+		// 	AssertDeleteCommand: "test ! -d /foo",
 		// },
 		// "source archive": {
-		// 	props: map[string]property.Value{
-		// 		"path":   property.New("/foo"),
-		// 		"source": resource.NewArchiveProperty(Must1(archive.FromPath("./"))),
+		// 	Create: Operation{
+		// 		Inputs: property.NewMap(map[string]property.Value{
+		// 			"path":   property.New("/foo"),
+		// 			"source": property.New(must.Must1(archive.FromPath("./"))),
+		// 		}),
+		// 		AssertCommand: "ls -lah / && exit 1",
 		// 	},
-		// 	create: "ls -lah / && exit 1",
-		// 	delete: "test ! -d /foo",
+		// 	AssertDeleteCommand: "test ! -d /foo",
 		// },
 	}
 
