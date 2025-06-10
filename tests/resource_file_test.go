@@ -3,9 +3,7 @@ package tests
 import (
 	"testing"
 
-	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/sapslaj/mid/tests/testmachine"
 )
@@ -18,51 +16,93 @@ func TestResourceFile(t *testing.T) {
 	})
 	defer harness.Close()
 
-	tests := map[string]struct {
-		props  map[string]property.Value
-		before string
-		create string
-		update string
-		delete string
-	}{
+	tests := map[string]LifeCycleTest{
 		"content": {
-			props: map[string]property.Value{
-				"path":    property.New("/foo"),
-				"ensure":  property.New("file"),
-				"content": property.New("bar\n"),
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":    property.New("/foo"),
+					"ensure":  property.New("file"),
+					"content": property.New("bar\n"),
+				}),
+				AssertCommand: "test -f /foo && grep -q ^bar /foo",
 			},
-			create: "test -f /foo && grep -q ^bar /foo",
-			delete: "test ! -f /foo",
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":    property.New("/foo"),
+						"ensure":  property.New("file"),
+						"content": property.New("bar\n"),
+					}),
+					AssertCommand: "test -f /foo && grep -q ^bar /foo",
+				},
+			},
+			AssertDeleteCommand: "test ! -f /foo",
 		},
 		"directory": {
-			props: map[string]property.Value{
-				"path":   property.New("/foo"),
-				"ensure": property.New("directory"),
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/foo"),
+					"ensure": property.New("directory"),
+				}),
+				AssertCommand: "test -d /foo",
 			},
-			create: "test -d /foo",
-			delete: "test ! -d /foo",
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/foo"),
+						"ensure": property.New("directory"),
+					}),
+					AssertCommand: "test -d /foo",
+				},
+			},
+			AssertDeleteCommand: "test ! -d /foo",
 		},
 		"set permissions on new file": {
-			props: map[string]property.Value{
-				"path":    property.New("/foo"),
-				"ensure":  property.New("file"),
-				"content": property.New("bar\n"),
-				"mode":    property.New("a=rwx"),
-				"owner":   property.New("games"),
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":    property.New("/foo"),
+					"ensure":  property.New("file"),
+					"content": property.New("bar\n"),
+					"mode":    property.New("a=rwx"),
+					"owner":   property.New("games"),
+				}),
+				AssertCommand: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777' && grep -q ^bar /foo",
 			},
-			create: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777' && grep -q ^bar /foo",
-			delete: "true",
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":    property.New("/foo"),
+						"ensure":  property.New("file"),
+						"content": property.New("bar\n"),
+						"mode":    property.New("a=rwx"),
+						"owner":   property.New("games"),
+					}),
+					AssertCommand: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777' && grep -q ^bar /foo",
+				},
+			},
 		},
 		"set permissions on existing file": {
-			props: map[string]property.Value{
-				"path":   property.New("/foo"),
-				"ensure": property.New("file"),
-				"mode":   property.New("a=rwx"),
-				"owner":  property.New("games"),
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/foo"),
+					"ensure": property.New("file"),
+					"mode":   property.New("a=rwx"),
+					"owner":  property.New("games"),
+				}),
+				AssertBeforeCommand: "sudo touch /foo",
+				AssertCommand:       "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777'",
 			},
-			before: "sudo touch /foo",
-			create: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777'",
-			delete: "true",
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/foo"),
+						"ensure": property.New("file"),
+						"mode":   property.New("a=rwx"),
+						"owner":  property.New("games"),
+					}),
+					AssertCommand: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777'",
+				},
+			},
 		},
 		// FIXME: these tests are borked for some reason
 		// "source asset": {
@@ -86,84 +126,12 @@ func TestResourceFile(t *testing.T) {
 	}
 
 	for name, tc := range tests {
-		tc := tc
 		t.Run(name, func(t *testing.T) {
 			// WARN: do not use t.Parallel() here
 
-			if tc.before != "" {
-				t.Logf("%s: running before commands", name)
-				if !harness.AssertCommand(t, tc.before) {
-					return
-				}
-			}
+			tc.Resource = "mid:resource:File"
 
-			t.Logf("%s: sending preview create request", name)
-			_, err := harness.Server.Create(p.CreateRequest{
-				Urn:        MakeURN("mid:resource:File"),
-				Properties: property.NewMap(tc.props),
-				DryRun:     true,
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			t.Logf("%s: sending create request", name)
-			createResponse, err := harness.Server.Create(p.CreateRequest{
-				Urn:        MakeURN("mid:resource:File"),
-				Properties: property.NewMap(tc.props),
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			t.Logf("%s: checking create status", name)
-			if !harness.AssertCommand(t, tc.create) {
-				return
-			}
-
-			t.Logf("%s: sending update request", name)
-			_, err = harness.Server.Update(p.UpdateRequest{
-				Urn:    MakeURN("mid:resource:File"),
-				State:  createResponse.Properties,
-				Inputs: property.NewMap(tc.props),
-				DryRun: true,
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			t.Logf("%s: sending update request", name)
-			updateResponse, err := harness.Server.Update(p.UpdateRequest{
-				Urn:    MakeURN("mid:resource:File"),
-				State:  createResponse.Properties,
-				Inputs: property.NewMap(tc.props),
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			if tc.update == "" {
-				t.Logf("%s: update check is same as create", name)
-				tc.update = tc.create
-			}
-			t.Logf("%s: checking update status", name)
-			if !harness.AssertCommand(t, tc.update) {
-				return
-			}
-
-			t.Logf("%s: sending delete request", name)
-			err = harness.Server.Delete(p.DeleteRequest{
-				Urn:        MakeURN("mid:resource:File"),
-				Properties: updateResponse.Properties,
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			t.Logf("%s: checking delete status", name)
-			if !harness.AssertCommand(t, tc.delete) {
-				return
-			}
+			tc.Run(t, harness)
 		})
 	}
 }

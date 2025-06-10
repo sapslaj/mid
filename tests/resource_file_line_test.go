@@ -3,9 +3,7 @@ package tests
 import (
 	"testing"
 
-	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/sapslaj/mid/tests/testmachine"
 )
@@ -13,21 +11,15 @@ import (
 func TestResourceFileLine(t *testing.T) {
 	t.Parallel()
 
-	tests := map[string]struct {
-		props        map[string]property.Value
-		before       string
-		beforeCreate string
-		create       string
-		update       string
-		delete       string
-	}{
+	tests := map[string]LifeCycleTest{
 		"line modification in existing file": {
-			props: map[string]property.Value{
-				"path":   property.New("/etc/default/motd-news"),
-				"line":   property.New("ENABLED=0"),
-				"regexp": property.New("^ENABLED"),
-			},
-			before: `cat << EOF | sudo tee /etc/default/motd-news
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/etc/default/motd-news"),
+					"line":   property.New("ENABLED=0"),
+					"regexp": property.New("^ENABLED"),
+				}),
+				AssertBeforeCommand: `cat << EOF | sudo tee /etc/default/motd-news
 # Enable/disable the dynamic MOTD news service
 # This is a useful way to provide dynamic, informative
 # information pertinent to the users and administrators
@@ -49,18 +41,28 @@ URLS=""
 WAIT=5
 EOF
 `,
-			create: "grep -q ^ENABLED=0 /etc/default/motd-news",
-			update: "grep -q ^ENABLED=0 /etc/default/motd-news",
-			// delete: "grep -q ^ENABLED=1 /etc/default/motd-news", // FIXME: revert on delete
+				AssertCommand: "grep -q ^ENABLED=0 /etc/default/motd-news",
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/etc/default/motd-news"),
+						"line":   property.New("ENABLED=0"),
+						"regexp": property.New("^ENABLED"),
+					}),
+					AssertCommand: "grep -q ^ENABLED=0 /etc/default/motd-news",
+				},
+			},
 		},
 		"line addition to new file": {
-			props: map[string]property.Value{
-				"path":   property.New("/etc/default/motd-news"),
-				"line":   property.New("ENABLED=0"),
-				"regexp": property.New("^ENABLED"),
-			},
-			before: "rm -f /etc/default/motd-news",
-			beforeCreate: `cat << EOF | sudo tee /etc/default/motd-news
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/etc/default/motd-news"),
+					"line":   property.New("ENABLED=0"),
+					"regexp": property.New("^ENABLED"),
+				}),
+				AssertBeforeCommand: `rm -f /etc/default/motd-news
+cat << EOF | sudo tee /etc/default/motd-news
 # Enable/disable the dynamic MOTD news service
 # This is a useful way to provide dynamic, informative
 # information pertinent to the users and administrators
@@ -82,9 +84,18 @@ URLS=""
 WAIT=5
 EOF
 `,
-			create: "grep -q ^ENABLED=0 /etc/default/motd-news",
-			update: "grep -q ^ENABLED=0 /etc/default/motd-news",
-			// delete: "grep -q ^ENABLED=1 /etc/default/motd-news", // FIXME: revert on delete
+				AssertCommand: "grep -q ^ENABLED=0 /etc/default/motd-news",
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/etc/default/motd-news"),
+						"line":   property.New("ENABLED=0"),
+						"regexp": property.New("^ENABLED"),
+					}),
+					AssertCommand: "grep -q ^ENABLED=0 /etc/default/motd-news",
+				},
+			},
 		},
 		// TODO: "line addition to new file with create=true"
 		// TODO: "line addition in existing file"
@@ -92,96 +103,17 @@ EOF
 	}
 
 	for name, tc := range tests {
-		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
+			tc.Resource = "mid:resource:FileLine"
 
 			harness := NewProviderTestHarness(t, testmachine.Config{
 				Backend: testmachine.DockerBackend,
 			})
 			defer harness.Close()
 
-			if tc.before != "" {
-				t.Logf("%s: running before commands", name)
-				if !harness.AssertCommand(t, tc.before) {
-					return
-				}
-			}
-
-			t.Logf("%s: sending preview create request", name)
-			_, err := harness.Server.Create(p.CreateRequest{
-				Urn:        MakeURN("mid:resource:FileLine"),
-				Properties: property.NewMap(tc.props),
-				DryRun:     true,
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			if tc.beforeCreate != "" {
-				t.Logf("%s: running before create commands", name)
-				if !harness.AssertCommand(t, tc.beforeCreate) {
-					return
-				}
-			}
-
-			t.Logf("%s: sending create request", name)
-			createResponse, err := harness.Server.Create(p.CreateRequest{
-				Urn:        MakeURN("mid:resource:FileLine"),
-				Properties: property.NewMap(tc.props),
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			t.Logf("%s: checking create status", name)
-			if !harness.AssertCommand(t, tc.create) {
-				return
-			}
-
-			t.Logf("%s: sending preview update request", name)
-			_, err = harness.Server.Update(p.UpdateRequest{
-				Urn:    MakeURN("mid:resource:FileLine"),
-				State:  createResponse.Properties,
-				Inputs: property.NewMap(tc.props),
-				DryRun: true,
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			t.Logf("%s: sending update request", name)
-			updateResponse, err := harness.Server.Update(p.UpdateRequest{
-				Urn:    MakeURN("mid:resource:FileLine"),
-				State:  createResponse.Properties,
-				Inputs: property.NewMap(tc.props),
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			if tc.update == "" {
-				t.Logf("%s: update check is same as create", name)
-				tc.update = tc.create
-			}
-			t.Logf("%s: checking update status", name)
-			if !harness.AssertCommand(t, tc.update) {
-				return
-			}
-
-			t.Logf("%s: sending delete request", name)
-			err = harness.Server.Delete(p.DeleteRequest{
-				Urn:        MakeURN("mid:resource:FileLine"),
-				Properties: updateResponse.Properties,
-			})
-			if !assert.NoError(t, err) {
-				return
-			}
-
-			t.Logf("%s: checking delete status", name)
-			if !harness.AssertCommand(t, tc.delete) {
-				return
-			}
+			tc.Run(t, harness)
 		})
 	}
 }
