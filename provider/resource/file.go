@@ -116,12 +116,12 @@ type FileState struct {
 	Triggers   types.TriggersOutput `pulumi:"triggers"`
 }
 
-func (r File) argsToFileTaskParameters(inputs FileArgs) (*ansible.FileParameters, error) {
+func (r File) argsToFileTaskParameters(inputs FileArgs) (ansible.FileParameters, error) {
 	var state *ansible.FileState
 	if inputs.Ensure != nil {
 		state = ansible.OptionalFileState(string(*inputs.Ensure))
 	}
-	return &ansible.FileParameters{
+	return ansible.FileParameters{
 		AccessTime:             inputs.AccessTime,
 		AccessTimeFormat:       inputs.AccessTimeFormat,
 		Attributes:             inputs.Attributes,
@@ -168,14 +168,14 @@ func (r File) argsToSource(inputs FileArgs) (*string, error) {
 	return nil, nil
 }
 
-func (r File) argsToCopyTaskParameters(inputs FileArgs) (*ansible.CopyParameters, error) {
+func (r File) argsToCopyTaskParameters(inputs FileArgs) (ansible.CopyParameters, error) {
 	isRemoteSource := inputs.RemoteSource != nil
 	source, err := r.argsToSource(inputs)
 	if err != nil {
-		return nil, err
+		return ansible.CopyParameters{}, err
 	}
 
-	return &ansible.CopyParameters{
+	return ansible.CopyParameters{
 		Attributes:    inputs.Attributes,
 		Backup:        inputs.Backup,
 		Checksum:      inputs.Checksum,
@@ -199,8 +199,8 @@ func (r File) argsToCopyTaskParameters(inputs FileArgs) (*ansible.CopyParameters
 	}, nil
 }
 
-func (r File) argsToStatTaskParameters(inputs FileArgs) (*ansible.StatParameters, error) {
-	return &ansible.StatParameters{
+func (r File) argsToStatTaskParameters(inputs FileArgs) (ansible.StatParameters, error) {
+	return ansible.StatParameters{
 		Follow: inputs.Follow,
 		Path:   inputs.Path,
 	}, nil
@@ -299,12 +299,6 @@ func (r File) runCreateUpdatePlay(
 	// are we creating a symlink?
 	//   - `file` task
 
-	tasks := []any{}
-
-	copyTaskIndex := -1
-	fileTaskIndex := -1
-	statTaskIndex := -1
-
 	copyNeeded := ptr.AnyNonNils(
 		inputs.Source,
 		inputs.Content,
@@ -321,9 +315,6 @@ func (r File) runCreateUpdatePlay(
 
 	defer func() {
 		span.SetAttributes(
-			attribute.Int("copy_task_index", copyTaskIndex),
-			attribute.Int("file_task_index", fileTaskIndex),
-			attribute.Int("stat_task_index", statTaskIndex),
 			attribute.Bool("copy_needed", copyNeeded),
 			attribute.Bool("file_needed", fileNeeded),
 		)
@@ -341,62 +332,39 @@ func (r File) runCreateUpdatePlay(
 		}
 	}
 
+	if executor.PreviewUnreachable(ctx, config.Connection, dryRun) {
+		span.SetAttributes(attribute.Bool("unreachable", true))
+		span.SetStatus(codes.Ok, "")
+		state = r.updateState(inputs, state, true)
+		return state, nil
+	}
+
+	changed := false
+
 	if copyNeeded {
 		params, err := r.argsToCopyTaskParameters(inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
-		copyTaskIndex = len(tasks)
-		tasks = append(tasks, map[string]any{
-			"ansible.builtin.copy": params,
-		})
-	}
 
-	if fileNeeded {
-		params, err := r.argsToFileTaskParameters(inputs)
+		// TODO: rewrite using `executor.CallAgent`
+		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
+			GatherFacts: false,
+			Become:      true,
+			Check:       dryRun,
+			Tasks: []any{
+				map[string]any{
+					"ansible.builtin.copy": params,
+				},
+			},
+		})
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
-		fileTaskIndex = len(tasks)
-		tasks = append(tasks, map[string]any{
-			"ansible.builtin.file": params,
-			"ignore_errors":        copyNeeded || dryRun,
-		})
-	}
 
-	statParams, err := r.argsToStatTaskParameters(inputs)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return state, err
-	}
-	statTaskIndex = len(tasks)
-	tasks = append(tasks, map[string]any{
-		"ansible.builtin.stat": statParams,
-		"ignore_errors":        dryRun,
-	})
-
-	output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       dryRun,
-		Tasks:       tasks,
-	})
-	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && dryRun {
-			span.SetAttributes(attribute.Bool("unreachable", true))
-			span.SetStatus(codes.Ok, "")
-			return state, nil
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return state, err
-	}
-
-	changed := false
-
-	if copyNeeded {
-		result, err := executor.GetTaskResult[ansible.CopyReturn](output, 0, copyTaskIndex)
+		result, err := executor.GetTaskResult[ansible.CopyReturn](output, 0, 0)
 		if err != nil {
 			return state, err
 		}
@@ -407,20 +375,45 @@ func (r File) runCreateUpdatePlay(
 	}
 
 	if fileNeeded {
-		result, err := executor.GetTaskResult[ansible.FileReturn](output, 0, fileTaskIndex)
+		params, err := r.argsToFileTaskParameters(inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
+		}
+		result, err := executor.AnsibleExecute[
+			ansible.FileParameters,
+			ansible.FileReturn,
+		](ctx, config.Connection, params, dryRun)
+		if err != nil {
+			if !dryRun {
+				span.SetStatus(codes.Error, err.Error())
+				return state, err
+			}
+			changed = true
 		}
 		if result.IsChanged() {
 			changed = true
 		}
 	}
 
-	statResult, err := executor.GetTaskResult[ansible.StatReturn](output, 0, statTaskIndex)
+	statParams, err := r.argsToStatTaskParameters(inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
+	}
+	statResult, err := executor.AnsibleExecute[
+		ansible.StatParameters,
+		ansible.StatReturn,
+	](ctx, config.Connection, statParams, dryRun)
+	if err != nil {
+		if !dryRun {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		changed = true
+	}
+	if statResult.IsChanged() {
+		changed = true
 	}
 
 	state.Stat, err = rpc.AnyToJSONT[FileStateStat](statResult.Stat)
@@ -577,16 +570,10 @@ func (r File) Delete(ctx context.Context, req infer.DeleteRequest[FileState]) (i
 		return infer.DeleteResponse{}, err
 	}
 
-	_, err = executor.RunPlay(ctx, config.Connection, executor.Play{
-		GatherFacts: false,
-		Become:      true,
-		Check:       false,
-		Tasks: []any{
-			map[string]any{
-				"ansible.builtin.file": parameters,
-			},
-		},
-	})
+	_, err = executor.AnsibleExecute[
+		ansible.FileParameters,
+		ansible.FileReturn,
+	](ctx, config.Connection, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))
