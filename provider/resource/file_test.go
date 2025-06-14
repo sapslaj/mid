@@ -35,7 +35,9 @@ func TestFile_buildFileCopyPlan(t *testing.T) {
 				Content: ptr.Of("foo"),
 			},
 			expect: FileCopyPlan{
-				Strategy: FileCopyPlanNop,
+				// Strategy: FileCopyPlanInlineContent,
+				Strategy: FileCopyPlanStringAsset,
+				Reader:   b64("Zm9v"),
 			},
 		},
 
@@ -44,7 +46,7 @@ func TestFile_buildFileCopyPlan(t *testing.T) {
 				RemoteSource: ptr.Of("/tmp/foo"),
 			},
 			expect: FileCopyPlan{
-				Strategy: FileCopyPlanNop,
+				Strategy: FileCopyPlanRemoteSource,
 			},
 		},
 
