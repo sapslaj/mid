@@ -120,12 +120,20 @@ type Operation struct {
 	AssertCommand string
 	// Command to run before running the operation
 	AssertBeforeCommand string
+	// Command to run after the dry run but before the real operation
+	AssertAfterDryRunCommand string
 }
 
 type LifeCycleTest struct {
-	Resource            string
-	Create              Operation
-	Updates             []Operation
+	// Resource token
+	Resource string
+	// Create operation
+	Create Operation
+	// Update operations, in order
+	Updates []Operation
+	// Command to run before the final delete operation
+	AssertBeforeDeleteCommand string
+	// Command to run after the final delete operation
 	AssertDeleteCommand string
 }
 
@@ -134,17 +142,29 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 	urn := MakeURN(l.Resource)
 
 	runCreate := func(op Operation) (p.CreateResponse, bool) {
-		if op.AssertBeforeCommand != "" && !harness.AssertCommand(t, op.AssertBeforeCommand) {
-			return p.CreateResponse{}, false
+		t.Log("running create")
+
+		if op.AssertBeforeCommand != "" {
+			t.Logf("running before create command %q", op.AssertBeforeCommand)
+			if !harness.AssertCommand(t, op.AssertBeforeCommand) {
+				t.Log("before create command failed")
+				return p.CreateResponse{}, false
+			}
 		}
+
 		// Here we do the create and the initial setup
+		t.Log("running check")
 		checkResponse, err := harness.Server.Check(p.CheckRequest{
 			Urn:    urn,
 			State:  property.Map{},
 			Inputs: op.Inputs,
 		})
-		assert.NoError(t, err, "resource check errored")
+		if !assert.NoError(t, err, "resource check errored") {
+			return p.CreateResponse{}, false
+		}
+
 		if len(op.CheckFailures) > 0 || len(checkResponse.Failures) > 0 {
+			t.Log("checking check failures")
 			assert.ElementsMatch(
 				t,
 				op.CheckFailures,
@@ -154,15 +174,33 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 			return p.CreateResponse{}, false
 		}
 
+		t.Log("dry-run create request")
 		_, err = harness.Server.Create(p.CreateRequest{
 			Urn:        urn,
 			Properties: checkResponse.Inputs,
 			DryRun:     true,
 		})
-		// We allow the failure from ExpectFailure to hit at either the preview or the Create.
-		if op.ExpectFailure && err != nil {
+		if err != nil {
+			t.Logf("got preview create failure: %v", err)
+			// We allow the failure from ExpectFailure to hit at either the preview or the Create.
+			if op.ExpectFailure {
+				t.Log("got expected failure")
+			} else {
+				t.Fail()
+				t.Log("got unexpected failure")
+			}
 			return p.CreateResponse{}, false
 		}
+
+		if op.AssertAfterDryRunCommand != "" {
+			t.Logf("running after dry-run create command %q", op.AssertAfterDryRunCommand)
+			if !harness.AssertCommand(t, op.AssertAfterDryRunCommand) {
+				t.Log("after dry-run create command failed")
+				return p.CreateResponse{}, false
+			}
+		}
+
+		t.Log("create request")
 		createResponse, err := harness.Server.Create(p.CreateRequest{
 			Urn:        urn,
 			Properties: checkResponse.Inputs,
@@ -171,45 +209,63 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 			assert.Error(t, err, "expected an error on create")
 			return p.CreateResponse{}, false
 		}
-		assert.NoError(t, err, "failed to run the create")
-		if err != nil {
+		if !assert.NoError(t, err, "failed to run the create") {
 			return p.CreateResponse{}, false
 		}
+
 		if op.Hook != nil {
+			t.Log("running operation hook")
 			op.Hook(checkResponse.Inputs, createResponse.Properties)
 		}
+
 		if op.ExpectedOutput != nil {
+			t.Log("checking for expected output")
 			assert.EqualValues(t, *op.ExpectedOutput, createResponse.Properties, "create outputs")
 		}
+
 		if op.AssertCommand != "" {
-			harness.AssertCommand(t, op.AssertCommand)
+			t.Logf("running after create command %q", op.AssertCommand)
+			if !harness.AssertCommand(t, op.AssertCommand) {
+				return createResponse, false
+			}
 		}
+
 		return createResponse, true
 	}
 
 	createResponse, keepGoing := runCreate(l.Create)
 	if !keepGoing {
+		t.Log("create operation signaled the test to stop")
 		return
 	}
 
 	id := createResponse.ID
 	olds := createResponse.Properties
+
 	for i, update := range l.Updates {
-		if update.AssertBeforeCommand != "" && !harness.AssertCommand(t, update.AssertBeforeCommand) {
-			return
+		t.Logf("running update %d", i)
+
+		if update.AssertBeforeCommand != "" {
+			t.Logf("running before update command %q", update.AssertBeforeCommand)
+			if !harness.AssertCommand(t, update.AssertBeforeCommand) {
+				t.Log("before update command failed")
+				return
+			}
 		}
+
 		// Perform the check
+		t.Log("running check")
 		check, err := harness.Server.Check(p.CheckRequest{
 			Urn:    urn,
 			State:  olds,
 			Inputs: update.Inputs,
 		})
-
-		assert.NoErrorf(t, err, "check returned an error on update %d", i)
-		if err != nil {
+		if !assert.NoErrorf(t, err, "check returned an error on update %d", i) {
 			return
 		}
+
 		if len(update.CheckFailures) > 0 || len(check.Failures) > 0 {
+			t.Log("checking check failures")
 			assert.ElementsMatchf(
 				t,
 				update.CheckFailures,
@@ -220,21 +276,25 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 			continue
 		}
 
+		t.Log("running diff")
 		diff, err := harness.Server.Diff(p.DiffRequest{
 			ID:     id,
 			Urn:    urn,
 			State:  olds,
 			Inputs: check.Inputs,
 		})
-		assert.NoErrorf(t, err, "diff failed on update %d", i)
-		if err != nil {
+		if !assert.NoErrorf(t, err, "diff failed on update %d", i) {
 			return
 		}
+
 		if !diff.HasChanges {
+			t.Log("no changes, continuing to next operation")
 			// We don't have any changes, so we can just do nothing
 			continue
 		}
+
 		isDelete := false
+
 		for _, v := range diff.DetailedDiff {
 			switch v.Kind {
 			case p.AddReplace:
@@ -245,8 +305,12 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 				isDelete = true
 			}
 		}
+
 		if isDelete {
+			t.Log("detected resource requires a delete and replace")
+
 			runDelete := func() {
+				t.Log("running replace-delete")
 				err = harness.Server.Delete(p.DeleteRequest{
 					ID:         id,
 					Urn:        urn,
@@ -254,28 +318,37 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 				})
 				assert.NoError(t, err, "failed to delete the resource")
 			}
+
 			if diff.DeleteBeforeReplace {
+				t.Log("running delete before create")
+
 				runDelete()
+
 				result, keepGoing := runCreate(update)
 				if !keepGoing {
+					t.Log("create signaled the test to continue to next operation")
 					continue
 				}
+
 				id = result.ID
 				olds = result.Properties
 			} else {
+				t.Log("running create before delete")
 				result, keepGoing := runCreate(update)
 				if !keepGoing {
+					t.Log("create signaled the test to continue to next operation")
 					continue
 				}
 
 				runDelete()
+
 				// Set the new block
 				id = result.ID
 				olds = result.Properties
 			}
 		} else {
-
 			// Now perform the preview
+			t.Log("dry-run update request")
 			_, err = harness.Server.Update(p.UpdateRequest{
 				ID:     id,
 				Urn:    urn,
@@ -283,38 +356,71 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 				Inputs: check.Inputs,
 				DryRun: true,
 			})
-
-			if update.ExpectFailure && err != nil {
-				continue
+			if err != nil {
+				t.Logf("got preview update failure: %v", err)
+				if update.ExpectFailure {
+					t.Log("got expected failure")
+					continue
+				} else {
+					t.Fail()
+					t.Log("got unexpected failure")
+					return
+				}
 			}
 
+			if update.AssertAfterDryRunCommand != "" {
+				t.Logf("running after dry-run update command %q", update.AssertAfterDryRunCommand)
+				if !harness.AssertCommand(t, update.AssertAfterDryRunCommand) {
+					t.Log("after dry-run update command failed")
+					return
+				}
+			}
+
+			t.Log("update request")
 			result, err := harness.Server.Update(p.UpdateRequest{
 				ID:     id,
 				Urn:    urn,
 				State:  olds,
 				Inputs: check.Inputs,
 			})
-			if !update.ExpectFailure && err != nil {
-				assert.NoError(t, err, "failed to update the resource")
-				continue
-			}
 			if update.ExpectFailure {
-				assert.Errorf(t, err, "expected failure on update %d", i)
-				continue
+				if assert.Errorf(t, err, "expected an error on update %d", i) {
+					continue
+				} else {
+					return
+				}
 			}
+			if !assert.NoError(t, err, "failed to update the resource") {
+				return
+			}
+
 			if update.Hook != nil {
+				t.Log("running operation hook")
 				update.Hook(check.Inputs, result.Properties)
 			}
+
 			if update.ExpectedOutput != nil {
+				t.Log("checking for expected output")
 				assert.EqualValues(t, *update.ExpectedOutput, result.Properties, "expected output on update %d", i)
 			}
+
 			olds = result.Properties
 		}
 
-		if update.AssertCommand != "" && !harness.AssertCommand(t, update.AssertCommand) {
-			return
+		if update.AssertCommand != "" {
+			t.Logf("running after update command %q", update.AssertCommand)
+			if !harness.AssertCommand(t, update.AssertCommand) {
+				return
+			}
 		}
 	}
+
+	if l.AssertBeforeDeleteCommand != "" {
+		t.Logf("running before delete command %q", l.AssertBeforeDeleteCommand)
+		harness.AssertCommand(t, l.AssertBeforeDeleteCommand)
+	}
+
+	t.Log("running delete")
 	err := harness.Server.Delete(p.DeleteRequest{
 		ID:         id,
 		Urn:        urn,
@@ -323,6 +429,7 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 	assert.NoError(t, err, "failed to delete the resource")
 
 	if l.AssertDeleteCommand != "" {
+		t.Logf("running after delete command %q", l.AssertDeleteCommand)
 		harness.AssertCommand(t, l.AssertDeleteCommand)
 	}
 }

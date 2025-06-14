@@ -20,7 +20,7 @@ func TestResourceSystemdService(t *testing.T) {
 		"start service": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
-					"name":  property.New("cron.service"),
+					"name":   property.New("cron.service"),
 					"ensure": property.New("started"),
 				}),
 				AssertBeforeCommand: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
@@ -33,7 +33,7 @@ func TestResourceSystemdService(t *testing.T) {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
 					"name":    property.New("cron.service"),
-					"ensure":   property.New("started"),
+					"ensure":  property.New("started"),
 					"enabled": property.New(true),
 				}),
 				AssertBeforeCommand: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",

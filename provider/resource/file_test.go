@@ -282,7 +282,7 @@ func TestFile_argsToCopyTaskParameters(t *testing.T) {
 				Path: "/tmp/foo",
 			},
 			expect: ansible.CopyParameters{
-				Dest:      "/tmp/foo",
+				Dest: "/tmp/foo",
 			},
 		},
 
