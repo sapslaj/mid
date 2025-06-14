@@ -26,6 +26,7 @@ func TestResourceApt(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -f /usr/bin/vim",
 		},
+
 		"installs multiple packages": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -39,6 +40,7 @@ func TestResourceApt(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -f /usr/bin/curl && test ! -f /usr/bin/wget",
 		},
+
 		"upgrade all packages": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -49,6 +51,7 @@ func TestResourceApt(t *testing.T) {
 				}),
 			},
 		},
+
 		"apt clean": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{

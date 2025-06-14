@@ -32,6 +32,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			},
 			expectedEnvironment: map[string]string{},
 		},
+
 		"create and update are same": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -46,6 +47,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			},
 			expectedEnvironment: map[string]string{},
 		},
+
 		"create and update are different": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -63,6 +65,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			},
 			expectedEnvironment: map[string]string{},
 		},
+
 		"create and delete": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -80,6 +83,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			},
 			expectedEnvironment: map[string]string{},
 		},
+
 		"shared environment": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -99,6 +103,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				"FOO": "BAR",
 			},
 		},
+
 		"lifecycle specific environment": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -118,6 +123,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				"FOO": "BAR",
 			},
 		},
+
 		"mixed environment": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -144,6 +150,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 				"C": "3",
 			},
 		},
+
 		"shared dir": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -160,6 +167,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			},
 			expectedEnvironment: map[string]string{},
 		},
+
 		"lifecycle specific dir": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -176,6 +184,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			},
 			expectedEnvironment: map[string]string{},
 		},
+
 		"mixed dir": {
 			input: ExecArgs{
 				Create: types.ExecCommand{
@@ -193,6 +202,7 @@ func TestExec_argsToTaskParameters(t *testing.T) {
 			},
 			expectedEnvironment: map[string]string{},
 		},
+
 		"expandArgumentVars": {
 			input: ExecArgs{
 				Create: types.ExecCommand{

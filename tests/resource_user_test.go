@@ -29,6 +29,7 @@ func TestResourceUser(t *testing.T) {
 			},
 			AssertDeleteCommand: "test -z $(grep ^mid /etc/passwd)",
 		},
+
 		"manage home": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{

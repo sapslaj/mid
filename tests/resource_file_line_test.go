@@ -54,6 +54,7 @@ EOF
 				},
 			},
 		},
+
 		"line addition to new file": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -97,6 +98,7 @@ EOF
 				},
 			},
 		},
+
 		// TODO: "line addition to new file with create=true"
 		// TODO: "line addition in existing file"
 		// TODO: "line deletion in existing file"

@@ -70,6 +70,7 @@ func TestResourceExec(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -f /create && test ! -f /update",
 		},
+
 		"dir": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -129,6 +130,7 @@ func TestResourceExec(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -f /tmp/create && test ! -f /tmp/update",
 		},
+
 		"environment": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -204,6 +206,7 @@ func TestResourceExec(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -f /tmp/environment",
 		},
+
 		"expandArgumentVars": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{

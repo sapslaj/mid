@@ -26,6 +26,7 @@ func TestResourcePackage(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -f /usr/bin/vim",
 		},
+
 		"installs multiple packages": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{

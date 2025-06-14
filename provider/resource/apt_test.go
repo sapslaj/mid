@@ -27,6 +27,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"install single package but in a list": {
 			input: AptArgs{
 				Names: ptr.Of([]string{"vim"}),
@@ -37,6 +38,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"install multiple packages": {
 			input: AptArgs{
 				Names: ptr.Of([]string{"vim", "emacs"}),
@@ -47,6 +49,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"update repositories and install package": {
 			input: AptArgs{
 				Name:        ptr.Of("vim"),
@@ -59,6 +62,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"remove package": {
 			input: AptArgs{
 				Name:   ptr.Of("emacs"),
@@ -71,6 +75,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"allow downgrade": {
 			input: AptArgs{
 				Name:           ptr.Of("emacs"),
@@ -83,6 +88,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"fail on autoremove": {
 			input: AptArgs{
 				Name:             ptr.Of("vim"),
@@ -95,6 +101,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"install recommends": {
 			input: AptArgs{
 				Name:              ptr.Of("vim"),
@@ -107,6 +114,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"update all packages": {
 			input: AptArgs{
 				Name:   ptr.Of("*"),
@@ -119,6 +127,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"apt dist-upgrade": {
 			input: AptArgs{
 				Upgrade: ptr.Of("dist"),
@@ -129,6 +138,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: false,
 		},
+
 		"apt update": {
 			input: AptArgs{
 				UpdateCache: ptr.Of(true),
@@ -139,6 +149,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: false,
 		},
+
 		"apt update with cache valid time": {
 			input: AptArgs{
 				UpdateCache:    ptr.Of(true),
@@ -151,6 +162,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: false,
 		},
+
 		"update and upgrade with dpkg options": {
 			input: AptArgs{
 				Upgrade:     ptr.Of("dist"),
@@ -165,6 +177,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: false,
 		},
+
 		"install from URL": {
 			input: AptArgs{
 				Deb: ptr.Of("https://ubuntu.pkgs.org/24.04/ubuntu-universe-amd64/neovim_0.9.5-6ubuntu2_amd64.deb.html"),
@@ -175,6 +188,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: true,
 		},
+
 		"autoclean": {
 			input: AptArgs{
 				Autoclean: ptr.Of(true),
@@ -185,6 +199,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: false,
 		},
+
 		"autoremove": {
 			input: AptArgs{
 				Autoremove: ptr.Of(true),
@@ -195,6 +210,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: false,
 		},
+
 		"autoremove and purge": {
 			input: AptArgs{
 				Autoremove: ptr.Of(true),
@@ -207,6 +223,7 @@ func TestApt_argsToTaskParameters(t *testing.T) {
 			},
 			canAssumeEnsure: false,
 		},
+
 		"clean": {
 			input: AptArgs{
 				Clean: ptr.Of(true),

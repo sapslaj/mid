@@ -12,7 +12,7 @@ func TestResourceFile(t *testing.T) {
 	t.Parallel()
 
 	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.QEMUBackend,
+		Backend: testmachine.DockerBackend,
 	})
 	defer harness.Close()
 
@@ -38,6 +38,7 @@ func TestResourceFile(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -f /foo",
 		},
+
 		"directory": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -57,6 +58,7 @@ func TestResourceFile(t *testing.T) {
 			},
 			AssertDeleteCommand: "test ! -d /foo",
 		},
+
 		"set permissions on new file": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -81,6 +83,7 @@ func TestResourceFile(t *testing.T) {
 				},
 			},
 		},
+
 		"set permissions on existing file": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -104,6 +107,7 @@ func TestResourceFile(t *testing.T) {
 				},
 			},
 		},
+
 		// FIXME: these tests are borked for some reason
 		// "source asset": {
 		// 	Create: Operation{
@@ -115,6 +119,7 @@ func TestResourceFile(t *testing.T) {
 		// 	},
 		// 	AssertDeleteCommand: "test ! -d /foo",
 		// },
+
 		// "source archive": {
 		// 	Create: Operation{
 		// 		Inputs: property.NewMap(map[string]property.Value{

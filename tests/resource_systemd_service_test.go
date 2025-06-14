@@ -28,6 +28,7 @@ func TestResourceSystemdService(t *testing.T) {
 			},
 			AssertDeleteCommand: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 		},
+
 		"start and enable service": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -40,6 +41,7 @@ func TestResourceSystemdService(t *testing.T) {
 			},
 			AssertDeleteCommand: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 		},
+
 		"enable service without start": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -51,6 +53,7 @@ func TestResourceSystemdService(t *testing.T) {
 			},
 			AssertDeleteCommand: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
 		},
+
 		"service unit not defined during create preview": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
