@@ -103,6 +103,19 @@ func TestResourceFile(t *testing.T) {
 			},
 		},
 
+		"allows for the parent directory to not be created yet during dry run": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":    property.New("/nested/sub/dir/foo"),
+					"ensure":  property.New("file"),
+					"content": property.New("bar\n"),
+				}),
+				AssertBeforeCommand:      "test ! -d /nested/sub/dir",
+				AssertAfterDryRunCommand: "sudo mkdir -p /nested/sub/dir",
+				AssertCommand:            "test -f /nested/sub/dir/foo",
+			},
+		},
+
 		// FIXME: these tests are borked for some reason
 		// "source asset": {
 		// 	Create: Operation{

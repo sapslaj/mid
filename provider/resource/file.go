@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -472,6 +473,33 @@ func (r File) runCreateUpdatePlay(
 				} else {
 					params.Src = &stagedPath
 				}
+			}
+		}
+
+		if dryRun {
+			// exit early if the parent dir doesn't exist
+			dir := filepath.Dir(params.Dest)
+			span.SetAttributes(attribute.String("parent_directory.path", dir))
+
+			dirStat, err := executor.CallAgent[rpc.FileStatArgs, rpc.FileStatResult](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+				RPCFunction: rpc.RPCFileStat,
+				Args: rpc.FileStatArgs{
+					Path:              dir,
+					CalculateChecksum: false,
+					FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
+				},
+			})
+			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
+				return state, err
+			}
+
+			span.SetAttributes(attribute.Bool("parent_directory.exists", dirStat.Result.Exists))
+
+			if !dirStat.Result.Exists {
+				span.SetStatus(codes.Ok, "")
+				state = r.updateState(inputs, state, true)
+				return state, err
 			}
 		}
 
