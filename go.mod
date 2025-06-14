@@ -12,7 +12,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pulumi/pulumi-go-provider v1.0.1
-	github.com/pulumi/pulumi/sdk v1.14.1
 	github.com/pulumi/pulumi/sdk/v3 v3.171.0
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.34.0
