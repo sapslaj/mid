@@ -471,7 +471,7 @@ func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
 		span.SetStatus(codes.Error, err.Error())
 		return "", err
 	}
-	remotePath := "mid/staging/" + strings.ToLower(uid.String())
+	remotePath := ".mid/staging/" + strings.ToLower(uid.String())
 	span.SetAttributes(attribute.String("rpc.stage_file.remote_path", remotePath))
 
 	realPathOutput, err := RunRemoteCommand(ctx, agent, "realpath "+remotePath)
