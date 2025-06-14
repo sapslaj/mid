@@ -425,9 +425,24 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 	}
 
 	ch := make(chan rpc.RPCResult[any])
-	agent.InFlight.Store(call.UUID, ch)
+	defer close(ch)
 
-	rawResult := <-ch
+	agent.InFlight.Store(call.UUID, ch)
+	defer agent.InFlight.Delete(call.UUID)
+
+	var rawResult rpc.RPCResult[any]
+	select {
+	case rawResult = <-ch:
+		break
+	case <-ctx.Done():
+		err := ctx.Err()
+		span.SetStatus(codes.Error, err.Error())
+		return rpc.RPCResult[O]{
+			UUID:        call.UUID,
+			RPCFunction: call.RPCFunction,
+			Error:       err.Error(),
+		}, err
+	}
 	span.SetAttributes(telemetry.OtelJSON("rpc.raw_result", rawResult))
 	res, err := rpc.AnyToJSONT[rpc.RPCResult[O]](rawResult)
 	span.SetAttributes(telemetry.OtelJSON("rpc.result", res))

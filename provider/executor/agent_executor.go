@@ -560,8 +560,8 @@ func DisconnectAll(ctx context.Context) error {
 		multierr = errors.Join(multierr, err)
 		cs.Agent = nil
 		cs.Reachable = false
-		cs.SetupAgentMutex.Unlock()
 		cs.CanConnectMutex.Unlock()
+		cs.SetupAgentMutex.Unlock()
 		AgentPool.Delete(id)
 		logger.DebugContext(ctx, fmt.Sprintf("DisconnectAll: disconnected %d", id), slog.Any("error", err))
 	}
