@@ -16,6 +16,7 @@ const (
 	RPCClose          RPCFunction = "Close"
 	RPCExec           RPCFunction = "Exec"
 	RPCFileStat       RPCFunction = "FileStat"
+	RPCUntar          RPCFunction = "Untar"
 )
 
 type Server struct {
