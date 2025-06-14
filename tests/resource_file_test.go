@@ -11,11 +11,6 @@ import (
 func TestResourceFile(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.DockerBackend,
-	})
-	defer harness.Close()
-
 	tests := map[string]LifeCycleTest{
 		"content": {
 			Create: Operation{
@@ -134,9 +129,14 @@ func TestResourceFile(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			// WARN: do not use t.Parallel() here
+			t.Parallel()
 
 			tc.Resource = "mid:resource:File"
+
+			harness := NewProviderTestHarness(t, testmachine.Config{
+				Backend: testmachine.DockerBackend,
+			})
+			defer harness.Close()
 
 			tc.Run(t, harness)
 		})

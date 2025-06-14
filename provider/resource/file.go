@@ -1,14 +1,19 @@
 package resource
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"errors"
-	"path/filepath"
+	"fmt"
+	"io"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
 	ptypes "github.com/pulumi/pulumi-go-provider/infer/types"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	parchive "github.com/pulumi/pulumi/sdk/v3/go/common/resource/archive"
+	passet "github.com/pulumi/pulumi/sdk/v3/go/common/resource/asset"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -116,6 +121,111 @@ type FileState struct {
 	Triggers   types.TriggersOutput `pulumi:"triggers"`
 }
 
+type FileCopyPlanStrategy string
+
+const (
+	FileCopyPlanNop           FileCopyPlanStrategy = ""
+	FileCopyPlanInlineContent FileCopyPlanStrategy = "InlineContent"
+	FileCopyPlanRemoteSource  FileCopyPlanStrategy = "RemoteSource"
+	FileCopyPlanFileAsset     FileCopyPlanStrategy = "FileAsset"
+	FileCopyPlanStringAsset   FileCopyPlanStrategy = "StringAsset"
+	FileCopyPlanRemoteAsset   FileCopyPlanStrategy = "RemoteAsset"
+	FileCopyPlanFileArchive   FileCopyPlanStrategy = "FileArchive"
+	FileCopyPlanRemoteArchive FileCopyPlanStrategy = "RemoteArchive"
+	FileCopyPlanAssetArchive  FileCopyPlanStrategy = "AssetArchive"
+)
+
+type FileCopyPlan struct {
+	Strategy  FileCopyPlanStrategy
+	Reader    io.ReadCloser
+	Unarchive bool
+}
+
+func (r File) buildFileCopyPlan(inputs FileArgs) (FileCopyPlan, error) {
+	if inputs.Content != nil {
+		// FIXME: setting `content` in ansible.FileParameters breaks the Ansible
+		// module because despite declaring `content` to be a valid parameter it
+		// still expects and requires `src` to be set and exist.
+		// return FileCopyPlan{
+		// 	Strategy: FileCopyPlanInlineContent,
+		// }, nil
+		asset, err := passet.FromText(*inputs.Content)
+		if err != nil {
+			return FileCopyPlan{}, nil
+		}
+		inputs.Source = &ptypes.AssetOrArchive{
+			Asset: asset,
+		}
+	}
+
+	if inputs.RemoteSource != nil && *inputs.RemoteSource != "" {
+		return FileCopyPlan{
+			Strategy: FileCopyPlanRemoteSource,
+		}, nil
+	}
+
+	if inputs.Source == nil {
+		return FileCopyPlan{
+			Strategy: FileCopyPlanNop,
+		}, nil
+	}
+
+	plan := FileCopyPlan{}
+
+	if inputs.Source.Asset != nil {
+		asset := inputs.Source.Asset
+		switch {
+		case asset.IsPath():
+			plan.Strategy = FileCopyPlanFileAsset
+		case asset.IsText():
+			plan.Strategy = FileCopyPlanStringAsset
+		case asset.IsURI():
+			plan.Strategy = FileCopyPlanRemoteAsset
+		default:
+			return plan, fmt.Errorf("unknown asset type: %#v", asset)
+		}
+
+		blob, err := asset.Read()
+		if err != nil {
+			return plan, err
+		}
+
+		plan.Reader = blob
+	}
+
+	if inputs.Source.Archive != nil {
+		archive := inputs.Source.Archive
+		plan.Unarchive = true
+		switch {
+		case archive.IsPath():
+			plan.Strategy = FileCopyPlanFileArchive
+		case archive.IsURI():
+			plan.Strategy = FileCopyPlanRemoteArchive
+		case archive.IsAssets():
+			plan.Strategy = FileCopyPlanAssetArchive
+		default:
+			return plan, fmt.Errorf("unknown archive type: %#v", archive)
+		}
+
+		// FIXME: the TarGZIPArchive format is broken because the gzip.Writer is
+		// never closed. This is an upstream Pulumi SDK bug.
+		bbuf := bytes.Buffer{}
+		zbuf := gzip.NewWriter(&bbuf)
+		err := archive.Archive(parchive.TarArchive, zbuf)
+		if err != nil {
+			return plan, err
+		}
+		err = zbuf.Close()
+		if err != nil {
+			return plan, err
+		}
+
+		plan.Reader = io.NopCloser(&bbuf)
+	}
+
+	return plan, nil
+}
+
 func (r File) argsToFileTaskParameters(inputs FileArgs) (ansible.FileParameters, error) {
 	var state *ansible.FileState
 	if inputs.Ensure != nil {
@@ -143,39 +253,8 @@ func (r File) argsToFileTaskParameters(inputs FileArgs) (ansible.FileParameters,
 	}, nil
 }
 
-func (r File) argsToSource(inputs FileArgs) (*string, error) {
-	if inputs.RemoteSource != nil {
-		return inputs.RemoteSource, nil
-	} else if inputs.Source != nil {
-		if inputs.Source.Asset != nil {
-			if inputs.Source.Asset.Text != "" {
-				return &inputs.Source.Asset.Text, nil
-			} else if inputs.Source.Asset.Path != "" {
-				abs, err := filepath.Abs(inputs.Source.Asset.Path)
-				if err != nil {
-					return nil, err
-				}
-				return &abs, nil
-			}
-		} else if inputs.Source.Archive != nil {
-			abs, err := filepath.Abs(inputs.Source.Archive.Path)
-			if err != nil {
-				return nil, err
-			}
-			return &abs, nil
-		}
-	}
-	return nil, nil
-}
-
 func (r File) argsToCopyTaskParameters(inputs FileArgs) (ansible.CopyParameters, error) {
-	isRemoteSource := inputs.RemoteSource != nil
-	source, err := r.argsToSource(inputs)
-	if err != nil {
-		return ansible.CopyParameters{}, err
-	}
-
-	return ansible.CopyParameters{
+	params := ansible.CopyParameters{
 		Attributes:    inputs.Attributes,
 		Backup:        inputs.Backup,
 		Checksum:      inputs.Checksum,
@@ -188,15 +267,14 @@ func (r File) argsToCopyTaskParameters(inputs FileArgs) (ansible.CopyParameters,
 		LocalFollow:   inputs.LocalFollow,
 		Mode:          ptr.ToAny(inputs.Mode),
 		Owner:         inputs.Owner,
-		RemoteSrc:     ptr.Of(isRemoteSource),
 		Selevel:       inputs.Selevel,
 		Serole:        inputs.Serole,
 		Setype:        inputs.Setype,
 		Seuser:        inputs.Seuser,
-		Src:           source,
 		UnsafeWrites:  inputs.UnsafeWrites,
 		Validate:      inputs.Validate,
-	}, nil
+	}
+	return params, nil
 }
 
 func (r File) argsToStatTaskParameters(inputs FileArgs) (ansible.StatParameters, error) {
@@ -320,18 +398,6 @@ func (r File) runCreateUpdatePlay(
 		)
 	}()
 
-	if dryRun && copyNeeded {
-		source, err := r.argsToSource(inputs)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return state, err
-		}
-		if source == nil {
-			copyNeeded = false
-			fileNeeded = true
-		}
-	}
-
 	if executor.PreviewUnreachable(ctx, config.Connection, dryRun) {
 		span.SetAttributes(attribute.Bool("unreachable", true))
 		span.SetStatus(codes.Ok, "")
@@ -342,35 +408,82 @@ func (r File) runCreateUpdatePlay(
 	changed := false
 
 	if copyNeeded {
+		remoteSource := false
+		if inputs.RemoteSource != nil && *inputs.RemoteSource != "" {
+			remoteSource = true
+		}
+
 		params, err := r.argsToCopyTaskParameters(inputs)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 
-		// TODO: rewrite using `executor.CallAgent`
-		output, err := executor.RunPlay(ctx, config.Connection, executor.Play{
-			GatherFacts: false,
-			Become:      true,
-			Check:       dryRun,
-			Tasks: []any{
-				map[string]any{
-					"ansible.builtin.copy": params,
-				},
-			},
-		})
+		if remoteSource {
+			params.Src = inputs.RemoteSource
+			params.RemoteSrc = ptr.Of(true)
+		} else {
+			fileCopyPlan, err := r.buildFileCopyPlan(inputs)
+			span.SetAttributes(
+				attribute.String("file_copy_path.strategy", string(fileCopyPlan.Strategy)),
+				attribute.Bool("file_copy_path.unarchive", fileCopyPlan.Unarchive),
+			)
+			if err != nil {
+				span.SetStatus(codes.Error, err.Error())
+				return state, err
+			}
+
+			switch fileCopyPlan.Strategy {
+			case FileCopyPlanNop, FileCopyPlanRemoteSource:
+				break
+			case FileCopyPlanInlineContent:
+				params.Content = inputs.Content
+				break
+			default:
+				if fileCopyPlan.Reader == nil {
+					err = fmt.Errorf("unsupported file copy plan: %s", fileCopyPlan.Strategy)
+					span.SetStatus(codes.Error, err.Error())
+					return state, err
+				}
+
+				// TODO: only conditionally copy based on stat and checksum
+				params.RemoteSrc = ptr.Of(true)
+				stagedPath, err := executor.StageFile(ctx, config.Connection, fileCopyPlan.Reader)
+				if err != nil {
+					span.SetStatus(codes.Error, err.Error())
+					return state, err
+				}
+
+				if fileCopyPlan.Unarchive {
+					result, err := executor.CallAgent[rpc.UntarArgs, rpc.UntarResult](ctx, config.Connection, rpc.RPCCall[rpc.UntarArgs]{
+						RPCFunction: rpc.RPCUntar,
+						Args: rpc.UntarArgs{
+							SourceFilePath:  stagedPath,
+							TargetDirectory: stagedPath + ".unarchived",
+						},
+					})
+					if err != nil {
+						return state, err
+					}
+					if result.Error != "" {
+						return state, errors.New(result.Error)
+					}
+					params.Src = ptr.Of(stagedPath + ".unarchived")
+				} else {
+					params.Src = &stagedPath
+				}
+			}
+		}
+
+		result, err := executor.AnsibleExecute[
+			ansible.CopyParameters,
+			ansible.CopyReturn,
+		](ctx, config.Connection, params, dryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 
-		result, err := executor.GetTaskResult[ansible.CopyReturn](output, 0, 0)
-		if err != nil {
-			return state, err
-		}
-		if result.IsChanged() {
-			changed = true
-		}
 		state.BackupFile = result.BackupFile
 	}
 
