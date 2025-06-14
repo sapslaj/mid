@@ -173,7 +173,7 @@ otel:
 	} else {
 		ts.Logger = ts.Logger.With(slog.String("otlp_endpoint", otlpEndpoint))
 		ts.Logger.Info("telemetry enabled")
-		exporter, err := otlptrace.New(
+		ts.OtlpExporter, err = otlptrace.New(
 			ts.Context,
 			otlptracegrpc.NewClient(
 				otlptracegrpc.WithInsecure(),
@@ -200,7 +200,7 @@ otel:
 		otel.SetTracerProvider(
 			sdktrace.NewTracerProvider(
 				sdktrace.WithSampler(sdktrace.AlwaysSample()),
-				sdktrace.WithBatcher(exporter),
+				sdktrace.WithBatcher(ts.OtlpExporter),
 				sdktrace.WithResource(res),
 			),
 		)
