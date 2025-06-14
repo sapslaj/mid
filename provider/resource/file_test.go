@@ -283,7 +283,6 @@ func TestFile_argsToCopyTaskParameters(t *testing.T) {
 			},
 			expect: ansible.CopyParameters{
 				Dest:      "/tmp/foo",
-				RemoteSrc: ptr.Of(true),
 			},
 		},
 
@@ -320,7 +319,6 @@ func TestFile_argsToCopyTaskParameters(t *testing.T) {
 				Group:        ptr.Of("root"),
 				Mode:         ptr.ToAny(ptr.Of("u+rwx")),
 				Owner:        ptr.Of("root"),
-				RemoteSrc:    ptr.Of(true),
 				Selevel:      ptr.Of("_default"),
 				Serole:       ptr.Of("_default"),
 				Setype:       ptr.Of("_default"),
