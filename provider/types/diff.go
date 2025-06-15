@@ -30,18 +30,59 @@ func DiffAttributes(olds any, news any, attributes []string) p.DiffResponse {
 		DetailedDiff: map[string]p.PropertyDiff{},
 	}
 
+	// FIXME: this function does not handle nested structs correctly
+
 	oldVal := reflect.ValueOf(olds)
 	newVal := reflect.ValueOf(news)
+	seen := map[string]bool{}
 	for _, attribute := range attributes {
 		for i := range oldVal.NumField() {
 			field := oldVal.Type().Field(i)
-			parts := strings.Split(field.Tag.Get("pulumi"), ",")
+			tag := field.Tag.Get("pulumi")
+			if tag == "" {
+				continue
+			}
+			parts := strings.Split(tag, ",")
 			if len(parts) == 0 {
 				continue
 			}
 			if parts[0] != attribute {
 				continue
 			}
+			seen[attribute] = true
+			propertyDiff := DiffAttribute(
+				oldVal.FieldByName(field.Name).Interface(),
+				newVal.FieldByName(field.Name).Interface(),
+			)
+			if propertyDiff == nil {
+				continue
+			}
+			diff.HasChanges = true
+			diff.DetailedDiff[attribute] = *propertyDiff
+			break
+		}
+	}
+
+	// do it again but loop through newVal's fields, mostly as a workaround to
+	// the unsupported nested struct limitation.
+	for _, attribute := range attributes {
+		if _, ok := seen[attribute]; ok {
+			continue
+		}
+		for i := range newVal.NumField() {
+			field := newVal.Type().Field(i)
+			tag := field.Tag.Get("pulumi")
+			if tag == "" {
+				continue
+			}
+			parts := strings.Split(tag, ",")
+			if len(parts) == 0 {
+				continue
+			}
+			if parts[0] != attribute {
+				continue
+			}
+			seen[attribute] = true
 			propertyDiff := DiffAttribute(
 				oldVal.FieldByName(field.Name).Interface(),
 				newVal.FieldByName(field.Name).Interface(),
