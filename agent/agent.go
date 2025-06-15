@@ -44,14 +44,15 @@ var Tracer = otel.Tracer("mid/agent")
 type Agent struct {
 	RemotePid    atomic.Int64
 	InstanceUUID string
+	ConnectMutex sync.Mutex
 	EncoderMutex sync.Mutex
 	Client       *ssh.Client
 	Session      *ssh.Session
 	Encoder      *json.Encoder
 	Decoder      *json.Decoder
-	Running      *atomic.Bool
-	WaitGroup    *sync.WaitGroup
-	InFlight     *syncmap.Map[string, chan rpc.RPCResult[any]]
+	Running      atomic.Bool
+	WaitGroup    sync.WaitGroup
+	InFlight     syncmap.Map[string, chan rpc.RPCResult[any]]
 }
 
 func (agent *Agent) EnsureUUID() (string, error) {
@@ -92,10 +93,12 @@ func (agent *Agent) RunLocal() {
 		err := agent.Decoder.Decode(&res)
 		if err != nil {
 			if !agent.Running.Load() {
+				logger.Debug("got error result from decode but agent should not be running")
 				return
 			}
 
 			if errors.Is(err, io.EOF) {
+				logger.Debug("got EOF from decode stream")
 				agent.Disconnect(context.Background(), false)
 				return
 			}
@@ -109,34 +112,66 @@ func (agent *Agent) RunLocal() {
 			logger.Error("error decoding", slog.String("error", res.Error))
 
 			if res.UUID == "" {
+				logger.Debug("result UUID is empty")
 				continue
 			}
 		}
 
-		decoderLogger := logger.With(
-			slog.Any("name", res.RPCFunction),
-			telemetry.SlogJSON("result", res.Result),
-			slog.String("error", res.Error),
-		)
+		logger.Debug("result appears valid, handling")
 
-		if res.UUID == "" {
-			decoderLogger.Error("UUID is empty")
-			continue
-		}
+		go func(res rpc.RPCResult[any]) {
+			resultLogger := agent.GetLogger(ctx).With(
+				slog.Any("name", res.RPCFunction),
+				telemetry.SlogJSON("result", res.Result),
+				slog.String("error", res.Error),
+				slog.String("rpc.uuid", res.UUID),
+			)
 
-		decoderLogger.Debug("got result")
+			if res.UUID == "" {
+				resultLogger.Error("UUID is empty")
+				return
+			}
 
-		ch, loaded := agent.InFlight.LoadAndDelete(res.UUID)
-		if !loaded {
-			decoderLogger.Warn("UUID not found in InFlight map")
-		}
-		if ch == nil {
-			decoderLogger.Error("result channel is nil, cannot send result")
-			continue
-		}
+			resultLogger.Debug("got result")
 
-		decoderLogger.Debug("channeling result")
-		ch <- res
+			for attempt := 1; attempt <= 10; attempt++ {
+				ch, loaded := agent.InFlight.Load(res.UUID)
+				if !loaded {
+					resultLogger.Warn("UUID not found in InFlight map")
+					goto retry
+				}
+				if ch == nil {
+					resultLogger.Error("result channel is nil, cannot send result")
+					goto retry
+				}
+
+				resultLogger.Debug("channeling result")
+				select {
+				case ch <- res:
+					resultLogger.Debug("result channeled")
+					return
+				case <-time.After(time.Second):
+					resultLogger.Warn("timed out channeling result")
+					goto retry
+				}
+
+			retry:
+				if attempt == 10 {
+					resultLogger.Warn(fmt.Sprintf(
+						"(attempt %d/10) result failed to send",
+						attempt,
+					))
+					return
+				}
+				wait := time.Duration(attempt)
+				resultLogger.Warn(fmt.Sprintf(
+					"(attempt %d/10) result failed to send, retrying again in %s",
+					attempt,
+					wait,
+				))
+				time.Sleep(wait)
+			}
+		}(res)
 	}
 }
 
@@ -176,7 +211,6 @@ func (agent *Agent) Disconnect(ctx context.Context, wait bool) error {
 				close(ch)
 			}(uuid, ch)
 		}
-		agent.InFlight.Delete(uuid)
 	}
 
 	err = errors.Join(
@@ -401,6 +435,9 @@ func Connect(ctx context.Context, agent *Agent) error {
 	ctx, span := Tracer.Start(ctx, "mid/agent.Connect")
 	defer span.End()
 
+	agent.ConnectMutex.Lock()
+	defer agent.ConnectMutex.Unlock()
+
 	_, err := agent.EnsureUUID()
 	if err != nil {
 		err = errors.Join(ErrConnectingToAgent, err)
@@ -409,6 +446,12 @@ func Connect(ctx context.Context, agent *Agent) error {
 	}
 
 	logger := agent.GetLogger(ctx)
+
+	if agent.Running.Load() {
+		logger.Warn("Connect called for already running agent")
+		return nil
+	}
+
 	logger.Info("connecting agent")
 	initOutput, err := RunRemoteCommand(ctx, agent, "mkdir -p .mid")
 	if err != nil {
@@ -553,11 +596,11 @@ func Connect(ctx context.Context, agent *Agent) error {
 		return err
 	}
 
-	agent.Running = &atomic.Bool{}
+	agent.Running = atomic.Bool{}
 	agent.Running.Store(true)
-	agent.WaitGroup = &sync.WaitGroup{}
+	agent.WaitGroup = sync.WaitGroup{}
 	agent.WaitGroup.Add(1)
-	agent.InFlight = &syncmap.Map[string, chan rpc.RPCResult[any]]{}
+	agent.InFlight = syncmap.Map[string, chan rpc.RPCResult[any]]{}
 
 	go agent.RunLocal()
 
@@ -598,6 +641,11 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 		}, err
 	}
 
+	logger := agent.GetLogger(ctx).With(
+		slog.String("rpc.function", string(call.RPCFunction)),
+	)
+	logger.DebugContext(ctx, "generating UUID for request")
+
 	uuid, err := uuid.NewRandom()
 	if err != nil {
 		err = errors.Join(ErrCallingRPCSystem, err)
@@ -609,12 +657,37 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 	}
 	call.UUID = uuid.String()
 	span.SetAttributes(attribute.String("rpc.uuid", call.UUID))
+	logger = logger.With(slog.String("rpc.uuid", call.UUID))
+	logger.DebugContext(ctx, "generated UUID")
 
+	logger.DebugContext(ctx, "creating result channel")
+	ch := make(chan rpc.RPCResult[any])
+
+	defer func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.ErrorContext(ctx, "caught panic closing channel", slog.Any("error", r))
+			}
+		}()
+		logger.DebugContext(ctx, "closing result channel")
+		close(ch)
+	}()
+
+	logger.DebugContext(ctx, "registering result channel as in-flight")
+	agent.InFlight.Store(call.UUID, ch)
+
+	logger.DebugContext(ctx, "acquiring encoder lock")
 	agent.EncoderMutex.Lock()
+
+	logger.DebugContext(ctx, "encoding call")
 	err = agent.Encoder.Encode(call)
+
+	logger.DebugContext(ctx, "releasing encoder lock")
 	agent.EncoderMutex.Unlock()
+
 	if err != nil {
 		err = errors.Join(ErrCallingRPCSystem, err)
+		logger.ErrorContext(ctx, "error encoding", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
 		return rpc.RPCResult[O]{
 			RPCFunction: call.RPCFunction,
@@ -624,6 +697,7 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 
 	// special case for "Close" since no response is expected
 	if call.RPCFunction == rpc.RPCClose {
+		logger.DebugContext(ctx, "detected RPCClose, exiting early")
 		span.SetStatus(codes.Ok, "")
 		return rpc.RPCResult[O]{
 			UUID:        call.UUID,
@@ -631,21 +705,15 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 		}, nil
 	}
 
-	ch := make(chan rpc.RPCResult[any])
-	defer func() {
-		defer func() { recover() }()
-		close(ch)
-	}()
-
-	agent.InFlight.Store(call.UUID, ch)
-	defer agent.InFlight.Delete(call.UUID)
-
+	logger.DebugContext(ctx, "waiting for result")
 	var rawResult rpc.RPCResult[any]
 	select {
 	case rawResult = <-ch:
+		logger.DebugContext(ctx, "got result")
 		break
 	case <-ctx.Done():
 		err := ctx.Err()
+		logger.ErrorContext(ctx, "timeout waiting for result", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
 		return rpc.RPCResult[O]{
 			UUID:        call.UUID,
@@ -653,6 +721,8 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 			Error:       err.Error(),
 		}, err
 	}
+
+	logger.DebugContext(ctx, "casting result to final type", telemetry.SlogJSON("rpc.raw_result", rawResult))
 	span.SetAttributes(telemetry.OtelJSON("rpc.raw_result", rawResult))
 	res, err := cast.AnyToJSONT[rpc.RPCResult[O]](rawResult)
 	span.SetAttributes(telemetry.OtelJSON("rpc.result", res))
@@ -663,9 +733,17 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 		} else {
 			res.Error = errors.Join(errors.New(res.Error), err).Error()
 		}
+		logger.ErrorContext(ctx, "error casting result", slog.Any("error", err))
 		span.SetStatus(codes.Error, err.Error())
 		return res, err
 	}
+
+	logger.DebugContext(
+		ctx,
+		"got final result",
+		telemetry.SlogJSON("rpc.raw_result", rawResult),
+		telemetry.SlogJSON("rpc.result", res),
+	)
 
 	span.SetStatus(codes.Ok, "")
 	return res, nil

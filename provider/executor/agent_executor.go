@@ -60,7 +60,7 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 	p.GetLogger(ctx).InfoStatus("") // clear info line
 	defer cs.SetupAgentMutex.Unlock()
 
-	if cs.Agent != nil && cs.Agent.Running != nil && cs.Agent.Running.Load() {
+	if cs.Agent != nil && cs.Agent.Running.Load() {
 		logger.With(slog.Bool("agent.already_running", true)).DebugContext(ctx, "SetupAgent: agent is already running")
 		span.SetAttributes(attribute.Bool("agent.already_running", true))
 		span.SetStatus(codes.Ok, "")
