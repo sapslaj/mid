@@ -158,6 +158,15 @@ func NewDocker(t *testing.T, config Config) (*TestMachine, error) {
 		return tm, err
 	}
 
+	existing, exists := tm.DockertestPool.ContainerByName(config.Name)
+	if exists {
+		t.Logf("removing orphaned container")
+		err = tm.DockertestPool.Purge(existing)
+		if err != nil {
+			return tm, err
+		}
+	}
+
 	tm.DockerContainer, err = tm.DockertestPool.BuildAndRun(
 		config.Name,
 		path.Join(config.DataPath, "Dockerfile"),
