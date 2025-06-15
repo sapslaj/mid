@@ -116,6 +116,8 @@ type Operation struct {
 	ExpectFailure bool
 	// If CheckFailures is non-nil, expect the check step to fail with the provided output.
 	CheckFailures []p.CheckFailure
+	// The expected diff for this operation
+	ExpectedDiff *p.DiffResponse
 	// Command to run to assert test success
 	AssertCommand string
 	// Command to run before running the operation
@@ -285,6 +287,13 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 		})
 		if !assert.NoErrorf(t, err, "diff failed on update %d", i) {
 			return
+		}
+
+		if update.ExpectedDiff != nil {
+			t.Log("checking diff")
+			if !assert.EqualValues(t, *update.ExpectedDiff, diff) {
+				return
+			}
 		}
 
 		if !diff.HasChanges {
