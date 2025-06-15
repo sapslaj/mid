@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages "spells" on Source Mage GNU/Linux using `sorcery` toolchain.
@@ -95,7 +96,7 @@ type SorceryParameters struct {
 
 // Wrap the `SorceryParameters into an `rpc.RPCCall`.
 func (p SorceryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -115,5 +116,5 @@ type SorceryReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SorceryReturn`
 func SorceryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SorceryReturn, error) {
-	return rpc.AnyToJSONT[SorceryReturn](r.Result.Result)
+	return cast.AnyToJSONT[SorceryReturn](r.Result.Result)
 }

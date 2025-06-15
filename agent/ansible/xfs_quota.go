@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Configure quotas on XFS filesystems.
@@ -92,7 +93,7 @@ type XfsQuotaParameters struct {
 
 // Wrap the `XfsQuotaParameters into an `rpc.RPCCall`.
 func (p XfsQuotaParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -130,5 +131,5 @@ type XfsQuotaReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `XfsQuotaReturn`
 func XfsQuotaReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (XfsQuotaReturn, error) {
-	return rpc.AnyToJSONT[XfsQuotaReturn](r.Result.Result)
+	return cast.AnyToJSONT[XfsQuotaReturn](r.Result.Result)
 }

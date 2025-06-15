@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage (add, remove, change) individual interface options in an interfaces-
@@ -160,7 +161,7 @@ type InterfacesFileParameters struct {
 
 // Wrap the `InterfacesFileParameters into an `rpc.RPCCall`.
 func (p InterfacesFileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -186,5 +187,5 @@ type InterfacesFileReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `InterfacesFileReturn`
 func InterfacesFileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (InterfacesFileReturn, error) {
-	return rpc.AnyToJSONT[InterfacesFileReturn](r.Result.Result)
+	return cast.AnyToJSONT[InterfacesFileReturn](r.Result.Result)
 }

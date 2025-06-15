@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Will install, upgrade and remove packages with swdepot package manager (HP-
@@ -32,7 +33,7 @@ type SwdepotParameters struct {
 
 // Wrap the `SwdepotParameters into an `rpc.RPCCall`.
 func (p SwdepotParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -52,5 +53,5 @@ type SwdepotReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SwdepotReturn`
 func SwdepotReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SwdepotReturn, error) {
-	return rpc.AnyToJSONT[SwdepotReturn](r.Result.Result)
+	return cast.AnyToJSONT[SwdepotReturn](r.Result.Result)
 }

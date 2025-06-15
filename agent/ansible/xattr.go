@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages filesystem user defined extended attributes.
@@ -82,7 +83,7 @@ type XattrParameters struct {
 
 // Wrap the `XattrParameters into an `rpc.RPCCall`.
 func (p XattrParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -102,5 +103,5 @@ type XattrReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `XattrReturn`
 func XattrReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (XattrReturn, error) {
-	return rpc.AnyToJSONT[XattrReturn](r.Result.Result)
+	return cast.AnyToJSONT[XattrReturn](r.Result.Result)
 }

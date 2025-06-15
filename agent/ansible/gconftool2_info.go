@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows retrieving application preferences from the GConf
@@ -17,7 +18,7 @@ type Gconftool2InfoParameters struct {
 
 // Wrap the `Gconftool2InfoParameters into an `rpc.RPCCall`.
 func (p Gconftool2InfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -43,5 +44,5 @@ type Gconftool2InfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `Gconftool2InfoReturn`
 func Gconftool2InfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (Gconftool2InfoReturn, error) {
-	return rpc.AnyToJSONT[Gconftool2InfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[Gconftool2InfoReturn](r.Result.Result)
 }

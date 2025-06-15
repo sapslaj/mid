@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module controls active and configured mount points in `/etc/fstab`.
@@ -152,7 +153,7 @@ type MountParameters struct {
 
 // Wrap the `MountParameters into an `rpc.RPCCall`.
 func (p MountParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -172,5 +173,5 @@ type MountReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `MountReturn`
 func MountReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (MountReturn, error) {
-	return rpc.AnyToJSONT[MountReturn](r.Result.Result)
+	return cast.AnyToJSONT[MountReturn](r.Result.Result)
 }

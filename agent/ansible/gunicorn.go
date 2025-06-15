@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Starts gunicorn with the parameters specified. Common settings for gunicorn
@@ -78,7 +79,7 @@ type GunicornParameters struct {
 
 // Wrap the `GunicornParameters into an `rpc.RPCCall`.
 func (p GunicornParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -101,5 +102,5 @@ type GunicornReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GunicornReturn`
 func GunicornReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GunicornReturn, error) {
-	return rpc.AnyToJSONT[GunicornReturn](r.Result.Result)
+	return cast.AnyToJSONT[GunicornReturn](r.Result.Result)
 }

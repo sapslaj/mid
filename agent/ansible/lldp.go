@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Reads data out of `lldpctl`.
@@ -18,7 +19,7 @@ type LldpParameters struct {
 
 // Wrap the `LldpParameters into an `rpc.RPCCall`.
 func (p LldpParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -38,5 +39,5 @@ type LldpReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `LldpReturn`
 func LldpReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LldpReturn, error) {
-	return rpc.AnyToJSONT[LldpReturn](r.Result.Result)
+	return cast.AnyToJSONT[LldpReturn](r.Result.Result)
 }

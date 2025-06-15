@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows Configuring Intel Optane Persistent Memory modules (PMem)
@@ -58,7 +59,7 @@ type PmemParameters struct {
 
 // Wrap the `PmemParameters into an `rpc.RPCCall`.
 func (p PmemParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -88,5 +89,5 @@ type PmemReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PmemReturn`
 func PmemReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PmemReturn, error) {
-	return rpc.AnyToJSONT[PmemReturn](r.Result.Result)
+	return cast.AnyToJSONT[PmemReturn](r.Result.Result)
 }

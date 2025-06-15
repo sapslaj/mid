@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module gathers information about firewalld rules.
@@ -21,7 +22,7 @@ type FirewalldInfoParameters struct {
 
 // Wrap the `FirewalldInfoParameters into an `rpc.RPCCall`.
 func (p FirewalldInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -54,5 +55,5 @@ type FirewalldInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `FirewalldInfoReturn`
 func FirewalldInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FirewalldInfoReturn, error) {
-	return rpc.AnyToJSONT[FirewalldInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[FirewalldInfoReturn](r.Result.Result)
 }

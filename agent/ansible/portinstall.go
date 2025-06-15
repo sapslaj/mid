@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage packages for FreeBSD using `portinstall`.
@@ -55,7 +56,7 @@ type PortinstallParameters struct {
 
 // Wrap the `PortinstallParameters into an `rpc.RPCCall`.
 func (p PortinstallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -75,5 +76,5 @@ type PortinstallReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PortinstallReturn`
 func PortinstallReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PortinstallReturn, error) {
-	return rpc.AnyToJSONT[PortinstallReturn](r.Result.Result)
+	return cast.AnyToJSONT[PortinstallReturn](r.Result.Result)
 }

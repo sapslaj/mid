@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage bower packages with `bower`.
@@ -69,7 +70,7 @@ type BowerParameters struct {
 
 // Wrap the `BowerParameters into an `rpc.RPCCall`.
 func (p BowerParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -89,5 +90,5 @@ type BowerReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `BowerReturn`
 func BowerReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (BowerReturn, error) {
-	return rpc.AnyToJSONT[BowerReturn](r.Result.Result)
+	return cast.AnyToJSONT[BowerReturn](r.Result.Result)
 }

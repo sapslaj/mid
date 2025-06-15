@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Gather facts on processes listening on TCP and UDP ports using the `netstat`
@@ -62,7 +63,7 @@ type ListenPortsFactsParameters struct {
 
 // Wrap the `ListenPortsFactsParameters into an `rpc.RPCCall`.
 func (p ListenPortsFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -85,5 +86,5 @@ type ListenPortsFactsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ListenPortsFactsReturn`
 func ListenPortsFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ListenPortsFactsReturn, error) {
-	return rpc.AnyToJSONT[ListenPortsFactsReturn](r.Result.Result)
+	return cast.AnyToJSONT[ListenPortsFactsReturn](r.Result.Result)
 }

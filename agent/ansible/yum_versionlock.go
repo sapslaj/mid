@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module adds installed packages to yum versionlock to prevent the
@@ -55,7 +56,7 @@ type YumVersionlockParameters struct {
 
 // Wrap the `YumVersionlockParameters into an `rpc.RPCCall`.
 func (p YumVersionlockParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -81,5 +82,5 @@ type YumVersionlockReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `YumVersionlockReturn`
 func YumVersionlockReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (YumVersionlockReturn, error) {
-	return rpc.AnyToJSONT[YumVersionlockReturn](r.Result.Result)
+	return cast.AnyToJSONT[YumVersionlockReturn](r.Result.Result)
 }

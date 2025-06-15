@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Run targets in a Makefile.
@@ -43,7 +44,7 @@ type MakeParameters struct {
 
 // Wrap the `MakeParameters into an `rpc.RPCCall`.
 func (p MakeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -84,5 +85,5 @@ type MakeReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `MakeReturn`
 func MakeReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (MakeReturn, error) {
-	return rpc.AnyToJSONT[MakeReturn](r.Result.Result)
+	return cast.AnyToJSONT[MakeReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module will insert/update/remove a block of multi-line text surrounded
@@ -214,7 +215,7 @@ type BlockinfileParameters struct {
 
 // Wrap the `BlockinfileParameters into an `rpc.RPCCall`.
 func (p BlockinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -234,5 +235,5 @@ type BlockinfileReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `BlockinfileReturn`
 func BlockinfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (BlockinfileReturn, error) {
-	return rpc.AnyToJSONT[BlockinfileReturn](r.Result.Result)
+	return cast.AnyToJSONT[BlockinfileReturn](r.Result.Result)
 }

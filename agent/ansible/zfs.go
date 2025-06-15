@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages ZFS file systems, volumes, clones and snapshots.
@@ -39,7 +40,7 @@ type ZfsParameters struct {
 
 // Wrap the `ZfsParameters into an `rpc.RPCCall`.
 func (p ZfsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -59,5 +60,5 @@ type ZfsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ZfsReturn`
 func ZfsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ZfsReturn, error) {
-	return rpc.AnyToJSONT[ZfsReturn](r.Result.Result)
+	return cast.AnyToJSONT[ZfsReturn](r.Result.Result)
 }

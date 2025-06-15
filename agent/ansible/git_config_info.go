@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `community.general.git_config_info` module reads the git configuration by
@@ -70,7 +71,7 @@ type GitConfigInfoParameters struct {
 
 // Wrap the `GitConfigInfoParameters into an `rpc.RPCCall`.
 func (p GitConfigInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -103,5 +104,5 @@ type GitConfigInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GitConfigInfoReturn`
 func GitConfigInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GitConfigInfoReturn, error) {
-	return rpc.AnyToJSONT[GitConfigInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[GitConfigInfoReturn](r.Result.Result)
 }

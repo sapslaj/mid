@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages locales in Debian and Ubuntu systems.
@@ -53,7 +54,7 @@ type LocaleGenParameters struct {
 
 // Wrap the `LocaleGenParameters into an `rpc.RPCCall`.
 func (p LocaleGenParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -76,5 +77,5 @@ type LocaleGenReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `LocaleGenReturn`
 func LocaleGenReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LocaleGenReturn, error) {
-	return rpc.AnyToJSONT[LocaleGenReturn](r.Result.Result)
+	return cast.AnyToJSONT[LocaleGenReturn](r.Result.Result)
 }

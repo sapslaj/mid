@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Runs the `facter` discovery program (`https://github.com/puppetlabs/facter`)
@@ -18,7 +19,7 @@ type FacterParameters struct {
 
 // Wrap the `FacterParameters into an `rpc.RPCCall`.
 func (p FacterParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -38,5 +39,5 @@ type FacterReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `FacterReturn`
 func FacterReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FacterReturn, error) {
-	return rpc.AnyToJSONT[FacterReturn](r.Result.Result)
+	return cast.AnyToJSONT[FacterReturn](r.Result.Result)
 }

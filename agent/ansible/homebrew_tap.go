@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Tap external Homebrew repositories.
@@ -62,7 +63,7 @@ type HomebrewTapParameters struct {
 
 // Wrap the `HomebrewTapParameters into an `rpc.RPCCall`.
 func (p HomebrewTapParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -82,5 +83,5 @@ type HomebrewTapReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `HomebrewTapReturn`
 func HomebrewTapReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (HomebrewTapReturn, error) {
-	return rpc.AnyToJSONT[HomebrewTapReturn](r.Result.Result)
+	return cast.AnyToJSONT[HomebrewTapReturn](r.Result.Result)
 }

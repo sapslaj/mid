@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Gather facts from ZFS pool properties.
@@ -26,7 +27,7 @@ type ZpoolFactsParameters struct {
 
 // Wrap the `ZpoolFactsParameters into an `rpc.RPCCall`.
 func (p ZpoolFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -55,5 +56,5 @@ type ZpoolFactsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ZpoolFactsReturn`
 func ZpoolFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ZpoolFactsReturn, error) {
-	return rpc.AnyToJSONT[ZpoolFactsReturn](r.Result.Result)
+	return cast.AnyToJSONT[ZpoolFactsReturn](r.Result.Result)
 }

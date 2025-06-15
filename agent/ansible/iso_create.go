@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module is used to generate ISO file with specified path of files.
@@ -168,7 +169,7 @@ type IsoCreateParameters struct {
 
 // Wrap the `IsoCreateParameters into an `rpc.RPCCall`.
 func (p IsoCreateParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -209,5 +210,5 @@ type IsoCreateReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `IsoCreateReturn`
 func IsoCreateReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (IsoCreateReturn, error) {
-	return rpc.AnyToJSONT[IsoCreateReturn](r.Result.Result)
+	return cast.AnyToJSONT[IsoCreateReturn](r.Result.Result)
 }

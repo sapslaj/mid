@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Controls systemd units (services, timers, and so on) on remote hosts.
@@ -151,7 +152,7 @@ type SystemdServiceParameters struct {
 
 // Wrap the `SystemdServiceParameters into an `rpc.RPCCall`.
 func (p SystemdServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -174,5 +175,5 @@ type SystemdServiceReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SystemdServiceReturn`
 func SystemdServiceReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SystemdServiceReturn, error) {
-	return rpc.AnyToJSONT[SystemdServiceReturn](r.Result.Result)
+	return cast.AnyToJSONT[SystemdServiceReturn](r.Result.Result)
 }

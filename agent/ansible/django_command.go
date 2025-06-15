@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows the execution of arbitrary Django admin commands.
@@ -79,7 +80,7 @@ type DjangoCommandParameters struct {
 
 // Wrap the `DjangoCommandParameters into an `rpc.RPCCall`.
 func (p DjangoCommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -105,5 +106,5 @@ type DjangoCommandReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DjangoCommandReturn`
 func DjangoCommandReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DjangoCommandReturn, error) {
-	return rpc.AnyToJSONT[DjangoCommandReturn](r.Result.Result)
+	return cast.AnyToJSONT[DjangoCommandReturn](r.Result.Result)
 }

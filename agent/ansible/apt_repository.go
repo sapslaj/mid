@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Add or remove an APT repositories in Ubuntu and Debian.
@@ -97,7 +98,7 @@ type AptRepositoryParameters struct {
 
 // Wrap the `AptRepositoryParameters into an `rpc.RPCCall`.
 func (p AptRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -126,5 +127,5 @@ type AptRepositoryReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AptRepositoryReturn`
 func AptRepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AptRepositoryReturn, error) {
-	return rpc.AnyToJSONT[AptRepositoryReturn](r.Result.Result)
+	return cast.AnyToJSONT[AptRepositoryReturn](r.Result.Result)
 }

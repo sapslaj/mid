@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages Android SDK packages.
@@ -110,7 +111,7 @@ type AndroidSdkParameters struct {
 
 // Wrap the `AndroidSdkParameters into an `rpc.RPCCall`.
 func (p AndroidSdkParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -136,5 +137,5 @@ type AndroidSdkReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AndroidSdkReturn`
 func AndroidSdkReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AndroidSdkReturn, error) {
-	return rpc.AnyToJSONT[AndroidSdkReturn](r.Result.Result)
+	return cast.AnyToJSONT[AndroidSdkReturn](r.Result.Result)
 }

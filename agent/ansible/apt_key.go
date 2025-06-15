@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Add or remove an `apt` key, optionally downloading it.
@@ -76,7 +77,7 @@ type AptKeyParameters struct {
 
 // Wrap the `AptKeyParameters into an `rpc.RPCCall`.
 func (p AptKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -114,5 +115,5 @@ type AptKeyReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AptKeyReturn`
 func AptKeyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AptKeyReturn, error) {
-	return rpc.AnyToJSONT[AptKeyReturn](r.Result.Result)
+	return cast.AnyToJSONT[AptKeyReturn](r.Result.Result)
 }

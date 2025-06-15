@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Add or change individual settings in KDE configuration files.
@@ -114,7 +115,7 @@ type KdeconfigParameters struct {
 
 // Wrap the `KdeconfigParameters into an `rpc.RPCCall`.
 func (p KdeconfigParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -134,5 +135,5 @@ type KdeconfigReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `KdeconfigReturn`
 func KdeconfigReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (KdeconfigReturn, error) {
-	return rpc.AnyToJSONT[KdeconfigReturn](r.Result.Result)
+	return cast.AnyToJSONT[KdeconfigReturn](r.Result.Result)
 }

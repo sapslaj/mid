@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module uses the `keyring Python library,
@@ -24,7 +25,7 @@ type KeyringInfoParameters struct {
 
 // Wrap the `KeyringInfoParameters into an `rpc.RPCCall`.
 func (p KeyringInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -47,5 +48,5 @@ type KeyringInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `KeyringInfoReturn`
 func KeyringInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (KeyringInfoReturn, error) {
-	return rpc.AnyToJSONT[KeyringInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[KeyringInfoReturn](r.Result.Result)
 }

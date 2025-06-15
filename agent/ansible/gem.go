@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage installation and uninstallation of Ruby gems.
@@ -106,7 +107,7 @@ type GemParameters struct {
 
 // Wrap the `GemParameters into an `rpc.RPCCall`.
 func (p GemParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -126,5 +127,5 @@ type GemReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GemReturn`
 func GemReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GemReturn, error) {
-	return rpc.AnyToJSONT[GemReturn](r.Result.Result)
+	return cast.AnyToJSONT[GemReturn](r.Result.Result)
 }

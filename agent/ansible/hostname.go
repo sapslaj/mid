@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Set system's hostname. Supports most OSs/Distributions including those using
@@ -74,7 +75,7 @@ type HostnameParameters struct {
 
 // Wrap the `HostnameParameters into an `rpc.RPCCall`.
 func (p HostnameParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -94,5 +95,5 @@ type HostnameReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `HostnameReturn`
 func HostnameReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (HostnameReturn, error) {
-	return rpc.AnyToJSONT[HostnameReturn](r.Result.Result)
+	return cast.AnyToJSONT[HostnameReturn](r.Result.Result)
 }

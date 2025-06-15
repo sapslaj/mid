@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows configuring the default handler for specific MIME types
@@ -23,7 +24,7 @@ type XdgMimeParameters struct {
 
 // Wrap the `XdgMimeParameters into an `rpc.RPCCall`.
 func (p XdgMimeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -49,5 +50,5 @@ type XdgMimeReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `XdgMimeReturn`
 func XdgMimeReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (XdgMimeReturn, error) {
-	return rpc.AnyToJSONT[XdgMimeReturn](r.Result.Result)
+	return cast.AnyToJSONT[XdgMimeReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Control Linux encrypted block devices that are set up during system boot in
@@ -58,7 +59,7 @@ type CrypttabParameters struct {
 
 // Wrap the `CrypttabParameters into an `rpc.RPCCall`.
 func (p CrypttabParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -78,5 +79,5 @@ type CrypttabReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `CrypttabReturn`
 func CrypttabReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CrypttabReturn, error) {
-	return rpc.AnyToJSONT[CrypttabReturn](r.Result.Result)
+	return cast.AnyToJSONT[CrypttabReturn](r.Result.Result)
 }

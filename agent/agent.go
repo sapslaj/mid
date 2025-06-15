@@ -23,6 +23,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 	"github.com/sapslaj/mid/pkg/syncmap"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/version"
@@ -85,7 +86,7 @@ func (agent *Agent) RunLocal() {
 
 		decoderLogger := logger.With(
 			slog.Any("name", res.RPCFunction),
-			rpc.SlogJSON("result", res.Result),
+			telemetry.SlogJSON("result", res.Result),
 			slog.String("error", res.Error),
 		)
 
@@ -594,7 +595,7 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 		}, err
 	}
 	span.SetAttributes(telemetry.OtelJSON("rpc.raw_result", rawResult))
-	res, err := rpc.AnyToJSONT[rpc.RPCResult[O]](rawResult)
+	res, err := cast.AnyToJSONT[rpc.RPCResult[O]](rawResult)
 	span.SetAttributes(telemetry.OtelJSON("rpc.result", res))
 	if err != nil {
 		err = errors.Join(ErrCallingRPCSystem, err)

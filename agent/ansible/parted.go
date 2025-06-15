@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows configuring block device partition using the `parted`
@@ -278,7 +279,7 @@ type PartedParameters struct {
 
 // Wrap the `PartedParameters into an `rpc.RPCCall`.
 func (p PartedParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -301,5 +302,5 @@ type PartedReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PartedReturn`
 func PartedReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PartedReturn, error) {
-	return rpc.AnyToJSONT[PartedReturn](r.Result.Result)
+	return cast.AnyToJSONT[PartedReturn](r.Result.Result)
 }

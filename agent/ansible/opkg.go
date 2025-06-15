@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages ipk packages for OpenWrt and Openembedded/Yocto based Linux
@@ -107,7 +108,7 @@ type OpkgParameters struct {
 
 // Wrap the `OpkgParameters into an `rpc.RPCCall`.
 func (p OpkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -130,5 +131,5 @@ type OpkgReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `OpkgReturn`
 func OpkgReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (OpkgReturn, error) {
-	return rpc.AnyToJSONT[OpkgReturn](r.Result.Result)
+	return cast.AnyToJSONT[OpkgReturn](r.Result.Result)
 }

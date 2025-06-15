@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Return information about installed pip packages.
@@ -19,7 +20,7 @@ type PipPackageInfoParameters struct {
 
 // Wrap the `PipPackageInfoParameters into an `rpc.RPCCall`.
 func (p PipPackageInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -42,5 +43,5 @@ type PipPackageInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PipPackageInfoReturn`
 func PipPackageInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PipPackageInfoReturn, error) {
-	return rpc.AnyToJSONT[PipPackageInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[PipPackageInfoReturn](r.Result.Result)
 }

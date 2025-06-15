@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `ansible.builtin.unarchive` module unpacks an archive. It will not unpack
@@ -178,7 +179,7 @@ type UnarchiveParameters struct {
 
 // Wrap the `UnarchiveParameters into an `rpc.RPCCall`.
 func (p UnarchiveParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -234,5 +235,5 @@ type UnarchiveReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `UnarchiveReturn`
 func UnarchiveReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (UnarchiveReturn, error) {
-	return rpc.AnyToJSONT[UnarchiveReturn](r.Result.Result)
+	return cast.AnyToJSONT[UnarchiveReturn](r.Result.Result)
 }

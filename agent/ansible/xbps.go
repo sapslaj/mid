@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage packages with the XBPS package manager.
@@ -88,7 +89,7 @@ type XbpsParameters struct {
 
 // Wrap the `XbpsParameters into an `rpc.RPCCall`.
 func (p XbpsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -114,5 +115,5 @@ type XbpsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `XbpsReturn`
 func XbpsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (XbpsReturn, error) {
-	return rpc.AnyToJSONT[XbpsReturn](r.Result.Result)
+	return cast.AnyToJSONT[XbpsReturn](r.Result.Result)
 }

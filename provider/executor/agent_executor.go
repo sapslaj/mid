@@ -20,6 +20,7 @@ import (
 
 	midagent "github.com/sapslaj/mid/agent"
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 	"github.com/sapslaj/mid/pkg/hashstructure"
 	"github.com/sapslaj/mid/pkg/syncmap"
 	"github.com/sapslaj/mid/pkg/telemetry"
@@ -473,7 +474,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 
 	if !callResult.Result.Success {
 		logger.WarnContext(ctx, "AnsibleExecute: not successful, extracting error information")
-		maybeReturn, maybeReturnErr := rpc.AnyToJSONT[O](callResult.Result.Result)
+		maybeReturn, maybeReturnErr := cast.AnyToJSONT[O](callResult.Result.Result)
 		if maybeReturnErr != nil {
 			span.SetAttributes(
 				attribute.String("ansible.return.decode_error", maybeReturnErr.Error()),
@@ -514,7 +515,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 		return maybeReturn, err
 	}
 
-	returns, err := rpc.AnyToJSONT[O](callResult.Result.Result)
+	returns, err := cast.AnyToJSONT[O](callResult.Result.Result)
 	span.SetAttributes(
 		telemetry.OtelJSON("ansible.return", returns),
 		attribute.String("ansible.msg", returns.GetMsg()),

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages packages with `apt-rpm`. Both low-level (`rpm`) and high-level (`apt-
@@ -90,7 +91,7 @@ type AptRpmParameters struct {
 
 // Wrap the `AptRpmParameters into an `rpc.RPCCall`.
 func (p AptRpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -110,5 +111,5 @@ type AptRpmReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AptRpmReturn`
 func AptRpmReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AptRpmReturn, error) {
-	return rpc.AnyToJSONT[AptRpmReturn](r.Result.Result)
+	return cast.AnyToJSONT[AptRpmReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module is used to add/remove/change files in ISO file.
@@ -32,7 +33,7 @@ type IsoCustomizeParameters struct {
 
 // Wrap the `IsoCustomizeParameters into an `rpc.RPCCall`.
 func (p IsoCustomizeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -58,5 +59,5 @@ type IsoCustomizeReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `IsoCustomizeReturn`
 func IsoCustomizeReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (IsoCustomizeReturn, error) {
-	return rpc.AnyToJSONT[IsoCustomizeReturn](r.Result.Result)
+	return cast.AnyToJSONT[IsoCustomizeReturn](r.Result.Result)
 }

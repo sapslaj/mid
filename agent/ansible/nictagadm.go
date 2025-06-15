@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Create or delete nic tags on SmartOS systems.
@@ -70,7 +71,7 @@ type NictagadmParameters struct {
 
 // Wrap the `NictagadmParameters into an `rpc.RPCCall`.
 func (p NictagadmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -109,5 +110,5 @@ type NictagadmReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `NictagadmReturn`
 func NictagadmReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (NictagadmReturn, error) {
-	return rpc.AnyToJSONT[NictagadmReturn](r.Result.Result)
+	return cast.AnyToJSONT[NictagadmReturn](r.Result.Result)
 }

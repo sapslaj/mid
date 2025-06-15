@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages packages with `urpmi` (such as for Mageia or Mandriva).
@@ -70,7 +71,7 @@ type UrpmiParameters struct {
 
 // Wrap the `UrpmiParameters into an `rpc.RPCCall`.
 func (p UrpmiParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -90,5 +91,5 @@ type UrpmiReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `UrpmiReturn`
 func UrpmiReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (UrpmiReturn, error) {
-	return rpc.AnyToJSONT[UrpmiReturn](r.Result.Result)
+	return cast.AnyToJSONT[UrpmiReturn](r.Result.Result)
 }

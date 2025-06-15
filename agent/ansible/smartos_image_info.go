@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Retrieve information about all installed images on SmartOS.
@@ -19,7 +20,7 @@ type SmartosImageInfoParameters struct {
 
 // Wrap the `SmartosImageInfoParameters into an `rpc.RPCCall`.
 func (p SmartosImageInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -39,5 +40,5 @@ type SmartosImageInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SmartosImageInfoReturn`
 func SmartosImageInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SmartosImageInfoReturn, error) {
-	return rpc.AnyToJSONT[SmartosImageInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[SmartosImageInfoReturn](r.Result.Result)
 }

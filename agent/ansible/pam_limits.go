@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `community.general.pam_limits` module modifies PAM limits.
@@ -91,7 +92,7 @@ type PamLimitsParameters struct {
 
 // Wrap the `PamLimitsParameters into an `rpc.RPCCall`.
 func (p PamLimitsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -111,5 +112,5 @@ type PamLimitsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PamLimitsReturn`
 func PamLimitsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PamLimitsReturn, error) {
-	return rpc.AnyToJSONT[PamLimitsReturn](r.Result.Result)
+	return cast.AnyToJSONT[PamLimitsReturn](r.Result.Result)
 }

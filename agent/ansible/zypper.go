@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage packages on SUSE and openSUSE using the zypper and rpm tools.
@@ -178,7 +179,7 @@ type ZypperParameters struct {
 
 // Wrap the `ZypperParameters into an `rpc.RPCCall`.
 func (p ZypperParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -198,5 +199,5 @@ type ZypperReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ZypperReturn`
 func ZypperReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ZypperReturn, error) {
-	return rpc.AnyToJSONT[ZypperReturn](r.Result.Result)
+	return cast.AnyToJSONT[ZypperReturn](r.Result.Result)
 }

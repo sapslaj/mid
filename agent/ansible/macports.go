@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages MacPorts packages (ports).
@@ -71,7 +72,7 @@ type MacportsParameters struct {
 
 // Wrap the `MacportsParameters into an `rpc.RPCCall`.
 func (p MacportsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -91,5 +92,5 @@ type MacportsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `MacportsReturn`
 func MacportsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (MacportsReturn, error) {
-	return rpc.AnyToJSONT[MacportsReturn](r.Result.Result)
+	return cast.AnyToJSONT[MacportsReturn](r.Result.Result)
 }

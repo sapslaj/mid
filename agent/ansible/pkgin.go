@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The standard package manager for SmartOS, but also usable on NetBSD or any OS
@@ -73,7 +74,7 @@ type PkginParameters struct {
 
 // Wrap the `PkginParameters into an `rpc.RPCCall`.
 func (p PkginParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -93,5 +94,5 @@ type PkginReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PkginReturn`
 func PkginReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PkginReturn, error) {
-	return rpc.AnyToJSONT[PkginReturn](r.Result.Result)
+	return cast.AnyToJSONT[PkginReturn](r.Result.Result)
 }

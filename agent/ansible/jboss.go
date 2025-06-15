@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Deploy applications to JBoss standalone using the filesystem.
@@ -60,7 +61,7 @@ type JbossParameters struct {
 
 // Wrap the `JbossParameters into an `rpc.RPCCall`.
 func (p JbossParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -80,5 +81,5 @@ type JbossReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `JbossReturn`
 func JbossReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (JbossReturn, error) {
-	return rpc.AnyToJSONT[JbossReturn](r.Result.Result)
+	return cast.AnyToJSONT[JbossReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage packages with the `pacman` package manager, which is used by Arch
@@ -188,7 +189,7 @@ type PacmanParameters struct {
 
 // Wrap the `PacmanParameters into an `rpc.RPCCall`.
 func (p PacmanParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -226,5 +227,5 @@ type PacmanReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PacmanReturn`
 func PacmanReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PacmanReturn, error) {
-	return rpc.AnyToJSONT[PacmanReturn](r.Result.Result)
+	return cast.AnyToJSONT[PacmanReturn](r.Result.Result)
 }

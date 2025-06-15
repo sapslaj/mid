@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Locks package versions using the `versionlock` plugin in `dnf` based systems.
@@ -88,7 +89,7 @@ type DnfVersionlockParameters struct {
 
 // Wrap the `DnfVersionlockParameters into an `rpc.RPCCall`.
 func (p DnfVersionlockParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -120,5 +121,5 @@ type DnfVersionlockReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DnfVersionlockReturn`
 func DnfVersionlockReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DnfVersionlockReturn, error) {
-	return rpc.AnyToJSONT[DnfVersionlockReturn](r.Result.Result)
+	return cast.AnyToJSONT[DnfVersionlockReturn](r.Result.Result)
 }

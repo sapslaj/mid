@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote
@@ -256,7 +257,7 @@ type GetUrlParameters struct {
 
 // Wrap the `GetUrlParameters into an `rpc.RPCCall`.
 func (p GetUrlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -330,5 +331,5 @@ type GetUrlReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GetUrlReturn`
 func GetUrlReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GetUrlReturn, error) {
-	return rpc.AnyToJSONT[GetUrlReturn](r.Result.Result)
+	return cast.AnyToJSONT[GetUrlReturn](r.Result.Result)
 }

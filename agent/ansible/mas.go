@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Installs, uninstalls and updates macOS applications from the Mac App Store
@@ -60,7 +61,7 @@ type MasParameters struct {
 
 // Wrap the `MasParameters into an `rpc.RPCCall`.
 func (p MasParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -80,5 +81,5 @@ type MasReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `MasReturn`
 func MasReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (MasReturn, error) {
-	return rpc.AnyToJSONT[MasReturn](r.Result.Result)
+	return cast.AnyToJSONT[MasReturn](r.Result.Result)
 }

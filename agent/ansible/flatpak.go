@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Allows users to add or remove flatpaks.
@@ -128,7 +129,7 @@ type FlatpakParameters struct {
 
 // Wrap the `FlatpakParameters into an `rpc.RPCCall`.
 func (p FlatpakParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -163,5 +164,5 @@ type FlatpakReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `FlatpakReturn`
 func FlatpakReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FlatpakReturn, error) {
-	return rpc.AnyToJSONT[FlatpakReturn](r.Result.Result)
+	return cast.AnyToJSONT[FlatpakReturn](r.Result.Result)
 }

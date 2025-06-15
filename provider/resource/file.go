@@ -21,6 +21,7 @@ import (
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
@@ -620,7 +621,7 @@ fileNeeded:
 		changed = true
 	}
 
-	state.Stat, err = rpc.AnyToJSONT[FileStateStat](statResult.Stat)
+	state.Stat, err = cast.AnyToJSONT[FileStateStat](statResult.Stat)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err

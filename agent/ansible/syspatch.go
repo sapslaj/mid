@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage OpenBSD system patches using syspatch.
@@ -47,7 +48,7 @@ type SyspatchParameters struct {
 
 // Wrap the `SyspatchParameters into an `rpc.RPCCall`.
 func (p SyspatchParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -79,5 +80,5 @@ type SyspatchReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SyspatchReturn`
 func SyspatchReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SyspatchReturn, error) {
-	return rpc.AnyToJSONT[SyspatchReturn](r.Result.Result)
+	return cast.AnyToJSONT[SyspatchReturn](r.Result.Result)
 }

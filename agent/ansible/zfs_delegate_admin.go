@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages ZFS file system delegated administration permissions, which allow
@@ -90,7 +91,7 @@ type ZfsDelegateAdminParameters struct {
 
 // Wrap the `ZfsDelegateAdminParameters into an `rpc.RPCCall`.
 func (p ZfsDelegateAdminParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -110,5 +111,5 @@ type ZfsDelegateAdminReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ZfsDelegateAdminReturn`
 func ZfsDelegateAdminReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ZfsDelegateAdminReturn, error) {
-	return rpc.AnyToJSONT[ZfsDelegateAdminReturn](r.Result.Result)
+	return cast.AnyToJSONT[ZfsDelegateAdminReturn](r.Result.Result)
 }

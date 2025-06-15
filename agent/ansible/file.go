@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Set attributes of files, directories, or symlinks and their targets.
@@ -236,7 +237,7 @@ type FileParameters struct {
 
 // Wrap the `FileParameters into an `rpc.RPCCall`.
 func (p FileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -262,5 +263,5 @@ type FileReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `FileReturn`
 func FileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FileReturn, error) {
-	return rpc.AnyToJSONT[FileReturn](r.Result.Result)
+	return cast.AnyToJSONT[FileReturn](r.Result.Result)
 }

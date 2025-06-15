@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Add and remove a domain from the list of permissive domains.
@@ -33,7 +34,7 @@ type SelinuxPermissiveParameters struct {
 
 // Wrap the `SelinuxPermissiveParameters into an `rpc.RPCCall`.
 func (p SelinuxPermissiveParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -53,5 +54,5 @@ type SelinuxPermissiveReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SelinuxPermissiveReturn`
 func SelinuxPermissiveReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SelinuxPermissiveReturn, error) {
-	return rpc.AnyToJSONT[SelinuxPermissiveReturn](r.Result.Result)
+	return cast.AnyToJSONT[SelinuxPermissiveReturn](r.Result.Result)
 }

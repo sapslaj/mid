@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Compatibility layer for using the `ansible.builtin.package` module for rpm-
@@ -15,7 +16,7 @@ type RhelFactsParameters struct {
 
 // Wrap the `RhelFactsParameters into an `rpc.RPCCall`.
 func (p RhelFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -38,5 +39,5 @@ type RhelFactsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `RhelFactsReturn`
 func RhelFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (RhelFactsReturn, error) {
-	return rpc.AnyToJSONT[RhelFactsReturn](r.Result.Result)
+	return cast.AnyToJSONT[RhelFactsReturn](r.Result.Result)
 }

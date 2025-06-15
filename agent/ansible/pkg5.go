@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // IPS packages are the native packages in Solaris 11 and higher.
@@ -71,7 +72,7 @@ type Pkg5Parameters struct {
 
 // Wrap the `Pkg5Parameters into an `rpc.RPCCall`.
 func (p Pkg5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -91,5 +92,5 @@ type Pkg5Return struct {
 
 // Unwrap the `rpc.RPCResult` into an `Pkg5Return`
 func Pkg5ReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (Pkg5Return, error) {
-	return rpc.AnyToJSONT[Pkg5Return](r.Result.Result)
+	return cast.AnyToJSONT[Pkg5Return](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage `git` checkouts of repositories to deploy files or software.
@@ -154,7 +155,7 @@ type GitParameters struct {
 
 // Wrap the `GitParameters into an `rpc.RPCCall`.
 func (p GitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -194,5 +195,5 @@ type GitReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GitReturn`
 func GitReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GitReturn, error) {
-	return rpc.AnyToJSONT[GitReturn](r.Result.Result)
+	return cast.AnyToJSONT[GitReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module creates, removes or resizes volume groups.
@@ -111,7 +112,7 @@ type LvgParameters struct {
 
 // Wrap the `LvgParameters into an `rpc.RPCCall`.
 func (p LvgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -131,5 +132,5 @@ type LvgReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `LvgReturn`
 func LvgReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LvgReturn, error) {
-	return rpc.AnyToJSONT[LvgReturn](r.Result.Result)
+	return cast.AnyToJSONT[LvgReturn](r.Result.Result)
 }

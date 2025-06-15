@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Installs, upgrade, removes, and lists packages and groups with the `dnf`
@@ -269,7 +270,7 @@ type DnfParameters struct {
 
 // Wrap the `DnfParameters into an `rpc.RPCCall`.
 func (p DnfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -289,5 +290,5 @@ type DnfReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DnfReturn`
 func DnfReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DnfReturn, error) {
-	return rpc.AnyToJSONT[DnfReturn](r.Result.Result)
+	return cast.AnyToJSONT[DnfReturn](r.Result.Result)
 }

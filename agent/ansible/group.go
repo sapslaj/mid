@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage presence of groups on a host.
@@ -93,7 +94,7 @@ type GroupParameters struct {
 
 // Wrap the `GroupParameters into an `rpc.RPCCall`.
 func (p GroupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -125,5 +126,5 @@ type GroupReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GroupReturn`
 func GroupReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GroupReturn, error) {
-	return rpc.AnyToJSONT[GroupReturn](r.Result.Result)
+	return cast.AnyToJSONT[GroupReturn](r.Result.Result)
 }

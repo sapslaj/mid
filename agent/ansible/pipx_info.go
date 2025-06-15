@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Retrieve details about Python applications installed in isolated virtualenvs
@@ -44,7 +45,7 @@ type PipxInfoParameters struct {
 
 // Wrap the `PipxInfoParameters into an `rpc.RPCCall`.
 func (p PipxInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -77,5 +78,5 @@ type PipxInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PipxInfoReturn`
 func PipxInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PipxInfoReturn, error) {
-	return rpc.AnyToJSONT[PipxInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[PipxInfoReturn](r.Result.Result)
 }

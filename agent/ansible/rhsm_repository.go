@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage (Enable/Disable) RHSM repositories to the Red Hat Subscription
@@ -67,7 +68,7 @@ type RhsmRepositoryParameters struct {
 
 // Wrap the `RhsmRepositoryParameters into an `rpc.RPCCall`.
 func (p RhsmRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -92,5 +93,5 @@ type RhsmRepositoryReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `RhsmRepositoryReturn`
 func RhsmRepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (RhsmRepositoryReturn, error) {
-	return rpc.AnyToJSONT[RhsmRepositoryReturn](r.Result.Result)
+	return cast.AnyToJSONT[RhsmRepositoryReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows retrieving Xfce 4 configurations with the help of `xfconf-
@@ -27,7 +28,7 @@ type XfconfInfoParameters struct {
 
 // Wrap the `XfconfInfoParameters into an `rpc.RPCCall`.
 func (p XfconfInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -67,5 +68,5 @@ type XfconfInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `XfconfInfoReturn`
 func XfconfInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (XfconfInfoReturn, error) {
-	return rpc.AnyToJSONT[XfconfInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[XfconfInfoReturn](r.Result.Result)
 }

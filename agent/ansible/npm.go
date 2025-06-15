@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage node.js packages with Node Package Manager (npm).
@@ -97,7 +98,7 @@ type NpmParameters struct {
 
 // Wrap the `NpmParameters into an `rpc.RPCCall`.
 func (p NpmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -117,5 +118,5 @@ type NpmReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `NpmReturn`
 func NpmReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (NpmReturn, error) {
-	return rpc.AnyToJSONT[NpmReturn](r.Result.Result)
+	return cast.AnyToJSONT[NpmReturn](r.Result.Result)
 }

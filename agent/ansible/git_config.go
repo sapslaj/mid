@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `community.general.git_config` module changes git configuration by
@@ -159,7 +160,7 @@ type GitConfigParameters struct {
 
 // Wrap the `GitConfigParameters into an `rpc.RPCCall`.
 func (p GitConfigParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -179,5 +180,5 @@ type GitConfigReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GitConfigReturn`
 func GitConfigReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GitConfigReturn, error) {
-	return rpc.AnyToJSONT[GitConfigReturn](r.Result.Result)
+	return cast.AnyToJSONT[GitConfigReturn](r.Result.Result)
 }

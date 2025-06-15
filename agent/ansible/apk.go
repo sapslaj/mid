@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages `apk` packages for Alpine Linux.
@@ -95,7 +96,7 @@ type ApkParameters struct {
 
 // Wrap the `ApkParameters into an `rpc.RPCCall`.
 func (p ApkParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -118,5 +119,5 @@ type ApkReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ApkReturn`
 func ApkReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ApkReturn, error) {
-	return rpc.AnyToJSONT[ApkReturn](r.Result.Result)
+	return cast.AnyToJSONT[ApkReturn](r.Result.Result)
 }

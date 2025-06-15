@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `ansible.builtin.known_hosts` module lets you add or remove host keys
@@ -88,7 +89,7 @@ type KnownHostsParameters struct {
 
 // Wrap the `KnownHostsParameters into an `rpc.RPCCall`.
 func (p KnownHostsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -108,5 +109,5 @@ type KnownHostsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `KnownHostsReturn`
 func KnownHostsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (KnownHostsReturn, error) {
-	return rpc.AnyToJSONT[KnownHostsReturn](r.Result.Result)
+	return cast.AnyToJSONT[KnownHostsReturn](r.Result.Result)
 }

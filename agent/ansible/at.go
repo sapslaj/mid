@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Use this module to schedule a command or script file to run once in the
@@ -101,7 +102,7 @@ type AtParameters struct {
 
 // Wrap the `AtParameters into an `rpc.RPCCall`.
 func (p AtParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -121,5 +122,5 @@ type AtReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AtReturn`
 func AtReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AtReturn, error) {
-	return rpc.AnyToJSONT[AtReturn](r.Result.Result)
+	return cast.AnyToJSONT[AtReturn](r.Result.Result)
 }

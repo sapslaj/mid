@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages symbolic links using the `update-alternatives` tool.
@@ -94,7 +95,7 @@ type AlternativesParameters struct {
 
 // Wrap the `AlternativesParameters into an `rpc.RPCCall`.
 func (p AlternativesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -114,5 +115,5 @@ type AlternativesReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AlternativesReturn`
 func AlternativesReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AlternativesReturn, error) {
-	return rpc.AnyToJSONT[AlternativesReturn](r.Result.Result)
+	return cast.AnyToJSONT[AlternativesReturn](r.Result.Result)
 }

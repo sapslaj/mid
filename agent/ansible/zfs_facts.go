@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Gather facts from ZFS dataset properties.
@@ -76,7 +77,7 @@ type ZfsFactsParameters struct {
 
 // Wrap the `ZfsFactsParameters into an `rpc.RPCCall`.
 func (p ZfsFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -108,5 +109,5 @@ type ZfsFactsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ZfsFactsReturn`
 func ZfsFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ZfsFactsReturn, error) {
-	return rpc.AnyToJSONT[ZfsFactsReturn](r.Result.Result)
+	return cast.AnyToJSONT[ZfsFactsReturn](r.Result.Result)
 }

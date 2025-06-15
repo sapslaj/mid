@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `ansible.builtin.copy` module copies a file or a directory structure from
@@ -213,7 +214,7 @@ type CopyParameters struct {
 
 // Wrap the `CopyParameters into an `rpc.RPCCall`.
 func (p CopyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -269,5 +270,5 @@ type CopyReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `CopyReturn`
 func CopyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CopyReturn, error) {
-	return rpc.AnyToJSONT[CopyReturn](r.Result.Result)
+	return cast.AnyToJSONT[CopyReturn](r.Result.Result)
 }

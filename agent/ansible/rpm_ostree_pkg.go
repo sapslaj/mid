@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Install or uninstall overlay additional packages using `rpm-ostree` command.
@@ -62,7 +63,7 @@ type RpmOstreePkgParameters struct {
 
 // Wrap the `RpmOstreePkgParameters into an `rpc.RPCCall`.
 func (p RpmOstreePkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -106,5 +107,5 @@ type RpmOstreePkgReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `RpmOstreePkgReturn`
 func RpmOstreePkgReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (RpmOstreePkgReturn, error) {
-	return rpc.AnyToJSONT[RpmOstreePkgReturn](r.Result.Result)
+	return cast.AnyToJSONT[RpmOstreePkgReturn](r.Result.Result)
 }

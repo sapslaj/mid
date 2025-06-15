@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Add and remove deb822 formatted repositories in Debian based distributions.
@@ -164,7 +165,7 @@ type Deb822RepositoryParameters struct {
 
 // Wrap the `Deb822RepositoryParameters into an `rpc.RPCCall`.
 func (p Deb822RepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -193,5 +194,5 @@ type Deb822RepositoryReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `Deb822RepositoryReturn`
 func Deb822RepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (Deb822RepositoryReturn, error) {
-	return rpc.AnyToJSONT[Deb822RepositoryReturn](r.Result.Result)
+	return cast.AnyToJSONT[Deb822RepositoryReturn](r.Result.Result)
 }

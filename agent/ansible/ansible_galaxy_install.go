@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows the installation of Ansible collections or roles using
@@ -111,7 +112,7 @@ type AnsibleGalaxyInstallParameters struct {
 
 // Wrap the `AnsibleGalaxyInstallParameters into an `rpc.RPCCall`.
 func (p AnsibleGalaxyInstallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -167,5 +168,5 @@ type AnsibleGalaxyInstallReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AnsibleGalaxyInstallReturn`
 func AnsibleGalaxyInstallReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AnsibleGalaxyInstallReturn, error) {
-	return rpc.AnyToJSONT[AnsibleGalaxyInstallReturn](r.Result.Result)
+	return cast.AnyToJSONT[AnsibleGalaxyInstallReturn](r.Result.Result)
 }

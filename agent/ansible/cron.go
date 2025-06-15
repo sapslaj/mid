@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Use this module to manage crontab and environment variables entries. This
@@ -174,7 +175,7 @@ type CronParameters struct {
 
 // Wrap the `CronParameters into an `rpc.RPCCall`.
 func (p CronParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -194,5 +195,5 @@ type CronReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `CronReturn`
 func CronReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CronReturn, error) {
-	return rpc.AnyToJSONT[CronReturn](r.Result.Result)
+	return cast.AnyToJSONT[CronReturn](r.Result.Result)
 }

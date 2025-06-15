@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // A diversion is for `dpkg` the knowledge that only a given package (or the
@@ -96,7 +97,7 @@ type DpkgDivertParameters struct {
 
 // Wrap the `DpkgDivertParameters into an `rpc.RPCCall`.
 func (p DpkgDivertParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -125,5 +126,5 @@ type DpkgDivertReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DpkgDivertReturn`
 func DpkgDivertReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DpkgDivertReturn, error) {
-	return rpc.AnyToJSONT[DpkgDivertReturn](r.Result.Result)
+	return cast.AnyToJSONT[DpkgDivertReturn](r.Result.Result)
 }

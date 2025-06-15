@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This modules allows for enable/disable/activate of `awall` policies.
@@ -60,7 +61,7 @@ type AwallParameters struct {
 
 // Wrap the `AwallParameters into an `rpc.RPCCall`.
 func (p AwallParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -80,5 +81,5 @@ type AwallReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AwallReturn`
 func AwallReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AwallReturn, error) {
-	return rpc.AnyToJSONT[AwallReturn](r.Result.Result)
+	return cast.AnyToJSONT[AwallReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage Node.js packages with the Yarn package manager `https://yarnpkg.com/`.
@@ -85,7 +86,7 @@ type YarnParameters struct {
 
 // Wrap the `YarnParameters into an `rpc.RPCCall`.
 func (p YarnParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -108,5 +109,5 @@ type YarnReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `YarnReturn`
 func YarnReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (YarnReturn, error) {
-	return rpc.AnyToJSONT[YarnReturn](r.Result.Result)
+	return cast.AnyToJSONT[YarnReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // A trivial test module, this module always returns `pong` on successful
@@ -25,7 +26,7 @@ type PingParameters struct {
 
 // Wrap the `PingParameters into an `rpc.RPCCall`.
 func (p PingParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -48,5 +49,5 @@ type PingReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PingReturn`
 func PingReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PingReturn, error) {
-	return rpc.AnyToJSONT[PingReturn](r.Result.Result)
+	return cast.AnyToJSONT[PingReturn](r.Result.Result)
 }

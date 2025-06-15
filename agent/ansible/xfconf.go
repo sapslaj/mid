@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows for the manipulation of Xfce 4 Configuration with the help
@@ -130,7 +131,7 @@ type XfconfParameters struct {
 
 // Wrap the `XfconfParameters into an `rpc.RPCCall`.
 func (p XfconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -177,5 +178,5 @@ type XfconfReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `XfconfReturn`
 func XfconfReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (XfconfReturn, error) {
-	return rpc.AnyToJSONT[XfconfReturn](r.Result.Result)
+	return cast.AnyToJSONT[XfconfReturn](r.Result.Result)
 }

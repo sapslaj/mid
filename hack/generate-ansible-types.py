@@ -224,6 +224,7 @@ def process_module_file(module_file: str):
             f.write("package ansible\n\n")
             f.write("import (\n")
             f.write('\t"github.com/sapslaj/mid/agent/rpc"\n')
+            f.write('\t"github.com/sapslaj/mid/pkg/cast"\n')
             f.write(")\n\n")
             f.write(doc_comment(documentation["description"], indent=0))
             f.write(f'const {pascalcase_name}Name = "{name}"\n\n')
@@ -341,7 +342,7 @@ def process_module_file(module_file: str):
             f.write(
                 f"func (p {pascalcase_name}Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {'{'}\n"
             )
-            f.write("\targs, err := rpc.AnyToJSONT[map[string]any](p)\n")
+            f.write("\targs, err := cast.AnyToJSONT[map[string]any](p)\n")
             f.write("\tif err != nil {\n")
             f.write("\t\treturn rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err\n")
             f.write("\t}\n")
@@ -379,7 +380,7 @@ def process_module_file(module_file: str):
                 f"func {pascalcase_name}ReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) ({pascalcase_name}Return, error) {'{'}\n"
             )
             f.write(
-                f"\treturn rpc.AnyToJSONT[{pascalcase_name}Return](r.Result.Result)\n"
+                f"\treturn cast.AnyToJSONT[{pascalcase_name}Return](r.Result.Result)\n"
             )
             f.write("}\n")
     except Exception as e:

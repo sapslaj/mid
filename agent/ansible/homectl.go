@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages a user's home directory managed by systemd-homed.
@@ -220,7 +221,7 @@ type HomectlParameters struct {
 
 // Wrap the `HomectlParameters into an `rpc.RPCCall`.
 func (p HomectlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -243,5 +244,5 @@ type HomectlReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `HomectlReturn`
 func HomectlReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (HomectlReturn, error) {
-	return rpc.AnyToJSONT[HomectlReturn](r.Result.Result)
+	return cast.AnyToJSONT[HomectlReturn](r.Result.Result)
 }

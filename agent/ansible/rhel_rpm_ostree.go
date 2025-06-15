@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Compatibility layer for using the "package" module for RHEL for Edge systems
@@ -83,7 +84,7 @@ type RhelRpmOstreeParameters struct {
 
 // Wrap the `RhelRpmOstreeParameters into an `rpc.RPCCall`.
 func (p RhelRpmOstreeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -106,5 +107,5 @@ type RhelRpmOstreeReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `RhelRpmOstreeReturn`
 func RhelRpmOstreeReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (RhelRpmOstreeReturn, error) {
-	return rpc.AnyToJSONT[RhelRpmOstreeReturn](r.Result.Result)
+	return cast.AnyToJSONT[RhelRpmOstreeReturn](r.Result.Result)
 }

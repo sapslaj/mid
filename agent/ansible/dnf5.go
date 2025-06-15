@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Installs, upgrade, removes, and lists packages and groups with the `dnf5`
@@ -236,7 +237,7 @@ type Dnf5Parameters struct {
 
 // Wrap the `Dnf5Parameters into an `rpc.RPCCall`.
 func (p Dnf5Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -268,5 +269,5 @@ type Dnf5Return struct {
 
 // Unwrap the `rpc.RPCResult` into an `Dnf5Return`
 func Dnf5ReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (Dnf5Return, error) {
-	return rpc.AnyToJSONT[Dnf5Return](r.Result.Result)
+	return cast.AnyToJSONT[Dnf5Return](r.Result.Result)
 }

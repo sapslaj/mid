@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows for the manipulation of GNOME 2 Configuration using
@@ -77,7 +78,7 @@ type Gconftool2Parameters struct {
 
 // Wrap the `Gconftool2Parameters into an `rpc.RPCCall`.
 func (p Gconftool2Parameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -117,5 +118,5 @@ type Gconftool2Return struct {
 
 // Unwrap the `rpc.RPCResult` into an `Gconftool2Return`
 func Gconftool2ReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (Gconftool2Return, error) {
-	return rpc.AnyToJSONT[Gconftool2Return](r.Result.Result)
+	return cast.AnyToJSONT[Gconftool2Return](r.Result.Result)
 }

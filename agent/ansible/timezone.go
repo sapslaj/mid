@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module configures the timezone setting, both of the system clock and of
@@ -75,7 +76,7 @@ type TimezoneParameters struct {
 
 // Wrap the `TimezoneParameters into an `rpc.RPCCall`.
 func (p TimezoneParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -98,5 +99,5 @@ type TimezoneReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `TimezoneReturn`
 func TimezoneReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (TimezoneReturn, error) {
-	return rpc.AnyToJSONT[TimezoneReturn](r.Result.Result)
+	return cast.AnyToJSONT[TimezoneReturn](r.Result.Result)
 }

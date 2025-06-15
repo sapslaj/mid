@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage user accounts and user attributes.
@@ -322,7 +323,7 @@ type UserParameters struct {
 
 // Wrap the `UserParameters into an `rpc.RPCCall`.
 func (p UserParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -399,5 +400,5 @@ type UserReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `UserReturn`
 func UserReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (UserReturn, error) {
-	return rpc.AnyToJSONT[UserReturn](r.Result.Result)
+	return cast.AnyToJSONT[UserReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages Homebrew packages.
@@ -87,7 +88,7 @@ type HomebrewParameters struct {
 
 // Wrap the `HomebrewParameters into an `rpc.RPCCall`.
 func (p HomebrewParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -116,5 +117,5 @@ type HomebrewReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `HomebrewReturn`
 func HomebrewReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (HomebrewReturn, error) {
-	return rpc.AnyToJSONT[HomebrewReturn](r.Result.Result)
+	return cast.AnyToJSONT[HomebrewReturn](r.Result.Result)
 }

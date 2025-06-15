@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module manipulates files privileges using the Linux capabilities(7)
@@ -56,7 +57,7 @@ type CapabilitiesParameters struct {
 
 // Wrap the `CapabilitiesParameters into an `rpc.RPCCall`.
 func (p CapabilitiesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -76,5 +77,5 @@ type CapabilitiesReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `CapabilitiesReturn`
 func CapabilitiesReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CapabilitiesReturn, error) {
-	return rpc.AnyToJSONT[CapabilitiesReturn](r.Result.Result)
+	return cast.AnyToJSONT[CapabilitiesReturn](r.Result.Result)
 }

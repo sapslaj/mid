@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages updates and bundles with the swupd bundle manager, which is used by
@@ -82,7 +83,7 @@ type SwupdParameters struct {
 
 // Wrap the `SwupdParameters into an `rpc.RPCCall`.
 func (p SwupdParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -108,5 +109,5 @@ type SwupdReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SwupdReturn`
 func SwupdReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SwupdReturn, error) {
-	return rpc.AnyToJSONT[SwupdReturn](r.Result.Result)
+	return cast.AnyToJSONT[SwupdReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage PHP packages with the pear package manager.
@@ -72,7 +73,7 @@ type PearParameters struct {
 
 // Wrap the `PearParameters into an `rpc.RPCCall`.
 func (p PearParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -92,5 +93,5 @@ type PearReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PearReturn`
 func PearReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PearReturn, error) {
-	return rpc.AnyToJSONT[PearReturn](r.Result.Result)
+	return cast.AnyToJSONT[PearReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Allows retrieving information about available USB devices through `lsusb`.
@@ -14,7 +15,7 @@ type UsbFactsParameters struct {
 
 // Wrap the `UsbFactsParameters into an `rpc.RPCCall`.
 func (p UsbFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -37,5 +38,5 @@ type UsbFactsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `UsbFactsReturn`
 func UsbFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (UsbFactsReturn, error) {
-	return rpc.AnyToJSONT[UsbFactsReturn](r.Result.Result)
+	return cast.AnyToJSONT[UsbFactsReturn](r.Result.Result)
 }

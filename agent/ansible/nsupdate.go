@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Create, update and remove DNS records using DDNS updates.
@@ -158,7 +159,7 @@ type NsupdateParameters struct {
 
 // Wrap the `NsupdateParameters into an `rpc.RPCCall`.
 func (p NsupdateParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -202,5 +203,5 @@ type NsupdateReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `NsupdateReturn`
 func NsupdateReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (NsupdateReturn, error) {
-	return rpc.AnyToJSONT[NsupdateReturn](r.Result.Result)
+	return cast.AnyToJSONT[NsupdateReturn](r.Result.Result)
 }

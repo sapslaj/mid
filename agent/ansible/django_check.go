@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module is a wrapper for the execution of `django-admin check`.
@@ -128,7 +129,7 @@ type DjangoCheckParameters struct {
 
 // Wrap the `DjangoCheckParameters into an `rpc.RPCCall`.
 func (p DjangoCheckParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -154,5 +155,5 @@ type DjangoCheckReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DjangoCheckReturn`
 func DjangoCheckReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DjangoCheckReturn, error) {
-	return rpc.AnyToJSONT[DjangoCheckReturn](r.Result.Result)
+	return cast.AnyToJSONT[DjangoCheckReturn](r.Result.Result)
 }

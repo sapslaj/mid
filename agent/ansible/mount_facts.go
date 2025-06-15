@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Retrieve information about mounts from preferred sources and filter the
@@ -105,7 +106,7 @@ type MountFactsParameters struct {
 
 // Wrap the `MountFactsParameters into an `rpc.RPCCall`.
 func (p MountFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -135,5 +136,5 @@ type MountFactsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `MountFactsReturn`
 func MountFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (MountFactsReturn, error) {
-	return rpc.AnyToJSONT[MountFactsReturn](r.Result.Result)
+	return cast.AnyToJSONT[MountFactsReturn](r.Result.Result)
 }

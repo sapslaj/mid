@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages Gentoo packages.
@@ -197,7 +198,7 @@ type PortageParameters struct {
 
 // Wrap the `PortageParameters into an `rpc.RPCCall`.
 func (p PortageParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -217,5 +218,5 @@ type PortageReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PortageReturn`
 func PortageReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PortageReturn, error) {
-	return rpc.AnyToJSONT[PortageReturn](r.Result.Result)
+	return cast.AnyToJSONT[PortageReturn](r.Result.Result)
 }

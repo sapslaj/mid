@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module is automatically called by playbooks to gather useful variables
@@ -70,7 +71,7 @@ type SetupParameters struct {
 
 // Wrap the `SetupParameters into an `rpc.RPCCall`.
 func (p SetupParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -90,5 +91,5 @@ type SetupReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SetupReturn`
 func SetupReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SetupReturn, error) {
-	return rpc.AnyToJSONT[SetupReturn](r.Result.Result)
+	return cast.AnyToJSONT[SetupReturn](r.Result.Result)
 }

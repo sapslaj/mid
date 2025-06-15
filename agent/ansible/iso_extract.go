@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module has two possible ways of operation.
@@ -47,7 +48,7 @@ type IsoExtractParameters struct {
 
 // Wrap the `IsoExtractParameters into an `rpc.RPCCall`.
 func (p IsoExtractParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -67,5 +68,5 @@ type IsoExtractReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `IsoExtractReturn`
 func IsoExtractReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (IsoExtractReturn, error) {
-	return rpc.AnyToJSONT[IsoExtractReturn](r.Result.Result)
+	return cast.AnyToJSONT[IsoExtractReturn](r.Result.Result)
 }

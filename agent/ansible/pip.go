@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage Python library dependencies. To use this module, one of the following
@@ -127,7 +128,7 @@ type PipParameters struct {
 
 // Wrap the `PipParameters into an `rpc.RPCCall`.
 func (p PipParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -162,5 +163,5 @@ type PipReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PipReturn`
 func PipReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PipReturn, error) {
-	return rpc.AnyToJSONT[PipReturn](r.Result.Result)
+	return cast.AnyToJSONT[PipReturn](r.Result.Result)
 }

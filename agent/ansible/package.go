@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This modules manages packages on a target without specifying a package
@@ -48,7 +49,7 @@ type PackageParameters struct {
 
 // Wrap the `PackageParameters into an `rpc.RPCCall`.
 func (p PackageParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -68,5 +69,5 @@ type PackageReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PackageReturn`
 func PackageReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PackageReturn, error) {
-	return rpc.AnyToJSONT[PackageReturn](r.Result.Result)
+	return cast.AnyToJSONT[PackageReturn](r.Result.Result)
 }

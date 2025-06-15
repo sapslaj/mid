@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage (add, remove, change) individual settings in an INI-style file without
@@ -234,7 +235,7 @@ type IniFileParameters struct {
 
 // Wrap the `IniFileParameters into an `rpc.RPCCall`.
 func (p IniFileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -254,5 +255,5 @@ type IniFileReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `IniFileReturn`
 func IniFileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (IniFileReturn, error) {
-	return rpc.AnyToJSONT[IniFileReturn](r.Result.Result)
+	return cast.AnyToJSONT[IniFileReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Set and retrieve file ACL information.
@@ -179,7 +180,7 @@ type AclParameters struct {
 
 // Wrap the `AclParameters into an `rpc.RPCCall`.
 func (p AclParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -202,5 +203,5 @@ type AclReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AclReturn`
 func AclReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AclReturn, error) {
-	return rpc.AnyToJSONT[AclReturn](r.Result.Result)
+	return cast.AnyToJSONT[AclReturn](r.Result.Result)
 }

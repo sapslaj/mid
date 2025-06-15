@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Shut downs a machine.
@@ -31,7 +32,7 @@ type ShutdownParameters struct {
 
 // Wrap the `ShutdownParameters into an `rpc.RPCCall`.
 func (p ShutdownParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -54,5 +55,5 @@ type ShutdownReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ShutdownReturn`
 func ShutdownReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ShutdownReturn, error) {
-	return rpc.AnyToJSONT[ShutdownReturn](r.Result.Result)
+	return cast.AnyToJSONT[ShutdownReturn](r.Result.Result)
 }

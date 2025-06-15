@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Configure a .deb package using debconf-set-selections.
@@ -80,7 +81,7 @@ type DebconfParameters struct {
 
 // Wrap the `DebconfParameters into an `rpc.RPCCall`.
 func (p DebconfParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -100,5 +101,5 @@ type DebconfReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DebconfReturn`
 func DebconfReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DebconfReturn, error) {
-	return rpc.AnyToJSONT[DebconfReturn](r.Result.Result)
+	return cast.AnyToJSONT[DebconfReturn](r.Result.Result)
 }

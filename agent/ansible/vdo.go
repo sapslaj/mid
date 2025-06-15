@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module controls the VDO dedupe and compression device.
@@ -411,7 +412,7 @@ type VdoParameters struct {
 
 // Wrap the `VdoParameters into an `rpc.RPCCall`.
 func (p VdoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -431,5 +432,5 @@ type VdoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `VdoReturn`
 func VdoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (VdoReturn, error) {
-	return rpc.AnyToJSONT[VdoReturn](r.Result.Result)
+	return cast.AnyToJSONT[VdoReturn](r.Result.Result)
 }

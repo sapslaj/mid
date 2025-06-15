@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Create, delete or activate ZFS boot environments.
@@ -75,7 +76,7 @@ type BeadmParameters struct {
 
 // Wrap the `BeadmParameters into an `rpc.RPCCall`.
 func (p BeadmParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -116,5 +117,5 @@ type BeadmReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `BeadmReturn`
 func BeadmReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (BeadmReturn, error) {
-	return rpc.AnyToJSONT[BeadmReturn](r.Result.Result)
+	return cast.AnyToJSONT[BeadmReturn](r.Result.Result)
 }

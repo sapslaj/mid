@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Toggles SELinux booleans.
@@ -28,7 +29,7 @@ type SebooleanParameters struct {
 
 // Wrap the `SebooleanParameters into an `rpc.RPCCall`.
 func (p SebooleanParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -48,5 +49,5 @@ type SebooleanReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SebooleanReturn`
 func SebooleanReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SebooleanReturn, error) {
-	return rpc.AnyToJSONT[SebooleanReturn](r.Result.Result)
+	return cast.AnyToJSONT[SebooleanReturn](r.Result.Result)
 }

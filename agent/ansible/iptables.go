@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // `ansible.builtin.iptables` is used to set up, maintain, and inspect the
@@ -591,7 +592,7 @@ type IptablesParameters struct {
 
 // Wrap the `IptablesParameters into an `rpc.RPCCall`.
 func (p IptablesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -611,5 +612,5 @@ type IptablesReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `IptablesReturn`
 func IptablesReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (IptablesReturn, error) {
-	return rpc.AnyToJSONT[IptablesReturn](r.Result.Result)
+	return cast.AnyToJSONT[IptablesReturn](r.Result.Result)
 }

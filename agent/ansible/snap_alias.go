@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages snaps aliases.
@@ -54,7 +55,7 @@ type SnapAliasParameters struct {
 
 // Wrap the `SnapAliasParameters into an `rpc.RPCCall`.
 func (p SnapAliasParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -81,5 +82,5 @@ type SnapAliasReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SnapAliasReturn`
 func SnapAliasReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SnapAliasReturn, error) {
-	return rpc.AnyToJSONT[SnapAliasReturn](r.Result.Result)
+	return cast.AnyToJSONT[SnapAliasReturn](r.Result.Result)
 }

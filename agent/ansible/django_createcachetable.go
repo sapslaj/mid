@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module is a wrapper for the execution of `django-admin
@@ -77,7 +78,7 @@ type DjangoCreatecachetableParameters struct {
 
 // Wrap the `DjangoCreatecachetableParameters into an `rpc.RPCCall`.
 func (p DjangoCreatecachetableParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -103,5 +104,5 @@ type DjangoCreatecachetableReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DjangoCreatecachetableReturn`
 func DjangoCreatecachetableReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DjangoCreatecachetableReturn, error) {
-	return rpc.AnyToJSONT[DjangoCreatecachetableReturn](r.Result.Result)
+	return cast.AnyToJSONT[DjangoCreatecachetableReturn](r.Result.Result)
 }

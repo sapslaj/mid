@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module is a simple wrapper around `dd` to create, extend or truncate a
@@ -150,7 +151,7 @@ type FilesizeParameters struct {
 
 // Wrap the `FilesizeParameters into an `rpc.RPCCall`.
 func (p FilesizeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -183,5 +184,5 @@ type FilesizeReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `FilesizeReturn`
 func FilesizeReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FilesizeReturn, error) {
-	return rpc.AnyToJSONT[FilesizeReturn](r.Result.Result)
+	return cast.AnyToJSONT[FilesizeReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // `ansible.posix.synchronize` is a wrapper around `rsync` to make common tasks
@@ -215,7 +216,7 @@ type SynchronizeParameters struct {
 
 // Wrap the `SynchronizeParameters into an `rpc.RPCCall`.
 func (p SynchronizeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -235,5 +236,5 @@ type SynchronizeReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SynchronizeReturn`
 func SynchronizeReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SynchronizeReturn, error) {
-	return rpc.AnyToJSONT[SynchronizeReturn](r.Result.Result)
+	return cast.AnyToJSONT[SynchronizeReturn](r.Result.Result)
 }

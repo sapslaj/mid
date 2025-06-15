@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `ansible.builtin.command` module takes the command name followed by a
@@ -73,7 +74,7 @@ type CommandParameters struct {
 
 // Wrap the `CommandParameters into an `rpc.RPCCall`.
 func (p CommandParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -123,5 +124,5 @@ type CommandReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `CommandReturn`
 func CommandReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CommandReturn, error) {
-	return rpc.AnyToJSONT[CommandReturn](r.Result.Result)
+	return cast.AnyToJSONT[CommandReturn](r.Result.Result)
 }

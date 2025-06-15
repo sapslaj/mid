@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module manipulates sysctl entries and optionally performs a
@@ -72,7 +73,7 @@ type SysctlParameters struct {
 
 // Wrap the `SysctlParameters into an `rpc.RPCCall`.
 func (p SysctlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -92,5 +93,5 @@ type SysctlReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SysctlReturn`
 func SysctlReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SysctlReturn, error) {
-	return rpc.AnyToJSONT[SysctlReturn](r.Result.Result)
+	return cast.AnyToJSONT[SysctlReturn](r.Result.Result)
 }

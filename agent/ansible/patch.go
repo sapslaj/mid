@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Apply patch files using the GNU patch tool.
@@ -90,7 +91,7 @@ type PatchParameters struct {
 
 // Wrap the `PatchParameters into an `rpc.RPCCall`.
 func (p PatchParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -110,5 +111,5 @@ type PatchReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PatchReturn`
 func PatchReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PatchReturn, error) {
-	return rpc.AnyToJSONT[PatchReturn](r.Result.Result)
+	return cast.AnyToJSONT[PatchReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Controls services on remote hosts. Supported init systems include BSD init,
@@ -116,7 +117,7 @@ type ServiceParameters struct {
 
 // Wrap the `ServiceParameters into an `rpc.RPCCall`.
 func (p ServiceParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -136,5 +137,5 @@ type ServiceReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ServiceReturn`
 func ServiceReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ServiceReturn, error) {
-	return rpc.AnyToJSONT[ServiceReturn](r.Result.Result)
+	return cast.AnyToJSONT[ServiceReturn](r.Result.Result)
 }

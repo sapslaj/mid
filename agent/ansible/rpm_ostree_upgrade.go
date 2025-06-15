@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage an rpm-ostree upgrade transactions.
@@ -29,7 +30,7 @@ type RpmOstreeUpgradeParameters struct {
 
 // Wrap the `RpmOstreeUpgradeParameters into an `rpc.RPCCall`.
 func (p RpmOstreeUpgradeParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -52,5 +53,5 @@ type RpmOstreeUpgradeReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `RpmOstreeUpgradeReturn`
 func RpmOstreeUpgradeReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (RpmOstreeUpgradeReturn, error) {
-	return rpc.AnyToJSONT[RpmOstreeUpgradeReturn](r.Result.Result)
+	return cast.AnyToJSONT[RpmOstreeUpgradeReturn](r.Result.Result)
 }

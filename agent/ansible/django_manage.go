@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages a Django application using the `manage.py` application frontend to
@@ -91,7 +92,7 @@ type DjangoManageParameters struct {
 
 // Wrap the `DjangoManageParameters into an `rpc.RPCCall`.
 func (p DjangoManageParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -111,5 +112,5 @@ type DjangoManageReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `DjangoManageReturn`
 func DjangoManageReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (DjangoManageReturn, error) {
-	return rpc.AnyToJSONT[DjangoManageReturn](r.Result.Result)
+	return cast.AnyToJSONT[DjangoManageReturn](r.Result.Result)
 }

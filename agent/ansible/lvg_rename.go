@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module renames volume groups using the `vgchange` command.
@@ -21,7 +22,7 @@ type LvgRenameParameters struct {
 
 // Wrap the `LvgRenameParameters into an `rpc.RPCCall`.
 func (p LvgRenameParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -41,5 +42,5 @@ type LvgRenameReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `LvgRenameReturn`
 func LvgRenameReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LvgRenameReturn, error) {
-	return rpc.AnyToJSONT[LvgRenameReturn](r.Result.Result)
+	return cast.AnyToJSONT[LvgRenameReturn](r.Result.Result)
 }

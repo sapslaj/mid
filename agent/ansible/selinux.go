@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Configures the SELinux mode and policy.
@@ -41,7 +42,7 @@ type SelinuxParameters struct {
 
 // Wrap the `SelinuxParameters into an `rpc.RPCCall`.
 func (p SelinuxParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -76,5 +77,5 @@ type SelinuxReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SelinuxReturn`
 func SelinuxReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SelinuxReturn, error) {
-	return rpc.AnyToJSONT[SelinuxReturn](r.Result.Result)
+	return cast.AnyToJSONT[SelinuxReturn](r.Result.Result)
 }

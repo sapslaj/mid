@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Controls services on target hosts that use the SysV init system.
@@ -88,7 +89,7 @@ type SysvinitParameters struct {
 
 // Wrap the `SysvinitParameters into an `rpc.RPCCall`.
 func (p SysvinitParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -111,5 +112,5 @@ type SysvinitReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SysvinitReturn`
 func SysvinitReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SysvinitReturn, error) {
-	return rpc.AnyToJSONT[SysvinitReturn](r.Result.Result)
+	return cast.AnyToJSONT[SysvinitReturn](r.Result.Result)
 }

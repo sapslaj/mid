@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Add or remove YUM repositories in RPM-based Linux distributions.
@@ -592,7 +593,7 @@ type YumRepositoryParameters struct {
 
 // Wrap the `YumRepositoryParameters into an `rpc.RPCCall`.
 func (p YumRepositoryParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -618,5 +619,5 @@ type YumRepositoryReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `YumRepositoryReturn`
 func YumRepositoryReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (YumRepositoryReturn, error) {
-	return rpc.AnyToJSONT[YumRepositoryReturn](r.Result.Result)
+	return cast.AnyToJSONT[YumRepositoryReturn](r.Result.Result)
 }

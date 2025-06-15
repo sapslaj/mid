@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module allows for addition or deletion of services and ports (either TCP
@@ -155,7 +156,7 @@ type FirewalldParameters struct {
 
 // Wrap the `FirewalldParameters into an `rpc.RPCCall`.
 func (p FirewalldParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -175,5 +176,5 @@ type FirewalldReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `FirewalldReturn`
 func FirewalldReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FirewalldReturn, error) {
-	return rpc.AnyToJSONT[FirewalldReturn](r.Result.Result)
+	return cast.AnyToJSONT[FirewalldReturn](r.Result.Result)
 }

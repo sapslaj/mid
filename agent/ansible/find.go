@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Return a list of files based on specific criteria. Multiple criteria are
@@ -200,7 +201,7 @@ type FindParameters struct {
 
 // Wrap the `FindParameters into an `rpc.RPCCall`.
 func (p FindParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -233,5 +234,5 @@ type FindReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `FindReturn`
 func FindReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (FindReturn, error) {
-	return rpc.AnyToJSONT[FindReturn](r.Result.Result)
+	return cast.AnyToJSONT[FindReturn](r.Result.Result)
 }

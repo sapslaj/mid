@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages `/etc/rc.conf` for FreeBSD.
@@ -76,7 +77,7 @@ type SysrcParameters struct {
 
 // Wrap the `SysrcParameters into an `rpc.RPCCall`.
 func (p SysrcParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -99,5 +100,5 @@ type SysrcReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SysrcReturn`
 func SysrcReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SysrcReturn, error) {
-	return rpc.AnyToJSONT[SysrcReturn](r.Result.Result)
+	return cast.AnyToJSONT[SysrcReturn](r.Result.Result)
 }

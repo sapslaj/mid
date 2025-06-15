@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // A CRUD-like interface to managing bits of XML files.
@@ -207,7 +208,7 @@ type XmlParameters struct {
 
 // Wrap the `XmlParameters into an `rpc.RPCCall`.
 func (p XmlParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -245,5 +246,5 @@ type XmlReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `XmlReturn`
 func XmlReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (XmlReturn, error) {
-	return rpc.AnyToJSONT[XmlReturn](r.Result.Result)
+	return cast.AnyToJSONT[XmlReturn](r.Result.Result)
 }

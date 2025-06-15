@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module manages the switching and upgrading of `bootc`.
@@ -32,7 +33,7 @@ type BootcManageParameters struct {
 
 // Wrap the `BootcManageParameters into an `rpc.RPCCall`.
 func (p BootcManageParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -52,5 +53,5 @@ type BootcManageReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `BootcManageReturn`
 func BootcManageReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (BootcManageReturn, error) {
-	return rpc.AnyToJSONT[BootcManageReturn](r.Result.Result)
+	return cast.AnyToJSONT[BootcManageReturn](r.Result.Result)
 }

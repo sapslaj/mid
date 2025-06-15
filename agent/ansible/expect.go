@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // The `ansible.builtin.expect` module executes a command and responds to
@@ -47,7 +48,7 @@ type ExpectParameters struct {
 
 // Wrap the `ExpectParameters into an `rpc.RPCCall`.
 func (p ExpectParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -67,5 +68,5 @@ type ExpectReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `ExpectReturn`
 func ExpectReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (ExpectReturn, error) {
-	return rpc.AnyToJSONT[ExpectReturn](r.Result.Result)
+	return cast.AnyToJSONT[ExpectReturn](r.Result.Result)
 }

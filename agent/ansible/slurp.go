@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module works like `ansible.builtin.fetch`. It is used for fetching a
@@ -19,7 +20,7 @@ type SlurpParameters struct {
 
 // Wrap the `SlurpParameters into an `rpc.RPCCall`.
 func (p SlurpParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -48,5 +49,5 @@ type SlurpReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SlurpReturn`
 func SlurpReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SlurpReturn, error) {
-	return rpc.AnyToJSONT[SlurpReturn](r.Result.Result)
+	return cast.AnyToJSONT[SlurpReturn](r.Result.Result)
 }

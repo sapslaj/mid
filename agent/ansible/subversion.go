@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Deploy given repository URL / revision to dest. If dest exists, update to the
@@ -71,7 +72,7 @@ type SubversionParameters struct {
 
 // Wrap the `SubversionParameters into an `rpc.RPCCall`.
 func (p SubversionParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -91,5 +92,5 @@ type SubversionReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SubversionReturn`
 func SubversionReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SubversionReturn, error) {
-	return rpc.AnyToJSONT[SubversionReturn](r.Result.Result)
+	return cast.AnyToJSONT[SubversionReturn](r.Result.Result)
 }

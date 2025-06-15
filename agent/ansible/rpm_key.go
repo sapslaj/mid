@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Adds or removes `rpm --import` a gpg key to your rpm database.
@@ -63,7 +64,7 @@ type RpmKeyParameters struct {
 
 // Wrap the `RpmKeyParameters into an `rpc.RPCCall`.
 func (p RpmKeyParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -83,5 +84,5 @@ type RpmKeyReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `RpmKeyReturn`
 func RpmKeyReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (RpmKeyReturn, error) {
-	return rpc.AnyToJSONT[RpmKeyReturn](r.Result.Result)
+	return cast.AnyToJSONT[RpmKeyReturn](r.Result.Result)
 }

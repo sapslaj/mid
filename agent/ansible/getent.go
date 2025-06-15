@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Runs getent against one of its various databases and returns information into
@@ -35,7 +36,7 @@ type GetentParameters struct {
 
 // Wrap the `GetentParameters into an `rpc.RPCCall`.
 func (p GetentParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -58,5 +59,5 @@ type GetentReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `GetentReturn`
 func GetentReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (GetentReturn, error) {
-	return rpc.AnyToJSONT[GetentReturn](r.Result.Result)
+	return cast.AnyToJSONT[GetentReturn](r.Result.Result)
 }

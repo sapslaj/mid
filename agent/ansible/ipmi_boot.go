@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Use this module to manage order of boot devices.
@@ -112,7 +113,7 @@ type IpmiBootParameters struct {
 
 // Wrap the `IpmiBootParameters into an `rpc.RPCCall`.
 func (p IpmiBootParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -141,5 +142,5 @@ type IpmiBootReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `IpmiBootReturn`
 func IpmiBootReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (IpmiBootReturn, error) {
-	return rpc.AnyToJSONT[IpmiBootReturn](r.Result.Result)
+	return cast.AnyToJSONT[IpmiBootReturn](r.Result.Result)
 }

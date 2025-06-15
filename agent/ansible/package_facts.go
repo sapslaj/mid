@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Return information about installed packages as facts.
@@ -134,7 +135,7 @@ type PackageFactsParameters struct {
 
 // Wrap the `PackageFactsParameters into an `rpc.RPCCall`.
 func (p PackageFactsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -157,5 +158,5 @@ type PackageFactsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PackageFactsReturn`
 func PackageFactsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PackageFactsReturn, error) {
-	return rpc.AnyToJSONT[PackageFactsReturn](r.Result.Result)
+	return cast.AnyToJSONT[PackageFactsReturn](r.Result.Result)
 }

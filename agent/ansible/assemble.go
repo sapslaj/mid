@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Assembles a configuration file from fragments.
@@ -141,7 +142,7 @@ type AssembleParameters struct {
 
 // Wrap the `AssembleParameters into an `rpc.RPCCall`.
 func (p AssembleParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -161,5 +162,5 @@ type AssembleReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AssembleReturn`
 func AssembleReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AssembleReturn, error) {
-	return rpc.AnyToJSONT[AssembleReturn](r.Result.Result)
+	return cast.AnyToJSONT[AssembleReturn](r.Result.Result)
 }

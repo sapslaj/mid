@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Retrieves facts for a file similar to the Linux/Unix `stat` command.
@@ -83,7 +84,7 @@ type StatParameters struct {
 
 // Wrap the `StatParameters into an `rpc.RPCCall`.
 func (p StatParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -107,5 +108,5 @@ type StatReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `StatReturn`
 func StatReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (StatReturn, error) {
-	return rpc.AnyToJSONT[StatReturn](r.Result.Result)
+	return cast.AnyToJSONT[StatReturn](r.Result.Result)
 }

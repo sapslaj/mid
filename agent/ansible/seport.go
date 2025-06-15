@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages SELinux network port type definitions.
@@ -78,7 +79,7 @@ type SeportParameters struct {
 
 // Wrap the `SeportParameters into an `rpc.RPCCall`.
 func (p SeportParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -98,5 +99,5 @@ type SeportReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SeportReturn`
 func SeportReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SeportReturn, error) {
-	return rpc.AnyToJSONT[SeportReturn](r.Result.Result)
+	return cast.AnyToJSONT[SeportReturn](r.Result.Result)
 }

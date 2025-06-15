@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage Local Backup Utility of Alpine Linux in run-from-RAM mode.
@@ -22,7 +23,7 @@ type LbuParameters struct {
 
 // Wrap the `LbuParameters into an `rpc.RPCCall`.
 func (p LbuParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -45,5 +46,5 @@ type LbuReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `LbuReturn`
 func LbuReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LbuReturn, error) {
-	return rpc.AnyToJSONT[LbuReturn](r.Result.Result)
+	return cast.AnyToJSONT[LbuReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Interacts with HTTP and HTTPS web services and supports Digest, Basic and
@@ -354,7 +355,7 @@ type UriParameters struct {
 
 // Wrap the `UriParameters into an `rpc.RPCCall`.
 func (p UriParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -401,5 +402,5 @@ type UriReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `UriReturn`
 func UriReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (UriReturn, error) {
-	return rpc.AnyToJSONT[UriReturn](r.Result.Result)
+	return cast.AnyToJSONT[UriReturn](r.Result.Result)
 }

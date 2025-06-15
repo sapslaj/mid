@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // You can wait for a set amount of time `timeout`, this is the default if
@@ -125,7 +126,7 @@ type WaitForParameters struct {
 
 // Wrap the `WaitForParameters into an `rpc.RPCCall`.
 func (p WaitForParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -157,5 +158,5 @@ type WaitForReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `WaitForReturn`
 func WaitForReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (WaitForReturn, error) {
-	return rpc.AnyToJSONT[WaitForReturn](r.Result.Result)
+	return cast.AnyToJSONT[WaitForReturn](r.Result.Result)
 }

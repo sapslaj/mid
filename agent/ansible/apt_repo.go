@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages APT repositories using `apt-repo` tool.
@@ -61,7 +62,7 @@ type AptRepoParameters struct {
 
 // Wrap the `AptRepoParameters into an `rpc.RPCCall`.
 func (p AptRepoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -81,5 +82,5 @@ type AptRepoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `AptRepoReturn`
 func AptRepoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (AptRepoReturn, error) {
-	return rpc.AnyToJSONT[AptRepoReturn](r.Result.Result)
+	return cast.AnyToJSONT[AptRepoReturn](r.Result.Result)
 }

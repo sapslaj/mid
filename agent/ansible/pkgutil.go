@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module installs, updates and removes packages from the OpenCSW project
@@ -58,7 +59,7 @@ type PkgutilParameters struct {
 
 // Wrap the `PkgutilParameters into an `rpc.RPCCall`.
 func (p PkgutilParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -78,5 +79,5 @@ type PkgutilReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PkgutilReturn`
 func PkgutilReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PkgutilReturn, error) {
-	return rpc.AnyToJSONT[PkgutilReturn](r.Result.Result)
+	return cast.AnyToJSONT[PkgutilReturn](r.Result.Result)
 }

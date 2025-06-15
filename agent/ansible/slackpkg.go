@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage binary packages for Slackware using `slackpkg` which is available in
@@ -61,7 +62,7 @@ type SlackpkgParameters struct {
 
 // Wrap the `SlackpkgParameters into an `rpc.RPCCall`.
 func (p SlackpkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -81,5 +82,5 @@ type SlackpkgReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SlackpkgReturn`
 func SlackpkgReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SlackpkgReturn, error) {
-	return rpc.AnyToJSONT[SlackpkgReturn](r.Result.Result)
+	return cast.AnyToJSONT[SlackpkgReturn](r.Result.Result)
 }

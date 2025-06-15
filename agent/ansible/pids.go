@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Retrieves a list of PIDs of given process name in Ansible
@@ -26,7 +27,7 @@ type PidsParameters struct {
 
 // Wrap the `PidsParameters into an `rpc.RPCCall`.
 func (p PidsParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -49,5 +50,5 @@ type PidsReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PidsReturn`
 func PidsReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PidsReturn, error) {
-	return rpc.AnyToJSONT[PidsReturn](r.Result.Result)
+	return cast.AnyToJSONT[PidsReturn](r.Result.Result)
 }

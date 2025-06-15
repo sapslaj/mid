@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage Rust packages with cargo.
@@ -73,7 +74,7 @@ type CargoParameters struct {
 
 // Wrap the `CargoParameters into an `rpc.RPCCall`.
 func (p CargoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -93,5 +94,5 @@ type CargoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `CargoReturn`
 func CargoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (CargoReturn, error) {
-	return rpc.AnyToJSONT[CargoReturn](r.Result.Result)
+	return cast.AnyToJSONT[CargoReturn](r.Result.Result)
 }

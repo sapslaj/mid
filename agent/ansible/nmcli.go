@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manage the network devices. Create, modify and manage various connection and
@@ -953,7 +954,7 @@ type NmcliParameters struct {
 
 // Wrap the `NmcliParameters into an `rpc.RPCCall`.
 func (p NmcliParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -973,5 +974,5 @@ type NmcliReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `NmcliReturn`
 func NmcliReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (NmcliReturn, error) {
-	return rpc.AnyToJSONT[NmcliReturn](r.Result.Result)
+	return cast.AnyToJSONT[NmcliReturn](r.Result.Result)
 }

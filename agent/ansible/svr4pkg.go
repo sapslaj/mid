@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Manages SVR4 packages on Solaris 10 and 11.
@@ -97,7 +98,7 @@ type Svr4pkgParameters struct {
 
 // Wrap the `Svr4pkgParameters into an `rpc.RPCCall`.
 func (p Svr4pkgParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -117,5 +118,5 @@ type Svr4pkgReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `Svr4pkgReturn`
 func Svr4pkgReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (Svr4pkgReturn, error) {
-	return rpc.AnyToJSONT[Svr4pkgReturn](r.Result.Result)
+	return cast.AnyToJSONT[Svr4pkgReturn](r.Result.Result)
 }

@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module decrypts input using `systemd`'s `systemd-creds decrypt`.
@@ -72,7 +73,7 @@ type SystemdCredsDecryptParameters struct {
 
 // Wrap the `SystemdCredsDecryptParameters into an `rpc.RPCCall`.
 func (p SystemdCredsDecryptParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -100,5 +101,5 @@ type SystemdCredsDecryptReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SystemdCredsDecryptReturn`
 func SystemdCredsDecryptReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SystemdCredsDecryptReturn, error) {
-	return rpc.AnyToJSONT[SystemdCredsDecryptReturn](r.Result.Result)
+	return cast.AnyToJSONT[SystemdCredsDecryptReturn](r.Result.Result)
 }

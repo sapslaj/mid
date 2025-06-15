@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Sends logs to LogEntries in realtime.
@@ -59,7 +60,7 @@ type LogentriesParameters struct {
 
 // Wrap the `LogentriesParameters into an `rpc.RPCCall`.
 func (p LogentriesParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -79,5 +80,5 @@ type LogentriesReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `LogentriesReturn`
 func LogentriesReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LogentriesReturn, error) {
-	return rpc.AnyToJSONT[LogentriesReturn](r.Result.Result)
+	return cast.AnyToJSONT[LogentriesReturn](r.Result.Result)
 }

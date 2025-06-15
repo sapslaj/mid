@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module ensures a particular line is in a file, or replace an existing
@@ -236,7 +237,7 @@ type LineinfileParameters struct {
 
 // Wrap the `LineinfileParameters into an `rpc.RPCCall`.
 func (p LineinfileParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -259,5 +260,5 @@ type LineinfileReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `LineinfileReturn`
 func LineinfileReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (LineinfileReturn, error) {
-	return rpc.AnyToJSONT[LineinfileReturn](r.Result.Result)
+	return cast.AnyToJSONT[LineinfileReturn](r.Result.Result)
 }

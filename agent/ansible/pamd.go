@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // Edit PAM service's type, control, module path and module arguments.
@@ -176,7 +177,7 @@ type PamdParameters struct {
 
 // Wrap the `PamdParameters into an `rpc.RPCCall`.
 func (p PamdParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -202,5 +203,5 @@ type PamdReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `PamdReturn`
 func PamdReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (PamdReturn, error) {
-	return rpc.AnyToJSONT[PamdReturn](r.Result.Result)
+	return cast.AnyToJSONT[PamdReturn](r.Result.Result)
 }

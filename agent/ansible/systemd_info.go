@@ -3,6 +3,7 @@ package ansible
 
 import (
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/cast"
 )
 
 // This module gathers info about systemd units (services, targets, sockets,
@@ -43,7 +44,7 @@ type SystemdInfoParameters struct {
 
 // Wrap the `SystemdInfoParameters into an `rpc.RPCCall`.
 func (p SystemdInfoParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) {
-	args, err := rpc.AnyToJSONT[map[string]any](p)
+	args, err := cast.AnyToJSONT[map[string]any](p)
 	if err != nil {
 		return rpc.RPCCall[rpc.AnsibleExecuteArgs]{}, err
 	}
@@ -68,5 +69,5 @@ type SystemdInfoReturn struct {
 
 // Unwrap the `rpc.RPCResult` into an `SystemdInfoReturn`
 func SystemdInfoReturnFromRPCResult(r rpc.RPCResult[rpc.AnsibleExecuteResult]) (SystemdInfoReturn, error) {
-	return rpc.AnyToJSONT[SystemdInfoReturn](r.Result.Result)
+	return cast.AnyToJSONT[SystemdInfoReturn](r.Result.Result)
 }
