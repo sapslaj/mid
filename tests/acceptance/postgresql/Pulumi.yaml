@@ -1,0 +1,5 @@
+name: mid-acctest.postgresql
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm

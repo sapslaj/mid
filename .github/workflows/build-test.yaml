@@ -108,3 +108,19 @@ jobs:
           key: noble-server-cloudimg-amd64.img-${{ hashFiles('./tests/testmachine/testmachine.go') }}
       - run: just provider_version=v0.0.0-ci agent-codegen
       - run: go test -timeout=1h -v -race ./tests/integration/...
+
+  test-acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup tools
+        uses: ./.github/actions/setup-tools
+        with:
+          tools: all
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::854523357306:role/github-actions
+          role-session-name: ${{ env.GITHUB_JOB }}
+          aws-region: us-east-1
+      - run: just provider_version=v0.0.0-ci build install
+      - run: go test -timeout=1h -v -race ./tests/acceptance/...

@@ -154,4 +154,8 @@ install-nodejs-sdk: sdk-nodejs
   cd ./sdk/nodejs/bin
   npm unlink @sapslaj/pulumi-mid
   npm link
-  echo 'run "npm link @sapslaj/pulumi-mid" in a project to link to local build'
+  echo 'npm: run "npm link @sapslaj/pulumi-mid" in a project to link to local build'
+  if command -v yarn &>/dev/null; then
+    yarn unlink
+    yarn link
+  fi
