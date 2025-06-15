@@ -135,5 +135,7 @@ jobs:
       - name: add GOPATH/bin to PATH
         run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: setup .npmrc
-        run: echo "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN" > ~/.npmrc
+        run: |
+          echo "@sapslaj:registry=https://npm.pkg.github.com" > ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
       - run: go test -timeout=1h -v -race ./tests/acceptance/...
