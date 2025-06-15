@@ -2219,15 +2219,15 @@ func (pt *ProgramTester) PrepareNodeJSProject(projinfo *engine.Projinfo) error {
 		}
 	}
 
+	// Now ensure dependencies are present.
+	if err = pt.RunNpmCommand("npm-install", []string{"install"}, cwd); err != nil {
+		return err
+	}
+
 	if !pt.Opts.RunUpdateTest {
 		if err = pt.NpmLinkPackageDeps(cwd); err != nil {
 			return err
 		}
-	}
-
-	// Now ensure dependencies are present.
-	if err = pt.RunNpmCommand("npm-install", []string{"install"}, cwd); err != nil {
-		return err
 	}
 
 	if pt.Opts.RunBuild {
