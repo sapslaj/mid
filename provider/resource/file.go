@@ -125,19 +125,22 @@ type FileState struct {
 type FileCopyPlanStrategy string
 
 const (
-	FileCopyPlanNop           FileCopyPlanStrategy = ""
-	FileCopyPlanInlineContent FileCopyPlanStrategy = "InlineContent"
-	FileCopyPlanRemoteSource  FileCopyPlanStrategy = "RemoteSource"
-	FileCopyPlanFileAsset     FileCopyPlanStrategy = "FileAsset"
-	FileCopyPlanStringAsset   FileCopyPlanStrategy = "StringAsset"
-	FileCopyPlanRemoteAsset   FileCopyPlanStrategy = "RemoteAsset"
-	FileCopyPlanFileArchive   FileCopyPlanStrategy = "FileArchive"
-	FileCopyPlanRemoteArchive FileCopyPlanStrategy = "RemoteArchive"
-	FileCopyPlanAssetArchive  FileCopyPlanStrategy = "AssetArchive"
+	FileCopyPlanInvalid         FileCopyPlanStrategy = ""
+	FileCopyPlanNop             FileCopyPlanStrategy = "Nop"
+	FileCopyPlanChecksumCompare FileCopyPlanStrategy = "ChecksumCompare"
+	FileCopyPlanInlineContent   FileCopyPlanStrategy = "InlineContent"
+	FileCopyPlanRemoteSource    FileCopyPlanStrategy = "RemoteSource"
+	FileCopyPlanFileAsset       FileCopyPlanStrategy = "FileAsset"
+	FileCopyPlanStringAsset     FileCopyPlanStrategy = "StringAsset"
+	FileCopyPlanRemoteAsset     FileCopyPlanStrategy = "RemoteAsset"
+	FileCopyPlanFileArchive     FileCopyPlanStrategy = "FileArchive"
+	FileCopyPlanRemoteArchive   FileCopyPlanStrategy = "RemoteArchive"
+	FileCopyPlanAssetArchive    FileCopyPlanStrategy = "AssetArchive"
 )
 
 type FileCopyPlan struct {
 	Strategy  FileCopyPlanStrategy
+	Hash      string
 	Reader    io.ReadCloser
 	Unarchive bool
 }
@@ -175,6 +178,7 @@ func (r File) buildFileCopyPlan(inputs FileArgs) (FileCopyPlan, error) {
 
 	if inputs.Source.Asset != nil {
 		asset := inputs.Source.Asset
+		plan.Hash = asset.Hash
 		switch {
 		case asset.IsPath():
 			plan.Strategy = FileCopyPlanFileAsset
@@ -183,7 +187,11 @@ func (r File) buildFileCopyPlan(inputs FileArgs) (FileCopyPlan, error) {
 		case asset.IsURI():
 			plan.Strategy = FileCopyPlanRemoteAsset
 		default:
-			return plan, fmt.Errorf("unknown asset type: %#v", asset)
+			if plan.Hash == "" {
+				return plan, fmt.Errorf("unknown asset type: %#v", asset)
+			}
+			plan.Strategy = FileCopyPlanChecksumCompare
+			return plan, nil
 		}
 
 		blob, err := asset.Read()
@@ -196,6 +204,7 @@ func (r File) buildFileCopyPlan(inputs FileArgs) (FileCopyPlan, error) {
 
 	if inputs.Source.Archive != nil {
 		archive := inputs.Source.Archive
+		plan.Hash = archive.Hash
 		plan.Unarchive = true
 		switch {
 		case archive.IsPath():
@@ -205,7 +214,11 @@ func (r File) buildFileCopyPlan(inputs FileArgs) (FileCopyPlan, error) {
 		case archive.IsAssets():
 			plan.Strategy = FileCopyPlanAssetArchive
 		default:
-			return plan, fmt.Errorf("unknown archive type: %#v", archive)
+			if plan.Hash == "" {
+				return plan, fmt.Errorf("unknown archive type: %#v", archive)
+			}
+			plan.Strategy = FileCopyPlanChecksumCompare
+			return plan, nil
 		}
 
 		// FIXME: the TarGZIPArchive format is broken because the gzip.Writer is
@@ -408,6 +421,19 @@ func (r File) runCreateUpdatePlay(
 
 	changed := false
 
+	stat, err := executor.CallAgent[rpc.FileStatArgs, rpc.FileStatResult](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+		RPCFunction: rpc.RPCFileStat,
+		Args: rpc.FileStatArgs{
+			Path:              inputs.Path,
+			FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
+			CalculateChecksum: true,
+		},
+	})
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
 	if copyNeeded {
 		remoteSource := false
 		if inputs.RemoteSource != nil && *inputs.RemoteSource != "" {
@@ -435,11 +461,34 @@ func (r File) runCreateUpdatePlay(
 			}
 
 			switch fileCopyPlan.Strategy {
+			case FileCopyPlanInvalid:
+				err = fmt.Errorf("invalid file copy plan: %#v", fileCopyPlan)
+				span.SetStatus(codes.Error, err.Error())
+				return state, err
+
 			case FileCopyPlanNop, FileCopyPlanRemoteSource:
 				break
+
 			case FileCopyPlanInlineContent:
 				params.Content = inputs.Content
 				break
+
+			case FileCopyPlanChecksumCompare:
+				if !dryRun {
+					err = fmt.Errorf("unable to update file due to the source not being loaded")
+					span.SetStatus(codes.Error, err.Error())
+					return state, err
+				}
+
+				if !stat.Result.Exists || stat.Result.SHA256Checksum == nil {
+					changed = true
+				}
+
+				if fileCopyPlan.Hash != *stat.Result.SHA256Checksum {
+					changed = true
+				}
+				goto fileNeeded
+
 			default:
 				if fileCopyPlan.Reader == nil {
 					err = fmt.Errorf("unsupported file copy plan: %s", fileCopyPlan.Strategy)
@@ -512,9 +561,14 @@ func (r File) runCreateUpdatePlay(
 			return state, err
 		}
 
+		if result.IsChanged() {
+			changed = true
+		}
+
 		state.BackupFile = result.BackupFile
 	}
 
+fileNeeded:
 	if fileNeeded {
 		params, err := r.argsToFileTaskParameters(inputs)
 		if err != nil {
