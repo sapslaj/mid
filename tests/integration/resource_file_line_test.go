@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 
+	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 
 	"github.com/sapslaj/mid/tests/testmachine"
@@ -95,6 +96,69 @@ EOF
 						"regexp": property.New("^ENABLED"),
 					}),
 					AssertCommand: "grep -q ^ENABLED=0 /etc/default/motd-news",
+				},
+			},
+		},
+
+		"line updates": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/fileline"),
+					"line":   property.New("foo bar baz"),
+					"regexp": property.New("^foo"),
+				}),
+				AssertBeforeCommand: "sudo touch /fileline",
+				AssertCommand:       "grep -F 'foo bar baz' /fileline",
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/fileline"),
+						"line":   property.New("foo bar foo"),
+						"regexp": property.New("^foo"),
+					}),
+					AssertCommand: "grep -F 'foo bar foo' /fileline",
+					ExpectedDiff: &p.DiffResponse{
+						HasChanges:          true,
+						DeleteBeforeReplace: true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"line": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/fileline"),
+						"line":   property.New("foo bar foo"),
+						"regexp": property.New("^foo"),
+					}),
+					AssertCommand: "grep -F 'foo bar foo' /fileline",
+					ExpectedDiff: &p.DiffResponse{
+						HasChanges:          false,
+						DeleteBeforeReplace: true,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/fileline"),
+						"line":   property.New("foo bar baz"),
+						"regexp": property.New("^foo"),
+					}),
+					AssertCommand: "grep -F 'foo bar baz' /fileline",
+					ExpectedDiff: &p.DiffResponse{
+						HasChanges:          true,
+						DeleteBeforeReplace: true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"line": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
 				},
 			},
 		},
