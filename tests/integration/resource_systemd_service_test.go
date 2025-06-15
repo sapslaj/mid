@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 
+	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 
 	"github.com/sapslaj/mid/tests/testmachine"
@@ -23,19 +24,22 @@ func TestResourceSystemdService(t *testing.T) {
 					"name":   property.New("cron.service"),
 					"ensure": property.New("started"),
 				}),
-				AssertBeforeCommand: `set -eu
+				AssertBeforeCommand: `set -eux
 					sudo systemctl disable --now cron.service
-					systemctl status cron.service | grep 'cron.service; disabled'
-					systemctl status cron.service | grep 'inactive (dead)'
+					systemctl status cron.service || true
+					systemctl status cron.service | grep -F 'cron.service; disabled'
+					systemctl status cron.service | grep -F 'inactive (dead)'
 				`,
-				AssertCommand: `set -eu
-					systemctl status cron.service | grep 'cron.service; disabled'
-					systemctl status cron.service | grep 'active (running)'
+				AssertCommand: `set -eux
+					systemctl status cron.service || true
+					systemctl status cron.service | grep -F 'cron.service; disabled'
+					systemctl status cron.service | grep -F 'active (running)'
 				`,
 			},
-			AssertDeleteCommand: `set -eu
-				systemctl status cron.service | grep 'cron.service; disabled'
-				systemctl status cron.service | grep 'inactive (dead)'
+			AssertDeleteCommand: `set -eux
+				systemctl status cron.service || true
+				systemctl status cron.service | grep -F 'cron.service; disabled'
+				systemctl status cron.service | grep -F 'inactive (dead)'
 			`,
 		},
 
@@ -48,17 +52,20 @@ func TestResourceSystemdService(t *testing.T) {
 				}),
 				AssertBeforeCommand: `set -eu
 					sudo systemctl disable --now cron.service
-					systemctl status cron.service | grep 'cron.service; disabled'
-					systemctl status cron.service | grep 'inactive (dead)'
+					systemctl status cron.service || true
+					systemctl status cron.service | grep -F 'cron.service; disabled'
+					systemctl status cron.service | grep -F 'inactive (dead)'
 				`,
 				AssertCommand: `set -eu
-					systemctl status cron.service | grep 'cron.service; enabled'
-					systemctl status cron.service | grep 'active (running)'
+					systemctl status cron.service || true
+					systemctl status cron.service | grep -F 'cron.service; enabled'
+					systemctl status cron.service | grep -F 'active (running)'
 				`,
 			},
 			AssertDeleteCommand: `set -eu
-				systemctl status cron.service | grep 'cron.service; disabled'
-				systemctl status cron.service | grep 'inactive (dead)'
+				systemctl status cron.service || true
+				systemctl status cron.service | grep -F 'cron.service; disabled'
+				systemctl status cron.service | grep -F 'inactive (dead)'
 			`,
 		},
 
@@ -70,17 +77,20 @@ func TestResourceSystemdService(t *testing.T) {
 				}),
 				AssertBeforeCommand: `set -eu
 					sudo systemctl disable --now cron.service
-					systemctl status cron.service | grep 'cron.service; disabled'
-					systemctl status cron.service | grep 'inactive (dead)'
+					systemctl status cron.service || true
+					systemctl status cron.service | grep -F 'cron.service; disabled'
+					systemctl status cron.service | grep -F 'inactive (dead)'
 				`,
 				AssertCommand: `set -eu
-					systemctl status cron.service | grep 'cron.service; enabled'
-					systemctl status cron.service | grep 'inactive (dead)'
+					systemctl status cron.service || true
+					systemctl status cron.service | grep -F 'cron.service; enabled'
+					systemctl status cron.service | grep -F 'inactive (dead)'
 				`,
 			},
 			AssertDeleteCommand: `set -eu
-				systemctl status cron.service | grep 'cron.service; disabled'
-				systemctl status cron.service | grep 'inactive (dead)'
+				systemctl status cron.service || true
+				systemctl status cron.service | grep -F 'cron.service; disabled'
+				systemctl status cron.service | grep -F 'inactive (dead)'
 			`,
 		},
 
@@ -105,10 +115,12 @@ WantedBy=multi-user.target
 EOF
 sudo systemctl daemon-reload
 sudo systemctl disable --now mid-systemd-service-test.service
+systemctl status mid-systemd-service-test.service || true
 `,
 				AssertCommand: `set -eu
-					systemctl status mid-systemd-service-test.service | grep 'mid-systemd-service-test.service; enabled'
-					systemctl status mid-systemd-service-test.service | grep 'inactive (dead)'
+					systemctl status mid-systemd-service-test.service || true
+					systemctl status mid-systemd-service-test.service | grep -F 'mid-systemd-service-test.service; enabled'
+					systemctl status mid-systemd-service-test.service | grep -F 'inactive (dead)'
 				`,
 			},
 		},
@@ -146,6 +158,11 @@ sudo systemctl disable --now mid-systemd-service-test.service
 						journalctl | tail -n 10 | grep -v "Stopped cron.service"
 						journalctl | tail -n 10 | grep -v "Started cron.service"
 					`,
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
 				},
 				// Reload on refresh changes
 				{
@@ -161,9 +178,19 @@ sudo systemctl disable --now mid-systemd-service-test.service
 					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
 					AssertCommand: `set -eu
 						journalctl | tail -n 10
-						journalctl | tail -n 10 | grep "Stopped cron.service"
-						journalctl | tail -n 10 | grep "Started cron.service"
+						journalctl | tail -n 10 | grep -F "Stopped cron.service"
+						journalctl | tail -n 10 | grep -F "Started cron.service"
 					`,
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"triggers": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -184,8 +211,9 @@ sudo systemctl disable --now mid-systemd-service-test.service
 					for i in $(seq 10); do logger space $i ; done
 				`,
 				AssertCommand: `set -eu
-					journalctl | tail -n 10 | grep "Stopping cron.service"
-					journalctl | tail -n 10 | grep "Starting cron.service"
+					journalctl | tail -n 10
+					journalctl | tail -n 10 | grep -F "Stopped cron.service"
+					journalctl | tail -n 10 | grep -F "Started cron.service"
 				`,
 			},
 		},
@@ -198,11 +226,13 @@ sudo systemctl disable --now mid-systemd-service-test.service
 				}),
 				AssertBeforeCommand: `set -eu
 					sudo systemctl start cron.service
+					systemctl status cron.service || true
 					for i in $(seq 10); do logger space $i ; done
 				`,
 				AssertCommand: `set -eu
-					journalctl | tail -n 10 | grep -v "Stopping cron.service"
-					journalctl | tail -n 10 | grep -v "Starting cron.service"
+					journalctl | tail -n 10
+					journalctl | tail -n 10 | grep -F -v "Stopping cron.service"
+					journalctl | tail -n 10 | grep -F -v "Starting cron.service"
 				`,
 			},
 		},
@@ -218,7 +248,10 @@ sudo systemctl disable --now mid-systemd-service-test.service
 					})),
 				}),
 				AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
-				AssertCommand:       `journalctl | tail -n 10 | grep "Reloading finished in"`,
+				AssertCommand: `set -eu
+					journalctl | tail -n 10
+					journalctl | tail -n 10 | grep -F "Reloading finished in"
+				`,
 			},
 			Updates: []Operation{
 				// Don't reload without refresh changes
@@ -232,7 +265,15 @@ sudo systemctl disable --now mid-systemd-service-test.service
 						})),
 					}),
 					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
-					AssertCommand:       `journalctl | tail -n 10 | grep -v "Reloading finished in"`,
+					AssertCommand: `set -eu
+						journalctl | tail -n 10
+						journalctl | tail -n 10 | grep -F -v "Reloading finished in"
+					`,
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
 				},
 				// Reload on refresh changes
 				{
@@ -245,7 +286,20 @@ sudo systemctl disable --now mid-systemd-service-test.service
 						})),
 					}),
 					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
-					AssertCommand:       `journalctl | tail -n 10 | grep "Reloading finished in"`,
+					AssertCommand: `set -eu
+						journalctl | tail -n 10
+						journalctl | tail -n 10 | grep -F "Reloading finished in"
+					`,
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"triggers": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -261,7 +315,10 @@ sudo systemctl disable --now mid-systemd-service-test.service
 					})),
 				}),
 				AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
-				AssertCommand:       `journalctl | tail -n 10 | grep "Reexecuting."`,
+				AssertCommand: `set -eu
+					journalctl | tail -n 10
+					journalctl | tail -n 10 | grep "Reexecuting."
+				`,
 			},
 			Updates: []Operation{
 				// Don't reload without refresh changes
@@ -275,7 +332,15 @@ sudo systemctl disable --now mid-systemd-service-test.service
 						})),
 					}),
 					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
-					AssertCommand:       `journalctl | tail -n 10 | grep -v "Reexecuting."`,
+					AssertCommand: `set -eu
+						journalctl | tail -n 10
+						journalctl | tail -n 10 | grep -v "Reexecuting."
+					`,
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
 				},
 				// Reload on refresh changes
 				{
@@ -288,7 +353,20 @@ sudo systemctl disable --now mid-systemd-service-test.service
 						})),
 					}),
 					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
-					AssertCommand:       `journalctl | tail -n 10 | grep "Reexecuting."`,
+					AssertCommand: `set -eu
+						journalctl | tail -n 10
+						journalctl | tail -n 10 | grep "Reexecuting."
+					`,
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"triggers": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
 				},
 			},
 		},

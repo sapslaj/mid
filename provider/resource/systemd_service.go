@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/sapslaj/mid/agent/ansible"
+	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
@@ -86,26 +87,22 @@ func (r SystemdService) doesUnitExist(
 	))
 	defer span.End()
 
-	systemdInfo, err := executor.AnsibleExecute[
-		ansible.SystemdInfoParameters,
-		ansible.SystemdInfoReturn,
-	](ctx, connection, ansible.SystemdInfoParameters{}, true)
+	result, err := executor.CallAgent[
+		rpc.SystemdUnitShortStatusArgs,
+		rpc.SystemdUnitShortStatusResult,
+	](ctx, connection, rpc.RPCCall[rpc.SystemdUnitShortStatusArgs]{
+		RPCFunction: rpc.RPCSystemdUnitShortStatus,
+		Args: rpc.SystemdUnitShortStatusArgs{
+			Name: name,
+		},
+	})
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
 
-	if systemdInfo.Units == nil {
-		// some reason couldn't get unit list, assume that it will be fine.
-		p.GetLogger(ctx).WarningStatus("couldn't get list of systemd units")
-		span.SetStatus(codes.Error, "couldn't get list of systemd units")
-		return false, nil
-	}
-
-	_, unitPresent := (*systemdInfo.Units)[name]
-
 	span.SetStatus(codes.Ok, "")
-	return unitPresent, err
+	return result.Result.Exists, nil
 }
 
 func (r SystemdService) updateService(
@@ -121,6 +118,8 @@ func (r SystemdService) updateService(
 	))
 	defer span.End()
 
+	defer span.SetAttributes(telemetry.OtelJSON("state", state))
+
 	config := infer.GetConfig[types.Config](ctx)
 
 	parameters, err := r.argsToTaskParameters(inputs)
@@ -130,12 +129,14 @@ func (r SystemdService) updateService(
 	}
 
 	refresh := false
-	if state.Triggers.Refresh != nil || (inputs.Triggers != nil && inputs.Triggers.Refresh != nil) {
+	if state.Triggers.Refresh != nil || inputs.Triggers != nil {
 		triggerDiff := types.DiffTriggers(state, inputs)
 		if triggerDiff.HasChanges {
 			refresh = true
 		}
 	}
+
+	span.SetAttributes(attribute.Bool("refresh", refresh))
 
 	if refresh && inputs.Ensure != nil && *inputs.Ensure == "started" {
 		parameters.State = ansible.OptionalSystemdServiceState(string(SystemdServiceEnsureRestarted))
@@ -232,7 +233,9 @@ func (r SystemdService) Create(
 	))
 	defer span.End()
 
-	state := r.updateState(req.Inputs, SystemdServiceState{}, true)
+	state := SystemdServiceState{
+		SystemdServiceArgs: req.Inputs,
+	}
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
 	id, err := resource.NewUniqueHex(req.Name, 8, 0)
@@ -321,7 +324,10 @@ func (r SystemdService) Read(
 	}, nil
 }
 
-func (r SystemdService) Update(ctx context.Context, req infer.UpdateRequest[SystemdServiceArgs, SystemdServiceState]) (infer.UpdateResponse[SystemdServiceState], error) {
+func (r SystemdService) Update(
+	ctx context.Context,
+	req infer.UpdateRequest[SystemdServiceArgs, SystemdServiceState],
+) (infer.UpdateResponse[SystemdServiceState], error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/SystemdService.Update", trace.WithAttributes(
 		attribute.String("pulumi.operation", "update"),
 		attribute.String("pulumi.type", "mid:resource:SystemdService"),
@@ -350,7 +356,10 @@ func (r SystemdService) Update(ctx context.Context, req infer.UpdateRequest[Syst
 	}, nil
 }
 
-func (r SystemdService) Delete(ctx context.Context, req infer.DeleteRequest[SystemdServiceState]) (infer.DeleteResponse, error) {
+func (r SystemdService) Delete(
+	ctx context.Context,
+	req infer.DeleteRequest[SystemdServiceState],
+) (infer.DeleteResponse, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/SystemdService.Delete", trace.WithAttributes(
 		attribute.String("pulumi.operation", "delete"),
 		attribute.String("pulumi.type", "mid:resource:SystemdService"),
