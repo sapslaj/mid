@@ -26,7 +26,7 @@ const (
 	SystemdServiceEnsureStarted   SystemdServiceEnsure = "started"
 	SystemdServiceEnsureStopped   SystemdServiceEnsure = "stopped"
 	SystemdServiceEnsureReloaded  SystemdServiceEnsure = "reloaded"
-	SystemdServiceEnsureRestarted SystemdServiceEnsure = "reloaded"
+	SystemdServiceEnsureRestarted SystemdServiceEnsure = "restarted"
 )
 
 type SystemdServiceArgs struct {
