@@ -42,7 +42,7 @@ var (
 var Tracer = otel.Tracer("mid/agent")
 
 type Agent struct {
-	RemotePid    int
+	RemotePid    atomic.Int64
 	InstanceUUID string
 	EncoderMutex sync.Mutex
 	Client       *ssh.Client
@@ -70,8 +70,8 @@ func (agent *Agent) GetLogger(ctx context.Context) *slog.Logger {
 	if agent.InstanceUUID != "" {
 		logger = logger.With(slog.String("agent.instance.uuid", agent.InstanceUUID))
 	}
-	if agent.RemotePid != 0 {
-		logger = logger.With(slog.Int("agent.remote.pid", agent.RemotePid))
+	if agent.RemotePid.Load() != 0 {
+		logger = logger.With(slog.Int("agent.remote.pid", int(agent.RemotePid.Load())))
 	}
 	return logger
 }
@@ -572,7 +572,7 @@ func Connect(ctx context.Context, agent *Agent) error {
 	}
 
 	logger.Error("ping result", telemetry.SlogJSON("pingResult", pingResult))
-	agent.RemotePid = pingResult.Pid
+	agent.RemotePid.Store(int64(pingResult.Pid))
 
 	go agent.RunHeartbeat()
 
