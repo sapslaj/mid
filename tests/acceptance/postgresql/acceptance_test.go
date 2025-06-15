@@ -4,8 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/pulumi/pulumi/pkg/v3/testing/integration"
-
+	"github.com/sapslaj/mid/tests/acceptance/integration"
 	"github.com/sapslaj/mid/tests/must"
 )
 
