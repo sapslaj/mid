@@ -421,7 +421,10 @@ func (r File) runCreateUpdatePlay(
 
 	changed := false
 
-	stat, err := executor.CallAgent[rpc.FileStatArgs, rpc.FileStatResult](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+	stat, err := executor.CallAgent[
+		rpc.FileStatArgs,
+		rpc.FileStatResult,
+	](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
 		RPCFunction: rpc.RPCFileStat,
 		Args: rpc.FileStatArgs{
 			Path:              inputs.Path,
@@ -505,7 +508,10 @@ func (r File) runCreateUpdatePlay(
 				}
 
 				if fileCopyPlan.Unarchive {
-					result, err := executor.CallAgent[rpc.UntarArgs, rpc.UntarResult](ctx, config.Connection, rpc.RPCCall[rpc.UntarArgs]{
+					result, err := executor.CallAgent[
+						rpc.UntarArgs,
+						rpc.UntarResult,
+					](ctx, config.Connection, rpc.RPCCall[rpc.UntarArgs]{
 						RPCFunction: rpc.RPCUntar,
 						Args: rpc.UntarArgs{
 							SourceFilePath:  stagedPath,
@@ -530,7 +536,10 @@ func (r File) runCreateUpdatePlay(
 			dir := filepath.Dir(params.Dest)
 			span.SetAttributes(attribute.String("parent_directory.path", dir))
 
-			dirStat, err := executor.CallAgent[rpc.FileStatArgs, rpc.FileStatResult](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+			dirStat, err := executor.CallAgent[
+				rpc.FileStatArgs,
+				rpc.FileStatResult,
+			](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
 				RPCFunction: rpc.RPCFileStat,
 				Args: rpc.FileStatArgs{
 					Path:              dir,
@@ -623,7 +632,10 @@ fileNeeded:
 	return state, nil
 }
 
-func (r File) Create(ctx context.Context, req infer.CreateRequest[FileArgs]) (infer.CreateResponse[FileState], error) {
+func (r File) Create(
+	ctx context.Context,
+	req infer.CreateRequest[FileArgs],
+) (infer.CreateResponse[FileState], error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:File.Create", trace.WithAttributes(
 		attribute.String("pulumi.operation", "create"),
 		attribute.String("pulumi.type", "mid:resource:File"),

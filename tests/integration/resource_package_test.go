@@ -38,7 +38,10 @@ func TestResourcePackage(t *testing.T) {
 				}),
 				AssertCommand: "test -f /usr/bin/curl && test -f /usr/bin/wget",
 			},
-			AssertDeleteCommand: "test ! -f /usr/bin/curl && test ! -f /usr/bin/wget",
+			AssertDeleteCommand: `set -eu
+				test ! -f /usr/bin/curl
+				test ! -f /usr/bin/wget
+			`,
 		},
 	}
 

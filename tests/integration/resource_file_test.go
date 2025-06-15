@@ -19,7 +19,10 @@ func TestResourceFile(t *testing.T) {
 					"ensure":  property.New("file"),
 					"content": property.New("bar\n"),
 				}),
-				AssertCommand: "test -f /foo && grep -q ^bar /foo",
+				AssertCommand: `set -eu
+					test -f /foo
+					grep -q ^bar /foo
+				`,
 			},
 			Updates: []Operation{
 				{
@@ -28,7 +31,10 @@ func TestResourceFile(t *testing.T) {
 						"ensure":  property.New("file"),
 						"content": property.New("bar\n"),
 					}),
-					AssertCommand: "test -f /foo && grep -q ^bar /foo",
+					AssertCommand: `set -eu
+						test -f /foo
+						grep -q ^bar /foo
+					`,
 				},
 			},
 			AssertDeleteCommand: "test ! -f /foo",
@@ -63,7 +69,11 @@ func TestResourceFile(t *testing.T) {
 					"mode":    property.New("a=rwx"),
 					"owner":   property.New("games"),
 				}),
-				AssertCommand: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777' && grep -q ^bar /foo",
+				AssertCommand: `set -eu
+					stat -c '%n %U %a' /foo
+					test "$(stat -c '%n %U %a' /foo)" = '/foo games 777'
+					grep -q ^bar /foo
+				`,
 			},
 			Updates: []Operation{
 				{
@@ -74,7 +84,11 @@ func TestResourceFile(t *testing.T) {
 						"mode":    property.New("a=rwx"),
 						"owner":   property.New("games"),
 					}),
-					AssertCommand: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777' && grep -q ^bar /foo",
+					AssertCommand: `set -eu
+						stat -c '%n %U %a' /foo
+						test "$(stat -c '%n %U %a' /foo)" = '/foo games 777'
+						grep -q ^bar /foo
+					`,
 				},
 			},
 		},
@@ -88,7 +102,10 @@ func TestResourceFile(t *testing.T) {
 					"owner":  property.New("games"),
 				}),
 				AssertBeforeCommand: "sudo touch /foo",
-				AssertCommand:       "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777'",
+				AssertCommand: `set -eu
+					stat -c '%n %U %a' /foo
+					test "$(stat -c '%n %U %a' /foo)" = '/foo games 777'
+				`,
 			},
 			Updates: []Operation{
 				{
@@ -98,7 +115,10 @@ func TestResourceFile(t *testing.T) {
 						"mode":   property.New("a=rwx"),
 						"owner":  property.New("games"),
 					}),
-					AssertCommand: "stat -c '%n %U %a' /foo && test \"$(stat -c '%n %U %a' /foo)\" = '/foo games 777'",
+					AssertCommand: `set -eu
+						stat -c '%n %U %a' /foo
+						test "$(stat -c '%n %U %a' /foo)" = '/foo games 777'
+					`,
 				},
 			},
 		},

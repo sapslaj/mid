@@ -23,10 +23,23 @@ func TestResourceService(t *testing.T) {
 					"name":  property.New("cron.service"),
 					"state": property.New("started"),
 				}),
-				AssertBeforeCommand: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
-				AssertCommand:       "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'active (running)'",
+				AssertBeforeCommand: `set -eu
+					sudo systemctl disable --now cron.service
+					systemctl status cron.service || true
+					systemctl status cron.service | grep 'cron.service; disabled'
+					systemctl status cron.service | grep 'inactive (dead)'
+				`,
+				AssertCommand: `set -eu
+					systemctl status cron.service || true
+					systemctl status cron.service | grep 'cron.service; disabled'
+					systemctl status cron.service | grep 'active (running)'
+				`,
 			},
-			AssertDeleteCommand: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
+			AssertDeleteCommand: `set -eu
+				systemctl status cron.service || true
+				systemctl status cron.service | grep 'cron.service; disabled'
+				systemctl status cron.service | grep 'inactive (dead)'
+			`,
 		},
 
 		"start and enable service": {
@@ -36,10 +49,23 @@ func TestResourceService(t *testing.T) {
 					"state":   property.New("started"),
 					"enabled": property.New(true),
 				}),
-				AssertBeforeCommand: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
-				AssertCommand:       "systemctl status cron.service | grep 'cron.service; enabled' && systemctl status cron.service | grep 'active (running)'",
+				AssertBeforeCommand: `set -eu
+					sudo systemctl disable --now cron.service
+					systemctl status cron.service || true
+					systemctl status cron.service | grep 'cron.service; disabled'
+					systemctl status cron.service | grep 'inactive (dead)'
+				`,
+				AssertCommand: `set -eu
+					systemctl status cron.service || true
+					systemctl status cron.service | grep 'cron.service; enabled'
+					systemctl status cron.service | grep 'active (running)'
+				`,
 			},
-			AssertDeleteCommand: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
+			AssertDeleteCommand: `set -eu
+				systemctl status cron.service || true
+				systemctl status cron.service | grep 'cron.service; disabled'
+				systemctl status cron.service | grep 'inactive (dead)'
+			`,
 		},
 
 		"enable service without start": {
@@ -48,10 +74,23 @@ func TestResourceService(t *testing.T) {
 					"name":    property.New("cron.service"),
 					"enabled": property.New(true),
 				}),
-				AssertBeforeCommand: "sudo systemctl disable --now cron.service && systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
-				AssertCommand:       "systemctl status cron.service | grep 'cron.service; enabled' && systemctl status cron.service | grep 'inactive (dead)'",
+				AssertBeforeCommand: `set -eu
+					sudo systemctl disable --now cron.service
+					systemctl status cron.service || true
+					systemctl status cron.service | grep 'cron.service; disabled'
+					systemctl status cron.service | grep 'inactive (dead)'
+				`,
+				AssertCommand: `set -eu
+					systemctl status cron.service || true
+					systemctl status cron.service | grep 'cron.service; enabled'
+					systemctl status cron.service | grep 'inactive (dead)'
+				`,
 			},
-			AssertDeleteCommand: "systemctl status cron.service | grep 'cron.service; disabled' && systemctl status cron.service | grep 'inactive (dead)'",
+			AssertDeleteCommand: `set -eu
+				systemctl status cron.service || true
+				systemctl status cron.service | grep 'cron.service; disabled'
+				systemctl status cron.service | grep 'inactive (dead)'
+			`,
 		},
 	}
 

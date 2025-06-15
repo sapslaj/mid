@@ -142,7 +142,10 @@ func (r User) Diff(ctx context.Context, req infer.DiffRequest[UserArgs, UserStat
 	return diff, nil
 }
 
-func (r User) Create(ctx context.Context, req infer.CreateRequest[UserArgs]) (infer.CreateResponse[UserState], error) {
+func (r User) Create(
+	ctx context.Context,
+	req infer.CreateRequest[UserArgs],
+) (infer.CreateResponse[UserState], error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/User.Create", trace.WithAttributes(
 		attribute.String("pulumi.operation", "create"),
 		attribute.String("pulumi.type", "mid:resource:User"),
