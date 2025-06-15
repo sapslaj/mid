@@ -59,7 +59,7 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 	p.GetLogger(ctx).InfoStatus("") // clear info line
 	defer cs.SetupAgentMutex.Unlock()
 
-	if cs.Agent != nil && cs.Agent.Running.Load() {
+	if cs.Agent != nil && cs.Agent.Running != nil && cs.Agent.Running.Load() {
 		logger.With(slog.Bool("agent.already_running", true)).DebugContext(ctx, "SetupAgent: agent is already running")
 		span.SetAttributes(attribute.Bool("agent.already_running", true))
 		span.SetStatus(codes.Ok, "")
@@ -556,7 +556,7 @@ func DisconnectAll(ctx context.Context) error {
 		logger.DebugContext(ctx, fmt.Sprintf("DisconnectAll: disconnecting %d", id))
 		cs.SetupAgentMutex.Lock()
 		cs.CanConnectMutex.Lock()
-		err := cs.Agent.Disconnect(ctx)
+		err := cs.Agent.Disconnect(ctx, true)
 		multierr = errors.Join(multierr, err)
 		cs.Agent = nil
 		cs.Reachable = false

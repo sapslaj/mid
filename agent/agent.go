@@ -41,14 +41,14 @@ var (
 var Tracer = otel.Tracer("mid/agent")
 
 type Agent struct {
-	Mutex     sync.Mutex
-	Client    *ssh.Client
-	Session   *ssh.Session
-	Encoder   *json.Encoder
-	Decoder   *json.Decoder
-	Running   *atomic.Bool
-	WaitGroup *sync.WaitGroup
-	InFlight  *syncmap.Map[string, chan rpc.RPCResult[any]]
+	EncoderMutex sync.Mutex
+	Client       *ssh.Client
+	Session      *ssh.Session
+	Encoder      *json.Encoder
+	Decoder      *json.Decoder
+	Running      *atomic.Bool
+	WaitGroup    *sync.WaitGroup
+	InFlight     *syncmap.Map[string, chan rpc.RPCResult[any]]
 }
 
 func (agent *Agent) GetLogger(ctx context.Context) *slog.Logger {
@@ -58,15 +58,6 @@ func (agent *Agent) GetLogger(ctx context.Context) *slog.Logger {
 func (agent *Agent) RunLocal() {
 	logger := agent.GetLogger(context.Background())
 	defer agent.WaitGroup.Done()
-	defer func() {
-		for uuid, ch := range agent.InFlight.Items() {
-			ch <- rpc.RPCResult[any]{
-				UUID:  uuid,
-				Error: ErrAgentShutDown.Error(),
-			}
-			close(ch)
-		}
-	}()
 	logger.Info("starting local decoder loop")
 	defer logger.Info("shutting down decoder loop")
 	for agent.Running.Load() {
@@ -74,21 +65,19 @@ func (agent *Agent) RunLocal() {
 		var res rpc.RPCResult[any]
 		err := agent.Decoder.Decode(&res)
 		if err != nil {
+			if !agent.Running.Load() {
+				return
+			}
+			if errors.Is(err, io.EOF) {
+				agent.Disconnect(context.Background(), false)
+				return
+			}
 			if res.Error == "" {
 				res.Error = errors.Join(ErrCallingRPCSystem, err).Error()
 			} else {
 				res.Error = errors.Join(ErrCallingRPCSystem, err, errors.New(res.Error)).Error()
 			}
-			if errors.Is(err, io.EOF) && !agent.Running.Load() {
-				// we're supposed to be shutting down, don't log an error
-				return
-			}
 			logger.Error("error decoding", slog.String("error", res.Error))
-			if errors.Is(err, io.EOF) {
-				// not supposed to be shutting down so probably an error (hence the
-				// logging above)
-				return
-			}
 			if res.UUID == "" {
 				continue
 			}
@@ -118,6 +107,173 @@ func (agent *Agent) RunLocal() {
 
 		decoderLogger.Debug("channeling result")
 		ch <- res
+	}
+}
+
+func (agent *Agent) Disconnect(ctx context.Context, wait bool) error {
+	ctx, span := Tracer.Start(ctx, "mid/agent.Agent.Disconnect")
+	defer span.End()
+
+	alreadyStopped := !agent.Running.Load()
+
+	agent.Running.Store(false)
+
+	_, err := Call[any, any](ctx, agent, rpc.RPCCall[any]{RPCFunction: rpc.RPCClose})
+
+	for uuid, ch := range agent.InFlight.Items() {
+		if wait {
+			func(ctx context.Context, uuid string, ch chan rpc.RPCResult[any]) {
+				defer func() { recover() }()
+				select {
+				case ch <- rpc.RPCResult[any]{
+					UUID:  uuid,
+					Error: ErrAgentShutDown.Error(),
+				}:
+				case <-ctx.Done():
+				}
+				close(ch)
+			}(ctx, uuid, ch)
+		} else {
+			go func(uuid string, ch chan rpc.RPCResult[any]) {
+				defer func() { recover() }()
+				select {
+				case ch <- rpc.RPCResult[any]{
+					UUID:  uuid,
+					Error: ErrAgentShutDown.Error(),
+				}:
+				case <-time.After(time.Second):
+				}
+				close(ch)
+			}(uuid, ch)
+		}
+		agent.InFlight.Delete(uuid)
+	}
+
+	err = errors.Join(
+		err,
+		agent.Session.Close(),
+	)
+
+	err = errors.Join(
+		err,
+		agent.Client.Close(),
+	)
+
+	if wait {
+		wg := make(chan int)
+		go func() {
+			agent.WaitGroup.Wait()
+			wg <- 0
+		}()
+		select {
+		case <-ctx.Done():
+		case <-wg:
+		}
+	}
+
+	if alreadyStopped {
+		span.SetStatus(codes.Ok, "")
+		return nil
+	}
+
+	if err != nil {
+		err = errors.Join(ErrDisconnectingFromAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	if err == nil {
+		span.SetStatus(codes.Ok, "")
+	}
+
+	return err
+}
+
+func (agent *Agent) Ping(ctx context.Context) error {
+	ctx, span := Tracer.Start(ctx, "mid/agent.Agent.Ping")
+	defer span.End()
+	pingResult, err := Call[rpc.AgentPingArgs, rpc.AgentPingResult](ctx, agent, rpc.RPCCall[rpc.AgentPingArgs]{
+		RPCFunction: rpc.RPCAgentPing,
+		Args: rpc.AgentPingArgs{
+			Ping: "ping",
+		},
+	})
+	if err != nil {
+		err = fmt.Errorf("error sending ping RPC: %w", err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	if pingResult.Error != "" {
+		err = fmt.Errorf("error received from ping RPC: %w", errors.New(pingResult.Error))
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (agent *Agent) Heartbeat(timeout time.Duration) (time.Duration, bool) {
+	ctx, span := Tracer.Start(context.Background(), "mid/agent.Agent.Heartbeat")
+	defer span.End()
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
+	logger := agent.GetLogger(ctx)
+	if !agent.Running.Load() {
+		logger.InfoContext(ctx, "stopping heartbeat due to agent shutdown")
+		cancel()
+		return 0, false
+	}
+
+	start := time.Now()
+
+	if !agent.Running.Load() {
+		cancel()
+		return 0, false
+	}
+	err := agent.Ping(ctx)
+	duration := time.Now().Sub(start)
+
+	span.SetAttributes(attribute.Stringer("duration", duration))
+	logger = logger.With("duration", duration)
+
+	if !agent.Running.Load() {
+		cancel()
+		return duration, false
+	}
+
+	if err != nil {
+		logger.ErrorContext(ctx, "failed heartbeat")
+		err := agent.Disconnect(ctx, false)
+		if err != nil {
+			logger.ErrorContext(ctx, "error stopping", slog.Any("error", err))
+		}
+		cancel()
+		return duration, false
+	}
+
+	logger.DebugContext(ctx, "successful heartbeat")
+	cancel()
+	return duration, true
+}
+
+func (agent *Agent) RunHeartbeat() {
+	// TODO: make heartbeat interval configurable
+	interval := time.Minute
+
+	for {
+		if !agent.Running.Load() {
+			return
+		}
+
+		duration, success := agent.Heartbeat(interval)
+		if !success {
+			return
+		}
+
+		wait := interval - duration
+		if wait > 0 {
+			time.Sleep(wait)
+		}
 	}
 }
 
@@ -359,25 +515,16 @@ func Connect(ctx context.Context, agent *Agent) error {
 	go agent.RunLocal()
 
 	logger.Info("pinging agent")
-	pingResult, err := Call[rpc.AgentPingArgs, rpc.AgentPingResult](ctx, agent, rpc.RPCCall[rpc.AgentPingArgs]{
-		RPCFunction: rpc.RPCAgentPing,
-		Args: rpc.AgentPingArgs{
-			Ping: "ping",
-		},
-	})
+	pingCtx, pingCancel := context.WithTimeout(ctx, time.Minute)
+	defer pingCancel()
+	err = agent.Ping(pingCtx)
 	if err != nil {
 		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error sending ping RPC: %w", err))
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	if pingResult.Error != "" {
-		err = errors.Join(
-			ErrConnectingToAgent,
-			fmt.Errorf("error received from ping RPC: %w", errors.New(pingResult.Error)),
-		)
-		span.SetStatus(codes.Error, err.Error())
-		return err
-	}
+
+	go agent.RunHeartbeat()
 
 	span.SetStatus(codes.Ok, "")
 	return nil
@@ -403,9 +550,9 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 	call.UUID = uuid.String()
 	span.SetAttributes(attribute.String("rpc.uuid", call.UUID))
 
-	agent.Mutex.Lock()
+	agent.EncoderMutex.Lock()
 	err = agent.Encoder.Encode(call)
-	agent.Mutex.Unlock()
+	agent.EncoderMutex.Unlock()
 	if err != nil {
 		err = errors.Join(ErrCallingRPCSystem, err)
 		span.SetStatus(codes.Error, err.Error())
@@ -425,7 +572,10 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 	}
 
 	ch := make(chan rpc.RPCResult[any])
-	defer close(ch)
+	defer func() {
+		defer func() { recover() }()
+		close(ch)
+	}()
 
 	agent.InFlight.Store(call.UUID, ch)
 	defer agent.InFlight.Delete(call.UUID)
@@ -508,43 +658,4 @@ func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
 
 	span.SetStatus(codes.Ok, "")
 	return remotePath, nil
-}
-
-func Disconnect(ctx context.Context, agent *Agent) error {
-	ctx, span := Tracer.Start(ctx, "mid/agent.Disconnect")
-	defer span.End()
-
-	agent.Running.Store(false)
-
-	_, err := Call[any, any](ctx, agent, rpc.RPCCall[any]{RPCFunction: rpc.RPCClose})
-
-	err = errors.Join(
-		err,
-		agent.Session.Close(),
-	)
-
-	err = errors.Join(
-		err,
-		agent.Client.Close(),
-	)
-
-	agent.WaitGroup.Wait()
-
-	if err != nil {
-		err = errors.Join(ErrDisconnectingFromAgent, err)
-		span.SetStatus(codes.Error, err.Error())
-	}
-
-	if err == nil {
-		span.SetStatus(codes.Ok, "")
-	}
-
-	return err
-}
-
-func (agent *Agent) Disconnect(ctx context.Context) error {
-	ctx, span := Tracer.Start(ctx, "mid/agent.Agent.Disconnect")
-	defer span.End()
-
-	return Disconnect(ctx, agent)
 }
