@@ -19,10 +19,14 @@ func main() {
 			os.Exit(0)
 		}
 	}
+
 	logfile, err := os.OpenFile(".mid-agent.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		panic(err)
 	}
+
+	instanceUUID := os.Getenv("PULUMI_MID_AGENT_INSTANCE_UUID")
+
 	logger := slog.New(
 		slog.NewTextHandler(
 			io.MultiWriter(
@@ -34,7 +38,11 @@ func main() {
 				Level:     log.LogLevelFromEnv(),
 			},
 		),
-	).With(slog.String("side", "remote"))
+	).With(
+		slog.String("side", "remote"),
+		slog.String("agent.instance.uuid", instanceUUID),
+		slog.Int("agent.remote.pid", os.Getpid()),
+	)
 	defer logfile.Close()
 
 	logger.Info("installing Ansible package")

@@ -42,6 +42,8 @@ var (
 var Tracer = otel.Tracer("mid/agent")
 
 type Agent struct {
+	RemotePid    int
+	InstanceUUID string
 	EncoderMutex sync.Mutex
 	Client       *ssh.Client
 	Session      *ssh.Session
@@ -52,33 +54,60 @@ type Agent struct {
 	InFlight     *syncmap.Map[string, chan rpc.RPCResult[any]]
 }
 
+func (agent *Agent) EnsureUUID() (string, error) {
+	if agent.InstanceUUID == "" {
+		uuid, err := uuid.NewRandom()
+		if err != nil {
+			return "", err
+		}
+		agent.InstanceUUID = uuid.String()
+	}
+	return agent.InstanceUUID, nil
+}
+
 func (agent *Agent) GetLogger(ctx context.Context) *slog.Logger {
-	return telemetry.LoggerFromContext(ctx).With(slog.String("side", "local"))
+	logger := telemetry.LoggerFromContext(ctx).With(slog.String("side", "local"))
+	if agent.InstanceUUID != "" {
+		logger = logger.With(slog.String("agent.instance.uuid", agent.InstanceUUID))
+	}
+	if agent.RemotePid != 0 {
+		logger = logger.With(slog.Int("agent.remote.pid", agent.RemotePid))
+	}
+	return logger
 }
 
 func (agent *Agent) RunLocal() {
-	logger := agent.GetLogger(context.Background())
+	ctx := context.Background()
+
 	defer agent.WaitGroup.Done()
-	logger.Info("starting local decoder loop")
-	defer logger.Info("shutting down decoder loop")
+
+	agent.GetLogger(ctx).Info("starting local decoder loop")
+	defer agent.GetLogger(ctx).Info("shutting down decoder loop")
+
 	for agent.Running.Load() {
+		logger := agent.GetLogger(ctx)
 		logger.Debug("waiting for next result")
+
 		var res rpc.RPCResult[any]
 		err := agent.Decoder.Decode(&res)
 		if err != nil {
 			if !agent.Running.Load() {
 				return
 			}
+
 			if errors.Is(err, io.EOF) {
 				agent.Disconnect(context.Background(), false)
 				return
 			}
+
 			if res.Error == "" {
 				res.Error = errors.Join(ErrCallingRPCSystem, err).Error()
 			} else {
 				res.Error = errors.Join(ErrCallingRPCSystem, err, errors.New(res.Error)).Error()
 			}
+
 			logger.Error("error decoding", slog.String("error", res.Error))
+
 			if res.UUID == "" {
 				continue
 			}
@@ -189,9 +218,10 @@ func (agent *Agent) Disconnect(ctx context.Context, wait bool) error {
 	return err
 }
 
-func (agent *Agent) Ping(ctx context.Context) error {
+func (agent *Agent) Ping(ctx context.Context) (rpc.AgentPingResult, error) {
 	ctx, span := Tracer.Start(ctx, "mid/agent.Agent.Ping")
 	defer span.End()
+
 	pingResult, err := Call[rpc.AgentPingArgs, rpc.AgentPingResult](ctx, agent, rpc.RPCCall[rpc.AgentPingArgs]{
 		RPCFunction: rpc.RPCAgentPing,
 		Args: rpc.AgentPingArgs{
@@ -201,15 +231,16 @@ func (agent *Agent) Ping(ctx context.Context) error {
 	if err != nil {
 		err = fmt.Errorf("error sending ping RPC: %w", err)
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return pingResult.Result, err
 	}
+
 	if pingResult.Error != "" {
 		err = fmt.Errorf("error received from ping RPC: %w", errors.New(pingResult.Error))
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return pingResult.Result, err
 	}
 
-	return nil
+	return pingResult.Result, nil
 }
 
 func (agent *Agent) Heartbeat(timeout time.Duration) (time.Duration, bool) {
@@ -231,7 +262,7 @@ func (agent *Agent) Heartbeat(timeout time.Duration) (time.Duration, bool) {
 		cancel()
 		return 0, false
 	}
-	err := agent.Ping(ctx)
+	_, err := agent.Ping(ctx)
 	duration := time.Now().Sub(start)
 
 	span.SetAttributes(attribute.Stringer("duration", duration))
@@ -283,6 +314,13 @@ func RunRemoteCommand(ctx context.Context, agent *Agent, cmd string) ([]byte, er
 		attribute.String("cmd", cmd),
 	))
 	defer span.End()
+
+	_, err := agent.EnsureUUID()
+	if err != nil {
+		err = errors.Join(ErrRunningRemoteCommand, err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
 
 	session, err := agent.Client.NewSession()
 	if err != nil {
@@ -362,6 +400,13 @@ func InstallAgent(ctx context.Context, agent *Agent) error {
 func Connect(ctx context.Context, agent *Agent) error {
 	ctx, span := Tracer.Start(ctx, "mid/agent.Connect")
 	defer span.End()
+
+	_, err := agent.EnsureUUID()
+	if err != nil {
+		err = errors.Join(ErrConnectingToAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
 
 	logger := agent.GetLogger(ctx)
 	logger.Info("connecting agent")
@@ -471,6 +516,7 @@ func Connect(ctx context.Context, agent *Agent) error {
 		}
 		envvars = append(envvars, envvar)
 	}
+	envvars = append(envvars, "PULUMI_MID_AGENT_INSTANCE_UUID="+agent.InstanceUUID)
 
 	logger.DebugContext(ctx, "passing through environment environment variables", telemetry.SlogJSON("env", envvars))
 
@@ -518,12 +564,15 @@ func Connect(ctx context.Context, agent *Agent) error {
 	logger.Info("pinging agent")
 	pingCtx, pingCancel := context.WithTimeout(ctx, time.Minute)
 	defer pingCancel()
-	err = agent.Ping(pingCtx)
+	pingResult, err := agent.Ping(pingCtx)
 	if err != nil {
 		err = errors.Join(ErrConnectingToAgent, fmt.Errorf("error sending ping RPC: %w", err))
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
+
+	logger.Error("ping result", telemetry.SlogJSON("pingResult", pingResult))
+	agent.RemotePid = pingResult.Pid
 
 	go agent.RunHeartbeat()
 
@@ -538,6 +587,16 @@ func Call[I any, O any](ctx context.Context, agent *Agent, call rpc.RPCCall[I]) 
 		telemetry.OtelJSON("rpc.args", call.Args),
 	))
 	defer span.End()
+
+	_, err := agent.EnsureUUID()
+	if err != nil {
+		err = errors.Join(ErrCallingRPCSystem, err)
+		span.SetStatus(codes.Error, err.Error())
+		return rpc.RPCResult[O]{
+			RPCFunction: call.RPCFunction,
+			Error:       err.Error(),
+		}, err
+	}
 
 	uuid, err := uuid.NewRandom()
 	if err != nil {
