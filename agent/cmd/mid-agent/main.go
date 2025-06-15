@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/agent/rpc/server"
 	"github.com/sapslaj/mid/pkg/log"
 	"github.com/sapslaj/mid/version"
 )
@@ -45,10 +45,10 @@ func main() {
 
 	logger.Info("starting RPC server")
 	defer logger.Info("stopping RPC server")
-	server := &rpc.Server{
+	server := &server.Server{
 		Logger: logger,
 	}
-	err = rpc.ServerStart(server)
+	err = server.Start()
 	if err != nil {
 		panic(err)
 	}
