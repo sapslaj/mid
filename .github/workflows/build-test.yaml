@@ -87,7 +87,7 @@ jobs:
         with:
           tools: just, go, python
       - run: just provider_version=v0.0.0-ci agent-codegen
-      - run: go test -timeout=1h -v -race ./provider/...
+      - run: go test -timeout=5m -v -race ./provider/...
 
   test-integration:
     runs-on: ubuntu-latest
@@ -107,7 +107,7 @@ jobs:
           path: tests/testmachine/noble-server-cloudimg-amd64.img
           key: noble-server-cloudimg-amd64.img-${{ hashFiles('./tests/testmachine/testmachine.go') }}
       - run: just provider_version=v0.0.0-ci agent-codegen
-      - run: go test -timeout=1h -v -race ./tests/integration/...
+      - run: go test -timeout=10m -v -race ./tests/integration/...
 
   test-acceptance:
     runs-on: ubuntu-latest
