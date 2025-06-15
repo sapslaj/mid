@@ -11,12 +11,13 @@ import (
 type RPCFunction string
 
 const (
-	RPCAgentPing      RPCFunction = "AgentPing"
-	RPCAnsibleExecute RPCFunction = "AnsibleExecute"
-	RPCClose          RPCFunction = "Close"
-	RPCExec           RPCFunction = "Exec"
-	RPCFileStat       RPCFunction = "FileStat"
-	RPCUntar          RPCFunction = "Untar"
+	RPCAgentPing              RPCFunction = "AgentPing"
+	RPCAnsibleExecute         RPCFunction = "AnsibleExecute"
+	RPCClose                  RPCFunction = "Close"
+	RPCExec                   RPCFunction = "Exec"
+	RPCFileStat               RPCFunction = "FileStat"
+	RPCSystemdUnitShortStatus RPCFunction = "SystemdUnitShortStatus"
+	RPCUntar                  RPCFunction = "Untar"
 )
 
 type Server struct {
@@ -89,6 +90,20 @@ func ServerRoute(s *Server, rpcFunction RPCFunction, args any) (any, error) {
 			return nil, err
 		}
 		return FileStat(targs)
+	case RPCSystemdUnitShortStatus:
+		var targs SystemdUnitShortStatusArgs
+		targs, err := AnyToJSONT[SystemdUnitShortStatusArgs](args)
+		if err != nil {
+			return nil, err
+		}
+		return SystemdUnitShortStatus(targs)
+	case RPCUntar:
+		var targs UntarArgs
+		targs, err := AnyToJSONT[UntarArgs](args)
+		if err != nil {
+			return nil, err
+		}
+		return Untar(targs)
 	}
 
 	return nil, fmt.Errorf("unsupported RPCFunction: %s", rpcFunction)
