@@ -77,6 +77,92 @@ sudo systemctl disable --now mid-systemd-service-test.service
 				AssertCommand: "systemctl status mid-systemd-service-test.service ; systemctl status mid-systemd-service-test.service | grep 'mid-systemd-service-test.service; enabled' && systemctl status mid-systemd-service-test.service | grep 'inactive (dead)'",
 			},
 		},
+
+		"daemon-reload": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"daemonReload": property.New(true),
+					"triggers": property.New(property.NewMap(map[string]property.Value{
+						"refresh": property.New(property.NewArray([]property.Value{
+							property.New("1"),
+						})),
+					})),
+				}),
+				AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
+				AssertCommand:       `journalctl | tail -n 10 | grep "Reloading finished in"`,
+			},
+			Updates: []Operation{
+				// Don't reload without refresh changes
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"daemonReload": property.New(true),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("1"),
+							})),
+						})),
+					}),
+					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
+					AssertCommand:       `journalctl | tail -n 10 | grep -v "Reloading finished in"`,
+				},
+				// Reload on refresh changes
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"daemonReload": property.New(true),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("2"),
+							})),
+						})),
+					}),
+					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
+					AssertCommand:       `journalctl | tail -n 10 | grep "Reloading finished in"`,
+				},
+			},
+		},
+
+		"daemon-reexec": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"daemonReexec": property.New(true),
+					"triggers": property.New(property.NewMap(map[string]property.Value{
+						"refresh": property.New(property.NewArray([]property.Value{
+							property.New("1"),
+						})),
+					})),
+				}),
+				AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
+				AssertCommand:       `journalctl | tail -n 10 | grep "Reexecuting."`,
+			},
+			Updates: []Operation{
+				// Don't reload without refresh changes
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"daemonReexec": property.New(true),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("1"),
+							})),
+						})),
+					}),
+					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
+					AssertCommand:       `journalctl | tail -n 10 | grep -v "Reexecuting."`,
+				},
+				// Reload on refresh changes
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"daemonReexec": property.New(true),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("2"),
+							})),
+						})),
+					}),
+					AssertBeforeCommand: "for i in $(seq 10); do logger space $i ; done",
+					AssertCommand:       `journalctl | tail -n 10 | grep "Reexecuting."`,
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {

@@ -20,17 +20,26 @@ import (
 
 type SystemdService struct{}
 
+type SystemdServiceEnsure string
+
+const (
+	SystemdServiceEnsureStarted   SystemdServiceEnsure = "started"
+	SystemdServiceEnsureStopped   SystemdServiceEnsure = "stopped"
+	SystemdServiceEnsureReloaded  SystemdServiceEnsure = "reloaded"
+	SystemdServiceEnsureRestarted SystemdServiceEnsure = "reloaded"
+)
+
 type SystemdServiceArgs struct {
-	DaemonReexec *bool                `pulumi:"daemonReexec,optional"`
-	DaemonReload *bool                `pulumi:"daemonReload,optional"`
-	Enabled      *bool                `pulumi:"enabled,optional"`
-	Force        *bool                `pulumi:"force,optional"`
-	Masked       *bool                `pulumi:"masked,optional"`
-	Name         *string              `pulumi:"name,optional"`
-	NoBlock      *bool                `pulumi:"noBlock,optional"`
-	Scope        *string              `pulumi:"scope,optional"`
-	Ensure       *string              `pulumi:"ensure,optional"` // TODO: enum for this?
-	Triggers     *types.TriggersInput `pulumi:"triggers,optional"`
+	DaemonReexec *bool                 `pulumi:"daemonReexec,optional"`
+	DaemonReload *bool                 `pulumi:"daemonReload,optional"`
+	Enabled      *bool                 `pulumi:"enabled,optional"`
+	Force        *bool                 `pulumi:"force,optional"`
+	Masked       *bool                 `pulumi:"masked,optional"`
+	Name         *string               `pulumi:"name,optional"`
+	NoBlock      *bool                 `pulumi:"noBlock,optional"`
+	Scope        *string               `pulumi:"scope,optional"`
+	Ensure       *SystemdServiceEnsure `pulumi:"ensure,optional"`
+	Triggers     *types.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type SystemdServiceState struct {
@@ -39,6 +48,10 @@ type SystemdServiceState struct {
 }
 
 func (r SystemdService) argsToTaskParameters(input SystemdServiceArgs) (ansible.SystemdServiceParameters, error) {
+	var state *ansible.SystemdServiceState
+	if input.Ensure != nil {
+		state = ansible.OptionalSystemdServiceState(string(*input.Ensure))
+	}
 	return ansible.SystemdServiceParameters{
 		DaemonReexec: input.DaemonReexec,
 		DaemonReload: input.DaemonReload,
@@ -48,7 +61,7 @@ func (r SystemdService) argsToTaskParameters(input SystemdServiceArgs) (ansible.
 		Name:         input.Name,
 		NoBlock:      input.NoBlock,
 		Scope:        ansible.OptionalSystemdServiceScope(input.Scope),
-		State:        ansible.OptionalSystemdServiceState(input.Ensure),
+		State:        state,
 	}, nil
 }
 
@@ -60,6 +73,110 @@ func (r SystemdService) updateState(
 	state.SystemdServiceArgs = inputs
 	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
+}
+
+func (r SystemdService) doesUnitExist(
+	ctx context.Context,
+	connection *types.Connection,
+	name string,
+) (bool, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/SystemdService.doesUnitExist", trace.WithAttributes(
+		attribute.String("connection.host", *connection.Host),
+		attribute.String("name", name),
+	))
+	defer span.End()
+
+	systemdInfo, err := executor.AnsibleExecute[
+		ansible.SystemdInfoParameters,
+		ansible.SystemdInfoReturn,
+	](ctx, connection, ansible.SystemdInfoParameters{}, true)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+
+	if systemdInfo.Units == nil {
+		// some reason couldn't get unit list, assume that it will be fine.
+		p.GetLogger(ctx).WarningStatus("couldn't get list of systemd units")
+		span.SetStatus(codes.Error, "couldn't get list of systemd units")
+		return false, nil
+	}
+
+	_, unitPresent := (*systemdInfo.Units)[name]
+
+	span.SetStatus(codes.Ok, "")
+	return unitPresent, err
+}
+
+func (r SystemdService) updateService(
+	ctx context.Context,
+	inputs SystemdServiceArgs,
+	state SystemdServiceState,
+	dryRun bool,
+) (SystemdServiceState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/SystemdService.updateService", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state", state),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	parameters, err := r.argsToTaskParameters(inputs)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	refresh := false
+	if state.Triggers.Refresh != nil || (inputs.Triggers != nil && inputs.Triggers.Refresh != nil) {
+		triggerDiff := types.DiffTriggers(state, inputs)
+		if triggerDiff.HasChanges {
+			refresh = true
+		}
+	}
+
+	if refresh && inputs.Ensure != nil && *inputs.Ensure == "started" {
+		parameters.State = ansible.OptionalSystemdServiceState(string(SystemdServiceEnsureRestarted))
+	}
+
+	if dryRun && inputs.Name != nil {
+		unitPresent, err := r.doesUnitExist(ctx, config.Connection, *inputs.Name)
+		if err != nil {
+			if errors.Is(err, executor.ErrUnreachable) && dryRun {
+				span.SetAttributes(attribute.Bool("unreachable", true))
+				span.SetStatus(codes.Ok, "")
+				return state, nil
+			}
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		if !unitPresent {
+			// Unit isn't present during dry run, which might be expected.
+			span.SetStatus(codes.Ok, "")
+			state = r.updateState(inputs, state, true)
+			return state, nil
+		}
+	}
+
+	result, err := executor.AnsibleExecute[
+		ansible.SystemdServiceParameters,
+		ansible.SystemdServiceReturn,
+	](ctx, config.Connection, parameters, dryRun)
+	if err != nil {
+		if errors.Is(err, executor.ErrUnreachable) && dryRun {
+			span.SetAttributes(attribute.Bool("unreachable", true))
+			span.SetStatus(codes.Ok, "")
+			return state, nil
+		}
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	state = r.updateState(inputs, state, result.IsChanged())
+
+	return state, nil
 }
 
 func (r SystemdService) Diff(
@@ -115,8 +232,6 @@ func (r SystemdService) Create(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
-
 	state := r.updateState(req.Inputs, SystemdServiceState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
@@ -130,68 +245,8 @@ func (r SystemdService) Create(
 	}
 	span.SetAttributes(attribute.String("id", id))
 
-	parameters, err := r.argsToTaskParameters(req.Inputs)
+	state, err = r.updateService(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return infer.CreateResponse[SystemdServiceState]{
-			ID:     id,
-			Output: state,
-		}, err
-	}
-
-	if req.DryRun {
-		systemdInfo, err := executor.AnsibleExecute[
-			ansible.SystemdInfoParameters,
-			ansible.SystemdInfoReturn,
-		](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
-		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
-				span.SetAttributes(attribute.Bool("unreachable", true))
-				span.SetStatus(codes.Ok, "")
-				return infer.CreateResponse[SystemdServiceState]{
-					ID:     id,
-					Output: state,
-				}, nil
-			}
-			span.SetStatus(codes.Error, err.Error())
-			return infer.CreateResponse[SystemdServiceState]{
-				ID:     id,
-				Output: state,
-			}, err
-		}
-		if systemdInfo.Units == nil {
-			// some reason couldn't get unit list, assume that it will be fine.
-			// TODO: log warning?
-			span.SetStatus(codes.Ok, "")
-			return infer.CreateResponse[SystemdServiceState]{
-				ID:     id,
-				Output: state,
-			}, nil
-		}
-		_, unitPresent := (*systemdInfo.Units)[*req.Inputs.Name]
-		if !unitPresent {
-			// Unit isn't present during req.DryRun, which might be expected.
-			span.SetStatus(codes.Ok, "")
-			return infer.CreateResponse[SystemdServiceState]{
-				ID:     id,
-				Output: state,
-			}, nil
-		}
-	}
-
-	_, err = executor.AnsibleExecute[
-		ansible.SystemdServiceParameters,
-		ansible.SystemdServiceReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
-	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
-			span.SetAttributes(attribute.Bool("unreachable", true))
-			span.SetStatus(codes.Ok, "")
-			return infer.CreateResponse[SystemdServiceState]{
-				ID:     id,
-				Output: state,
-			}, nil
-		}
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[SystemdServiceState]{
 			ID:     id,
@@ -277,86 +332,17 @@ func (r SystemdService) Update(ctx context.Context, req infer.UpdateRequest[Syst
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
-
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	parameters, err := r.argsToTaskParameters(req.Inputs)
+	var err error
+	state, err = r.updateService(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.UpdateResponse[SystemdServiceState]{
 			Output: state,
 		}, err
 	}
-
-	refresh := false
-	triggerDiff := types.DiffTriggers(req.State, req.Inputs)
-	if triggerDiff.HasChanges {
-		refresh = true
-	}
-
-	if refresh && req.Inputs.Ensure != nil && *req.Inputs.Ensure == "started" {
-		parameters.State = ansible.OptionalSystemdServiceState("restarted")
-	}
-
-	if req.DryRun {
-		systemdInfo, err := executor.AnsibleExecute[
-			ansible.SystemdInfoParameters,
-			ansible.SystemdInfoReturn,
-		](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
-		if err != nil {
-			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
-				span.SetAttributes(attribute.Bool("unreachable", true))
-				span.SetStatus(codes.Ok, "")
-				return infer.UpdateResponse[SystemdServiceState]{
-					Output: state,
-				}, nil
-			}
-			span.SetStatus(codes.Error, err.Error())
-			return infer.UpdateResponse[SystemdServiceState]{
-				Output: state,
-			}, err
-		}
-		if systemdInfo.Units == nil {
-			// some reason couldn't get unit list, assume that it will be fine.
-			// TODO: log warning?
-			state = r.updateState(req.Inputs, state, true)
-			span.SetStatus(codes.Ok, "")
-			return infer.UpdateResponse[SystemdServiceState]{
-				Output: state,
-			}, nil
-		}
-		_, unitPresent := (*systemdInfo.Units)[*req.Inputs.Name]
-		if !unitPresent {
-			// Unit isn't present during dry run, which might be expected.
-			span.SetStatus(codes.Ok, "")
-			state = r.updateState(req.Inputs, state, true)
-			return infer.UpdateResponse[SystemdServiceState]{
-				Output: state,
-			}, nil
-		}
-	}
-
-	result, err := executor.AnsibleExecute[
-		ansible.SystemdServiceParameters,
-		ansible.SystemdServiceReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
-	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
-			span.SetAttributes(attribute.Bool("unreachable", true))
-			span.SetStatus(codes.Ok, "")
-			return infer.UpdateResponse[SystemdServiceState]{
-				Output: state,
-			}, nil
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return infer.UpdateResponse[SystemdServiceState]{
-			Output: state,
-		}, err
-	}
-
-	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
 	return infer.UpdateResponse[SystemdServiceState]{
@@ -387,20 +373,25 @@ func (r SystemdService) Delete(ctx context.Context, req infer.DeleteRequest[Syst
 		Ensure:       req.State.Ensure,
 	}
 
-	runPlay := false
+	takeAction := false
 
 	if args.Enabled != nil && *args.Enabled {
-		runPlay = true
+		takeAction = true
 		args.Enabled = ptr.Of(false)
 	}
-	if args.Ensure != nil && *args.Ensure != "stopped" {
-		runPlay = true
-		args.Ensure = ptr.Of("stopped")
+
+	if args.Ensure != nil && *args.Ensure != SystemdServiceEnsureStopped {
+		takeAction = true
+		args.Ensure = ptr.Of(SystemdServiceEnsureStopped)
 	}
 
-	span.SetAttributes(attribute.Bool("run_play", runPlay))
+	if args.Name == nil {
+		takeAction = false
+	}
 
-	if !runPlay {
+	span.SetAttributes(attribute.Bool("take_action", takeAction))
+
+	if !takeAction {
 		span.SetStatus(codes.Ok, "")
 		return infer.DeleteResponse{}, nil
 	}
@@ -411,10 +402,7 @@ func (r SystemdService) Delete(ctx context.Context, req infer.DeleteRequest[Syst
 		return infer.DeleteResponse{}, err
 	}
 
-	systemdInfo, err := executor.AnsibleExecute[
-		ansible.SystemdInfoParameters,
-		ansible.SystemdInfoReturn,
-	](ctx, config.Connection, ansible.SystemdInfoParameters{}, true)
+	unitPresent, err := r.doesUnitExist(ctx, config.Connection, *args.Name)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -425,16 +413,9 @@ func (r SystemdService) Delete(ctx context.Context, req infer.DeleteRequest[Syst
 		span.SetStatus(codes.Error, err.Error())
 		return infer.DeleteResponse{}, err
 	}
-	if systemdInfo.Units == nil {
-		// some reason couldn't get unit list, assume that it will be fine.
-		// TODO: log warning?
-		span.SetStatus(codes.Ok, "")
-		return infer.DeleteResponse{}, nil
-	}
-	_, unitPresent := (*systemdInfo.Units)[*req.State.Name]
+
+	span.SetAttributes(attribute.Bool("unit_present", unitPresent))
 	if !unitPresent {
-		// Unit might have been removed from system. In this case it is okay to
-		// delete from req.State.
 		span.SetStatus(codes.Ok, "")
 		return infer.DeleteResponse{}, nil
 	}
