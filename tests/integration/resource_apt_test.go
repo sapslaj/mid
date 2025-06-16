@@ -11,11 +11,6 @@ import (
 func TestResourceApt(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.DockerBackend,
-	})
-	defer harness.Close()
-
 	tests := map[string]LifeCycleTest{
 		"installs vim": {
 			Create: Operation{
@@ -63,7 +58,12 @@ func TestResourceApt(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			// WARN: do not use t.Parallel() here
+			t.Parallel()
+
+			harness := NewProviderTestHarness(t, testmachine.Config{
+				Backend: testmachine.DockerBackend,
+			})
+			defer harness.Close()
 
 			tc.Resource = "mid:resource:Apt"
 			tc.Run(t, harness)
