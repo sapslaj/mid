@@ -346,6 +346,7 @@ const postgresqlSuperadmin = new mid.resource.Exec("postgresql-superadmin", {
   ],
 });
 
+// just grabbing some logs for debugging test failures.
 export const debuglogs = new remote.Command("debuglogs", {
   connection: {
     host: instance.publicIp,
@@ -353,7 +354,11 @@ export const debuglogs = new remote.Command("debuglogs", {
     privateKey: privateKey.privateKeyOpenssh,
   },
   create:
-    "set -x ; sudo journalctl -xe --no-pager | tail -n 20 ; sudo systemctl status postgresql.service ; sudo ss -tlpn",
+    `bash -xc "sudo journalctl -xe --no-pager | tail -n 20 ; sudo systemctl status postgresql.service ; sudo ss -tlpn" 2>&1`,
+}, {
+  dependsOn: [
+    postgresqlService,
+  ],
 }).stdout.apply((stdout) => {
   console.log(stdout);
   return stdout;
