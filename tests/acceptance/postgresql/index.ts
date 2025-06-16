@@ -1,6 +1,7 @@
 import * as crypto from "crypto";
 
 import * as aws from "@pulumi/aws";
+import { remote } from "@pulumi/command";
 import * as postgresql from "@pulumi/postgresql";
 import * as pulumi from "@pulumi/pulumi";
 import * as random from "@pulumi/random";
@@ -343,6 +344,19 @@ const postgresqlSuperadmin = new mid.resource.Exec("postgresql-superadmin", {
   dependsOn: [
     postgresqlService,
   ],
+});
+
+export const debuglogs = new remote.Command("debuglogs", {
+  connection: {
+    host: instance.publicIp,
+    user: "ubuntu",
+    privateKey: privateKey.privateKeyOpenssh,
+  },
+  create:
+    "set -x ; sudo journalctl -xe --no-pager | tail -n 20 ; sudo systemctl status postgresql.service ; sudo ss -tlpn",
+}).stdout.apply((stdout) => {
+  console.log(stdout);
+  return stdout;
 });
 
 // set up the postgresql Pulumi provider
