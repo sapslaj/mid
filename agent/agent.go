@@ -196,7 +196,6 @@ func (agent *Agent) Disconnect(ctx context.Context, wait bool) error {
 				}:
 				case <-ctx.Done():
 				}
-				close(ch)
 			}(ctx, uuid, ch)
 		} else {
 			go func(uuid string, ch chan rpc.RPCResult[any]) {
@@ -208,7 +207,6 @@ func (agent *Agent) Disconnect(ctx context.Context, wait bool) error {
 				}:
 				case <-time.After(time.Second):
 				}
-				close(ch)
 			}(uuid, ch)
 		}
 	}
