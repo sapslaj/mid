@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 
+	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 
 	"github.com/sapslaj/mid/tests/testmachine"
@@ -52,6 +53,89 @@ func TestResourceApt(t *testing.T) {
 				Inputs: property.NewMap(map[string]property.Value{
 					"clean": property.New(true),
 				}),
+			},
+		},
+
+		"changing the package list": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"name": property.New("curl"),
+				}),
+				AssertCommand: "test -f /usr/bin/curl",
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"name": property.New("curl"),
+					}),
+					AssertCommand: "test -f /usr/bin/curl",
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"names": property.New([]property.Value{
+							property.New("curl"),
+							property.New("wget"),
+						}),
+					}),
+					AssertCommand: "test -f /usr/bin/curl && test -f /usr/bin/wget",
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"name": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+							"names": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"names": property.New([]property.Value{
+							property.New("wget"),
+						}),
+					}),
+					AssertCommand: "test ! -f /usr/bin/curl && test -f /usr/bin/wget",
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"names": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"name": property.New("curl"),
+					}),
+					AssertCommand: "test -f /usr/bin/curl && test ! -f /usr/bin/wget",
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"name": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+							"names": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
