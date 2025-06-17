@@ -20,6 +20,20 @@ func TestResourceApt(t *testing.T) {
 				}),
 				AssertCommand: "test -f /usr/bin/vim",
 			},
+			Updates: []Operation{
+				{
+					Refresh: true,
+					Inputs: property.NewMap(map[string]property.Value{
+						"name": property.New("vim"),
+					}),
+					AssertCommand: "test -f /usr/bin/vim",
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+			},
 			AssertDeleteCommand: "test ! -f /usr/bin/vim",
 		},
 
@@ -34,6 +48,24 @@ func TestResourceApt(t *testing.T) {
 				}),
 				AssertCommand: "test -f /usr/bin/curl && test -f /usr/bin/wget",
 			},
+			Updates: []Operation{
+				{
+					Refresh: true,
+					Inputs: property.NewMap(map[string]property.Value{
+						"names": property.New([]property.Value{
+							property.New("curl"),
+							property.New("wget"),
+						}),
+						"ensure": property.New("latest"),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+					AssertCommand: "test -f /usr/bin/curl && test -f /usr/bin/wget",
+				},
+			},
 			AssertDeleteCommand: "test ! -f /usr/bin/curl && test ! -f /usr/bin/wget",
 		},
 
@@ -46,6 +78,22 @@ func TestResourceApt(t *testing.T) {
 					"updateCache": property.New(true),
 				}),
 			},
+			Updates: []Operation{
+				{
+					Refresh: true,
+					Inputs: property.NewMap(map[string]property.Value{
+						"name":        property.New("*"),
+						"ensure":      property.New("latest"),
+						"autoremove":  property.New(true),
+						"updateCache": property.New(true),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+			},
 		},
 
 		"apt clean": {
@@ -53,6 +101,19 @@ func TestResourceApt(t *testing.T) {
 				Inputs: property.NewMap(map[string]property.Value{
 					"clean": property.New(true),
 				}),
+			},
+			Updates: []Operation{
+				{
+					Refresh: true,
+					Inputs: property.NewMap(map[string]property.Value{
+						"clean": property.New(true),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
 			},
 		},
 

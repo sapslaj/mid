@@ -124,6 +124,14 @@ type Operation struct {
 	AssertBeforeCommand string
 	// Command to run after the dry run but before the real operation
 	AssertAfterDryRunCommand string
+	// Run a "refresh" (read) before the operation. Ignored on create.
+	Refresh bool
+	// If the test should expect the "refresh" to fail.
+	ExpectRefreshFailure bool
+	// A function called on the read outputs
+	RefreshHook func(p.ReadResponse, error)
+	// Command to run after refresh (if enabled)
+	AssertAfterRefreshCommand string
 }
 
 type LifeCycleTest struct {
@@ -252,6 +260,38 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 			if !harness.AssertCommand(t, update.AssertBeforeCommand) {
 				t.Log("before update command failed")
 				return
+			}
+		}
+
+		if update.Refresh {
+			t.Logf("running refresh %d", i)
+			readResponse, err := harness.Server.Read(p.ReadRequest{
+				ID:         id,
+				Urn:        urn,
+				Properties: olds,
+				Inputs:     update.Inputs,
+			})
+
+			if update.RefreshHook != nil {
+				t.Log("running refresh hook")
+				update.RefreshHook(readResponse, err)
+			}
+
+			if update.ExpectRefreshFailure {
+				assert.Error(t, err, "expected an error on refresh")
+				continue
+			}
+			if !assert.NoError(t, err, "failed to run the refresh") {
+				return
+			}
+
+			olds = readResponse.Properties
+
+			if update.AssertAfterRefreshCommand != "" {
+				t.Logf("running after create command %q", update.AssertAfterRefreshCommand)
+				if !harness.AssertCommand(t, update.AssertAfterRefreshCommand) {
+					return
+				}
 			}
 		}
 
