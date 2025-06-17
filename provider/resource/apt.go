@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -266,44 +265,6 @@ func (r Apt) Diff(ctx context.Context, req infer.DiffRequest[AptArgs, AptState])
 		DeleteBeforeReplace: true,
 	}
 
-	if req.Inputs.Name != nil {
-		if req.State.Name == nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["name"] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-		} else if *req.Inputs.Name != *req.State.Name {
-			diff.HasChanges = true
-			diff.DetailedDiff["name"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	}
-
-	if req.Inputs.Names != nil {
-		if req.State.Names == nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["names"] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-		} else if !slices.Equal(*req.State.Names, *req.Inputs.Names) {
-			diff.HasChanges = true
-			diff.DetailedDiff["names"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	} else if req.State.Names != nil && !slices.Equal(*req.State.Names, *req.Inputs.Names) {
-		diff.HasChanges = true
-		diff.DetailedDiff["names"] = p.PropertyDiff{
-			Kind:      p.Update,
-			InputDiff: true,
-		}
-	}
-
 	attrs := []string{
 		"allowChangeHeldPackages",
 		"allowDowngrade",
@@ -320,6 +281,8 @@ func (r Apt) Diff(ctx context.Context, req infer.DiffRequest[AptArgs, AptState])
 		"forceAptGet",
 		"installRecommends",
 		"lockTimeout",
+		"name",
+		"names",
 		"onlyUpgrade",
 		"policyRcD",
 		"purge",
