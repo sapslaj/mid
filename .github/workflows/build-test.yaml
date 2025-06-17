@@ -87,7 +87,22 @@ jobs:
         with:
           tools: just, go, python
       - run: just provider_version=v0.0.0-ci agent-codegen
-      - run: go test -timeout=5m -v -race ./provider/...
+      - name: go test
+        run: |
+          go test \
+            -timeout=5m \
+            -v \
+            -race \
+            -covermode atomic \
+            -coverprofile=coverage.out \
+            -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/... \
+            ./provider/...
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+          flag-name: test-unit
+          parallel: true
 
   test-integration:
     runs-on: ubuntu-latest
@@ -107,9 +122,24 @@ jobs:
           path: tests/testmachine/noble-server-cloudimg-amd64.img
           key: noble-server-cloudimg-amd64.img-${{ hashFiles('./tests/testmachine/testmachine.go') }}
       - run: just provider_version=v0.0.0-ci agent-codegen
-      - run: go test -timeout=10m -v -race ./tests/integration/...
+      - name: go test
+        run: |
+          go test \
+            -timeout=10m \
+            -v \
+            -race \
+            -covermode atomic \
+            -coverprofile=coverage.out \
+            -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/... \
+            ./tests/integration/...
         env:
           PULUMI_MID_LOG_LEVEL: DEBUG
+      - name: Send coverage
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+          flag-name: test-integration
+          parallel: true
 
   test-acceptance:
     runs-on: ubuntu-latest
@@ -141,3 +171,13 @@ jobs:
           echo "@sapslaj:registry=https://npm.pkg.github.com" > ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
       - run: go test -timeout=1h -v -race ./tests/acceptance/...
+
+  send-coverage:
+    needs:
+      - test-unit
+      - test-integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: shogo82148/actions-goveralls@v1
+        with:
+          parallel-finished: true
