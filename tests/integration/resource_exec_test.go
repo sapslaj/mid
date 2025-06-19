@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 
+	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
 
@@ -67,6 +68,74 @@ func TestResourceExec(t *testing.T) {
 				},
 			},
 			AssertDeleteCommand: "test ! -f /create && test ! -f /update",
+		},
+
+		"configurable deleteBeforeReplace": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"create": property.New(map[string]property.Value{
+						"command": property.New([]property.Value{
+							property.New("touch"),
+							property.New("/create"),
+						}),
+					}),
+					"deleteBeforeReplace": property.New(true),
+					"triggers": property.New(property.NewMap(map[string]property.Value{
+						"refresh": property.New(property.NewArray([]property.Value{
+							property.New("1"),
+						})),
+					})),
+				}),
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"create": property.New(map[string]property.Value{
+							"command": property.New([]property.Value{
+								property.New("touch"),
+								property.New("/create"),
+							}),
+						}),
+						"deleteBeforeReplace": property.New(true),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("1"),
+							})),
+						})),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"create": property.New(map[string]property.Value{
+							"command": property.New([]property.Value{
+								property.New("touch"),
+								property.New("/create"),
+							}),
+						}),
+						"deleteBeforeReplace": property.New(false),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("2"),
+							})),
+						})),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"triggers": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+				},
+			},
 		},
 
 		"dir": {
