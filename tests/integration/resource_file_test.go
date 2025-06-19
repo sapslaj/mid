@@ -3,6 +3,7 @@ package tests
 import (
 	"testing"
 
+	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 
 	"github.com/sapslaj/mid/tests/testmachine"
@@ -133,6 +134,40 @@ func TestResourceFile(t *testing.T) {
 				AssertBeforeCommand:      "test ! -d /nested/sub/dir",
 				AssertAfterDryRunCommand: "sudo mkdir -p /nested/sub/dir",
 				AssertCommand:            "test -f /nested/sub/dir/foo",
+			},
+		},
+
+		"path replace": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":    property.New("/foo"),
+					"ensure":  property.New("file"),
+					"content": property.New("bar\n"),
+				}),
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":    property.New("/bar"),
+						"ensure":  property.New("file"),
+						"content": property.New("bar\n"),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"path": {
+								Kind:      p.UpdateReplace,
+								InputDiff: true,
+							},
+						},
+					},
+					AssertCommand: `set -eu
+						test ! -f /foo
+						test -f /bar
+						grep -q ^bar /bar
+					`,
+				},
 			},
 		},
 
