@@ -199,6 +199,23 @@ func TestResourceApt(t *testing.T) {
 				},
 			},
 		},
+
+		"handles dpkg locking": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"name": property.New("vim"),
+				}),
+				AssertBeforeCommand: `
+					sudo apt-get update -y
+					nohup sudo apt-get install emacs </dev/null >/dev/null 2>&1 & disown
+				`,
+				AssertCommand: `
+					file /usr/bin/vim || true
+					file /usr/bin/emacs || true
+					test -f /usr/bin/vim
+				`,
+			},
+		},
 	}
 
 	for name, tc := range tests {
