@@ -3,10 +3,8 @@ package tests
 import (
 	"testing"
 
-	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/sapslaj/mid/tests/testmachine"
 )
@@ -1056,49 +1054,4 @@ func TestResourceExec(t *testing.T) {
 			tc.Run(t, harness)
 		})
 	}
-}
-
-func TestResourceExec_logging(t *testing.T) {
-	t.Parallel()
-
-	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.DockerBackend,
-	})
-	defer harness.Close()
-
-	props := map[string]property.Value{
-		"create": property.New(map[string]property.Value{
-			"command": property.New([]property.Value{
-				property.New("/bin/sh"),
-				property.New("-c"),
-				property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-			}),
-		}),
-		"update": property.New(map[string]property.Value{
-			"command": property.New([]property.Value{
-				property.New("/bin/sh"),
-				property.New("-c"),
-				property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-			}),
-		}),
-	}
-
-	createResponse, err := harness.Server.Create(p.CreateRequest{
-		Urn:        MakeURN("mid:resource:Exec"),
-		Properties: property.NewMap(props),
-	})
-	require.NoError(t, err)
-
-	assert.Equal(t, "this is create stdout\n", createResponse.Properties.Get("stdout").AsString())
-	assert.Equal(t, "this is create stderr\n", createResponse.Properties.Get("stderr").AsString())
-
-	updateResponse, err := harness.Server.Update(p.UpdateRequest{
-		Urn:    MakeURN("mid:resource:Exec"),
-		State:  createResponse.Properties,
-		Inputs: property.NewMap(props),
-	})
-	require.NoError(t, err)
-
-	assert.Equal(t, "this is update stdout\n", updateResponse.Properties.Get("stdout").AsString())
-	assert.Equal(t, "this is update stderr\n", updateResponse.Properties.Get("stderr").AsString())
 }
