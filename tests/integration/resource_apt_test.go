@@ -216,6 +216,17 @@ func TestResourceApt(t *testing.T) {
 				`,
 			},
 		},
+
+		"ensure absent": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"name":   property.New("nano"),
+					"ensure": property.New("absent"),
+				}),
+				AssertCommand: `test ! -f /usr/bin/nano`,
+			},
+			AssertDeleteCommand: `test ! -f /usr/bin/nano`,
+		},
 	}
 
 	for name, tc := range tests {
