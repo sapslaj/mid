@@ -450,6 +450,8 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 	}
 	call.Args.Check = preview
 
+	span.SetAttributes(attribute.String("ansible.name", call.Args.Name))
+
 	if PreviewUnreachable(ctx, connection, preview) {
 		err = ErrUnreachable
 		span.SetAttributes(attribute.Bool("unreachable", true))
@@ -519,6 +521,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 	span.SetAttributes(
 		telemetry.OtelJSON("ansible.return", returns),
 		attribute.String("ansible.msg", returns.GetMsg()),
+		attribute.Bool("ansible.is_changed", returns.IsChanged()),
 	)
 	if err != nil {
 		logger.ErrorContext(
