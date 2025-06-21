@@ -21,7 +21,6 @@ import (
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
-	"github.com/sapslaj/mid/pkg/cast"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
@@ -71,55 +70,10 @@ type FileArgs struct {
 	Triggers               *types.TriggersInput   `pulumi:"triggers,optional"`
 }
 
-type FileStateStat struct {
-	Atime      float64  `pulumi:"atime" json:"atime"`
-	Attributes []string `pulumi:"attributes" json:"attributes"`
-	Charset    string   `pulumi:"charset" json:"charset"`
-	Checksum   string   `pulumi:"checksum" json:"checksum"`
-	Ctime      float64  `pulumi:"ctime" json:"ctime"`
-	Dev        int      `pulumi:"dev" json:"dev"`
-	Executable bool     `pulumi:"executable" json:"executable"`
-	Exists     bool     `pulumi:"exists" json:"exists"`
-	Gid        int      `pulumi:"gid" json:"gid"`
-	GrName     string   `pulumi:"gr_name" json:"gr_name"`
-	Inode      int      `pulumi:"inode" json:"inode"`
-	Isblk      bool     `pulumi:"isblk" json:"isblk"`
-	Ischr      bool     `pulumi:"ischr" json:"ischr"`
-	Isdir      bool     `pulumi:"isdir" json:"isdir"`
-	Isfifo     bool     `pulumi:"isfifo" json:"isfifo"`
-	Isgid      bool     `pulumi:"isgid" json:"isgid"`
-	Islnk      bool     `pulumi:"islnk" json:"islnk"`
-	Isreg      bool     `pulumi:"isreg" json:"isreg"`
-	Issock     bool     `pulumi:"issock" json:"issock"`
-	Isuid      bool     `pulumi:"isuid" json:"isuid"`
-	LnkSource  string   `pulumi:"lnkSource" json:"lnk_source"`
-	LnkTarget  string   `pulumi:"lnkTarget" json:"lnk_target"`
-	Mimetype   string   `pulumi:"mimetype" json:"mimetype"`
-	Mode       string   `pulumi:"mode" json:"mode"`
-	Mtime      float64  `pulumi:"mtime" json:"mtime"`
-	Nlink      int      `pulumi:"nlink" json:"nlink"`
-	Path       string   `pulumi:"path" json:"path"`
-	PwName     string   `pulumi:"pwName" json:"pw_name"`
-	Readable   bool     `pulumi:"readable" json:"readable"`
-	Rgrp       bool     `pulumi:"rgrp" json:"rgrp"`
-	Roth       bool     `pulumi:"roth" json:"roth"`
-	Rusr       bool     `pulumi:"rusr" json:"rusr"`
-	Size       int      `pulumi:"size" json:"size"`
-	Uid        int      `pulumi:"uid" json:"uid"`
-	Version    string   `pulumi:"version" json:"version"`
-	Wgrp       bool     `pulumi:"wgrp" json:"wgrp"`
-	Woth       bool     `pulumi:"woth" json:"woth"`
-	Writeable  bool     `pulumi:"writeable" json:"writeable"`
-	Wusr       bool     `pulumi:"wusr" json:"wusr"`
-	Xgrp       bool     `pulumi:"xgrp" json:"xgrp"`
-	Xoth       bool     `pulumi:"xoth" json:"xoth"`
-	Xusr       bool     `pulumi:"xusr" json:"xusr"`
-}
-
 type FileState struct {
 	FileArgs
 	BackupFile *string              `pulumi:"backupFile,optional"`
-	Stat       FileStateStat        `pulumi:"stat"`
+	Stat       types.FileStatState  `pulumi:"stat"`
 	Triggers   types.TriggersOutput `pulumi:"triggers"`
 }
 
@@ -622,13 +576,25 @@ fileNeeded:
 		changed = true
 	}
 
-	state.Stat, err = cast.AnyToJSONT[FileStateStat](statResult.Stat)
+	state = r.updateState(inputs, state, changed)
+
+	stat, err = executor.CallAgent[
+		rpc.FileStatArgs,
+		rpc.FileStatResult,
+	](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+		RPCFunction: rpc.RPCFileStat,
+		Args: rpc.FileStatArgs{
+			Path:              inputs.Path,
+			FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
+			CalculateChecksum: true,
+		},
+	})
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
-	state = r.updateState(inputs, state, changed)
+	state.Stat = types.FileStatStateFromRPCResult(stat.Result)
 
 	span.SetStatus(codes.Ok, "")
 	return state, nil
