@@ -27,6 +27,7 @@ func TestResourceFile(t *testing.T) {
 			},
 			Updates: []Operation{
 				{
+					Refresh: true,
 					Inputs: property.NewMap(map[string]property.Value{
 						"path":    property.New("/foo"),
 						"ensure":  property.New("file"),
@@ -51,6 +52,7 @@ func TestResourceFile(t *testing.T) {
 			},
 			Updates: []Operation{
 				{
+					Refresh: true,
 					Inputs: property.NewMap(map[string]property.Value{
 						"path":   property.New("/foo"),
 						"ensure": property.New("directory"),
@@ -78,6 +80,7 @@ func TestResourceFile(t *testing.T) {
 			},
 			Updates: []Operation{
 				{
+					Refresh: true,
 					Inputs: property.NewMap(map[string]property.Value{
 						"path":    property.New("/foo"),
 						"ensure":  property.New("file"),
@@ -110,6 +113,7 @@ func TestResourceFile(t *testing.T) {
 			},
 			Updates: []Operation{
 				{
+					Refresh: true,
 					Inputs: property.NewMap(map[string]property.Value{
 						"path":   property.New("/foo"),
 						"ensure": property.New("file"),
@@ -166,6 +170,41 @@ func TestResourceFile(t *testing.T) {
 						test ! -f /foo
 						test -f /bar
 						grep -q ^bar /bar
+					`,
+				},
+			},
+		},
+
+		"read should detect changes": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":    property.New("/foo"),
+					"ensure":  property.New("file"),
+					"content": property.New("bar\n"),
+				}),
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":    property.New("/foo"),
+						"ensure":  property.New("file"),
+						"content": property.New("bar\n"),
+					}),
+					AssertBeforeCommand: "echo baz | sudo tee -a /foo",
+					Refresh:             true,
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"content": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+					AssertCommand: `set -eu
+						test -f /foo
+						grep -q ^bar /foo
 					`,
 				},
 			},
