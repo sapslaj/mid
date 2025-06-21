@@ -421,6 +421,7 @@ func (r File) runCreateUpdatePlay(
 	}
 
 	changed := false
+	defer span.SetAttributes(attribute.Bool("changed", changed))
 
 	stat, err := executor.CallAgent[
 		rpc.FileStatArgs,
