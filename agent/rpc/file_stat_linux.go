@@ -10,9 +10,11 @@ import (
 	"io/fs"
 	"os"
 	"os/user"
+	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/sapslaj/mid/pkg/dirhash"
 	"github.com/sapslaj/mid/pkg/ptr"
 )
 
@@ -66,18 +68,50 @@ func FileStat(args FileStatArgs) (FileStatResult, error) {
 		}
 	}
 
-	if args.CalculateChecksum && !fileInfo.IsDir() {
-		f, err := os.Open(args.Path)
-		if err != nil {
-			return result, err
+	if args.CalculateChecksum {
+		if fileInfo.IsDir() {
+			var innerError error
+			hash, outterError := dirhash.Dirhash(func(yield func(string, io.ReadCloser) bool) {
+				err := filepath.WalkDir(args.Path, func(path string, dirent fs.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+					if dirent.IsDir() {
+						return nil
+					}
+					fp, err := os.Open(path)
+					if err != nil {
+						return err
+					}
+					if !yield(path, fp) {
+						return fs.SkipAll
+					}
+					return nil
+				})
+				if err != nil {
+					innerError = err
+				}
+			})
+
+			err := errors.Join(outterError, innerError)
+			if err != nil {
+				return result, err
+			}
+
+			result.SHA256Checksum = ptr.Of(hash)
+		} else {
+			f, err := os.Open(args.Path)
+			if err != nil {
+				return result, err
+			}
+			defer f.Close()
+			h := sha256.New()
+			_, err = io.Copy(h, f)
+			if err != nil {
+				return result, err
+			}
+			result.SHA256Checksum = ptr.Of(fmt.Sprintf("%x", h.Sum(nil)))
 		}
-		defer f.Close()
-		h := sha256.New()
-		_, err = io.Copy(h, f)
-		if err != nil {
-			return result, err
-		}
-		result.SHA256Checksum = ptr.Of(fmt.Sprintf("%x", h.Sum(nil)))
 	}
 
 	return result, nil
