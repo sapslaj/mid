@@ -95,8 +95,8 @@ jobs:
             -race \
             -covermode atomic \
             -coverprofile=coverage.out \
-            -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/... \
-            ./provider/...
+            -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/...,github.com/sapslaj/mid/pkg... \
+            ./pkg/... ./provider/...
       - name: Send coverage
         uses: shogo82148/actions-goveralls@v1
         with:
