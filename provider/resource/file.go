@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path"
 	"path/filepath"
+	"strings"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
-	ptypes "github.com/pulumi/pulumi-go-provider/infer/types"
+	infertypes "github.com/pulumi/pulumi-go-provider/infer/types"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	parchive "github.com/pulumi/pulumi/sdk/v3/go/common/resource/archive"
 	passet "github.com/pulumi/pulumi/sdk/v3/go/common/resource/asset"
@@ -21,6 +23,8 @@ import (
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/dirhash"
+	"github.com/sapslaj/mid/pkg/pdiff"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
@@ -32,42 +36,41 @@ type File struct{}
 type FileEnsure string
 
 const (
-	FileEnsureAbsent    FileEnsure = "absent"
-	FileEnsureDirectory FileEnsure = "directory"
 	FileEnsureFile      FileEnsure = "file"
+	FileEnsureDirectory FileEnsure = "directory"
+	FileEnsureAbsent    FileEnsure = "absent"
 	FileEnsureHard      FileEnsure = "hard"
 	FileEnsureLink      FileEnsure = "link"
-	FileEnsureTouch     FileEnsure = "touch"
 )
 
 type FileArgs struct {
-	AccessTime             *string                `pulumi:"accessTime,optional"`
-	AccessTimeFormat       *string                `pulumi:"accessTimeFormat,optional"`
-	Attributes             *string                `pulumi:"attributes,optional"`
-	Backup                 *bool                  `pulumi:"backup,optional"`
-	Checksum               *string                `pulumi:"checksum,optional"`
-	Content                *string                `pulumi:"content,optional"`
-	DirectoryMode          *string                `pulumi:"directoryMode,optional"`
-	Ensure                 *FileEnsure            `pulumi:"ensure,optional"`
-	Follow                 *bool                  `pulumi:"follow,optional"`
-	Force                  *bool                  `pulumi:"force,optional"`
-	Group                  *string                `pulumi:"group,optional"`
-	LocalFollow            *bool                  `pulumi:"localFollow,optional"`
-	Mode                   *string                `pulumi:"mode,optional"`
-	ModificationTime       *string                `pulumi:"modificationTime,optional"`
-	ModificationTimeFormat *string                `pulumi:"modificationTimeFormat,optional"`
-	Owner                  *string                `pulumi:"owner,optional"`
-	Path                   string                 `pulumi:"path"`
-	Recurse                *bool                  `pulumi:"recurse,optional"`
-	RemoteSource           *string                `pulumi:"remoteSource,optional"`
-	Selevel                *string                `pulumi:"selevel,optional"`
-	Serole                 *string                `pulumi:"serole,optional"`
-	Setype                 *string                `pulumi:"setype,optional"`
-	Seuser                 *string                `pulumi:"seuser,optional"`
-	Source                 *ptypes.AssetOrArchive `pulumi:"source,optional"`
-	UnsafeWrites           *bool                  `pulumi:"unsafeWrites,optional"`
-	Validate               *string                `pulumi:"validate,optional"`
-	Triggers               *types.TriggersInput   `pulumi:"triggers,optional"`
+	AccessTime             *string                    `pulumi:"accessTime,optional"`
+	AccessTimeFormat       *string                    `pulumi:"accessTimeFormat,optional"`
+	Attributes             *string                    `pulumi:"attributes,optional"`
+	Backup                 *bool                      `pulumi:"backup,optional"`
+	Checksum               *string                    `pulumi:"checksum,optional"`
+	Content                *string                    `pulumi:"content,optional"`
+	DirectoryMode          *string                    `pulumi:"directoryMode,optional"`
+	Ensure                 *FileEnsure                `pulumi:"ensure,optional"`
+	Follow                 *bool                      `pulumi:"follow,optional"`
+	Force                  *bool                      `pulumi:"force,optional"`
+	Group                  *string                    `pulumi:"group,optional"`
+	LocalFollow            *bool                      `pulumi:"localFollow,optional"`
+	Mode                   *string                    `pulumi:"mode,optional"`
+	ModificationTime       *string                    `pulumi:"modificationTime,optional"`
+	ModificationTimeFormat *string                    `pulumi:"modificationTimeFormat,optional"`
+	Owner                  *string                    `pulumi:"owner,optional"`
+	Path                   string                     `pulumi:"path" provider:"replaceOnChanges"`
+	Recurse                *bool                      `pulumi:"recurse,optional"`
+	RemoteSource           *string                    `pulumi:"remoteSource,optional"`
+	Selevel                *string                    `pulumi:"selevel,optional"`
+	Serole                 *string                    `pulumi:"serole,optional"`
+	Setype                 *string                    `pulumi:"setype,optional"`
+	Seuser                 *string                    `pulumi:"seuser,optional"`
+	Source                 *infertypes.AssetOrArchive `pulumi:"source,optional"`
+	UnsafeWrites           *bool                      `pulumi:"unsafeWrites,optional"`
+	Validate               *string                    `pulumi:"validate,optional"`
+	Triggers               *types.TriggersInput       `pulumi:"triggers,optional"`
 }
 
 type FileState struct {
@@ -77,241 +80,140 @@ type FileState struct {
 	Triggers   types.TriggersOutput `pulumi:"triggers"`
 }
 
-type FileCopyPlanStrategy string
-
-const (
-	FileCopyPlanInvalid         FileCopyPlanStrategy = ""
-	FileCopyPlanNop             FileCopyPlanStrategy = "Nop"
-	FileCopyPlanChecksumCompare FileCopyPlanStrategy = "ChecksumCompare"
-	FileCopyPlanInlineContent   FileCopyPlanStrategy = "InlineContent"
-	FileCopyPlanRemoteSource    FileCopyPlanStrategy = "RemoteSource"
-	FileCopyPlanFileAsset       FileCopyPlanStrategy = "FileAsset"
-	FileCopyPlanStringAsset     FileCopyPlanStrategy = "StringAsset"
-	FileCopyPlanRemoteAsset     FileCopyPlanStrategy = "RemoteAsset"
-	FileCopyPlanFileArchive     FileCopyPlanStrategy = "FileArchive"
-	FileCopyPlanRemoteArchive   FileCopyPlanStrategy = "RemoteArchive"
-	FileCopyPlanAssetArchive    FileCopyPlanStrategy = "AssetArchive"
-)
-
-type FileCopyPlan struct {
-	Strategy  FileCopyPlanStrategy
-	Hash      string
-	Reader    io.ReadCloser
-	Unarchive bool
-}
-
-func (r File) buildFileCopyPlan(inputs FileArgs) (FileCopyPlan, error) {
-	if inputs.Content != nil {
-		// FIXME: setting `content` in ansible.FileParameters breaks the Ansible
-		// module because despite declaring `content` to be a valid parameter it
-		// still expects and requires `src` to be set and exist.
-		// return FileCopyPlan{
-		// 	Strategy: FileCopyPlanInlineContent,
-		// }, nil
-		asset, err := passet.FromText(*inputs.Content)
-		if err != nil {
-			return FileCopyPlan{}, nil
-		}
-		inputs.Source = &ptypes.AssetOrArchive{
-			Asset: asset,
-		}
-	}
-
-	if inputs.RemoteSource != nil && *inputs.RemoteSource != "" {
-		return FileCopyPlan{
-			Strategy: FileCopyPlanRemoteSource,
-		}, nil
-	}
-
-	if inputs.Source == nil {
-		return FileCopyPlan{
-			Strategy: FileCopyPlanNop,
-		}, nil
-	}
-
-	plan := FileCopyPlan{}
-
-	if inputs.Source.Asset != nil {
-		asset := inputs.Source.Asset
-		plan.Hash = asset.Hash
-		switch {
-		case asset.IsPath():
-			plan.Strategy = FileCopyPlanFileAsset
-		case asset.IsText():
-			plan.Strategy = FileCopyPlanStringAsset
-		case asset.IsURI():
-			plan.Strategy = FileCopyPlanRemoteAsset
-		default:
-			if plan.Hash == "" {
-				return plan, fmt.Errorf("unknown asset type: %#v", asset)
-			}
-			plan.Strategy = FileCopyPlanChecksumCompare
-			return plan, nil
-		}
-
-		blob, err := asset.Read()
-		if err != nil {
-			return plan, err
-		}
-
-		plan.Reader = blob
-	}
-
-	if inputs.Source.Archive != nil {
-		archive := inputs.Source.Archive
-		plan.Hash = archive.Hash
-		plan.Unarchive = true
-		switch {
-		case archive.IsPath():
-			plan.Strategy = FileCopyPlanFileArchive
-		case archive.IsURI():
-			plan.Strategy = FileCopyPlanRemoteArchive
-		case archive.IsAssets():
-			plan.Strategy = FileCopyPlanAssetArchive
-		default:
-			if plan.Hash == "" {
-				return plan, fmt.Errorf("unknown archive type: %#v", archive)
-			}
-			plan.Strategy = FileCopyPlanChecksumCompare
-			return plan, nil
-		}
-
-		// FIXME: the TarGZIPArchive format is broken because the gzip.Writer is
-		// never closed. This is an upstream Pulumi SDK bug.
-		bbuf := bytes.Buffer{}
-		zbuf := gzip.NewWriter(&bbuf)
-		err := archive.Archive(parchive.TarArchive, zbuf)
-		if err != nil {
-			return plan, err
-		}
-		err = zbuf.Close()
-		if err != nil {
-			return plan, err
-		}
-
-		plan.Reader = io.NopCloser(&bbuf)
-	}
-
-	return plan, nil
-}
-
-func (r File) argsToFileTaskParameters(inputs FileArgs) (ansible.FileParameters, error) {
-	var state *ansible.FileState
-	if inputs.Ensure != nil {
-		state = ansible.OptionalFileState(string(*inputs.Ensure))
-	}
-	return ansible.FileParameters{
-		AccessTime:             inputs.AccessTime,
-		AccessTimeFormat:       inputs.AccessTimeFormat,
-		Attributes:             inputs.Attributes,
-		Follow:                 inputs.Follow,
-		Group:                  inputs.Group,
-		Mode:                   ptr.ToAny(inputs.Mode),
-		ModificationTime:       inputs.ModificationTime,
-		ModificationTimeFormat: inputs.ModificationTimeFormat,
-		Owner:                  inputs.Owner,
-		Path:                   inputs.Path,
-		Recurse:                inputs.Recurse,
-		Selevel:                inputs.Selevel,
-		Serole:                 inputs.Serole,
-		Setype:                 inputs.Setype,
-		Seuser:                 inputs.Seuser,
-		Src:                    inputs.RemoteSource,
-		State:                  state,
-		UnsafeWrites:           inputs.UnsafeWrites,
-	}, nil
-}
-
-func (r File) argsToCopyTaskParameters(inputs FileArgs) (ansible.CopyParameters, error) {
-	params := ansible.CopyParameters{
-		Attributes:    inputs.Attributes,
-		Backup:        inputs.Backup,
-		Checksum:      inputs.Checksum,
-		Content:       inputs.Content,
-		Dest:          inputs.Path,
-		DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
-		Follow:        inputs.Follow,
-		Force:         inputs.Force,
-		Group:         inputs.Group,
-		LocalFollow:   inputs.LocalFollow,
-		Mode:          ptr.ToAny(inputs.Mode),
-		Owner:         inputs.Owner,
-		Selevel:       inputs.Selevel,
-		Serole:        inputs.Serole,
-		Setype:        inputs.Setype,
-		Seuser:        inputs.Seuser,
-		UnsafeWrites:  inputs.UnsafeWrites,
-		Validate:      inputs.Validate,
-	}
-	return params, nil
-}
-
-func (r File) argsToStatTaskParameters(inputs FileArgs) (ansible.StatParameters, error) {
-	return ansible.StatParameters{
-		Follow: inputs.Follow,
-		Path:   inputs.Path,
-	}, nil
-}
-
 func (r File) updateState(inputs FileArgs, state FileState, changed bool) FileState {
 	state.FileArgs = inputs
 	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
-func (r File) Diff(ctx context.Context, req infer.DiffRequest[FileArgs, FileState]) (infer.DiffResponse, error) {
+func (r File) inferEnsure(inputs FileArgs, fallback FileEnsure) FileEnsure {
+	if inputs.Ensure != nil {
+		return *inputs.Ensure
+	}
+	return fallback
+}
+
+func (r File) Check(
+	ctx context.Context,
+	req infer.CheckRequest,
+) (infer.CheckResponse[FileArgs], error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.Check", trace.WithAttributes(
+		attribute.String("pulumi.type", "mid:resource:File"),
+		attribute.String("pulumi.name", req.Name),
+		attribute.String("pulumi.old_inputs", fmt.Sprintf("%#v", req.OldInputs)),
+		attribute.String("pulumi.new_inputs", fmt.Sprintf("%#v", req.NewInputs)),
+	))
+	defer span.End()
+
+	inputs, failures, err := infer.DefaultCheck[FileArgs](ctx, req.NewInputs)
+
+	defer span.SetAttributes(
+		telemetry.OtelJSON("pulumi.check.inputs", inputs),
+		telemetry.OtelJSON("pulumi.check.failures", failures),
+	)
+
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return infer.CheckResponse[FileArgs]{
+			Inputs:   inputs,
+			Failures: failures,
+		}, err
+	}
+
+	if inputs.Content != nil && inputs.Source != nil {
+		failures = append(failures, p.CheckFailure{
+			Property: "content",
+			Reason:   "content and source are mutually exclusive",
+		})
+	}
+
+	if inputs.Source != nil && inputs.RemoteSource != nil {
+		failures = append(failures, p.CheckFailure{
+			Property: "source",
+			Reason:   "source and remoteSource are mutually exclusive",
+		})
+	}
+
+	if inputs.Content != nil && inputs.RemoteSource != nil {
+		failures = append(failures, p.CheckFailure{
+			Property: "content",
+			Reason:   "content and remoteSource are mutually exclusive",
+		})
+	}
+
+	if inputs.Ensure != nil {
+		switch *inputs.Ensure {
+		case FileEnsureFile:
+			break
+
+		case FileEnsureDirectory:
+			break
+
+		case FileEnsureAbsent:
+			if inputs.Source != nil || inputs.RemoteSource != nil || inputs.Content != nil {
+				failures = append(failures, p.CheckFailure{
+					Property: "ensure",
+					Reason:   "ensure=absent cannot be used with content, source, or remoteSource",
+				})
+			}
+
+		case FileEnsureHard:
+			if inputs.Source != nil || inputs.Content != nil {
+				failures = append(failures, p.CheckFailure{
+					Property: "ensure",
+					Reason:   "ensure=hard can only be used with remoteSource",
+				})
+			} else if inputs.RemoteSource == nil {
+				failures = append(failures, p.CheckFailure{
+					Property: "ensure",
+					Reason:   "remoteSource must be specified when using ensure=hard",
+				})
+			}
+
+		case FileEnsureLink:
+			if inputs.Source != nil || inputs.Content != nil {
+				failures = append(failures, p.CheckFailure{
+					Property: "ensure",
+					Reason:   "ensure=link can only be used with remoteSource",
+				})
+			} else if inputs.RemoteSource == nil {
+				failures = append(failures, p.CheckFailure{
+					Property: "ensure",
+					Reason:   "remoteSource must be specified when using ensure=link",
+				})
+			}
+
+		default:
+			failures = append(failures, p.CheckFailure{
+				Property: "ensure",
+				Reason:   fmt.Sprintf("ensure=%s is invalid; must be one of {present,absent,hard,link}", *inputs.Ensure),
+			})
+
+		}
+	}
+
+	return infer.CheckResponse[FileArgs]{
+		Inputs:   inputs,
+		Failures: failures,
+	}, nil
+}
+
+func (r File) Diff(
+	ctx context.Context,
+	req infer.DiffRequest[FileArgs, FileState],
+) (infer.DiffResponse, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.Diff", trace.WithAttributes(
 		attribute.String("pulumi.operation", "diff"),
-		attribute.String("pulumi.type", "mid:resource:File"),
+		attribute.String("pulumi.type", "mid:resource:Group"),
 		attribute.String("pulumi.id", req.ID),
 		telemetry.OtelJSON("pulumi.inputs", req.Inputs),
 		telemetry.OtelJSON("pulumi.state", req.State),
 	))
 	defer span.End()
 
-	diff := p.DiffResponse{
-		HasChanges:          false,
-		DetailedDiff:        map[string]p.PropertyDiff{},
-		DeleteBeforeReplace: true,
-	}
-
-	if req.Inputs.Path != req.State.Path {
-		diff.HasChanges = true
-		diff.DetailedDiff["path"] = p.PropertyDiff{
-			Kind:      p.UpdateReplace,
-			InputDiff: true,
-		}
-	}
-
-	diff = types.MergeDiffResponses(
-		diff,
-		types.DiffAttributes(req.State, req.Inputs, []string{
-			"accessTime",
-			"accessTimeFormat",
-			"attributes",
-			"backup",
-			"checksum",
-			"content",
-			"directoryMode",
-			"ensure",
-			"follow",
-			"force",
-			"group",
-			"localFollow",
-			"mode",
-			"modificationTime",
-			"modificationTimeFormat",
-			"owner",
-			"recurse",
-			"remoteSource",
-			"selevel",
-			"serole",
-			"setype",
-			"seuser",
-			"source",
-			"unsafeWrites",
-			"validate",
-		}),
+	diff := pdiff.MergeDiffResponses(
+		p.DiffResponse{},
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{"triggers"}),
 		types.DiffTriggers(req.State, req.Inputs),
 	)
 
@@ -320,52 +222,616 @@ func (r File) Diff(ctx context.Context, req infer.DiffRequest[FileArgs, FileStat
 	return diff, nil
 }
 
-func (r File) runCreateUpdatePlay(
+func (r File) copyNetworkSourceDirectory(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyNetworkSourceDirectory", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	result, err := executor.AnsibleExecute[
+		ansible.UnarchiveParameters,
+		ansible.UnarchiveReturn,
+	](
+		ctx,
+		config.Connection,
+		ansible.UnarchiveParameters{
+			Attributes:   inputs.Attributes,
+			Dest:         inputs.Path,
+			Group:        inputs.Group,
+			Mode:         ptr.ToAny(inputs.Mode),
+			Owner:        inputs.Owner,
+			RemoteSrc:    ptr.Of(true),
+			Selevel:      inputs.Selevel,
+			Serole:       inputs.Serole,
+			Setype:       inputs.Setype,
+			Seuser:       inputs.Seuser,
+			Src:          *inputs.RemoteSource,
+			UnsafeWrites: inputs.UnsafeWrites,
+			// TODO: Exclude:
+			// TODO: ExtraOpts:
+			// TODO: IoBufferSize:
+			// TODO: Exclude:
+			// TODO: Include:
+			// TODO: KeepNewer:
+			// TODO: ValidateCerts:
+		},
+		dryRun,
+	)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	state = r.updateState(inputs, state, result.IsChanged())
+
+	return state, nil
+}
+
+func (r File) copyNetworkSourceFile(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyNetworkSourceFile", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	result, err := executor.AnsibleExecute[
+		ansible.GetUrlParameters,
+		ansible.GetUrlReturn,
+	](
+		ctx,
+		config.Connection,
+		ansible.GetUrlParameters{
+			Attributes:   inputs.Attributes,
+			Backup:       inputs.Backup,
+			Checksum:     inputs.Checksum,
+			Dest:         inputs.Path,
+			Force:        inputs.Force,
+			Group:        inputs.Group,
+			Mode:         ptr.ToAny(inputs.Mode),
+			Owner:        inputs.Owner,
+			Selevel:      inputs.Selevel,
+			Serole:       inputs.Serole,
+			Setype:       inputs.Setype,
+			Seuser:       inputs.Seuser,
+			UnsafeWrites: inputs.UnsafeWrites,
+			Url:          *inputs.RemoteSource,
+			// TODO: Ciphers:
+			// TODO: ClientCert:
+			// TODO: ClientKey:
+			// TODO: Decompress:
+			// TODO: ForceBasicAuth:
+			// TODO: Headers:
+			// TODO: HttpAgent:
+			// TODO: Timeout:
+			// TODO: TmpDest:
+			// TODO: UnredirectedHeaders:
+			// TODO: UrlPassword:
+			// TODO: UrlUsername:
+			// TODO: UseGssapi:
+			// TODO: UseNetrc:
+			// TODO: UseProxy:
+			// TODO: ValidateCerts:
+		},
+		dryRun,
+	)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	state = r.updateState(inputs, state, result.IsChanged())
+
+	return state, nil
+}
+
+func (r File) copyRemoteSourceDirectory(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyRemoteSourceDirectory", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	result, err := executor.AnsibleExecute[
+		ansible.CopyParameters,
+		ansible.CopyReturn,
+	](
+		ctx,
+		config.Connection,
+		ansible.CopyParameters{
+			Attributes:    inputs.Attributes,
+			Dest:          inputs.Path,
+			DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
+			Follow:        inputs.Follow,
+			Force:         inputs.Force,
+			Group:         inputs.Group,
+			Mode:          ptr.ToAny(inputs.Mode),
+			Owner:         inputs.Owner,
+			RemoteSrc:     ptr.Of(true),
+			Selevel:       inputs.Selevel,
+			Serole:        inputs.Serole,
+			Setype:        inputs.Setype,
+			Seuser:        inputs.Seuser,
+			Src:           inputs.RemoteSource,
+			UnsafeWrites:  inputs.UnsafeWrites,
+		},
+		dryRun,
+	)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	state = r.updateState(inputs, state, result.IsChanged())
+
+	return state, nil
+}
+
+func (r File) copyRemoteSourceFile(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyRemoteSourceFile", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	result, err := executor.AnsibleExecute[
+		ansible.CopyParameters,
+		ansible.CopyReturn,
+	](
+		ctx,
+		config.Connection,
+		ansible.CopyParameters{
+			Attributes:    inputs.Attributes,
+			Backup:        inputs.Backup,
+			Checksum:      inputs.Checksum,
+			Content:       inputs.Content,
+			Dest:          inputs.Path,
+			DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
+			Follow:        inputs.Follow,
+			Force:         inputs.Force,
+			Group:         inputs.Group,
+			LocalFollow:   inputs.LocalFollow,
+			Mode:          ptr.ToAny(inputs.Mode),
+			Owner:         inputs.Owner,
+			RemoteSrc:     ptr.Of(true),
+			Selevel:       inputs.Selevel,
+			Serole:        inputs.Serole,
+			Setype:        inputs.Setype,
+			Seuser:        inputs.Seuser,
+			Src:           inputs.RemoteSource,
+			UnsafeWrites:  inputs.UnsafeWrites,
+			Validate:      inputs.Validate,
+		},
+		dryRun,
+	)
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	state.BackupFile = result.BackupFile
+
+	state = r.updateState(inputs, state, result.IsChanged())
+
+	return state, nil
+}
+
+func (r File) copyRemoteSource(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (ansible.FileState, FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyRemoteSource", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	source := *inputs.RemoteSource
+	isNetworkSource := strings.Contains(source, "://")
+	span.SetAttributes(attribute.Bool("is_network_source", isNetworkSource))
+
+	var ansibleFileState ansible.FileState
+	defer span.SetAttributes(attribute.String("ansible_file_state", string(ansibleFileState)))
+
+	var err error
+	if isNetworkSource {
+		if r.inferEnsure(inputs, FileEnsureFile) == FileEnsureDirectory {
+			ansibleFileState = ansible.FileStateDirectory
+			state, err = r.copyNetworkSourceDirectory(ctx, inputs, state, stat, dryRun)
+		} else {
+			ansibleFileState = ansible.FileStateFile
+			state, err = r.copyNetworkSourceFile(ctx, inputs, state, stat, dryRun)
+		}
+	} else {
+		sourceStat, err := executor.CallAgent[
+			rpc.FileStatArgs,
+			rpc.FileStatResult,
+		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+			RPCFunction: rpc.RPCFileStat,
+			Args: rpc.FileStatArgs{
+				Path:              source,
+				FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
+				CalculateChecksum: false,
+			},
+		})
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return ansibleFileState, state, err
+		}
+
+		if !sourceStat.Result.Exists && dryRun {
+			state = r.updateState(inputs, state, true)
+			span.SetStatus(codes.Ok, "")
+			return ansibleFileState, state, nil
+		}
+
+		fallbackEnsure := FileEnsureFile
+		if sourceStat.Result.FileMode.IsDir() {
+			fallbackEnsure = FileEnsureDirectory
+		}
+
+		if r.inferEnsure(inputs, fallbackEnsure) == FileEnsureDirectory {
+			ansibleFileState = ansible.FileStateDirectory
+			state, err = r.copyRemoteSourceDirectory(ctx, inputs, state, stat, dryRun)
+		} else {
+			ansibleFileState = ansible.FileStateFile
+			state, err = r.copyRemoteSourceFile(ctx, inputs, state, stat, dryRun)
+		}
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return ansibleFileState, state, err
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return ansibleFileState, state, nil
+}
+
+func (r File) copyLocalSourceArchive(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyLocalSourceArchive", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	archive := inputs.Source.Archive
+
+	if dryRun && !archive.HasContents() {
+		state = r.updateState(inputs, state, true)
+		state.Stat.SHA256Checksum = nil
+		span.SetStatus(codes.Ok, "")
+		return state, nil
+	}
+
+	if dryRun && stat.Exists && stat.SHA256Checksum != nil {
+		reader, err := archive.Open()
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		var innerError error
+		hash, outterError := dirhash.Dirhash(func(yield func(string, io.ReadCloser) bool) {
+			for {
+				name, blob, err := reader.Next()
+				fclose := func() {
+					if blob != nil {
+						err := blob.Close()
+						if err != nil {
+							innerError = errors.Join(innerError, err)
+						}
+					}
+				}
+				if errors.Is(err, io.EOF) {
+					fclose()
+					return
+				}
+				if err != nil {
+					innerError = errors.Join(innerError, err)
+					fclose()
+					return
+				}
+				if !yield(path.Join(inputs.Path, name), blob) {
+					fclose()
+					return
+				}
+				fclose()
+			}
+		})
+
+		err = errors.Join(outterError, innerError)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		if hash != *stat.SHA256Checksum {
+			state = r.updateState(inputs, state, true)
+		}
+
+		state.Stat = types.FileStatStateFromRPCResult(stat)
+	} else {
+		// FIXME: the TarGZIPArchive format is broken because the gzip.Writer is
+		// never closed. This is an upstream Pulumi SDK bug.
+		bbuf := bytes.Buffer{}
+		zbuf := gzip.NewWriter(&bbuf)
+
+		err := archive.Archive(parchive.TarArchive, zbuf)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		err = zbuf.Close()
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		stagedPath, err := executor.StageFile(ctx, config.Connection, &bbuf)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		result, err := executor.AnsibleExecute[
+			ansible.CopyParameters,
+			ansible.CopyReturn,
+		](
+			ctx,
+			config.Connection,
+			ansible.CopyParameters{
+				Attributes:    inputs.Attributes,
+				Dest:          inputs.Path,
+				DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
+				Follow:        inputs.Follow,
+				Force:         inputs.Force,
+				Group:         inputs.Group,
+				Mode:          ptr.ToAny(inputs.Mode),
+				Owner:         inputs.Owner,
+				RemoteSrc:     ptr.Of(true),
+				Selevel:       inputs.Selevel,
+				Serole:        inputs.Serole,
+				Setype:        inputs.Setype,
+				Seuser:        inputs.Seuser,
+				Src:           &stagedPath,
+				UnsafeWrites:  inputs.UnsafeWrites,
+			},
+			dryRun,
+		)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		state = r.updateState(inputs, state, result.IsChanged())
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return state, nil
+}
+
+func (r File) copyLocalSourceAsset(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyLocalSourceAsset", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	config := infer.GetConfig[types.Config](ctx)
+
+	var asset *resource.Asset
+	var err error
+	if inputs.Content != nil {
+		asset, err = passet.FromText(*inputs.Content)
+	} else {
+		asset = inputs.Source.Asset
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	if dryRun && !asset.HasContents() {
+		state = r.updateState(inputs, state, true)
+		state.Stat.SHA256Checksum = nil
+		span.SetStatus(codes.Ok, "")
+		return state, nil
+	}
+
+	if dryRun && stat.Exists && stat.SHA256Checksum != nil {
+		if asset.Hash != *stat.SHA256Checksum {
+			state = r.updateState(inputs, state, true)
+		}
+
+		state.Stat = types.FileStatStateFromRPCResult(stat)
+	} else {
+		blob, err := asset.Read()
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		defer blob.Close()
+
+		stagedPath, err := executor.StageFile(ctx, config.Connection, blob)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		result, err := executor.AnsibleExecute[
+			ansible.CopyParameters,
+			ansible.CopyReturn,
+		](
+			ctx,
+			config.Connection,
+			ansible.CopyParameters{
+				Attributes:    inputs.Attributes,
+				Backup:        inputs.Backup,
+				Checksum:      inputs.Checksum,
+				Dest:          inputs.Path,
+				DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
+				Follow:        inputs.Follow,
+				Force:         inputs.Force,
+				Group:         inputs.Group,
+				Mode:          ptr.ToAny(inputs.Mode),
+				Owner:         inputs.Owner,
+				RemoteSrc:     ptr.Of(true),
+				Selevel:       inputs.Selevel,
+				Serole:        inputs.Serole,
+				Setype:        inputs.Setype,
+				Seuser:        inputs.Seuser,
+				Src:           &stagedPath,
+				UnsafeWrites:  inputs.UnsafeWrites,
+				Validate:      inputs.Validate,
+			},
+			dryRun,
+		)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		state = r.updateState(inputs, state, result.IsChanged())
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return state, nil
+}
+
+func (r File) copyLocalSource(
+	ctx context.Context,
+	inputs FileArgs,
+	state FileState,
+	stat rpc.FileStatResult,
+	dryRun bool,
+) (ansible.FileState, FileState, error) {
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.copyLocalSource", trace.WithAttributes(
+		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
+		telemetry.OtelJSON("stat", stat),
+		attribute.Bool("dry_run", dryRun),
+	))
+	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
+
+	fallbackEnsure := FileEnsureFile
+	if inputs.Source != nil && inputs.Source.Archive != nil {
+		fallbackEnsure = FileEnsureDirectory
+	}
+
+	var ansibleFileState ansible.FileState
+	defer span.SetAttributes(attribute.String("ansible_file_state", string(ansibleFileState)))
+
+	ensure := r.inferEnsure(inputs, fallbackEnsure)
+	if ensure == FileEnsureDirectory {
+		ansibleFileState = ansible.FileStateDirectory
+	} else {
+		ansibleFileState = ansible.FileStateFile
+	}
+
+	var err error
+	if ensure == FileEnsureDirectory {
+		state, err = r.copyLocalSourceArchive(ctx, inputs, state, stat, dryRun)
+	} else {
+		state, err = r.copyLocalSourceAsset(ctx, inputs, state, stat, dryRun)
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return ansibleFileState, state, err
+	}
+
+	span.SetStatus(codes.Ok, "")
+	return ansibleFileState, state, nil
+}
+
+func (r File) createOrUpdate(
 	ctx context.Context,
 	inputs FileArgs,
 	state FileState,
 	dryRun bool,
 ) (FileState, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:File.runCreateUpdatePlay", trace.WithAttributes(
-		telemetry.OtelJSON("state", state),
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.createOrUpdate", trace.WithAttributes(
 		telemetry.OtelJSON("inputs", inputs),
+		telemetry.OtelJSON("state.initial", state),
 		attribute.Bool("dry_run", dryRun),
 	))
 	defer span.End()
+	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
 	config := infer.GetConfig[types.Config](ctx)
-	// several scenarios:
-	// are we copying a local file to remote?
-	//   - `copy` task
-	// are we copying a remote file to remote?
-	//   - `copy` task
-	// are we setting the content of a remote file?
-	//   - `copy` task
-	// are we tweaking some metadata of an existing remote file?
-	//   - `file` task
-	// are we creating a symlink?
-	//   - `file` task
-
-	copyNeeded := ptr.AnyNonNils(
-		inputs.Source,
-		inputs.Content,
-	)
-
-	fileNeeded := ptr.AnyNonNils(
-		inputs.AccessTime,
-		inputs.AccessTimeFormat,
-		inputs.ModificationTime,
-		inputs.ModificationTimeFormat,
-		inputs.Recurse,
-		inputs.Ensure,
-	)
-
-	defer func() {
-		span.SetAttributes(
-			attribute.Bool("copy_needed", copyNeeded),
-			attribute.Bool("file_needed", fileNeeded),
-		)
-	}()
 
 	if executor.PreviewUnreachable(ctx, config.Connection, dryRun) {
 		span.SetAttributes(attribute.Bool("unreachable", true))
@@ -374,10 +840,7 @@ func (r File) runCreateUpdatePlay(
 		return state, nil
 	}
 
-	changed := false
-	defer span.SetAttributes(attribute.Bool("changed", changed))
-
-	stat, err := executor.CallAgent[
+	statResult, err := executor.CallAgent[
 		rpc.FileStatArgs,
 		rpc.FileStatResult,
 	](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
@@ -393,210 +856,137 @@ func (r File) runCreateUpdatePlay(
 		return state, err
 	}
 
-	if copyNeeded {
-		remoteSource := false
-		if inputs.RemoteSource != nil && *inputs.RemoteSource != "" {
-			remoteSource = true
-		}
+	stat := statResult.Result
 
-		params, err := r.argsToCopyTaskParameters(inputs)
+	if !stat.Exists && dryRun {
+		// exit early if the parent dir doesn't exist
+		dir := filepath.Dir(inputs.Path)
+		span.SetAttributes(attribute.String("parent_directory.path", dir))
+
+		dirStat, err := executor.CallAgent[
+			rpc.FileStatArgs,
+			rpc.FileStatResult,
+		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+			RPCFunction: rpc.RPCFileStat,
+			Args: rpc.FileStatArgs{
+				Path:              dir,
+				CalculateChecksum: false,
+				FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
+			},
+		})
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 
-		if remoteSource {
-			params.Src = inputs.RemoteSource
-			params.RemoteSrc = ptr.Of(true)
-		} else {
-			fileCopyPlan, err := r.buildFileCopyPlan(inputs)
-			span.SetAttributes(
-				attribute.String("file_copy_path.strategy", string(fileCopyPlan.Strategy)),
-				attribute.Bool("file_copy_path.unarchive", fileCopyPlan.Unarchive),
-			)
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return state, err
-			}
+		span.SetAttributes(attribute.Bool("parent_directory.exists", dirStat.Result.Exists))
 
-			switch fileCopyPlan.Strategy {
-			case FileCopyPlanInvalid:
-				err = fmt.Errorf("invalid file copy plan: %#v", fileCopyPlan)
-				span.SetStatus(codes.Error, err.Error())
-				return state, err
-
-			case FileCopyPlanNop, FileCopyPlanRemoteSource:
-				break
-
-			case FileCopyPlanInlineContent:
-				params.Content = inputs.Content
-				break
-
-			case FileCopyPlanChecksumCompare:
-				if !dryRun {
-					err = fmt.Errorf("unable to update file due to the source not being loaded")
-					span.SetStatus(codes.Error, err.Error())
-					return state, err
-				}
-
-				if !stat.Result.Exists || stat.Result.SHA256Checksum == nil {
-					changed = true
-				}
-
-				if fileCopyPlan.Hash != *stat.Result.SHA256Checksum {
-					changed = true
-				}
-				goto fileNeeded
-
-			default:
-				if fileCopyPlan.Reader == nil {
-					err = fmt.Errorf("unsupported file copy plan: %s", fileCopyPlan.Strategy)
-					span.SetStatus(codes.Error, err.Error())
-					return state, err
-				}
-
-				// TODO: only conditionally copy based on stat and checksum
-				params.RemoteSrc = ptr.Of(true)
-				stagedPath, err := executor.StageFile(ctx, config.Connection, fileCopyPlan.Reader)
-				if err != nil {
-					span.SetStatus(codes.Error, err.Error())
-					return state, err
-				}
-
-				if fileCopyPlan.Unarchive {
-					result, err := executor.CallAgent[
-						rpc.UntarArgs,
-						rpc.UntarResult,
-					](ctx, config.Connection, rpc.RPCCall[rpc.UntarArgs]{
-						RPCFunction: rpc.RPCUntar,
-						Args: rpc.UntarArgs{
-							SourceFilePath:  stagedPath,
-							TargetDirectory: stagedPath + ".unarchived",
-						},
-					})
-					if err != nil {
-						return state, err
-					}
-					if result.Error != "" {
-						return state, errors.New(result.Error)
-					}
-					params.Src = ptr.Of(stagedPath + ".unarchived")
-				} else {
-					params.Src = &stagedPath
-				}
-			}
-		}
-
-		if dryRun {
-			// exit early if the parent dir doesn't exist
-			dir := filepath.Dir(params.Dest)
-			span.SetAttributes(attribute.String("parent_directory.path", dir))
-
-			dirStat, err := executor.CallAgent[
-				rpc.FileStatArgs,
-				rpc.FileStatResult,
-			](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
-				RPCFunction: rpc.RPCFileStat,
-				Args: rpc.FileStatArgs{
-					Path:              dir,
-					CalculateChecksum: false,
-					FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
-				},
-			})
-			if err != nil {
-				span.SetStatus(codes.Error, err.Error())
-				return state, err
-			}
-
-			span.SetAttributes(attribute.Bool("parent_directory.exists", dirStat.Result.Exists))
-
-			if !dirStat.Result.Exists {
-				span.SetStatus(codes.Ok, "")
-				state = r.updateState(inputs, state, true)
-				return state, err
-			}
-		}
-
-		result, err := executor.AnsibleExecute[
-			ansible.CopyParameters,
-			ansible.CopyReturn,
-		](ctx, config.Connection, params, dryRun)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
+		if !dirStat.Result.Exists {
+			span.SetStatus(codes.Ok, "")
+			state = r.updateState(inputs, state, true)
 			return state, err
 		}
-
-		if result.IsChanged() {
-			changed = true
-		}
-
-		state.BackupFile = result.BackupFile
 	}
 
-fileNeeded:
-	if fileNeeded {
-		params, err := r.argsToFileTaskParameters(inputs)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return state, err
+	var ansibleState ansible.FileState
+	if inputs.Ensure != nil {
+		span.SetAttributes(attribute.Bool("ansible_file_state.inferred", false))
+		switch *inputs.Ensure {
+		case FileEnsureFile:
+			ansibleState = ansible.FileStateFile
+		case FileEnsureDirectory:
+			ansibleState = ansible.FileStateDirectory
+		case FileEnsureAbsent:
+			ansibleState = ansible.FileStateAbsent
+		case FileEnsureHard:
+			ansibleState = ansible.FileStateHard
+		case FileEnsureLink:
+			ansibleState = ansible.FileStateLink
 		}
+	}
+
+	var fallbackAnsibleState ansible.FileState
+	if inputs.RemoteSource != nil {
+		fallbackAnsibleState, state, err = r.copyRemoteSource(ctx, inputs, state, stat, dryRun)
+	} else if inputs.Source != nil || inputs.Content != nil {
+		fallbackAnsibleState, state, err = r.copyLocalSource(ctx, inputs, state, stat, dryRun)
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
+
+	if ansibleState == "" {
+		span.SetAttributes(attribute.Bool("ansible_file_state.inferred", true))
+		if fallbackAnsibleState != "" {
+			ansibleState = fallbackAnsibleState
+		} else {
+			ansibleState = ansible.FileStateTouch
+		}
+	}
+
+	span.SetAttributes(attribute.String("ansible_file_state", string(ansibleState)))
+
+	if stat.Exists || !dryRun {
 		result, err := executor.AnsibleExecute[
 			ansible.FileParameters,
 			ansible.FileReturn,
-		](ctx, config.Connection, params, dryRun)
+		](
+			ctx,
+			config.Connection,
+			ansible.FileParameters{
+				AccessTime:             inputs.AccessTime,
+				AccessTimeFormat:       inputs.AccessTimeFormat,
+				Attributes:             inputs.Attributes,
+				Follow:                 inputs.Follow,
+				Force:                  inputs.Force,
+				Group:                  inputs.Group,
+				Mode:                   ptr.ToAny(inputs.Mode),
+				ModificationTime:       inputs.ModificationTime,
+				ModificationTimeFormat: inputs.ModificationTimeFormat,
+				Owner:                  inputs.Owner,
+				Path:                   inputs.Path,
+				Recurse:                inputs.Recurse,
+				Selevel:                inputs.Selevel,
+				Serole:                 inputs.Serole,
+				Setype:                 inputs.Setype,
+				Seuser:                 inputs.Seuser,
+				Src:                    inputs.RemoteSource,
+				State:                  ansible.OptionalFileState(ansibleState),
+				UnsafeWrites:           inputs.UnsafeWrites,
+			},
+			dryRun,
+		)
 		if err != nil {
-			if !dryRun {
-				span.SetStatus(codes.Error, err.Error())
-				return state, err
-			}
-			changed = true
-		}
-		if result.IsChanged() {
-			changed = true
-		}
-	}
-
-	statParams, err := r.argsToStatTaskParameters(inputs)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return state, err
-	}
-	statResult, err := executor.AnsibleExecute[
-		ansible.StatParameters,
-		ansible.StatReturn,
-	](ctx, config.Connection, statParams, dryRun)
-	if err != nil {
-		if !dryRun {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
-		changed = true
-	}
-	if statResult.IsChanged() {
-		changed = true
-	}
 
-	state = r.updateState(inputs, state, changed)
-
-	stat, err = executor.CallAgent[
-		rpc.FileStatArgs,
-		rpc.FileStatResult,
-	](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
-		RPCFunction: rpc.RPCFileStat,
-		Args: rpc.FileStatArgs{
-			Path:              inputs.Path,
-			FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
-			CalculateChecksum: true,
-		},
-	})
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return state, err
+		state = r.updateState(inputs, state, result.IsChanged())
+	} else {
+		state = r.updateState(inputs, state, true)
 	}
 
-	state.Stat = types.FileStatStateFromRPCResult(stat.Result)
+	if !dryRun {
+		statResult, err := executor.CallAgent[
+			rpc.FileStatArgs,
+			rpc.FileStatResult,
+		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+			RPCFunction: rpc.RPCFileStat,
+			Args: rpc.FileStatArgs{
+				Path:              inputs.Path,
+				FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
+				CalculateChecksum: false,
+			},
+		})
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
 
-	span.SetStatus(codes.Ok, "")
+		state.Stat = types.FileStatStateFromRPCResult(statResult.Result)
+	}
+
 	return state, nil
 }
 
@@ -626,7 +1016,7 @@ func (r File) Create(
 	}
 	span.SetAttributes(attribute.String("pulumi.id", id))
 
-	state, err = r.runCreateUpdatePlay(ctx, req.Inputs, state, req.DryRun)
+	state, err = r.createOrUpdate(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[FileState]{
@@ -658,7 +1048,7 @@ func (r File) Read(
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	state, err := r.runCreateUpdatePlay(ctx, req.Inputs, state, true)
+	state, err := r.createOrUpdate(ctx, req.Inputs, state, true)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.ReadResponse[FileArgs, FileState]{
@@ -693,7 +1083,7 @@ func (r File) Update(
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	state, err := r.runCreateUpdatePlay(ctx, req.Inputs, state, req.DryRun)
+	state, err := r.createOrUpdate(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.UpdateResponse[FileState]{
@@ -707,7 +1097,10 @@ func (r File) Update(
 	}, nil
 }
 
-func (r File) Delete(ctx context.Context, req infer.DeleteRequest[FileState]) (infer.DeleteResponse, error) {
+func (r File) Delete(
+	ctx context.Context,
+	req infer.DeleteRequest[FileState],
+) (infer.DeleteResponse, error) {
 	ctx, span := Tracer.Start(ctx, "mid:resource:File.Delete", trace.WithAttributes(
 		attribute.String("pulumi.operation", "delete"),
 		attribute.String("pulumi.type", "mid:resource:File"),
@@ -716,39 +1109,20 @@ func (r File) Delete(ctx context.Context, req infer.DeleteRequest[FileState]) (i
 	))
 	defer span.End()
 
-	shouldDelete := ptr.AnyNonNils(
-		req.State.Source,
-		req.State.Content,
-		req.State.AccessTime,
-		req.State.AccessTimeFormat,
-		req.State.ModificationTime,
-		req.State.ModificationTimeFormat,
-		req.State.Recurse,
-		req.State.Ensure,
-	)
-
-	span.SetAttributes(attribute.Bool("should_delete", shouldDelete))
-
-	if !shouldDelete {
-		span.SetStatus(codes.Ok, "")
-		return infer.DeleteResponse{}, nil
-	}
-
 	config := infer.GetConfig[types.Config](ctx)
 
-	parameters, err := r.argsToFileTaskParameters(FileArgs{
-		Path:   req.State.Path,
-		Ensure: (*FileEnsure)(ptr.Of(string(FileEnsureAbsent))),
-	})
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return infer.DeleteResponse{}, err
-	}
-
-	_, err = executor.AnsibleExecute[
+	_, err := executor.AnsibleExecute[
 		ansible.FileParameters,
 		ansible.FileReturn,
-	](ctx, config.Connection, parameters, false)
+	](
+		ctx,
+		config.Connection,
+		ansible.FileParameters{
+			Path:  req.State.Path,
+			State: ansible.OptionalFileState(ansible.FileStateAbsent),
+		},
+		false,
+	)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -756,6 +1130,7 @@ func (r File) Delete(ctx context.Context, req infer.DeleteRequest[FileState]) (i
 			span.SetStatus(codes.Ok, "")
 			return infer.DeleteResponse{}, nil
 		}
+
 		span.SetStatus(codes.Error, err.Error())
 		return infer.DeleteResponse{}, err
 	}
