@@ -108,28 +108,46 @@ func (harness *ProviderTestHarness) AssertCommand(t *testing.T, cmd string) bool
 type Operation struct {
 	// The inputs for the operation
 	Inputs property.Map
-	// The expected output for the operation. If ExpectedOutput is nil, no check will be made.
+
+	// The expected output for the operation. If ExpectedOutput is nil, no check
+	// will be made.
 	ExpectedOutput *property.Map
+
 	// A function called on the output of this operation.
 	Hook func(inputs, output property.Map)
+
 	// If the test should expect the operation to signal an error.
 	ExpectFailure bool
-	// If CheckFailures is non-nil, expect the check step to fail with the provided output.
+
+	// If CheckFailures is non-nil, expect the check step to fail with the
+	// provided output.
 	CheckFailures []p.CheckFailure
+
 	// The expected diff for this operation
 	ExpectedDiff *p.DiffResponse
+
 	// Command to run to assert test success
 	AssertCommand string
+
 	// Command to run before running the operation
 	AssertBeforeCommand string
+
 	// Command to run after the dry run but before the real operation
 	AssertAfterDryRunCommand string
+
+	// Command to run between delete and create operations in a replace-update
+	// operation
+	AssertInMiddleOfReplaceCommand string
+
 	// Run a "refresh" (read) before the operation. Ignored on create.
 	Refresh bool
+
 	// If the test should expect the "refresh" to fail.
 	ExpectRefreshFailure bool
+
 	// A function called on the read outputs
 	RefreshHook func(p.ReadResponse, error)
+
 	// Command to run after refresh (if enabled)
 	AssertAfterRefreshCommand string
 }
@@ -233,13 +251,6 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 			assert.EqualValues(t, *op.ExpectedOutput, createResponse.Properties, "create outputs")
 		}
 
-		if op.AssertCommand != "" {
-			t.Logf("running after create command %q", op.AssertCommand)
-			if !harness.AssertCommand(t, op.AssertCommand) {
-				return createResponse, false
-			}
-		}
-
 		return createResponse, true
 	}
 
@@ -247,6 +258,13 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 	if !keepGoing {
 		t.Log("create operation signaled the test to stop")
 		return
+	}
+
+	if l.Create.AssertCommand != "" {
+		t.Logf("running after create command %q", l.Create.AssertCommand)
+		if !harness.AssertCommand(t, l.Create.AssertCommand) {
+			return
+		}
 	}
 
 	id := createResponse.ID
@@ -373,6 +391,13 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 
 				runDelete()
 
+				if update.AssertInMiddleOfReplaceCommand != "" {
+					t.Logf("running in-middle-of-replace command %q", update.AssertInMiddleOfReplaceCommand)
+					if !harness.AssertCommand(t, update.AssertInMiddleOfReplaceCommand) {
+						return
+					}
+				}
+
 				result, keepGoing := runCreate(update)
 				if !keepGoing {
 					t.Log("create signaled the test to continue to next operation")
@@ -387,6 +412,13 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 				if !keepGoing {
 					t.Log("create signaled the test to continue to next operation")
 					continue
+				}
+
+				if update.AssertInMiddleOfReplaceCommand != "" {
+					t.Logf("running in-middle-of-replace command %q", update.AssertInMiddleOfReplaceCommand)
+					if !harness.AssertCommand(t, update.AssertInMiddleOfReplaceCommand) {
+						return
+					}
 				}
 
 				runDelete()
