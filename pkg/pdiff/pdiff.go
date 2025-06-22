@@ -17,6 +17,9 @@ import (
 // DiffAttributes performs deep equality on two structs only for the attributes
 // provided and returns a DiffResponse
 func DiffAttributes(inputs any, state any, attributes []string) p.DiffResponse {
+	inputProps, err := introspect.FindProperties(reflect.TypeOf(inputs))
+	contract.AssertNoErrorf(err, "could not get properties")
+
 	encoder := &ende.Encoder{}
 
 	inputsMap, err := encoder.Encode(inputs)
@@ -33,19 +36,26 @@ func DiffAttributes(inputs any, state any, attributes []string) p.DiffResponse {
 	}
 
 	objDiff := oldInputsMap.Diff(inputsMap)
-	pluginDiff := plugin.NewDetailedDiffFromObjectDiff(objDiff, false)
+	pluginDiff := plugin.NewDetailedDiffFromObjectDiff(objDiff, true)
 	diff := map[string]p.PropertyDiff{}
 
 	for k, v := range pluginDiff {
 		if !slices.Contains(attributes, k) {
 			continue
 		}
+
 		set := func(kind p.DiffKind) {
 			diff[k] = p.PropertyDiff{
 				Kind:      kind,
 				InputDiff: v.InputDiff,
 			}
 		}
+
+		fieldTag := inputProps[k]
+		if fieldTag.ReplaceOnChanges {
+			v.Kind = v.Kind.AsReplace()
+		}
+
 		switch v.Kind {
 		case plugin.DiffAdd:
 			set(p.Add)
