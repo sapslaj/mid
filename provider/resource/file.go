@@ -871,7 +871,7 @@ func (r File) copyLocalSourceAsset(
 		attribute.Bool("asset.has_contents", asset.HasContents()),
 	)
 
-	if dryRun && !asset.HasContents() {
+	if dryRun && !asset.HasContents() && asset.Hash == "" {
 		state = r.updateState(inputs, state, true)
 		state = r.updateStateDrifted(inputs, state, []string{sourceProp})
 		state.Stat.SHA256Checksum = nil

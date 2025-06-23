@@ -18,12 +18,12 @@ package ende
 import (
 	"reflect"
 
+	"github.com/pulumi/pulumi-go-provider/infer/types"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource/sig"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/contract"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/mapper"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
-	"github.com/pulumi/pulumi-go-provider/infer/types"
 
 	"github.com/sapslaj/mid/pkg/pulumi-go-provider/introspect"
 	"github.com/sapslaj/mid/pkg/pulumi-go-provider/putil"
