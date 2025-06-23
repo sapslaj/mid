@@ -1100,6 +1100,12 @@ func (r File) createOrUpdate(
 		}
 	}
 
+	if fallbackAnsibleState == "" && !stat.Exists && ansibleState == ansible.FileStateFile {
+		// special case to make sure file gets created if it wouldn't otherwise by
+		// a copy operation
+		ansibleState = ansible.FileStateTouch
+	}
+
 	span.SetAttributes(attribute.String("ansible_file_state", string(ansibleState)))
 
 	if stat.Exists || !dryRun {

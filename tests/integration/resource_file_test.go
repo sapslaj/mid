@@ -42,6 +42,54 @@ func TestResourceFile(t *testing.T) {
 			AssertDeleteCommand: "test ! -f /foo",
 		},
 
+		"empty file": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/foo"),
+					"ensure": property.New("file"),
+				}),
+				AssertCommand: `test -f /foo`,
+			},
+			Updates: []Operation{
+				{
+					Refresh: true,
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/foo"),
+						"ensure": property.New("file"),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+					AssertCommand: `test -f /foo`,
+				},
+			},
+		},
+
+		"empty file with inferred ensure": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path": property.New("/foo"),
+				}),
+				AssertCommand: `test -f /foo`,
+			},
+			Updates: []Operation{
+				{
+					Refresh: true,
+					Inputs: property.NewMap(map[string]property.Value{
+						"path": property.New("/foo"),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+					AssertCommand: `test -f /foo`,
+				},
+			},
+		},
+
 		"directory": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
