@@ -154,6 +154,7 @@ jobs:
       NPM_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GOCOVERDIR: covdatafiles
     steps:
       - uses: actions/checkout@v4
       - name: Setup tools
@@ -165,7 +166,7 @@ jobs:
           role-to-assume: arn:aws:iam::854523357306:role/github-actions
           role-session-name: ${{ env.GITHUB_JOB }}
           aws-region: us-east-1
-      - run: just provider_version=v0.0.0-ci build fmt install
+      - run: just provider_version=v0.0.0-ci provider-debug fmt install
       - name: add GOPATH/bin to PATH
         run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: setup .npmrc
@@ -173,11 +174,22 @@ jobs:
           echo "@sapslaj:registry=https://npm.pkg.github.com" > ~/.npmrc
           echo "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
       - run: go test -timeout=1h -v -race ./tests/acceptance/...
+      - name: Gather coverage
+        if: ${{ always() }}
+        run: go tool covdata textfmt -i=$GOCOVERDIR -o=coverage.out
+      - name: Send coverage
+        if: ${{ always() }}
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: coverage.out
+          flag-name: test-integration
+          parallel: true
 
   send-coverage:
     needs:
       - test-unit
       - test-integration
+      - test-acceptance
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:

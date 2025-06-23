@@ -9,6 +9,10 @@ build: provider sdk-go sdk-nodejs sdk-python
 
 [group('sdk')]
 [group('provider')]
+build-debug: provider-debug sdk-go sdk-nodejs sdk-python
+
+[group('sdk')]
+[group('provider')]
 install: install-provider install-nodejs-sdk
 
 fmt:
@@ -61,11 +65,20 @@ agent-codegen: agent-ansible-bundle
 
 [group('provider')]
 provider: set-version agent-codegen
-  go build -o ./bin/pulumi-resource-mid "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
+  go build \
+    -o ./bin/pulumi-resource-mid \
+    "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
 
 [group('provider')]
 provider-debug: set-version agent-codegen
-  go build -o ./bin/pulumi-resource-mid -gcflags="all=-N -l" "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
+  go build \
+    -o ./bin/pulumi-resource-mid \
+    -race \
+    -cover \
+    -covermode=set \
+    -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/...,github.com/sapslaj/mid/pkg... \
+    -gcflags="all=-N -l" \
+    "github.com/sapslaj/mid/provider/cmd/pulumi-resource-mid"
 
 [group('provider')]
 [group('test')]
