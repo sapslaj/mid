@@ -714,10 +714,20 @@ func (r File) copyLocalSourceArchive(
 	)
 
 	if dryRun && !archive.HasContents() {
-		state = r.updateState(inputs, state, true)
-		state.Stat.SHA256Checksum = nil
-		span.SetStatus(codes.Ok, "")
-		return state, nil
+		if archive.Hash == "" {
+			state = r.updateState(inputs, state, true)
+			state = r.updateStateDrifted(inputs, state, []string{"source"})
+			state.Stat.SHA256Checksum = nil
+			span.SetStatus(codes.Ok, "")
+			return state, nil
+		}
+
+		if state.Source != nil && state.Source.Archive != nil && state.Source.Archive.Hash != archive.Hash {
+			state = r.updateState(inputs, state, true)
+			state = r.updateStateDrifted(inputs, state, []string{"source"})
+			span.SetStatus(codes.Ok, "")
+			return state, nil
+		}
 	}
 
 	if dryRun && stat.Exists && stat.SHA256Checksum != nil {
