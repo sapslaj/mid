@@ -8,11 +8,13 @@ type AnsibleCommonReturns struct {
 	Diff    *any    `json:"diff,omitempty"`
 }
 
-// Returns true if Changed or Diff is set, false otherwise.
+// Returns true if Changed, false otherwise.
 func (returns AnsibleCommonReturns) IsChanged() bool {
-	changed := returns.Changed
-	hasDiff := returns.Diff != nil
-	return changed || hasDiff
+	// NOTE: previous versions checked if `returns.Diff` was set or not. Turns
+	// out that some modules will _always_ output a diff whether there are
+	// changes or not. This results in false positives from this method, so let's
+	// not do that.
+	return returns.Changed
 }
 
 // Returns "msg" if set, empty string if not
