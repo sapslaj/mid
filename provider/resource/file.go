@@ -1182,7 +1182,7 @@ func (r File) Create(
 	ctx context.Context,
 	req infer.CreateRequest[FileArgs],
 ) (infer.CreateResponse[FileState], error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:File.Create", trace.WithAttributes(
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.Create", trace.WithAttributes(
 		attribute.String("pulumi.operation", "create"),
 		attribute.String("pulumi.type", "mid:resource:File"),
 		attribute.String("pulumi.name", req.Name),
@@ -1224,7 +1224,7 @@ func (r File) Read(
 	ctx context.Context,
 	req infer.ReadRequest[FileArgs, FileState],
 ) (infer.ReadResponse[FileArgs, FileState], error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:File.Read", trace.WithAttributes(
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.Read", trace.WithAttributes(
 		attribute.String("pulumi.operation", "read"),
 		attribute.String("pulumi.type", "mid:resource:File"),
 		attribute.String("pulumi.id", req.ID),
@@ -1258,7 +1258,7 @@ func (r File) Update(
 	ctx context.Context,
 	req infer.UpdateRequest[FileArgs, FileState],
 ) (infer.UpdateResponse[FileState], error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:File.Update", trace.WithAttributes(
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.Update", trace.WithAttributes(
 		attribute.String("pulumi.operation", "update"),
 		attribute.String("pulumi.type", "mid:resource:File"),
 		attribute.String("pulumi.id", req.ID),
@@ -1289,7 +1289,7 @@ func (r File) Delete(
 	ctx context.Context,
 	req infer.DeleteRequest[FileState],
 ) (infer.DeleteResponse, error) {
-	ctx, span := Tracer.Start(ctx, "mid:resource:File.Delete", trace.WithAttributes(
+	ctx, span := Tracer.Start(ctx, "mid/provider/resource/File.Delete", trace.WithAttributes(
 		attribute.String("pulumi.operation", "delete"),
 		attribute.String("pulumi.type", "mid:resource:File"),
 		attribute.String("pulumi.id", req.ID),
