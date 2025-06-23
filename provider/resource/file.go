@@ -802,34 +802,19 @@ func (r File) copyLocalSourceArchive(
 			return state, err
 		}
 
-		parameters := r.makeAnsibleCopyParameters(inputs, stat)
-		parameters.Src = &stagedPath
+		_, err = executor.CallAgent[
+			rpc.UntarArgs,
+			rpc.UntarResult,
+		](ctx, config.Connection, rpc.RPCCall[rpc.UntarArgs]{
+			RPCFunction: rpc.RPCUntar,
+			Args: rpc.UntarArgs{
+				SourceFilePath:  stagedPath,
+				TargetDirectory: inputs.Path,
+			},
+		})
 
-		result, err := executor.AnsibleExecute[
-			ansible.CopyParameters,
-			ansible.CopyReturn,
-		](ctx, config.Connection, parameters, dryRun)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return state, err
-		}
-
-		state = r.updateState(inputs, state, result.IsChanged())
-		if result.IsChanged() {
-			state = r.updateStateDrifted(inputs, state, []string{
-				// TODO: filter this down based on resulting diff
-				"attributes",
-				"directoryMode",
-				"group",
-				"mode",
-				"owner",
-				"selevel",
-				"serole",
-				"setype",
-				"seuser",
-				"source",
-			})
-		}
+		state = r.updateState(inputs, state, true)
+		state = r.updateStateDrifted(inputs, state, []string{"source"})
 	}
 
 	span.SetStatus(codes.Ok, "")
