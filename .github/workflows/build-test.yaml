@@ -98,6 +98,7 @@ jobs:
             -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/...,github.com/sapslaj/mid/pkg... \
             ./pkg/... ./provider/...
       - name: Send coverage
+        if: ${{ always() }}
         uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: coverage.out
@@ -135,6 +136,7 @@ jobs:
         env:
           PULUMI_MID_LOG_LEVEL: DEBUG
       - name: Send coverage
+        if: ${{ always() }}
         uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: coverage.out
@@ -176,6 +178,7 @@ jobs:
     needs:
       - test-unit
       - test-integration
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - uses: shogo82148/actions-goveralls@v1
