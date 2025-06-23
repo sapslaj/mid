@@ -51,7 +51,10 @@ func StructToMap(i any) map[string]any {
 			continue
 		}
 
-		m[tag] = value.FieldByIndex(field.Index).Interface()
+		pulumiArray := strings.Split(tag, ",")
+		name := pulumiArray[0]
+
+		m[name] = value.FieldByIndex(field.Index).Interface()
 	}
 	return m
 }
