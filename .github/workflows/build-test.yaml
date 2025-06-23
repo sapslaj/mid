@@ -130,7 +130,7 @@ jobs:
             -race \
             -covermode atomic \
             -coverprofile=coverage.out \
-            -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/... \
+            -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/...,github.com/sapslaj/mid/pkg... \
             ./tests/integration/...
         env:
           PULUMI_MID_LOG_LEVEL: DEBUG
