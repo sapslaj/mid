@@ -73,7 +73,6 @@ provider: set-version agent-codegen
 provider-debug: set-version agent-codegen
   go build \
     -o ./bin/pulumi-resource-mid \
-    -race \
     -cover \
     -covermode=set \
     -coverpkg=github.com/sapslaj/mid/agent,github.com/sapslaj/mid/provider/...,github.com/sapslaj/mid/pkg... \
