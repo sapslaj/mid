@@ -1,0 +1,5 @@
+name: mid-acctest.file-operations
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm

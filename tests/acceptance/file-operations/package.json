@@ -1,0 +1,10 @@
+{
+  "name": "mid-acctest-file-operations",
+  "dependencies": {
+    "@pulumi/aws": "^6.82.2",
+    "@pulumi/command": "^1.1.0",
+    "@pulumi/pulumi": "^3.177.0",
+    "@pulumi/tls": "^5.2.0",
+    "@sapslaj/pulumi-mid": "latest"
+  }
+}
