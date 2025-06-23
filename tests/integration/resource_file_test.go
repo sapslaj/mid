@@ -157,7 +157,7 @@ func TestResourceFile(t *testing.T) {
 						"content": property.New("bar\n"),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"path": {
@@ -166,9 +166,16 @@ func TestResourceFile(t *testing.T) {
 							},
 						},
 					},
+					AssertInMiddleOfReplaceCommand: `set -eu
+						ls -lah /foo /bar || true
+						test -f /foo
+						test -f /bar
+					`,
 					AssertCommand: `set -eu
+						ls -lah /foo /bar || true
 						test ! -f /foo
 						test -f /bar
+						cat /bar
 						grep -q ^bar /bar
 					`,
 				},
@@ -193,16 +200,17 @@ func TestResourceFile(t *testing.T) {
 					AssertBeforeCommand: "echo baz | sudo tee -a /foo",
 					Refresh:             true,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"content": {
 								Kind:      p.Update,
-								InputDiff: true,
+								InputDiff: false,
 							},
 						},
 					},
 					AssertCommand: `set -eu
+						ls -lah /foo || true
 						test -f /foo
 						grep -q ^bar /foo
 					`,

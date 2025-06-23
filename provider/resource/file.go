@@ -9,6 +9,9 @@ import (
 	"io"
 	"path"
 	"path/filepath"
+	"reflect"
+	"slices"
+	"strconv"
 	"strings"
 
 	p "github.com/pulumi/pulumi-go-provider"
@@ -26,6 +29,7 @@ import (
 	"github.com/sapslaj/mid/pkg/dirhash"
 	"github.com/sapslaj/mid/pkg/pdiff"
 	"github.com/sapslaj/mid/pkg/ptr"
+	"github.com/sapslaj/mid/pkg/pulumi-go-provider/introspect"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -76,6 +80,7 @@ type FileArgs struct {
 type FileState struct {
 	FileArgs
 	BackupFile *string              `pulumi:"backupFile,optional"`
+	Drifted    []string             `pulumi:"_drifted"`
 	Stat       types.FileStatState  `pulumi:"stat"`
 	Triggers   types.TriggersOutput `pulumi:"triggers"`
 }
@@ -83,6 +88,36 @@ type FileState struct {
 func (r File) updateState(inputs FileArgs, state FileState, changed bool) FileState {
 	state.FileArgs = inputs
 	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	return state
+}
+
+func (r File) updateStateDrifted(inputs FileArgs, state FileState, props []string) FileState {
+	inputsMap := introspect.StructToMap(inputs)
+	if state.Drifted == nil {
+		state.Drifted = []string{}
+	}
+	for _, prop := range props {
+		val, ok := inputsMap[prop]
+		if !ok || val == nil {
+			continue
+		}
+		rv := reflect.ValueOf(val)
+		if slices.Contains([]reflect.Kind{
+			reflect.Chan,
+			reflect.Func,
+			reflect.Interface,
+			reflect.Map,
+			reflect.Pointer,
+			reflect.Slice,
+		}, rv.Type().Kind()) {
+			if rv.IsNil() {
+				continue
+			}
+		}
+		if !slices.Contains(state.Drifted, prop) {
+			state.Drifted = append(state.Drifted, prop)
+		}
+	}
 	return state
 }
 
@@ -211,8 +246,20 @@ func (r File) Diff(
 	))
 	defer span.End()
 
-	diff := pdiff.MergeDiffResponses(
-		p.DiffResponse{},
+	diff := p.DiffResponse{
+		DetailedDiff: map[string]p.PropertyDiff{},
+	}
+
+	for _, prop := range req.State.Drifted {
+		diff.HasChanges = true
+		diff.DetailedDiff[prop] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	diff = pdiff.MergeDiffResponses(
+		diff,
 		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{"triggers"}),
 		types.DiffTriggers(req.State, req.Inputs),
 	)
@@ -220,6 +267,87 @@ func (r File) Diff(
 	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
 	return diff, nil
+}
+
+func (r File) makeAnsibleCopyParameters(inputs FileArgs, stat rpc.FileStatResult) ansible.CopyParameters {
+	parameters := ansible.CopyParameters{
+		Attributes:    inputs.Attributes,
+		Backup:        inputs.Backup,
+		Checksum:      inputs.Checksum,
+		Content:       inputs.Content,
+		Dest:          inputs.Path,
+		DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
+		Follow:        inputs.Follow,
+		Force:         inputs.Force,
+		Group:         inputs.Group,
+		LocalFollow:   inputs.LocalFollow,
+		Mode:          ptr.ToAny(inputs.Mode),
+		Owner:         inputs.Owner,
+		RemoteSrc:     ptr.Of(true),
+		Selevel:       inputs.Selevel,
+		Serole:        inputs.Serole,
+		Setype:        inputs.Setype,
+		Seuser:        inputs.Seuser,
+		Src:           inputs.RemoteSource,
+		UnsafeWrites:  inputs.UnsafeWrites,
+		Validate:      inputs.Validate,
+	}
+	// for some insane reason, I need to do this because `copy` will do different
+	// things depending on whether the destination is a new file or not. To quote:
+	//
+	//   - If `mode` is not specified and the destination filesystem object _does
+	//     not_ exist, the default `umask` on the system will be used when setting
+	//     the mode for the newly created filesystem object.
+	//   - If `mode` is not specified and the destination filesystem object
+	//     _does_ exist, the mode of the existing filesystem object will be used.
+	//
+	// Ridiculous.
+	if stat.Exists {
+		// TODO: support attributes
+		if parameters.Mode == nil && stat.FileMode != nil {
+			parameters.Mode = ptr.ToAny(ptr.Of("0" + strconv.FormatUint(uint64(*stat.FileMode), 8)))
+		}
+		if parameters.Group == nil && stat.GroupName != nil {
+			parameters.Group = stat.GroupName
+		}
+		if parameters.Owner == nil && stat.UserName != nil {
+			parameters.Owner = stat.UserName
+		}
+	}
+	return parameters
+}
+
+func (r File) ansibleFileDiffedAttributes(result ansible.FileReturn) []string {
+	if result.Diff == nil {
+		return []string{}
+	}
+	data, ok := (*result.Diff).(map[string]any)
+	if !ok {
+		return []string{}
+	}
+	beforeAny, ok := data["before"]
+	if !ok {
+		return []string{}
+	}
+	before, ok := beforeAny.(map[string]any)
+	if !ok {
+		return []string{}
+	}
+	afterAny, ok := data["after"]
+	if !ok {
+		return []string{}
+	}
+	after, ok := afterAny.(map[string]any)
+	if !ok {
+		return []string{}
+	}
+	diff := []string{}
+	for k := range before {
+		if !reflect.DeepEqual(before[k], after[k]) {
+			diff = append(diff, k)
+		}
+	}
+	return diff
 }
 
 func (r File) copyNetworkSourceDirectory(
@@ -275,6 +403,20 @@ func (r File) copyNetworkSourceDirectory(
 	}
 
 	state = r.updateState(inputs, state, result.IsChanged())
+	if result.IsChanged() {
+		state = r.updateStateDrifted(inputs, state, []string{
+			// TODO: filter this down based on resulting diff
+			"attributes",
+			"group",
+			"mode",
+			"owner",
+			"selevel",
+			"serole",
+			"setype",
+			"seuser",
+			"remoteSource",
+		})
+	}
 
 	return state, nil
 }
@@ -343,6 +485,21 @@ func (r File) copyNetworkSourceFile(
 	}
 
 	state = r.updateState(inputs, state, result.IsChanged())
+	if result.IsChanged() {
+		state = r.updateStateDrifted(inputs, state, []string{
+			// TODO: filter this down based on resulting diff
+			"attributes",
+			"checksum",
+			"group",
+			"mode",
+			"owner",
+			"selevel",
+			"serole",
+			"setype",
+			"seuser",
+			"remoteSource",
+		})
+	}
 
 	return state, nil
 }
@@ -368,34 +525,28 @@ func (r File) copyRemoteSourceDirectory(
 	result, err := executor.AnsibleExecute[
 		ansible.CopyParameters,
 		ansible.CopyReturn,
-	](
-		ctx,
-		config.Connection,
-		ansible.CopyParameters{
-			Attributes:    inputs.Attributes,
-			Dest:          inputs.Path,
-			DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
-			Follow:        inputs.Follow,
-			Force:         inputs.Force,
-			Group:         inputs.Group,
-			Mode:          ptr.ToAny(inputs.Mode),
-			Owner:         inputs.Owner,
-			RemoteSrc:     ptr.Of(true),
-			Selevel:       inputs.Selevel,
-			Serole:        inputs.Serole,
-			Setype:        inputs.Setype,
-			Seuser:        inputs.Seuser,
-			Src:           inputs.RemoteSource,
-			UnsafeWrites:  inputs.UnsafeWrites,
-		},
-		dryRun,
-	)
+	](ctx, config.Connection, r.makeAnsibleCopyParameters(inputs, stat), dryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
 
 	state = r.updateState(inputs, state, result.IsChanged())
+	if result.IsChanged() {
+		state = r.updateStateDrifted(inputs, state, []string{
+			// TODO: filter this down based on resulting diff
+			"attributes",
+			"directoryMode",
+			"group",
+			"mode",
+			"owner",
+			"selevel",
+			"serole",
+			"setype",
+			"seuser",
+			"remoteSource",
+		})
+	}
 
 	return state, nil
 }
@@ -421,33 +572,7 @@ func (r File) copyRemoteSourceFile(
 	result, err := executor.AnsibleExecute[
 		ansible.CopyParameters,
 		ansible.CopyReturn,
-	](
-		ctx,
-		config.Connection,
-		ansible.CopyParameters{
-			Attributes:    inputs.Attributes,
-			Backup:        inputs.Backup,
-			Checksum:      inputs.Checksum,
-			Content:       inputs.Content,
-			Dest:          inputs.Path,
-			DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
-			Follow:        inputs.Follow,
-			Force:         inputs.Force,
-			Group:         inputs.Group,
-			LocalFollow:   inputs.LocalFollow,
-			Mode:          ptr.ToAny(inputs.Mode),
-			Owner:         inputs.Owner,
-			RemoteSrc:     ptr.Of(true),
-			Selevel:       inputs.Selevel,
-			Serole:        inputs.Serole,
-			Setype:        inputs.Setype,
-			Seuser:        inputs.Seuser,
-			Src:           inputs.RemoteSource,
-			UnsafeWrites:  inputs.UnsafeWrites,
-			Validate:      inputs.Validate,
-		},
-		dryRun,
-	)
+	](ctx, config.Connection, r.makeAnsibleCopyParameters(inputs, stat), dryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
@@ -456,6 +581,23 @@ func (r File) copyRemoteSourceFile(
 	state.BackupFile = result.BackupFile
 
 	state = r.updateState(inputs, state, result.IsChanged())
+	if result.IsChanged() {
+		state = r.updateStateDrifted(inputs, state, []string{
+			// TODO: filter this down based on resulting diff
+			"attributes",
+			"checksum",
+			"directoryMode",
+			"group",
+			"mode",
+			"owner",
+			"selevel",
+			"serole",
+			"setype",
+			"seuser",
+			"remoteSource",
+			"validate",
+		})
+	}
 
 	return state, nil
 }
@@ -559,6 +701,18 @@ func (r File) copyLocalSourceArchive(
 
 	archive := inputs.Source.Archive
 
+	span.SetAttributes(
+		attribute.String("archive.sig", archive.Sig),
+		attribute.String("archive.hash", archive.Hash),
+		telemetry.OtelJSON("archive.assets", archive.Assets),
+		attribute.String("archive.path", archive.Path),
+		attribute.String("archive.uri", archive.URI),
+		attribute.Bool("archive.is_assets", archive.IsAssets()),
+		attribute.Bool("archive.is_path", archive.IsPath()),
+		attribute.Bool("archive.is_uri", archive.IsURI()),
+		attribute.Bool("archive.has_contents", archive.HasContents()),
+	)
+
 	if dryRun && !archive.HasContents() {
 		state = r.updateState(inputs, state, true)
 		state.Stat.SHA256Checksum = nil
@@ -610,6 +764,7 @@ func (r File) copyLocalSourceArchive(
 
 		if hash != *stat.SHA256Checksum {
 			state = r.updateState(inputs, state, true)
+			state = r.updateStateDrifted(inputs, state, []string{"source"})
 		}
 
 		state.Stat = types.FileStatStateFromRPCResult(stat)
@@ -637,37 +792,34 @@ func (r File) copyLocalSourceArchive(
 			return state, err
 		}
 
+		parameters := r.makeAnsibleCopyParameters(inputs, stat)
+		parameters.Src = &stagedPath
+
 		result, err := executor.AnsibleExecute[
 			ansible.CopyParameters,
 			ansible.CopyReturn,
-		](
-			ctx,
-			config.Connection,
-			ansible.CopyParameters{
-				Attributes:    inputs.Attributes,
-				Dest:          inputs.Path,
-				DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
-				Follow:        inputs.Follow,
-				Force:         inputs.Force,
-				Group:         inputs.Group,
-				Mode:          ptr.ToAny(inputs.Mode),
-				Owner:         inputs.Owner,
-				RemoteSrc:     ptr.Of(true),
-				Selevel:       inputs.Selevel,
-				Serole:        inputs.Serole,
-				Setype:        inputs.Setype,
-				Seuser:        inputs.Seuser,
-				Src:           &stagedPath,
-				UnsafeWrites:  inputs.UnsafeWrites,
-			},
-			dryRun,
-		)
+		](ctx, config.Connection, parameters, dryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 
 		state = r.updateState(inputs, state, result.IsChanged())
+		if result.IsChanged() {
+			state = r.updateStateDrifted(inputs, state, []string{
+				// TODO: filter this down based on resulting diff
+				"attributes",
+				"directoryMode",
+				"group",
+				"mode",
+				"owner",
+				"selevel",
+				"serole",
+				"setype",
+				"seuser",
+				"source",
+			})
+		}
 	}
 
 	span.SetStatus(codes.Ok, "")
@@ -692,11 +844,14 @@ func (r File) copyLocalSourceAsset(
 
 	config := infer.GetConfig[types.Config](ctx)
 
+	var sourceProp string
 	var asset *resource.Asset
 	var err error
 	if inputs.Content != nil {
+		sourceProp = "content"
 		asset, err = passet.FromText(*inputs.Content)
 	} else {
+		sourceProp = "source"
 		asset = inputs.Source.Asset
 	}
 	if err != nil {
@@ -704,8 +859,21 @@ func (r File) copyLocalSourceAsset(
 		return state, err
 	}
 
+	span.SetAttributes(
+		attribute.String("asset.sig", asset.Sig),
+		attribute.String("asset.hash", asset.Hash),
+		attribute.String("asset.text", asset.Text),
+		attribute.String("asset.path", asset.Path),
+		attribute.String("asset.uri", asset.URI),
+		attribute.Bool("asset.is_text", asset.IsText()),
+		attribute.Bool("asset.is_path", asset.IsPath()),
+		attribute.Bool("asset.is_uri", asset.IsURI()),
+		attribute.Bool("asset.has_contents", asset.HasContents()),
+	)
+
 	if dryRun && !asset.HasContents() {
 		state = r.updateState(inputs, state, true)
+		state = r.updateStateDrifted(inputs, state, []string{sourceProp})
 		state.Stat.SHA256Checksum = nil
 		span.SetStatus(codes.Ok, "")
 		return state, nil
@@ -714,6 +882,7 @@ func (r File) copyLocalSourceAsset(
 	if dryRun && stat.Exists && stat.SHA256Checksum != nil {
 		if asset.Hash != *stat.SHA256Checksum {
 			state = r.updateState(inputs, state, true)
+			state = r.updateStateDrifted(inputs, state, []string{sourceProp})
 		}
 
 		state.Stat = types.FileStatStateFromRPCResult(stat)
@@ -731,40 +900,36 @@ func (r File) copyLocalSourceAsset(
 			return state, err
 		}
 
+		parameters := r.makeAnsibleCopyParameters(inputs, stat)
+		parameters.Src = &stagedPath
+
 		result, err := executor.AnsibleExecute[
 			ansible.CopyParameters,
 			ansible.CopyReturn,
-		](
-			ctx,
-			config.Connection,
-			ansible.CopyParameters{
-				Attributes:    inputs.Attributes,
-				Backup:        inputs.Backup,
-				Checksum:      inputs.Checksum,
-				Dest:          inputs.Path,
-				DirectoryMode: ptr.ToAny(inputs.DirectoryMode),
-				Follow:        inputs.Follow,
-				Force:         inputs.Force,
-				Group:         inputs.Group,
-				Mode:          ptr.ToAny(inputs.Mode),
-				Owner:         inputs.Owner,
-				RemoteSrc:     ptr.Of(true),
-				Selevel:       inputs.Selevel,
-				Serole:        inputs.Serole,
-				Setype:        inputs.Setype,
-				Seuser:        inputs.Seuser,
-				Src:           &stagedPath,
-				UnsafeWrites:  inputs.UnsafeWrites,
-				Validate:      inputs.Validate,
-			},
-			dryRun,
-		)
+		](ctx, config.Connection, parameters, dryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
 
 		state = r.updateState(inputs, state, result.IsChanged())
+		if result.IsChanged() {
+			state = r.updateStateDrifted(inputs, state, []string{
+				// TODO: filter this down based on resulting diff
+				sourceProp,
+				"attributes",
+				"checksum",
+				"directoryMode",
+				"group",
+				"mode",
+				"owner",
+				"selevel",
+				"serole",
+				"setype",
+				"seuser",
+				"validate",
+			})
+		}
 	}
 
 	span.SetStatus(codes.Ok, "")
@@ -963,11 +1128,34 @@ func (r File) createOrUpdate(
 		}
 
 		state = r.updateState(inputs, state, result.IsChanged())
+		if result.IsChanged() {
+			state = r.updateStateDrifted(inputs, state, r.ansibleFileDiffedAttributes(result))
+		}
 	} else {
 		state = r.updateState(inputs, state, true)
+		state = r.updateStateDrifted(inputs, state, []string{
+			// it could be any of these, there's no way to know since we aren't in a
+			// situation where we can check.
+			"accessTime",
+			"attributes",
+			"group",
+			"mode",
+			"modificationTime",
+			"owner",
+			"selevel",
+			"serole",
+			"setype",
+			"seuser",
+			"remoteSource",
+		})
 	}
 
+	span.SetAttributes(attribute.StringSlice("drifted", state.Drifted))
+
 	if !dryRun {
+		// clear drifted if we aren't doing a dry-run
+		state.Drifted = []string{}
+
 		statResult, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
@@ -976,7 +1164,7 @@ func (r File) createOrUpdate(
 			Args: rpc.FileStatArgs{
 				Path:              inputs.Path,
 				FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
-				CalculateChecksum: false,
+				CalculateChecksum: true,
 			},
 		})
 		if err != nil {
