@@ -266,6 +266,42 @@ func TestResourceFile(t *testing.T) {
 			},
 		},
 
+		"force=true should change directories into files": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/foo"),
+					"ensure": property.New("file"),
+					"force":  property.New(true),
+				}),
+				AssertBeforeCommand: `
+					set -eu
+					sudo mkdir /foo
+				`,
+				AssertCommand: `
+					set -eu
+					test -f /foo
+				`,
+			},
+		},
+
+		"force=true should change files into directories": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/foo"),
+					"ensure": property.New("directory"),
+					"force":  property.New(true),
+				}),
+				AssertBeforeCommand: `
+					set -eu
+					sudo touch /foo
+				`,
+				AssertCommand: `
+					set -eu
+					test -d /foo
+				`,
+			},
+		},
+
 		// FIXME: these tests are borked for some reason
 		// "source asset": {
 		// 	Create: Operation{

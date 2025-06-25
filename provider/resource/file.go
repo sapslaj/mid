@@ -6,8 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"path"
 	"path/filepath"
 	"reflect"
 	"slices"
@@ -26,7 +24,6 @@ import (
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
-	"github.com/sapslaj/mid/pkg/dirhash"
 	"github.com/sapslaj/mid/pkg/pdiff"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/pulumi-go-provider/introspect"
@@ -92,6 +89,9 @@ func (r File) updateState(inputs FileArgs, state FileState, changed bool) FileSt
 }
 
 func (r File) updateStateDrifted(inputs FileArgs, state FileState, props []string) FileState {
+	if len(props) > 0 {
+		state = r.updateState(inputs, state, true)
+	}
 	inputsMap := introspect.StructToMap(inputs)
 	if state.Drifted == nil {
 		state.Drifted = []string{}
@@ -484,7 +484,6 @@ func (r File) copyNetworkSourceFile(
 		return state, err
 	}
 
-	state = r.updateState(inputs, state, result.IsChanged())
 	if result.IsChanged() {
 		state = r.updateStateDrifted(inputs, state, []string{
 			// TODO: filter this down based on resulting diff
@@ -531,7 +530,6 @@ func (r File) copyRemoteSourceDirectory(
 		return state, err
 	}
 
-	state = r.updateState(inputs, state, result.IsChanged())
 	if result.IsChanged() {
 		state = r.updateStateDrifted(inputs, state, []string{
 			// TODO: filter this down based on resulting diff
@@ -580,7 +578,6 @@ func (r File) copyRemoteSourceFile(
 
 	state.BackupFile = result.BackupFile
 
-	state = r.updateState(inputs, state, result.IsChanged())
 	if result.IsChanged() {
 		state = r.updateStateDrifted(inputs, state, []string{
 			// TODO: filter this down based on resulting diff
@@ -715,7 +712,6 @@ func (r File) copyLocalSourceArchive(
 
 	if dryRun && !archive.HasContents() {
 		if archive.Hash == "" {
-			state = r.updateState(inputs, state, true)
 			state = r.updateStateDrifted(inputs, state, []string{"source"})
 			state.Stat.SHA256Checksum = nil
 			span.SetStatus(codes.Ok, "")
@@ -723,60 +719,19 @@ func (r File) copyLocalSourceArchive(
 		}
 
 		if state.Source != nil && state.Source.Archive != nil && state.Source.Archive.Hash != archive.Hash {
-			state = r.updateState(inputs, state, true)
 			state = r.updateStateDrifted(inputs, state, []string{"source"})
 			span.SetStatus(codes.Ok, "")
 			return state, nil
 		}
 	}
 
-	if dryRun && stat.Exists && stat.SHA256Checksum != nil {
-		reader, err := archive.Open()
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return state, err
-		}
+	// TODO: the archive cannot be opened in dry run, so cannot check that the
+	// contents match.
 
-		var innerError error
-		hash, outterError := dirhash.Dirhash(func(yield func(string, io.ReadCloser) bool) {
-			for {
-				name, blob, err := reader.Next()
-				fclose := func() {
-					if blob != nil {
-						err := blob.Close()
-						if err != nil {
-							innerError = errors.Join(innerError, err)
-						}
-					}
-				}
-				if errors.Is(err, io.EOF) {
-					fclose()
-					return
-				}
-				if err != nil {
-					innerError = errors.Join(innerError, err)
-					fclose()
-					return
-				}
-				if !yield(path.Join(inputs.Path, name), blob) {
-					fclose()
-					return
-				}
-				fclose()
-			}
-		})
-
-		err = errors.Join(outterError, innerError)
-		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return state, err
-		}
-
-		if hash != *stat.SHA256Checksum {
-			state = r.updateState(inputs, state, true)
+	if dryRun && stat.Exists && stat.SHA256Checksum != nil && state.Stat.SHA256Checksum != nil {
+		if *state.Stat.SHA256Checksum != *stat.SHA256Checksum {
 			state = r.updateStateDrifted(inputs, state, []string{"source"})
 		}
-
 		state.Stat = types.FileStatStateFromRPCResult(stat)
 	} else {
 		// FIXME: the TarGZIPArchive format is broken because the gzip.Writer is
@@ -813,7 +768,6 @@ func (r File) copyLocalSourceArchive(
 			},
 		})
 
-		state = r.updateState(inputs, state, true)
 		state = r.updateStateDrifted(inputs, state, []string{"source"})
 	}
 
@@ -867,7 +821,6 @@ func (r File) copyLocalSourceAsset(
 	)
 
 	if dryRun && !asset.HasContents() && asset.Hash == "" {
-		state = r.updateState(inputs, state, true)
 		state = r.updateStateDrifted(inputs, state, []string{sourceProp})
 		state.Stat.SHA256Checksum = nil
 		span.SetStatus(codes.Ok, "")
@@ -876,7 +829,6 @@ func (r File) copyLocalSourceAsset(
 
 	if dryRun && stat.Exists && stat.SHA256Checksum != nil {
 		if asset.Hash != *stat.SHA256Checksum {
-			state = r.updateState(inputs, state, true)
 			state = r.updateStateDrifted(inputs, state, []string{sourceProp})
 		}
 
@@ -907,7 +859,6 @@ func (r File) copyLocalSourceAsset(
 			return state, err
 		}
 
-		state = r.updateState(inputs, state, result.IsChanged())
 		if result.IsChanged() {
 			state = r.updateStateDrifted(inputs, state, []string{
 				// TODO: filter this down based on resulting diff
@@ -1017,8 +968,21 @@ func (r File) createOrUpdate(
 	}
 
 	stat := statResult.Result
+	span.SetAttributes(telemetry.OtelJSON("stat.initial", stat))
 
-	if !stat.Exists && dryRun {
+	var currentState FileEnsure
+	if !stat.Exists {
+		currentState = FileEnsureAbsent
+	} else if stat.FileMode.IsDir() {
+		currentState = FileEnsureDirectory
+	} else if stat.FileMode.IsRegular() {
+		currentState = FileEnsureFile
+	} else {
+		// TODO: figure out if symlink or hardlink or not
+		currentState = FileEnsureAbsent
+	}
+
+	if currentState == FileEnsureAbsent && dryRun {
 		// exit early if the parent dir doesn't exist
 		dir := filepath.Dir(inputs.Path)
 		span.SetAttributes(attribute.String("parent_directory.path", dir))
@@ -1048,20 +1012,20 @@ func (r File) createOrUpdate(
 		}
 	}
 
-	var ansibleState ansible.FileState
+	var ansibleDesiredState ansible.FileState
 	if inputs.Ensure != nil {
 		span.SetAttributes(attribute.Bool("ansible_file_state.inferred", false))
 		switch *inputs.Ensure {
 		case FileEnsureFile:
-			ansibleState = ansible.FileStateFile
+			ansibleDesiredState = ansible.FileStateFile
 		case FileEnsureDirectory:
-			ansibleState = ansible.FileStateDirectory
+			ansibleDesiredState = ansible.FileStateDirectory
 		case FileEnsureAbsent:
-			ansibleState = ansible.FileStateAbsent
+			ansibleDesiredState = ansible.FileStateAbsent
 		case FileEnsureHard:
-			ansibleState = ansible.FileStateHard
+			ansibleDesiredState = ansible.FileStateHard
 		case FileEnsureLink:
-			ansibleState = ansible.FileStateLink
+			ansibleDesiredState = ansible.FileStateLink
 		}
 	}
 
@@ -1076,24 +1040,44 @@ func (r File) createOrUpdate(
 		return state, err
 	}
 
-	if ansibleState == "" {
+	if ansibleDesiredState == "" {
 		span.SetAttributes(attribute.Bool("ansible_file_state.inferred", true))
 		if fallbackAnsibleState != "" {
-			ansibleState = fallbackAnsibleState
+			ansibleDesiredState = fallbackAnsibleState
 		} else {
-			ansibleState = ansible.FileStateTouch
+			ansibleDesiredState = ansible.FileStateTouch
 		}
 	}
 
-	if fallbackAnsibleState == "" && !stat.Exists && ansibleState == ansible.FileStateFile {
+	if fallbackAnsibleState == "" && !stat.Exists && ansibleDesiredState == ansible.FileStateFile {
 		// special case to make sure file gets created if it wouldn't otherwise by
 		// a copy operation
-		ansibleState = ansible.FileStateTouch
+		ansibleDesiredState = ansible.FileStateTouch
 	}
 
-	span.SetAttributes(attribute.String("ansible_file_state", string(ansibleState)))
+	span.SetAttributes(attribute.String("ansible_file_state", string(ansibleDesiredState)))
 
-	if stat.Exists || !dryRun {
+	var desiredState FileEnsure
+	if inputs.Ensure != nil {
+		desiredState = *inputs.Ensure
+	} else {
+		switch ansibleDesiredState {
+		case ansible.FileStateAbsent:
+			desiredState = FileEnsureAbsent
+		case ansible.FileStateDirectory:
+			desiredState = FileEnsureDirectory
+		case ansible.FileStateFile:
+			desiredState = FileEnsureFile
+		case ansible.FileStateHard:
+			desiredState = FileEnsureHard
+		case ansible.FileStateLink:
+			desiredState = FileEnsureLink
+		case ansible.FileStateTouch:
+			desiredState = FileEnsureFile
+		}
+	}
+
+	executeFile := func() error {
 		result, err := executor.AnsibleExecute[
 			ansible.FileParameters,
 			ansible.FileReturn,
@@ -1118,22 +1102,27 @@ func (r File) createOrUpdate(
 				Setype:                 inputs.Setype,
 				Seuser:                 inputs.Seuser,
 				Src:                    inputs.RemoteSource,
-				State:                  ansible.OptionalFileState(ansibleState),
+				State:                  ansible.OptionalFileState(ansibleDesiredState),
 				UnsafeWrites:           inputs.UnsafeWrites,
 			},
 			dryRun,
 		)
 		if err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			return state, err
+			return err
 		}
 
-		state = r.updateState(inputs, state, result.IsChanged())
 		if result.IsChanged() {
 			state = r.updateStateDrifted(inputs, state, r.ansibleFileDiffedAttributes(result))
 		}
-	} else {
-		state = r.updateState(inputs, state, true)
+		return nil
+	}
+
+	if currentState == desiredState {
+		err = executeFile()
+	} else if desiredState == FileEnsureAbsent || currentState == FileEnsureAbsent {
+		err = executeFile()
+		state = r.updateStateDrifted(inputs, state, []string{"ensure"})
+	} else if dryRun {
 		state = r.updateStateDrifted(inputs, state, []string{
 			// it could be any of these, there's no way to know since we aren't in a
 			// situation where we can check.
@@ -1149,6 +1138,38 @@ func (r File) createOrUpdate(
 			"seuser",
 			"remoteSource",
 		})
+	} else if inputs.Force != nil && *inputs.Force {
+		if ansibleDesiredState == ansible.FileStateFile {
+			ansibleDesiredState = ansible.FileStateTouch
+		}
+		_, err = executor.AnsibleExecute[
+			ansible.FileParameters,
+			ansible.FileReturn,
+		](
+			ctx,
+			config.Connection,
+			ansible.FileParameters{
+				Follow:       inputs.Follow,
+				Force:        inputs.Force,
+				Path:         inputs.Path,
+				Recurse:      inputs.Recurse,
+				State:        ansible.OptionalFileState(ansible.FileStateAbsent),
+				UnsafeWrites: inputs.UnsafeWrites,
+			},
+			false,
+		)
+		err = errors.Join(err, executeFile())
+		state = r.updateStateDrifted(inputs, state, []string{"ensure"})
+	} else {
+		err = fmt.Errorf(
+			"unsupported situation (this is a bug): current_state=%v desired_state=%v",
+			currentState,
+			desiredState,
+		)
+	}
+	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
 	}
 
 	span.SetAttributes(attribute.StringSlice("drifted", state.Drifted))
@@ -1174,6 +1195,7 @@ func (r File) createOrUpdate(
 		}
 
 		state.Stat = types.FileStatStateFromRPCResult(statResult.Result)
+		span.SetAttributes(telemetry.OtelJSON("stat.final", stat))
 	}
 
 	return state, nil

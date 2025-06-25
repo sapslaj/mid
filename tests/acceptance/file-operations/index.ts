@@ -100,20 +100,21 @@ const provider = new mid.Provider("file-operations", {
 function testfileAssertion(test: string): string {
   return `
     set -eux
-    test -f /tmp/${test}
-    test "foo" = "$(cat /tmp/${test})"
+    test -f "/tmp/${test}"
+    cat "/tmp/${test}"
+    test "https://www.youtube.com/watch?v=nS8EywXYlSc" = "$(cat "/tmp/${test}")"
   `;
 }
 
 function testdirAssertion(test: string): string {
   return `
     set -eux
-    ls -lah /tmp/${test} || true
-    test -d /tmp/${test}
-    test -f /tmp/${test}/passwords.txt
-    test -f /tmp/${test}/sunday.txt
-    grep -F solarwinds123 /tmp/${test}/passwords.txt
-    grep -F Charmony /tmp/${test}/sunday.txt
+    ls -lah "/tmp/${test}" || true
+    test -d "/tmp/${test}"
+    test -f "/tmp/${test}/passwords.txt"
+    test -f "/tmp/${test}/sunday.txt"
+    grep -F "solarwinds123" "/tmp/${test}/passwords.txt"
+    grep -F "Charmony" "/tmp/${test}/sunday.txt"
   `;
 }
 
@@ -128,8 +129,9 @@ new remote.Command("empty-file", {
   connection,
   create: `
     set -eux
-    test -f /tmp/empty-file
-    test -z "$(cat /tmp/empty-file)",
+    test -f "/tmp/empty-file"
+    cat "/tmp/empty-file"
+    test -z "$(cat "/tmp/empty-file")"
   `,
 }, {
   dependsOn: [emptyFile],
