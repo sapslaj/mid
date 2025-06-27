@@ -1077,6 +1077,11 @@ func (r File) createOrUpdate(
 		}
 	}
 
+	defer span.SetAttributes(
+		attribute.String("ensure.current_state", string(currentState)),
+		attribute.String("ensure.desired_state", string(desiredState)),
+	)
+
 	executeFile := func() error {
 		result, err := executor.AnsibleExecute[
 			ansible.FileParameters,
@@ -1119,7 +1124,10 @@ func (r File) createOrUpdate(
 
 	if currentState == desiredState {
 		err = executeFile()
-	} else if desiredState == FileEnsureAbsent || currentState == FileEnsureAbsent {
+	} else if desiredState == FileEnsureAbsent {
+		err = executeFile()
+		state = r.updateStateDrifted(inputs, state, []string{"ensure"})
+	} else if currentState == FileEnsureAbsent && !dryRun && ansibleDesiredState != "" {
 		err = executeFile()
 		state = r.updateStateDrifted(inputs, state, []string{"ensure"})
 	} else if dryRun {
