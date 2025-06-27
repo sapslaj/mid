@@ -649,6 +649,11 @@ func (r File) copyRemoteSource(
 			span.SetStatus(codes.Error, err.Error())
 			return ansibleFileState, state, err
 		}
+		if sourceStat.Error != "" {
+			err = errors.New(sourceStat.Error)
+			span.SetStatus(codes.Error, err.Error())
+			return ansibleFileState, state, err
+		}
 
 		if !sourceStat.Result.Exists && dryRun {
 			state = r.updateState(inputs, state, true)
@@ -757,7 +762,7 @@ func (r File) copyLocalSourceArchive(
 			return state, err
 		}
 
-		_, err = executor.CallAgent[
+		untarResult, err := executor.CallAgent[
 			rpc.UntarArgs,
 			rpc.UntarResult,
 		](ctx, config.Connection, rpc.RPCCall[rpc.UntarArgs]{
@@ -767,6 +772,15 @@ func (r File) copyLocalSourceArchive(
 				TargetDirectory: inputs.Path,
 			},
 		})
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		if untarResult.Error != "" {
+			err = errors.New(untarResult.Error)
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
 
 		state = r.updateStateDrifted(inputs, state, []string{"source"})
 	}
@@ -966,6 +980,11 @@ func (r File) createOrUpdate(
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
 	}
+	if statResult.Error != "" {
+		err = errors.New(statResult.Error)
+		span.SetStatus(codes.Error, err.Error())
+		return state, err
+	}
 
 	stat := statResult.Result
 	span.SetAttributes(telemetry.OtelJSON("stat.initial", stat))
@@ -999,6 +1018,11 @@ func (r File) createOrUpdate(
 			},
 		})
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		if dirStat.Error != "" {
+			err = errors.New(dirStat.Error)
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
@@ -1198,6 +1222,11 @@ func (r File) createOrUpdate(
 			},
 		})
 		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		if statResult.Error != "" {
+			err = errors.New(statResult.Error)
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
 		}
