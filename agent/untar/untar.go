@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 )
@@ -40,6 +41,10 @@ func Untar(reader io.Reader, target string) error {
 		case tar.TypeRegA:
 			fallthrough
 		case tar.TypeReg:
+			err = os.MkdirAll(path.Dir(targetFilepath), os.FileMode(header.Mode)|fs.ModeDir)
+			if err != nil && !errors.Is(err, os.ErrExist) {
+				return err
+			}
 			f, err := os.OpenFile(targetFilepath, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
 				return err
