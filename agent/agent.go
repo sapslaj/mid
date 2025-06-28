@@ -127,6 +127,12 @@ func (agent *Agent) RunLocal() {
 				slog.String("rpc.uuid", res.UUID),
 			)
 
+			defer func() {
+				if r := recover(); r != nil {
+					resultLogger.Error("caught panic", slog.Any("error", r))
+				}
+			}()
+
 			if res.UUID == "" {
 				resultLogger.Error("UUID is empty")
 				return
@@ -751,7 +757,38 @@ func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
 	ctx, span := Tracer.Start(ctx, "mid/agent.StageFile")
 	defer span.End()
 
-	_, err := RunRemoteCommand(ctx, agent, "mkdir -p .mid/staging")
+	var err error
+
+	for attempt := 1; attempt <= 10; attempt++ {
+		if attempt == 10 {
+			break
+		}
+
+		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid/agent.StageFile:mkdir:Attempt", trace.WithAttributes(
+			attribute.Int("retry.attempt", attempt),
+		))
+
+		_, err = RunRemoteCommand(attemptCtx, agent, "mkdir -p .mid/staging")
+		if err == nil {
+			attemptSpan.SetStatus(codes.Ok, "")
+		} else {
+			attemptSpan.SetStatus(codes.Error, err.Error())
+		}
+
+		attemptSpan.End()
+
+		if err == nil {
+			break
+		}
+
+		sleepDuration := time.Duration(attempt) * 10 * time.Second
+		_, sleepSpan := Tracer.Start(ctx, "mid/agent.StageFile:mkdir:Sleep", trace.WithAttributes(
+			attribute.Int("retry.attempt", attempt),
+			attribute.String("retry.sleep", sleepDuration.String()),
+		))
+		time.Sleep(sleepDuration)
+		sleepSpan.End()
+	}
 	if err != nil {
 		err = errors.Join(ErrStagingFile, err)
 		span.SetStatus(codes.Error, err.Error())
@@ -775,7 +812,37 @@ func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
 	remotePath := ".mid/staging/" + strings.ToLower(uid.String())
 	span.SetAttributes(attribute.String("rpc.stage_file.remote_path", remotePath))
 
-	realPathOutput, err := RunRemoteCommand(ctx, agent, "realpath "+remotePath)
+	var realPathOutput []byte
+	for attempt := 1; attempt <= 10; attempt++ {
+		if attempt == 10 {
+			break
+		}
+
+		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid/agent.StageFile:realpath:Attempt", trace.WithAttributes(
+			attribute.Int("retry.attempt", attempt),
+		))
+
+		realPathOutput, err = RunRemoteCommand(attemptCtx, agent, "realpath "+remotePath)
+		if err == nil {
+			attemptSpan.SetStatus(codes.Ok, "")
+		} else {
+			attemptSpan.SetStatus(codes.Error, err.Error())
+		}
+
+		attemptSpan.End()
+
+		if err == nil {
+			break
+		}
+
+		sleepDuration := time.Duration(attempt) * 10 * time.Second
+		_, sleepSpan := Tracer.Start(ctx, "mid/agent.StageFile:realpath:Sleep", trace.WithAttributes(
+			attribute.Int("retry.attempt", attempt),
+			attribute.String("retry.sleep", sleepDuration.String()),
+		))
+		time.Sleep(sleepDuration)
+		sleepSpan.End()
+	}
 	if err != nil {
 		err = errors.Join(ErrStagingFile, err)
 		span.SetStatus(codes.Error, err.Error())
@@ -785,7 +852,36 @@ func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
 	remotePath = strings.TrimSpace(string(realPathOutput))
 	span.SetAttributes(attribute.String("rpc.stage_file.absolute_remote_path", remotePath))
 
-	err = scpClient.CopyFile(ctx, f, remotePath, "0400")
+	for attempt := 1; attempt <= 10; attempt++ {
+		if attempt == 10 {
+			break
+		}
+
+		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid/agent.StageFile:CopyFile:Attempt", trace.WithAttributes(
+			attribute.Int("retry.attempt", attempt),
+		))
+
+		err = scpClient.CopyFile(attemptCtx, f, remotePath, "0400")
+		if err == nil {
+			attemptSpan.SetStatus(codes.Ok, "")
+		} else {
+			attemptSpan.SetStatus(codes.Error, err.Error())
+		}
+
+		attemptSpan.End()
+
+		if err == nil {
+			break
+		}
+
+		sleepDuration := time.Duration(attempt) * 10 * time.Second
+		_, sleepSpan := Tracer.Start(ctx, "mid/agent.StageFile:CopyFile:Sleep", trace.WithAttributes(
+			attribute.Int("retry.attempt", attempt),
+			attribute.String("retry.sleep", sleepDuration.String()),
+		))
+		time.Sleep(sleepDuration)
+		sleepSpan.End()
+	}
 	if err != nil {
 		err = errors.Join(ErrStagingFile, err)
 		span.SetStatus(codes.Error, err.Error())
