@@ -347,6 +347,9 @@ func (r File) ansibleFileDiffedAttributes(result ansible.FileReturn) []string {
 			diff = append(diff, k)
 		}
 	}
+	if slices.Contains(diff, "state") {
+		diff = append(diff, "ensure")
+	}
 	return diff
 }
 
@@ -368,44 +371,186 @@ func (r File) copyNetworkSourceDirectory(
 
 	config := infer.GetConfig[types.Config](ctx)
 
-	result, err := executor.AnsibleExecute[
-		ansible.UnarchiveParameters,
-		ansible.UnarchiveReturn,
-	](
-		ctx,
-		config.Connection,
-		ansible.UnarchiveParameters{
-			Attributes:   inputs.Attributes,
-			Dest:         inputs.Path,
-			Group:        inputs.Group,
-			Mode:         ptr.ToAny(inputs.Mode),
-			Owner:        inputs.Owner,
-			RemoteSrc:    ptr.Of(true),
-			Selevel:      inputs.Selevel,
-			Serole:       inputs.Serole,
-			Setype:       inputs.Setype,
-			Seuser:       inputs.Seuser,
-			Src:          *inputs.RemoteSource,
-			UnsafeWrites: inputs.UnsafeWrites,
-			// TODO: Exclude:
-			// TODO: ExtraOpts:
-			// TODO: IoBufferSize:
-			// TODO: Exclude:
-			// TODO: Include:
-			// TODO: KeepNewer:
-			// TODO: ValidateCerts:
-		},
-		dryRun,
-	)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return state, err
+	exists := stat.Exists
+	forceable := false
+	if exists && stat.FileMode != nil && !stat.FileMode.IsDir() {
+		forceable = true
 	}
 
-	state = r.updateState(inputs, state, result.IsChanged())
-	if result.IsChanged() {
+	if inputs.Force != nil && *inputs.Force && forceable {
+		exists = false
+		_, err := executor.AnsibleExecute[
+			ansible.FileParameters,
+			ansible.FileReturn,
+		](
+			ctx,
+			config.Connection,
+			ansible.FileParameters{
+				Follow:       inputs.Follow,
+				Force:        inputs.Force,
+				Path:         inputs.Path,
+				Recurse:      inputs.Recurse,
+				State:        ansible.OptionalFileState(ansible.FileStateAbsent),
+				UnsafeWrites: inputs.UnsafeWrites,
+			},
+			false,
+		)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		state = r.updateStateDrifted(inputs, state, []string{"ensure"})
+	}
+
+	if !exists {
+		mkdirResult, err := executor.AnsibleExecute[
+			ansible.FileParameters,
+			ansible.FileReturn,
+		](
+			ctx,
+			config.Connection,
+			ansible.FileParameters{
+				AccessTime:             inputs.AccessTime,
+				AccessTimeFormat:       inputs.AccessTimeFormat,
+				Attributes:             inputs.Attributes,
+				Follow:                 inputs.Follow,
+				Force:                  inputs.Force,
+				Group:                  inputs.Group,
+				Mode:                   ptr.ToAny(inputs.Mode),
+				ModificationTime:       inputs.ModificationTime,
+				ModificationTimeFormat: inputs.ModificationTimeFormat,
+				Owner:                  inputs.Owner,
+				Path:                   inputs.Path,
+				Recurse:                inputs.Recurse,
+				Selevel:                inputs.Selevel,
+				Serole:                 inputs.Serole,
+				Setype:                 inputs.Setype,
+				Seuser:                 inputs.Seuser,
+				State:                  ansible.OptionalFileState(ansible.FileStateDirectory),
+				UnsafeWrites:           inputs.UnsafeWrites,
+			},
+			dryRun,
+		)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		if mkdirResult.IsChanged() {
+			state = r.updateStateDrifted(inputs, state, r.ansibleFileDiffedAttributes(mkdirResult))
+		}
+	}
+
+	if !dryRun {
+		// TODO: better temp file management
+		base := filepath.Base(inputs.Path)
+		if base == "." {
+			base = ""
+		}
+		base = "mid-temp-" + base + "-"
+		tempfilename, err := resource.NewUniqueHex(base, 8, 63)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+		tempfilepath := filepath.Join("/tmp", tempfilename)
+
+		downloadResult, err := executor.AnsibleExecute[
+			ansible.GetUrlParameters,
+			ansible.GetUrlReturn,
+		](
+			ctx,
+			config.Connection,
+			ansible.GetUrlParameters{
+				Checksum:     inputs.Checksum,
+				Dest:         tempfilepath,
+				Force:        ptr.Of(true),
+				Mode:         ptr.ToAny(ptr.Of("0600")),
+				UnsafeWrites: inputs.UnsafeWrites,
+				Url:          *inputs.RemoteSource,
+				// TODO: Ciphers:
+				// TODO: ClientCert:
+				// TODO: ClientKey:
+				// TODO: Decompress:
+				// TODO: ForceBasicAuth:
+				// TODO: Headers:
+				// TODO: HttpAgent:
+				// TODO: Timeout:
+				// TODO: TmpDest:
+				// TODO: UnredirectedHeaders:
+				// TODO: UrlPassword:
+				// TODO: UrlUsername:
+				// TODO: UseGssapi:
+				// TODO: UseNetrc:
+				// TODO: UseProxy:
+				// TODO: ValidateCerts:
+			},
+			dryRun,
+		)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		if downloadResult.IsChanged() {
+			state = r.updateStateDrifted(inputs, state, []string{
+				// TODO: filter this down based on resulting diff
+				"checksum",
+				"remoteSource",
+			})
+		}
+
+		unarchiveResult, err := executor.AnsibleExecute[
+			ansible.UnarchiveParameters,
+			ansible.UnarchiveReturn,
+		](
+			ctx,
+			config.Connection,
+			ansible.UnarchiveParameters{
+				Attributes:   inputs.Attributes,
+				Dest:         inputs.Path,
+				Group:        inputs.Group,
+				Mode:         ptr.ToAny(inputs.Mode),
+				Owner:        inputs.Owner,
+				RemoteSrc:    ptr.Of(true),
+				Selevel:      inputs.Selevel,
+				Serole:       inputs.Serole,
+				Setype:       inputs.Setype,
+				Seuser:       inputs.Seuser,
+				Src:          tempfilepath,
+				UnsafeWrites: inputs.UnsafeWrites,
+				// TODO: Exclude:
+				// TODO: ExtraOpts:
+				// TODO: IoBufferSize:
+				// TODO: Exclude:
+				// TODO: Include:
+				// TODO: KeepNewer:
+				// TODO: ValidateCerts:
+			},
+			dryRun,
+		)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
+
+		if unarchiveResult.IsChanged() {
+			state = r.updateStateDrifted(inputs, state, []string{
+				// TODO: filter this down based on resulting diff
+				"attributes",
+				"group",
+				"mode",
+				"owner",
+				"selevel",
+				"serole",
+				"setype",
+				"seuser",
+				"remoteSource",
+			})
+		}
+	} else {
 		state = r.updateStateDrifted(inputs, state, []string{
-			// TODO: filter this down based on resulting diff
+			// it could be any of these, there's no way to know since we aren't in a
+			// situation where we can check.
 			"attributes",
 			"group",
 			"mode",
@@ -738,6 +883,8 @@ func (r File) copyLocalSourceArchive(
 			state = r.updateStateDrifted(inputs, state, []string{"source"})
 		}
 		state.Stat = types.FileStatStateFromRPCResult(stat)
+	} else if dryRun {
+		state = r.updateStateDrifted(inputs, state, []string{"source"})
 	} else {
 		// FIXME: the TarGZIPArchive format is broken because the gzip.Writer is
 		// never closed. This is an upstream Pulumi SDK bug.
@@ -1107,35 +1254,33 @@ func (r File) createOrUpdate(
 	)
 
 	executeFile := func() error {
+		params := ansible.FileParameters{
+			AccessTime:             inputs.AccessTime,
+			AccessTimeFormat:       inputs.AccessTimeFormat,
+			Attributes:             inputs.Attributes,
+			Follow:                 inputs.Follow,
+			Force:                  inputs.Force,
+			Group:                  inputs.Group,
+			Mode:                   ptr.ToAny(inputs.Mode),
+			ModificationTime:       inputs.ModificationTime,
+			ModificationTimeFormat: inputs.ModificationTimeFormat,
+			Owner:                  inputs.Owner,
+			Path:                   inputs.Path,
+			Recurse:                inputs.Recurse,
+			Selevel:                inputs.Selevel,
+			Serole:                 inputs.Serole,
+			Setype:                 inputs.Setype,
+			Seuser:                 inputs.Seuser,
+			State:                  ansible.OptionalFileState(ansibleDesiredState),
+			UnsafeWrites:           inputs.UnsafeWrites,
+		}
+		if desiredState != FileEnsureDirectory && desiredState != FileEnsureFile {
+			params.Src = inputs.RemoteSource
+		}
 		result, err := executor.AnsibleExecute[
 			ansible.FileParameters,
 			ansible.FileReturn,
-		](
-			ctx,
-			config.Connection,
-			ansible.FileParameters{
-				AccessTime:             inputs.AccessTime,
-				AccessTimeFormat:       inputs.AccessTimeFormat,
-				Attributes:             inputs.Attributes,
-				Follow:                 inputs.Follow,
-				Force:                  inputs.Force,
-				Group:                  inputs.Group,
-				Mode:                   ptr.ToAny(inputs.Mode),
-				ModificationTime:       inputs.ModificationTime,
-				ModificationTimeFormat: inputs.ModificationTimeFormat,
-				Owner:                  inputs.Owner,
-				Path:                   inputs.Path,
-				Recurse:                inputs.Recurse,
-				Selevel:                inputs.Selevel,
-				Serole:                 inputs.Serole,
-				Setype:                 inputs.Setype,
-				Seuser:                 inputs.Seuser,
-				Src:                    inputs.RemoteSource,
-				State:                  ansible.OptionalFileState(ansibleDesiredState),
-				UnsafeWrites:           inputs.UnsafeWrites,
-			},
-			dryRun,
-		)
+		](ctx, config.Connection, params, dryRun)
 		if err != nil {
 			return err
 		}

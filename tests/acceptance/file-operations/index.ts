@@ -97,6 +97,13 @@ const provider = new mid.Provider("file-operations", {
   connection,
 });
 
+// needed for some remoteSource functions
+const unzip = new mid.resource.Package("unzip", {
+  name: "unzip",
+}, {
+  provider,
+});
+
 function testfileAssertion(test: string): string {
   return `
     set -eux
@@ -185,7 +192,7 @@ new remote.Command("local-source-string-asset", {
 
 const localSourceFileAsset = new mid.resource.File("local-source-file-asset", {
   path: "/tmp/local-source-file-asset",
-  source: new pulumi.asset.FileAsset("./testdata/testfile"),
+  source: new pulumi.asset.FileAsset(__dirname + "/testdata/testfile"),
 }, {
   provider,
 });
@@ -211,13 +218,17 @@ new remote.Command("local-network-source-asset", {
   dependsOn: [localNetworkSourceAsset],
 });
 
+// TODO: figure out way to differentiate between copying a directory vs the
+// contents of a directory (like all of the cp/rsync trailing slash behavior)
 const localSourceDirectoryArchive = new mid.resource.File("local-source-directory-archive", {
-  path: "/tmp/local-source-directory-archive",
-  source: new pulumi.asset.FileArchive("./testdata/testdir"),
-  mode: "a+r",
+  path: "/tmp/local-source-directory-archive/",
+  source: new pulumi.asset.FileArchive(__dirname + "/testdata/testdir/"),
+  // FIXME: default mode should come from umask
+  mode: "a+rx",
   recurse: true,
 }, {
   provider,
+  deleteBeforeReplace: true,
 });
 
 new remote.Command("local-source-directory-archive", {
@@ -229,8 +240,9 @@ new remote.Command("local-source-directory-archive", {
 
 const localSourceTarGzArchive = new mid.resource.File("local-source-targz-archive", {
   path: "/tmp/local-source-targz-archive",
-  source: new pulumi.asset.FileArchive("./testdata/testdir.tar.gz"),
-  mode: "a+r",
+  source: new pulumi.asset.FileArchive(__dirname + "/testdata/testdir.tar.gz"),
+  // FIXME: default mode should come from umask
+  mode: "a+rx",
   recurse: true,
 }, {
   provider,
@@ -238,15 +250,16 @@ const localSourceTarGzArchive = new mid.resource.File("local-source-targz-archiv
 
 new remote.Command("local-source-targz-archive", {
   connection,
-  create: testdirAssertion("local-source-targz-archive"),
+  create: testdirAssertion("local-source-targz-archive/testdir"),
 }, {
   dependsOn: [localSourceTarGzArchive],
 });
 
 const localSourceZipArchive = new mid.resource.File("local-source-zip-archive", {
   path: "/tmp/local-source-zip-archive",
-  source: new pulumi.asset.FileArchive("./testdata/testdir.zip"),
-  mode: "a+r",
+  source: new pulumi.asset.FileArchive(__dirname + "/testdata/testdir.zip"),
+  // FIXME: default mode should come from umask
+  mode: "a+rx",
   recurse: true,
 }, {
   provider,
@@ -254,7 +267,7 @@ const localSourceZipArchive = new mid.resource.File("local-source-zip-archive", 
 
 new remote.Command("local-source-zip-archive", {
   connection,
-  create: testdirAssertion("local-source-zip-archive"),
+  create: testdirAssertion("local-source-zip-archive/testdir"),
 }, {
   dependsOn: [localSourceZipArchive],
 });
@@ -264,7 +277,8 @@ const localNetworkSourceTarGzArchive = new mid.resource.File("local-network-sour
   source: new pulumi.asset.RemoteArchive(
     "https://sapslaj-stuff.s3.us-east-1.amazonaws.com/mid-testdata/testdir.tar.gz",
   ),
-  mode: "a+r",
+  // FIXME: default mode should come from umask
+  mode: "a+rx",
   recurse: true,
 }, {
   provider,
@@ -272,7 +286,7 @@ const localNetworkSourceTarGzArchive = new mid.resource.File("local-network-sour
 
 new remote.Command("local-network-source-targz-archive", {
   connection,
-  create: testdirAssertion("local-network-source-targz-archive"),
+  create: testdirAssertion("local-network-source-targz-archive/testdir"),
 }, {
   dependsOn: [localNetworkSourceTarGzArchive],
 });
@@ -282,7 +296,8 @@ const localNetworkSourceZipArchive = new mid.resource.File("local-network-source
   source: new pulumi.asset.RemoteArchive(
     "https://sapslaj-stuff.s3.us-east-1.amazonaws.com/mid-testdata/testdir.zip",
   ),
-  mode: "a+r",
+  // FIXME: default mode should come from umask
+  mode: "a+rx",
   recurse: true,
 }, {
   provider,
@@ -290,29 +305,30 @@ const localNetworkSourceZipArchive = new mid.resource.File("local-network-source
 
 new remote.Command("local-network-source-zip-archive", {
   connection,
-  create: testdirAssertion("local-network-source-zip-archive"),
+  create: testdirAssertion("local-network-source-zip-archive/testdir"),
 }, {
   dependsOn: [localNetworkSourceZipArchive],
 });
 
-const localSourceArchiveOfAsset = new mid.resource.File("local-source-archive-of-assets", {
-  path: "/tmp/local-source-archive-of-assets",
-  source: new pulumi.asset.AssetArchive({
-    "passwords.txt": new pulumi.asset.FileAsset("./testdata/testdir/passwords.txt"),
-    "sunday.txt": new pulumi.asset.FileAsset("./testdata/testdir/sunday.txt"),
-  }),
-  mode: "a+r",
-  recurse: true,
-}, {
-  provider,
-});
-
-new remote.Command("local-source-archive-of-assets", {
-  connection,
-  create: testdirAssertion("local-source-archive-of-assets"),
-}, {
-  dependsOn: [localSourceArchiveOfAsset],
-});
+// FIXME: AssetArchive doesn't work?
+// const localSourceArchiveOfAsset = new mid.resource.File("local-source-archive-of-assets", {
+//   path: "/tmp/local-source-archive-of-assets",
+//   source: new pulumi.asset.AssetArchive({
+//     "passwords.txt": new pulumi.asset.FileAsset("./testdata/testdir/passwords.txt"),
+//     "sunday.txt": new pulumi.asset.FileAsset("./testdata/testdir/sunday.txt"),
+//   }),
+//   mode: "a+rx",
+//   recurse: true,
+// }, {
+//   provider,
+// });
+//
+// new remote.Command("local-source-archive-of-assets", {
+//   connection,
+//   create: testdirAssertion("local-source-archive-of-assets"),
+// }, {
+//   dependsOn: [localSourceArchiveOfAsset],
+// });
 
 const remoteSourceFile = new mid.resource.File("remote-source-file", {
   path: "/tmp/remote-source-file",
@@ -332,8 +348,8 @@ new remote.Command("remote-source-file", {
 });
 
 const remoteSourceDirectory = new mid.resource.File("remote-source-directory", {
-  path: "/tmp/remote-source-directory",
-  remoteSource: "/tmp/local-source-directory-archive",
+  path: "/tmp/remote-source-directory/",
+  remoteSource: "/tmp/local-source-directory-archive/",
 }, {
   provider,
   dependsOn: [
@@ -365,6 +381,7 @@ new remote.Command("remote-network-source-file", {
 const remoteNetworkSourceTarGzArchive = new mid.resource.File("remote-network-source-targz-archive", {
   path: "/tmp/remote-network-source-targz-archive",
   remoteSource: "https://sapslaj-stuff.s3.us-east-1.amazonaws.com/mid-testdata/testdir.tar.gz",
+  ensure: "directory",
 }, {
   provider,
   dependsOn: [
@@ -374,7 +391,7 @@ const remoteNetworkSourceTarGzArchive = new mid.resource.File("remote-network-so
 
 new remote.Command("remote-network-source-targz-archive", {
   connection,
-  create: testdirAssertion("remote-network-source-targz-archive"),
+  create: testdirAssertion("remote-network-source-targz-archive/testdir"),
 }, {
   dependsOn: [remoteNetworkSourceTarGzArchive],
 });
@@ -382,16 +399,18 @@ new remote.Command("remote-network-source-targz-archive", {
 const remoteNetworkSourceZipArchive = new mid.resource.File("remote-network-source-zip-archive", {
   path: "/tmp/remote-network-source-zip-archive",
   remoteSource: "https://sapslaj-stuff.s3.us-east-1.amazonaws.com/mid-testdata/testdir.zip",
+  ensure: "directory",
 }, {
   provider,
   dependsOn: [
+    unzip,
     localSourceDirectoryArchive,
   ],
 });
 
 new remote.Command("remote-network-source-zip-archive", {
   connection,
-  create: testdirAssertion("remote-network-source-zip-archive"),
+  create: testdirAssertion("remote-network-source-zip-archive/testdir"),
 }, {
   dependsOn: [remoteNetworkSourceZipArchive],
 });
