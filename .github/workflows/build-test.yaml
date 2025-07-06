@@ -40,6 +40,8 @@ jobs:
         run: |
           set -eux
           just provider
+          ls -lh ./agent/mid-agent-*
+          file ./agent/mid-agent-*
           ls -lh ./bin/pulumi-resource-mid
           file ./bin/pulumi-resource-mid
 
