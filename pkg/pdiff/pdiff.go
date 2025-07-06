@@ -72,7 +72,7 @@ func DiffAttributes(inputs any, state any, attributes []string) p.DiffResponse {
 		}
 	}
 	return p.DiffResponse{
-		HasChanges:   objDiff.AnyChanges(),
+		HasChanges:   len(diff) > 0,
 		DetailedDiff: diff,
 	}
 }
