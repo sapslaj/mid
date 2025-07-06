@@ -1,5 +1,5 @@
 [project]
-name = "yournamespace_mid"
+name = "pulumi_mid"
 description = "Pulumi-native configuration management"
 dependencies = [
   "parver>=0.2.1",
@@ -23,4 +23,4 @@ build-backend = "setuptools.build_meta"
 [tool]
 [tool.setuptools]
 [tool.setuptools.package-data]
-yournamespace_mid = ["py.typed", "pulumi-plugin.json"]
+pulumi_mid = ["py.typed", "pulumi-plugin.json"]

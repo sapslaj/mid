@@ -45,6 +45,7 @@ func Provider() (p.Provider, error) {
 				"packageName":          "@sapslaj/pulumi-mid",
 			},
 			"python": map[string]any{
+				"packageName":          "pulumi_mid",
 				"respectSchemaVersion": true,
 				"pyproject": map[string]any{
 					"enabled": true,
