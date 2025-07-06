@@ -423,6 +423,8 @@ func (r FileLine) Update(
 
 	if result.IsChanged() {
 		state = r.updateStateDrifted(req.Inputs, state, r.ansibleLineinfileDiffedAttributes(result))
+	} else {
+		state = r.updateState(req.Inputs, state, false)
 	}
 
 	if !req.DryRun {
