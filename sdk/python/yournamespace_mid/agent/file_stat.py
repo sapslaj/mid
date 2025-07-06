@@ -15,7 +15,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from . import outputs
+from .. import types as _types
 
 __all__ = [
     "FileStatResult",
@@ -135,7 +135,7 @@ class FileStatResult:
 
     @property
     @pulumi.getter(name="fileMode")
-    def file_mode(self) -> Optional["outputs.FileStatFileMode"]:
+    def file_mode(self) -> Optional["_types.outputs.FileStatFileMode"]:
         return pulumi.get(self, "file_mode")
 
     @property

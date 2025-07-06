@@ -16,6 +16,7 @@ import (
 type File struct {
 	pulumi.CustomResourceState
 
+	_drifted               pulumi.StringArrayOutput    `pulumi:"_drifted"`
 	AccessTime             pulumi.StringPtrOutput      `pulumi:"accessTime"`
 	AccessTimeFormat       pulumi.StringPtrOutput      `pulumi:"accessTimeFormat"`
 	Attributes             pulumi.StringPtrOutput      `pulumi:"attributes"`
@@ -41,7 +42,7 @@ type File struct {
 	Setype                 pulumi.StringPtrOutput      `pulumi:"setype"`
 	Seuser                 pulumi.StringPtrOutput      `pulumi:"seuser"`
 	Source                 pulumi.AssetOrArchiveOutput `pulumi:"source"`
-	Stat                   FileStateStatOutput         `pulumi:"stat"`
+	Stat                   types.FileStatStateOutput   `pulumi:"stat"`
 	Triggers               types.TriggersOutputOutput  `pulumi:"triggers"`
 	UnsafeWrites           pulumi.BoolPtrOutput        `pulumi:"unsafeWrites"`
 	Validate               pulumi.StringPtrOutput      `pulumi:"validate"`
@@ -57,6 +58,10 @@ func NewFile(ctx *pulumi.Context,
 	if args.Path == nil {
 		return nil, errors.New("invalid value for required argument 'Path'")
 	}
+	replaceOnChanges := pulumi.ReplaceOnChanges([]string{
+		"path",
+	})
+	opts = append(opts, replaceOnChanges)
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource File
 	err := ctx.RegisterResource("mid:resource:File", name, args, &resource, opts...)
@@ -237,6 +242,10 @@ func (o FileOutput) ToFileOutputWithContext(ctx context.Context) FileOutput {
 	return o
 }
 
+func (o FileOutput) _drifted() pulumi.StringArrayOutput {
+	return o.ApplyT(func(v *File) pulumi.StringArrayOutput { return v._drifted }).(pulumi.StringArrayOutput)
+}
+
 func (o FileOutput) AccessTime() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *File) pulumi.StringPtrOutput { return v.AccessTime }).(pulumi.StringPtrOutput)
 }
@@ -337,8 +346,8 @@ func (o FileOutput) Source() pulumi.AssetOrArchiveOutput {
 	return o.ApplyT(func(v *File) pulumi.AssetOrArchiveOutput { return v.Source }).(pulumi.AssetOrArchiveOutput)
 }
 
-func (o FileOutput) Stat() FileStateStatOutput {
-	return o.ApplyT(func(v *File) FileStateStatOutput { return v.Stat }).(FileStateStatOutput)
+func (o FileOutput) Stat() types.FileStatStateOutput {
+	return o.ApplyT(func(v *File) types.FileStatStateOutput { return v.Stat }).(types.FileStatStateOutput)
 }
 
 func (o FileOutput) Triggers() types.TriggersOutputOutput {

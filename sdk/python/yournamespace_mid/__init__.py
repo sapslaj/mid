@@ -11,23 +11,23 @@ from .provider import *
 
 # Make subpackages available:
 if typing.TYPE_CHECKING:
-    import pulumi_mid.agent as __agent
+    import yournamespace_mid.agent as __agent
 
     agent = __agent
-    import pulumi_mid.config as __config
+    import yournamespace_mid.config as __config
 
     config = __config
-    import pulumi_mid.resource as __resource
+    import yournamespace_mid.resource as __resource
 
     resource = __resource
-    import pulumi_mid.types as __types
+    import yournamespace_mid.types as __types
 
     types = __types
 else:
-    agent = _utilities.lazy_import("pulumi_mid.agent")
-    config = _utilities.lazy_import("pulumi_mid.config")
-    resource = _utilities.lazy_import("pulumi_mid.resource")
-    types = _utilities.lazy_import("pulumi_mid.types")
+    agent = _utilities.lazy_import("yournamespace_mid.agent")
+    config = _utilities.lazy_import("yournamespace_mid.config")
+    resource = _utilities.lazy_import("yournamespace_mid.resource")
+    types = _utilities.lazy_import("yournamespace_mid.types")
 
 _utilities.register(
     resource_modules="""
@@ -35,7 +35,7 @@ _utilities.register(
  {
   "pkg": "mid",
   "mod": "resource",
-  "fqn": "pulumi_mid.resource",
+  "fqn": "yournamespace_mid.resource",
   "classes": {
    "mid:resource:Apt": "Apt",
    "mid:resource:Exec": "Exec",
@@ -55,7 +55,7 @@ _utilities.register(
  {
   "pkg": "mid",
   "token": "pulumi:providers:mid",
-  "fqn": "pulumi_mid",
+  "fqn": "yournamespace_mid",
   "class": "Provider"
  }
 ]

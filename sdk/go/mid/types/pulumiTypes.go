@@ -470,6 +470,209 @@ func (o ExecCommandPtrOutput) Stdin() pulumi.StringPtrOutput {
 	}).(pulumi.StringPtrOutput)
 }
 
+type FileStatFileMode struct {
+	Int       int    `pulumi:"int"`
+	IsDir     bool   `pulumi:"isDir"`
+	IsRegular bool   `pulumi:"isRegular"`
+	Octal     string `pulumi:"octal"`
+	String    string `pulumi:"string"`
+}
+
+type FileStatFileModeOutput struct{ *pulumi.OutputState }
+
+func (FileStatFileModeOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((*FileStatFileMode)(nil)).Elem()
+}
+
+func (o FileStatFileModeOutput) ToFileStatFileModeOutput() FileStatFileModeOutput {
+	return o
+}
+
+func (o FileStatFileModeOutput) ToFileStatFileModeOutputWithContext(ctx context.Context) FileStatFileModeOutput {
+	return o
+}
+
+func (o FileStatFileModeOutput) Int() pulumi.IntOutput {
+	return o.ApplyT(func(v FileStatFileMode) int { return v.Int }).(pulumi.IntOutput)
+}
+
+func (o FileStatFileModeOutput) IsDir() pulumi.BoolOutput {
+	return o.ApplyT(func(v FileStatFileMode) bool { return v.IsDir }).(pulumi.BoolOutput)
+}
+
+func (o FileStatFileModeOutput) IsRegular() pulumi.BoolOutput {
+	return o.ApplyT(func(v FileStatFileMode) bool { return v.IsRegular }).(pulumi.BoolOutput)
+}
+
+func (o FileStatFileModeOutput) Octal() pulumi.StringOutput {
+	return o.ApplyT(func(v FileStatFileMode) string { return v.Octal }).(pulumi.StringOutput)
+}
+
+func (o FileStatFileModeOutput) String() pulumi.StringOutput {
+	return o.ApplyT(func(v FileStatFileMode) string { return v.String }).(pulumi.StringOutput)
+}
+
+type FileStatFileModePtrOutput struct{ *pulumi.OutputState }
+
+func (FileStatFileModePtrOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((**FileStatFileMode)(nil)).Elem()
+}
+
+func (o FileStatFileModePtrOutput) ToFileStatFileModePtrOutput() FileStatFileModePtrOutput {
+	return o
+}
+
+func (o FileStatFileModePtrOutput) ToFileStatFileModePtrOutputWithContext(ctx context.Context) FileStatFileModePtrOutput {
+	return o
+}
+
+func (o FileStatFileModePtrOutput) Elem() FileStatFileModeOutput {
+	return o.ApplyT(func(v *FileStatFileMode) FileStatFileMode {
+		if v != nil {
+			return *v
+		}
+		var ret FileStatFileMode
+		return ret
+	}).(FileStatFileModeOutput)
+}
+
+func (o FileStatFileModePtrOutput) Int() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v *FileStatFileMode) *int {
+		if v == nil {
+			return nil
+		}
+		return &v.Int
+	}).(pulumi.IntPtrOutput)
+}
+
+func (o FileStatFileModePtrOutput) IsDir() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v *FileStatFileMode) *bool {
+		if v == nil {
+			return nil
+		}
+		return &v.IsDir
+	}).(pulumi.BoolPtrOutput)
+}
+
+func (o FileStatFileModePtrOutput) IsRegular() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v *FileStatFileMode) *bool {
+		if v == nil {
+			return nil
+		}
+		return &v.IsRegular
+	}).(pulumi.BoolPtrOutput)
+}
+
+func (o FileStatFileModePtrOutput) Octal() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *FileStatFileMode) *string {
+		if v == nil {
+			return nil
+		}
+		return &v.Octal
+	}).(pulumi.StringPtrOutput)
+}
+
+func (o FileStatFileModePtrOutput) String() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *FileStatFileMode) *string {
+		if v == nil {
+			return nil
+		}
+		return &v.String
+	}).(pulumi.StringPtrOutput)
+}
+
+type FileStatState struct {
+	AccessTime     *string           `pulumi:"accessTime"`
+	BaseName       *string           `pulumi:"baseName"`
+	CreateTime     *string           `pulumi:"createTime"`
+	Dev            *int              `pulumi:"dev"`
+	Exists         bool              `pulumi:"exists"`
+	FileMode       *FileStatFileMode `pulumi:"fileMode"`
+	Gid            *int              `pulumi:"gid"`
+	GroupName      *string           `pulumi:"groupName"`
+	Inode          *int              `pulumi:"inode"`
+	ModifiedTime   *string           `pulumi:"modifiedTime"`
+	Nlink          *int              `pulumi:"nlink"`
+	Sha256Checksum *string           `pulumi:"sha256Checksum"`
+	Size           *int              `pulumi:"size"`
+	Uid            *int              `pulumi:"uid"`
+	UserName       *string           `pulumi:"userName"`
+}
+
+type FileStatStateOutput struct{ *pulumi.OutputState }
+
+func (FileStatStateOutput) ElementType() reflect.Type {
+	return reflect.TypeOf((*FileStatState)(nil)).Elem()
+}
+
+func (o FileStatStateOutput) ToFileStatStateOutput() FileStatStateOutput {
+	return o
+}
+
+func (o FileStatStateOutput) ToFileStatStateOutputWithContext(ctx context.Context) FileStatStateOutput {
+	return o
+}
+
+func (o FileStatStateOutput) AccessTime() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v FileStatState) *string { return v.AccessTime }).(pulumi.StringPtrOutput)
+}
+
+func (o FileStatStateOutput) BaseName() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v FileStatState) *string { return v.BaseName }).(pulumi.StringPtrOutput)
+}
+
+func (o FileStatStateOutput) CreateTime() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v FileStatState) *string { return v.CreateTime }).(pulumi.StringPtrOutput)
+}
+
+func (o FileStatStateOutput) Dev() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v FileStatState) *int { return v.Dev }).(pulumi.IntPtrOutput)
+}
+
+func (o FileStatStateOutput) Exists() pulumi.BoolOutput {
+	return o.ApplyT(func(v FileStatState) bool { return v.Exists }).(pulumi.BoolOutput)
+}
+
+func (o FileStatStateOutput) FileMode() FileStatFileModePtrOutput {
+	return o.ApplyT(func(v FileStatState) *FileStatFileMode { return v.FileMode }).(FileStatFileModePtrOutput)
+}
+
+func (o FileStatStateOutput) Gid() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v FileStatState) *int { return v.Gid }).(pulumi.IntPtrOutput)
+}
+
+func (o FileStatStateOutput) GroupName() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v FileStatState) *string { return v.GroupName }).(pulumi.StringPtrOutput)
+}
+
+func (o FileStatStateOutput) Inode() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v FileStatState) *int { return v.Inode }).(pulumi.IntPtrOutput)
+}
+
+func (o FileStatStateOutput) ModifiedTime() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v FileStatState) *string { return v.ModifiedTime }).(pulumi.StringPtrOutput)
+}
+
+func (o FileStatStateOutput) Nlink() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v FileStatState) *int { return v.Nlink }).(pulumi.IntPtrOutput)
+}
+
+func (o FileStatStateOutput) Sha256Checksum() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v FileStatState) *string { return v.Sha256Checksum }).(pulumi.StringPtrOutput)
+}
+
+func (o FileStatStateOutput) Size() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v FileStatState) *int { return v.Size }).(pulumi.IntPtrOutput)
+}
+
+func (o FileStatStateOutput) Uid() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v FileStatState) *int { return v.Uid }).(pulumi.IntPtrOutput)
+}
+
+func (o FileStatStateOutput) UserName() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v FileStatState) *string { return v.UserName }).(pulumi.StringPtrOutput)
+}
+
 type TriggersInput struct {
 	// Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
 	// any value in this list changes.
@@ -689,6 +892,9 @@ func init() {
 	pulumi.RegisterOutputType(ConnectionPtrOutput{})
 	pulumi.RegisterOutputType(ExecCommandOutput{})
 	pulumi.RegisterOutputType(ExecCommandPtrOutput{})
+	pulumi.RegisterOutputType(FileStatFileModeOutput{})
+	pulumi.RegisterOutputType(FileStatFileModePtrOutput{})
+	pulumi.RegisterOutputType(FileStatStateOutput{})
 	pulumi.RegisterOutputType(TriggersInputOutput{})
 	pulumi.RegisterOutputType(TriggersInputPtrOutput{})
 	pulumi.RegisterOutputType(TriggersOutputOutput{})

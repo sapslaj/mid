@@ -33,6 +33,7 @@ export class FileLine extends pulumi.CustomResource {
     return obj["__pulumiType"] === FileLine.__pulumiType;
   }
 
+  public readonly /*out*/ _drifted!: pulumi.Output<string[]>;
   public readonly backrefs!: pulumi.Output<boolean | undefined>;
   public readonly backup!: pulumi.Output<boolean | undefined>;
   public readonly create!: pulumi.Output<boolean | undefined>;
@@ -76,7 +77,9 @@ export class FileLine extends pulumi.CustomResource {
       resourceInputs["triggers"] = args ? args.triggers : undefined;
       resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
       resourceInputs["validate"] = args ? args.validate : undefined;
+      resourceInputs["_drifted"] = undefined /*out*/;
     } else {
+      resourceInputs["_drifted"] = undefined /*out*/;
       resourceInputs["backrefs"] = undefined /*out*/;
       resourceInputs["backup"] = undefined /*out*/;
       resourceInputs["create"] = undefined /*out*/;

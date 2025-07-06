@@ -16,4 +16,3 @@ from .package import *
 from .service import *
 from .systemd_service import *
 from .user import *
-from . import outputs

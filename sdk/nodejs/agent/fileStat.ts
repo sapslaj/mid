@@ -28,7 +28,7 @@ export interface FileStatResult {
   readonly createTime?: string;
   readonly dev?: number;
   readonly exists: boolean;
-  readonly fileMode?: outputs.agent.FileStatFileMode;
+  readonly fileMode?: outputs.types.FileStatFileMode;
   readonly followSymlinks?: boolean;
   readonly gid?: number;
   readonly groupName?: string;

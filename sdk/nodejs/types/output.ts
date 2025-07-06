@@ -7,63 +7,6 @@ import * as outputs from "../types/output";
 
 import * as utilities from "../utilities";
 
-export namespace agent {
-  export interface FileStatFileMode {
-    int: number;
-    isDir: boolean;
-    isRegular: boolean;
-    octal: string;
-    string: string;
-  }
-}
-
-export namespace resource {
-  export interface FileStateStat {
-    atime: number;
-    attributes: string[];
-    charset: string;
-    checksum: string;
-    ctime: number;
-    dev: number;
-    executable: boolean;
-    exists: boolean;
-    gid: number;
-    gr_name: string;
-    inode: number;
-    isblk: boolean;
-    ischr: boolean;
-    isdir: boolean;
-    isfifo: boolean;
-    isgid: boolean;
-    islnk: boolean;
-    isreg: boolean;
-    issock: boolean;
-    isuid: boolean;
-    lnkSource: string;
-    lnkTarget: string;
-    mimetype: string;
-    mode: string;
-    mtime: number;
-    nlink: number;
-    path: string;
-    pwName: string;
-    readable: boolean;
-    rgrp: boolean;
-    roth: boolean;
-    rusr: boolean;
-    size: number;
-    uid: number;
-    version: string;
-    wgrp: boolean;
-    woth: boolean;
-    writeable: boolean;
-    wusr: boolean;
-    xgrp: boolean;
-    xoth: boolean;
-    xusr: boolean;
-  }
-}
-
 export namespace types {
   /**
    * Instructions for how to connect to a remote endpoint.
@@ -122,6 +65,32 @@ export namespace types {
      * Pass a string to the command's process as standard in.
      */
     stdin?: string;
+  }
+
+  export interface FileStatFileMode {
+    int: number;
+    isDir: boolean;
+    isRegular: boolean;
+    octal: string;
+    string: string;
+  }
+
+  export interface FileStatState {
+    accessTime?: string;
+    baseName?: string;
+    createTime?: string;
+    dev?: number;
+    exists: boolean;
+    fileMode?: outputs.types.FileStatFileMode;
+    gid?: number;
+    groupName?: string;
+    inode?: number;
+    modifiedTime?: string;
+    nlink?: number;
+    sha256Checksum?: string;
+    size?: number;
+    uid?: number;
+    userName?: string;
   }
 
   export interface TriggersOutput {

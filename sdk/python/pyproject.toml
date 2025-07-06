@@ -1,5 +1,5 @@
 [project]
-name = "pulumi_mid"
+name = "yournamespace_mid"
 description = "Pulumi-native configuration management"
 dependencies = [
   "parver>=0.2.1",
@@ -9,7 +9,7 @@ dependencies = [
 ]
 readme = "README.md"
 requires-python = ">=3.9"
-version = "0.0.7"
+version = "0.0.8"
 [project.license]
 text = "MIT"
 [project.urls]
@@ -23,4 +23,4 @@ build-backend = "setuptools.build_meta"
 [tool]
 [tool.setuptools]
 [tool.setuptools.package-data]
-pulumi_mid = ["py.typed", "pulumi-plugin.json"]
+yournamespace_mid = ["py.typed", "pulumi-plugin.json"]

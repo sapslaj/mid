@@ -1,5 +1,5 @@
 import pulumi
-import pulumi_mid as mid
+import yournamespace_mid as mid
 
 provider = mid.Provider(
     "provider",

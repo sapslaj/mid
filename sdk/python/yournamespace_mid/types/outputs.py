@@ -15,10 +15,13 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
+from . import outputs
 
 __all__ = [
     "Connection",
     "ExecCommand",
+    "FileStatFileMode",
+    "FileStatState",
     "TriggersOutput",
 ]
 
@@ -164,6 +167,230 @@ class ExecCommand(dict):
         Pass a string to the command's process as standard in.
         """
         return pulumi.get(self, "stdin")
+
+
+@pulumi.output_type
+class FileStatFileMode(dict):
+    @staticmethod
+    def __key_warning(key: str):
+        suggest = None
+        if key == "isDir":
+            suggest = "is_dir"
+        elif key == "isRegular":
+            suggest = "is_regular"
+
+        if suggest:
+            pulumi.log.warn(
+                f"Key '{key}' not found in FileStatFileMode. Access the value via the '{suggest}' property getter instead."
+            )
+
+    def __getitem__(self, key: str) -> Any:
+        FileStatFileMode.__key_warning(key)
+        return super().__getitem__(key)
+
+    def get(self, key: str, default=None) -> Any:
+        FileStatFileMode.__key_warning(key)
+        return super().get(key, default)
+
+    def __init__(
+        __self__,
+        *,
+        int: builtins.int,
+        is_dir: builtins.bool,
+        is_regular: builtins.bool,
+        octal: builtins.str,
+        string: builtins.str,
+    ):
+        pulumi.set(__self__, "int", int)
+        pulumi.set(__self__, "is_dir", is_dir)
+        pulumi.set(__self__, "is_regular", is_regular)
+        pulumi.set(__self__, "octal", octal)
+        pulumi.set(__self__, "string", string)
+
+    @property
+    @pulumi.getter
+    def int(self) -> builtins.int:
+        return pulumi.get(self, "int")
+
+    @property
+    @pulumi.getter(name="isDir")
+    def is_dir(self) -> builtins.bool:
+        return pulumi.get(self, "is_dir")
+
+    @property
+    @pulumi.getter(name="isRegular")
+    def is_regular(self) -> builtins.bool:
+        return pulumi.get(self, "is_regular")
+
+    @property
+    @pulumi.getter
+    def octal(self) -> builtins.str:
+        return pulumi.get(self, "octal")
+
+    @property
+    @pulumi.getter
+    def string(self) -> builtins.str:
+        return pulumi.get(self, "string")
+
+
+@pulumi.output_type
+class FileStatState(dict):
+    @staticmethod
+    def __key_warning(key: str):
+        suggest = None
+        if key == "accessTime":
+            suggest = "access_time"
+        elif key == "baseName":
+            suggest = "base_name"
+        elif key == "createTime":
+            suggest = "create_time"
+        elif key == "fileMode":
+            suggest = "file_mode"
+        elif key == "groupName":
+            suggest = "group_name"
+        elif key == "modifiedTime":
+            suggest = "modified_time"
+        elif key == "sha256Checksum":
+            suggest = "sha256_checksum"
+        elif key == "userName":
+            suggest = "user_name"
+
+        if suggest:
+            pulumi.log.warn(
+                f"Key '{key}' not found in FileStatState. Access the value via the '{suggest}' property getter instead."
+            )
+
+    def __getitem__(self, key: str) -> Any:
+        FileStatState.__key_warning(key)
+        return super().__getitem__(key)
+
+    def get(self, key: str, default=None) -> Any:
+        FileStatState.__key_warning(key)
+        return super().get(key, default)
+
+    def __init__(
+        __self__,
+        *,
+        exists: builtins.bool,
+        access_time: Optional[builtins.str] = None,
+        base_name: Optional[builtins.str] = None,
+        create_time: Optional[builtins.str] = None,
+        dev: Optional[builtins.int] = None,
+        file_mode: Optional["outputs.FileStatFileMode"] = None,
+        gid: Optional[builtins.int] = None,
+        group_name: Optional[builtins.str] = None,
+        inode: Optional[builtins.int] = None,
+        modified_time: Optional[builtins.str] = None,
+        nlink: Optional[builtins.int] = None,
+        sha256_checksum: Optional[builtins.str] = None,
+        size: Optional[builtins.int] = None,
+        uid: Optional[builtins.int] = None,
+        user_name: Optional[builtins.str] = None,
+    ):
+        pulumi.set(__self__, "exists", exists)
+        if access_time is not None:
+            pulumi.set(__self__, "access_time", access_time)
+        if base_name is not None:
+            pulumi.set(__self__, "base_name", base_name)
+        if create_time is not None:
+            pulumi.set(__self__, "create_time", create_time)
+        if dev is not None:
+            pulumi.set(__self__, "dev", dev)
+        if file_mode is not None:
+            pulumi.set(__self__, "file_mode", file_mode)
+        if gid is not None:
+            pulumi.set(__self__, "gid", gid)
+        if group_name is not None:
+            pulumi.set(__self__, "group_name", group_name)
+        if inode is not None:
+            pulumi.set(__self__, "inode", inode)
+        if modified_time is not None:
+            pulumi.set(__self__, "modified_time", modified_time)
+        if nlink is not None:
+            pulumi.set(__self__, "nlink", nlink)
+        if sha256_checksum is not None:
+            pulumi.set(__self__, "sha256_checksum", sha256_checksum)
+        if size is not None:
+            pulumi.set(__self__, "size", size)
+        if uid is not None:
+            pulumi.set(__self__, "uid", uid)
+        if user_name is not None:
+            pulumi.set(__self__, "user_name", user_name)
+
+    @property
+    @pulumi.getter
+    def exists(self) -> builtins.bool:
+        return pulumi.get(self, "exists")
+
+    @property
+    @pulumi.getter(name="accessTime")
+    def access_time(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "access_time")
+
+    @property
+    @pulumi.getter(name="baseName")
+    def base_name(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "base_name")
+
+    @property
+    @pulumi.getter(name="createTime")
+    def create_time(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "create_time")
+
+    @property
+    @pulumi.getter
+    def dev(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "dev")
+
+    @property
+    @pulumi.getter(name="fileMode")
+    def file_mode(self) -> Optional["outputs.FileStatFileMode"]:
+        return pulumi.get(self, "file_mode")
+
+    @property
+    @pulumi.getter
+    def gid(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "gid")
+
+    @property
+    @pulumi.getter(name="groupName")
+    def group_name(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "group_name")
+
+    @property
+    @pulumi.getter
+    def inode(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "inode")
+
+    @property
+    @pulumi.getter(name="modifiedTime")
+    def modified_time(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "modified_time")
+
+    @property
+    @pulumi.getter
+    def nlink(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "nlink")
+
+    @property
+    @pulumi.getter(name="sha256Checksum")
+    def sha256_checksum(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "sha256_checksum")
+
+    @property
+    @pulumi.getter
+    def size(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "size")
+
+    @property
+    @pulumi.getter
+    def uid(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "uid")
+
+    @property
+    @pulumi.getter(name="userName")
+    def user_name(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "user_name")
 
 
 @pulumi.output_type

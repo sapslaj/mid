@@ -16,6 +16,7 @@ import (
 type FileLine struct {
 	pulumi.CustomResourceState
 
+	_drifted     pulumi.StringArrayOutput   `pulumi:"_drifted"`
 	Backrefs     pulumi.BoolPtrOutput       `pulumi:"backrefs"`
 	Backup       pulumi.BoolPtrOutput       `pulumi:"backup"`
 	Create       pulumi.BoolPtrOutput       `pulumi:"create"`
@@ -194,6 +195,10 @@ func (o FileLineOutput) ToFileLineOutput() FileLineOutput {
 
 func (o FileLineOutput) ToFileLineOutputWithContext(ctx context.Context) FileLineOutput {
 	return o
+}
+
+func (o FileLineOutput) _drifted() pulumi.StringArrayOutput {
+	return o.ApplyT(func(v *FileLine) pulumi.StringArrayOutput { return v._drifted }).(pulumi.StringArrayOutput)
 }
 
 func (o FileLineOutput) Backrefs() pulumi.BoolPtrOutput {

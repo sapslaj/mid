@@ -33,6 +33,7 @@ export class File extends pulumi.CustomResource {
     return obj["__pulumiType"] === File.__pulumiType;
   }
 
+  public readonly /*out*/ _drifted!: pulumi.Output<string[]>;
   public readonly accessTime!: pulumi.Output<string | undefined>;
   public readonly accessTimeFormat!: pulumi.Output<string | undefined>;
   public readonly attributes!: pulumi.Output<string | undefined>;
@@ -58,7 +59,7 @@ export class File extends pulumi.CustomResource {
   public readonly setype!: pulumi.Output<string | undefined>;
   public readonly seuser!: pulumi.Output<string | undefined>;
   public readonly source!: pulumi.Output<pulumi.asset.Asset | pulumi.asset.Archive | undefined>;
-  public readonly /*out*/ stat!: pulumi.Output<outputs.resource.FileStateStat>;
+  public readonly /*out*/ stat!: pulumi.Output<outputs.types.FileStatState>;
   public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
   public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
   public readonly validate!: pulumi.Output<string | undefined>;
@@ -104,9 +105,11 @@ export class File extends pulumi.CustomResource {
       resourceInputs["triggers"] = args ? args.triggers : undefined;
       resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
       resourceInputs["validate"] = args ? args.validate : undefined;
+      resourceInputs["_drifted"] = undefined /*out*/;
       resourceInputs["backupFile"] = undefined /*out*/;
       resourceInputs["stat"] = undefined /*out*/;
     } else {
+      resourceInputs["_drifted"] = undefined /*out*/;
       resourceInputs["accessTime"] = undefined /*out*/;
       resourceInputs["accessTimeFormat"] = undefined /*out*/;
       resourceInputs["attributes"] = undefined /*out*/;
@@ -138,6 +141,8 @@ export class File extends pulumi.CustomResource {
       resourceInputs["validate"] = undefined /*out*/;
     }
     opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
+    const replaceOnChanges = { replaceOnChanges: ["path"] };
+    opts = pulumi.mergeOptions(opts, replaceOnChanges);
     super(File.__pulumiType, name, resourceInputs, opts);
   }
 }

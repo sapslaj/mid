@@ -9,6 +9,7 @@ import (
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
+	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 func FileStat(ctx *pulumi.Context, args *FileStatArgs, opts ...pulumi.InvokeOption) (*FileStatResult, error) {
@@ -28,24 +29,24 @@ type FileStatArgs struct {
 }
 
 type FileStatResult struct {
-	AccessTime        *string           `pulumi:"accessTime"`
-	BaseName          *string           `pulumi:"baseName"`
-	CalculateChecksum *bool             `pulumi:"calculateChecksum"`
-	CreateTime        *string           `pulumi:"createTime"`
-	Dev               *int              `pulumi:"dev"`
-	Exists            bool              `pulumi:"exists"`
-	FileMode          *FileStatFileMode `pulumi:"fileMode"`
-	FollowSymlinks    *bool             `pulumi:"followSymlinks"`
-	Gid               *int              `pulumi:"gid"`
-	GroupName         *string           `pulumi:"groupName"`
-	Inode             *int              `pulumi:"inode"`
-	ModifiedTime      *string           `pulumi:"modifiedTime"`
-	Nlink             *int              `pulumi:"nlink"`
-	Path              string            `pulumi:"path"`
-	Sha256Checksum    *string           `pulumi:"sha256Checksum"`
-	Size              *int              `pulumi:"size"`
-	Uid               *int              `pulumi:"uid"`
-	UserName          *string           `pulumi:"userName"`
+	AccessTime        *string                 `pulumi:"accessTime"`
+	BaseName          *string                 `pulumi:"baseName"`
+	CalculateChecksum *bool                   `pulumi:"calculateChecksum"`
+	CreateTime        *string                 `pulumi:"createTime"`
+	Dev               *int                    `pulumi:"dev"`
+	Exists            bool                    `pulumi:"exists"`
+	FileMode          *types.FileStatFileMode `pulumi:"fileMode"`
+	FollowSymlinks    *bool                   `pulumi:"followSymlinks"`
+	Gid               *int                    `pulumi:"gid"`
+	GroupName         *string                 `pulumi:"groupName"`
+	Inode             *int                    `pulumi:"inode"`
+	ModifiedTime      *string                 `pulumi:"modifiedTime"`
+	Nlink             *int                    `pulumi:"nlink"`
+	Path              string                  `pulumi:"path"`
+	Sha256Checksum    *string                 `pulumi:"sha256Checksum"`
+	Size              *int                    `pulumi:"size"`
+	Uid               *int                    `pulumi:"uid"`
+	UserName          *string                 `pulumi:"userName"`
 }
 
 func FileStatOutput(ctx *pulumi.Context, args FileStatOutputArgs, opts ...pulumi.InvokeOption) FileStatResultOutput {
@@ -105,8 +106,8 @@ func (o FileStatResultOutput) Exists() pulumi.BoolOutput {
 	return o.ApplyT(func(v FileStatResult) bool { return v.Exists }).(pulumi.BoolOutput)
 }
 
-func (o FileStatResultOutput) FileMode() FileStatFileModePtrOutput {
-	return o.ApplyT(func(v FileStatResult) *FileStatFileMode { return v.FileMode }).(FileStatFileModePtrOutput)
+func (o FileStatResultOutput) FileMode() types.FileStatFileModePtrOutput {
+	return o.ApplyT(func(v FileStatResult) *types.FileStatFileMode { return v.FileMode }).(types.FileStatFileModePtrOutput)
 }
 
 func (o FileStatResultOutput) FollowSymlinks() pulumi.BoolPtrOutput {

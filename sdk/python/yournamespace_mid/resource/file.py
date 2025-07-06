@@ -15,7 +15,6 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from . import outputs
 from .. import types as _types
 
 __all__ = ["FileArgs", "File"]
@@ -508,8 +507,11 @@ class File(pulumi.CustomResource):
             __props__.__dict__["triggers"] = triggers
             __props__.__dict__["unsafe_writes"] = unsafe_writes
             __props__.__dict__["validate"] = validate
+            __props__.__dict__["_drifted"] = None
             __props__.__dict__["backup_file"] = None
             __props__.__dict__["stat"] = None
+        replace_on_changes = pulumi.ResourceOptions(replace_on_changes=["path"])
+        opts = pulumi.ResourceOptions.merge(opts, replace_on_changes)
         super(File, __self__).__init__(
             "mid:resource:File", resource_name, __props__, opts
         )
@@ -532,6 +534,7 @@ class File(pulumi.CustomResource):
 
         __props__ = FileArgs.__new__(FileArgs)
 
+        __props__.__dict__["_drifted"] = None
         __props__.__dict__["access_time"] = None
         __props__.__dict__["access_time_format"] = None
         __props__.__dict__["attributes"] = None
@@ -562,6 +565,11 @@ class File(pulumi.CustomResource):
         __props__.__dict__["unsafe_writes"] = None
         __props__.__dict__["validate"] = None
         return File(resource_name, opts=opts, __props__=__props__)
+
+    @property
+    @pulumi.getter
+    def _drifted(self) -> pulumi.Output[Sequence[builtins.str]]:
+        return pulumi.get(self, "_drifted")
 
     @property
     @pulumi.getter(name="accessTime")
@@ -690,7 +698,7 @@ class File(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def stat(self) -> pulumi.Output["outputs.FileStateStat"]:
+    def stat(self) -> pulumi.Output["_types.outputs.FileStatState"]:
         return pulumi.get(self, "stat")
 
     @property

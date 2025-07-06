@@ -310,6 +310,7 @@ class FileLine(pulumi.CustomResource):
             __props__.__dict__["triggers"] = triggers
             __props__.__dict__["unsafe_writes"] = unsafe_writes
             __props__.__dict__["validate"] = validate
+            __props__.__dict__["_drifted"] = None
         super(FileLine, __self__).__init__(
             "mid:resource:FileLine", resource_name, __props__, opts
         )
@@ -332,6 +333,7 @@ class FileLine(pulumi.CustomResource):
 
         __props__ = FileLineArgs.__new__(FileLineArgs)
 
+        __props__.__dict__["_drifted"] = None
         __props__.__dict__["backrefs"] = None
         __props__.__dict__["backup"] = None
         __props__.__dict__["create"] = None
@@ -347,6 +349,11 @@ class FileLine(pulumi.CustomResource):
         __props__.__dict__["unsafe_writes"] = None
         __props__.__dict__["validate"] = None
         return FileLine(resource_name, opts=opts, __props__=__props__)
+
+    @property
+    @pulumi.getter
+    def _drifted(self) -> pulumi.Output[Sequence[builtins.str]]:
+        return pulumi.get(self, "_drifted")
 
     @property
     @pulumi.getter

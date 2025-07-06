@@ -7,12 +7,6 @@ import * as outputs from "../types/output";
 
 import * as utilities from "../utilities";
 
-export namespace agent {
-}
-
-export namespace resource {
-}
-
 export namespace types {
   /**
    * Instructions for how to connect to a remote endpoint.
