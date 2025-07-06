@@ -176,11 +176,15 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=$NODE_AUTH_TOKEN" >> ~/.npmrc
       - name: go test -timeout=1h -v -race ./tests/acceptance/...
         run: |
+          set -x
           export GOCOVERDIR="$(pwd)/covdatafiles.out"
+          mkdir "$GOCOVERDIR"
           go test -timeout=1h -v -race ./tests/acceptance/...
       - name: Gather coverage
         if: ${{ always() }}
-        run: go tool covdata textfmt -i="$(pwd)/covdatafiles.out" -o=coverage.out
+        run: |
+          set -x
+          go tool covdata textfmt -i="$(pwd)/covdatafiles.out" -o=coverage.out
       - name: Send coverage
         if: ${{ always() }}
         uses: shogo82148/actions-goveralls@v1
