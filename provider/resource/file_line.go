@@ -3,6 +3,8 @@ package resource
 import (
 	"context"
 	"errors"
+	"reflect"
+	"slices"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi-go-provider/infer"
@@ -13,6 +15,8 @@ import (
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/pdiff"
+	"github.com/sapslaj/mid/pkg/pulumi-go-provider/introspect"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
 	"github.com/sapslaj/mid/provider/types"
@@ -39,6 +43,7 @@ type FileLineArgs struct {
 
 type FileLineState struct {
 	FileLineArgs
+	Drifted  []string             `pulumi:"_drifted"`
 	Triggers types.TriggersOutput `pulumi:"triggers"`
 }
 
@@ -66,6 +71,78 @@ func (r FileLine) updateState(inputs FileLineArgs, state FileLineState, changed 
 	return state
 }
 
+func (r FileLine) updateStateDrifted(inputs FileLineArgs, state FileLineState, props []string) FileLineState {
+	if len(props) > 0 {
+		state = r.updateState(inputs, state, true)
+	}
+	inputsMap := introspect.StructToMap(inputs)
+	if state.Drifted == nil {
+		state.Drifted = []string{}
+	}
+	for _, prop := range props {
+		val, ok := inputsMap[prop]
+		if !ok || val == nil {
+			continue
+		}
+		rv := reflect.ValueOf(val)
+		if slices.Contains([]reflect.Kind{
+			reflect.Chan,
+			reflect.Func,
+			reflect.Interface,
+			reflect.Map,
+			reflect.Pointer,
+			reflect.Slice,
+		}, rv.Type().Kind()) {
+			if rv.IsNil() {
+				continue
+			}
+		}
+		if !slices.Contains(state.Drifted, prop) {
+			state.Drifted = append(state.Drifted, prop)
+		}
+	}
+	return state
+}
+
+func (r FileLine) ansibleLineinfileDiffedAttributes(result ansible.LineinfileReturn) []string {
+	if result.Diff == nil {
+		return []string{}
+	}
+	data, ok := (*result.Diff).(map[string]any)
+	if !ok {
+		return []string{}
+	}
+	beforeAny, ok := data["before"]
+	if !ok {
+		return []string{}
+	}
+	before, ok := beforeAny.(map[string]any)
+	if !ok {
+		return []string{}
+	}
+	afterAny, ok := data["after"]
+	if !ok {
+		return []string{}
+	}
+	after, ok := afterAny.(map[string]any)
+	if !ok {
+		return []string{}
+	}
+	diff := []string{}
+	for k := range before {
+		if !reflect.DeepEqual(before[k], after[k]) {
+			diff = append(diff, k)
+		}
+	}
+	if slices.Contains(diff, "state") {
+		diff = append(diff, "ensure")
+	}
+	if slices.Contains(diff, "content") {
+		diff = append(diff, "line")
+	}
+	return diff
+}
+
 func (r FileLine) Diff(
 	ctx context.Context,
 	req infer.DiffRequest[FileLineArgs, FileLineState],
@@ -85,23 +162,17 @@ func (r FileLine) Diff(
 		DeleteBeforeReplace: true,
 	}
 
-	diff = types.MergeDiffResponses(
+	for _, prop := range req.State.Drifted {
+		diff.HasChanges = true
+		diff.DetailedDiff[prop] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
+	diff = pdiff.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(req.State, req.Inputs, []string{
-			"ensure",
-			"path",
-			"backrefs",
-			"backup",
-			"create",
-			"firstMatch",
-			"insertBefore",
-			"insertAfter",
-			"line",
-			"regexp",
-			"searchString",
-			"unsafeWrites",
-			"validate",
-		}),
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{"triggers"}),
 		types.DiffTriggers(req.State, req.Inputs),
 	)
 
@@ -126,6 +197,7 @@ func (r FileLine) Create(
 	config := infer.GetConfig[types.Config](ctx)
 
 	state := r.updateState(req.Inputs, FileLineState{}, true)
+	state.Drifted = []string{}
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
 	id, err := resource.NewUniqueHex(req.Name, 8, 0)
@@ -259,7 +331,9 @@ func (r FileLine) Read(
 		}, err
 	}
 
-	state = r.updateState(req.Inputs, state, result.IsChanged())
+	if result.IsChanged() {
+		state = r.updateStateDrifted(req.Inputs, state, r.ansibleLineinfileDiffedAttributes(result))
+	}
 
 	span.SetStatus(codes.Ok, "")
 	return infer.ReadResponse[FileLineArgs, FileLineState]{
@@ -347,7 +421,14 @@ func (r FileLine) Update(
 		}, err
 	}
 
-	state = r.updateState(req.Inputs, state, result.IsChanged())
+	if result.IsChanged() {
+		state = r.updateStateDrifted(req.Inputs, state, r.ansibleLineinfileDiffedAttributes(result))
+	}
+
+	if !req.DryRun {
+		// clear drifted if we aren't doing a dry-run
+		state.Drifted = []string{}
+	}
 
 	span.SetStatus(codes.Ok, "")
 	return infer.UpdateResponse[FileLineState]{

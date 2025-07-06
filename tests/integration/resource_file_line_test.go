@@ -244,6 +244,20 @@ EOF
 				{
 					Inputs: property.NewMap(map[string]property.Value{
 						"path":   property.New("/fileline"),
+						"line":   property.New("foo bar foo"),
+						"regexp": property.New("^foo"),
+					}),
+					Refresh:       true,
+					AssertCommand: "grep -F 'foo bar foo' /fileline",
+					ExpectedDiff: &p.DiffResponse{
+						HasChanges:          false,
+						DeleteBeforeReplace: true,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/fileline"),
 						"line":   property.New("foo bar baz"),
 						"regexp": property.New("^foo"),
 					}),
@@ -255,6 +269,31 @@ EOF
 							"line": {
 								Kind:      p.Update,
 								InputDiff: true,
+							},
+						},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/fileline"),
+						"line":   property.New("foo bar baz"),
+						"regexp": property.New("^foo"),
+					}),
+					AssertBeforeCommand: `
+						set -eux
+						cat /fileline
+						sudo sed -i 's/foo bar/foo foo/' /fileline
+						cat /fileline
+					`,
+					Refresh:       true,
+					AssertCommand: "grep -F 'foo bar baz' /fileline",
+					ExpectedDiff: &p.DiffResponse{
+						HasChanges:          true,
+						DeleteBeforeReplace: true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"line": {
+								Kind:      p.Update,
+								InputDiff: false,
 							},
 						},
 					},
