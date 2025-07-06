@@ -226,6 +226,9 @@ const postgresqlListenAddresses = new mid.resource.FileLine("postgresql-listen-a
 }, {
   provider,
   dependsOn: [
+    // FIXME: cannot edit the same file concurrently or else the changes get
+    // eaten. need to implement file locking apparently.
+    postgresqlMaxConnections,
     postgresqlPackage,
   ],
 });
@@ -254,7 +257,7 @@ const postgresqlHBA = new mid.resource.FileLine("postgresql-hba", {
 // make sure postgresql.service is started and enabled, and restart on any
 // changes to any of the triggers.
 const postgresqlService = new mid.resource.SystemdService("postgresql.service", {
-  name: "postgresql.service",
+  name: pulumi.interpolate`postgresql@${postgresqlVersion}-main.service`,
   ensure: "started",
   enabled: true,
   triggers: {
