@@ -283,15 +283,17 @@ def write_changes(module, b_lines, dest):
         )
 
 
-def check_file_attrs(module, changed, message, diff):
+def check_file_attrs(module, diff):
     file_args = module.load_file_common_arguments(module.params)
-    if module.set_fs_attributes_if_different(file_args, False, diff=diff):
-        if changed:
-            message += " and "
-        changed = True
-        message += "ownership, perms or SE linux context changed"
+    if module.set_fs_attributes_if_different(
+        file_args=file_args,
+        changed=False,
+        diff=diff,
+    ):
+        message = "ownership, perms or SE linux context changed"
+        return message, True
 
-    return message, changed
+    return "", False
 
 
 def present(
@@ -308,10 +310,12 @@ def present(
     firstmatch,
 ):
     diff = {
-        "before": "",
-        "after": "",
-        "before_header": "%s (content)" % dest,
-        "after_header": "%s (content)" % dest,
+        "before": {
+            "path": dest,
+        },
+        "after": {
+            "path": dest,
+        },
     }
 
     b_dest = to_bytes(dest, errors="surrogate_or_strict")
@@ -333,7 +337,7 @@ def present(
             b_lines = f.readlines()
 
     if module._diff:
-        diff["before"] = to_native(b"".join(b_lines))
+        diff["before"]["content"] = to_native(b"".join(b_lines))
 
     if regexp is not None:
         bre_m = re.compile(to_bytes(regexp, errors="surrogate_or_strict"))
@@ -428,7 +432,7 @@ def present(
             if insertafter and insertafter != "EOF":
                 # Ensure there is a line separator after the found string
                 # at the end of the file.
-                if b_lines and not b_lines[-1][-1:] in (b"\n", b"\r"):
+                if b_lines and b_lines[-1][-1:] not in (b"\n", b"\r"):
                     b_lines[-1] = b_lines[-1] + b_linesep
 
                 # If the line to insert after is at the end of the file
@@ -476,7 +480,7 @@ def present(
     # (so default behaviour is to add at the end)
     elif insertafter == "EOF" or index[1] == -1:
         # If the file is not empty then ensure there's a newline before the added line
-        if b_lines and not b_lines[-1][-1:] in (b"\n", b"\r"):
+        if b_lines and b_lines[-1][-1:] not in (b"\n", b"\r"):
             b_lines.append(b_linesep)
 
         b_lines.append(b_line + b_linesep)
@@ -503,7 +507,7 @@ def present(
         changed = True
 
     if module._diff:
-        diff["after"] = to_native(b"".join(b_lines))
+        diff["after"]["content"] = to_native(b"".join(b_lines))
 
     backupdest = ""
     if changed and not module.check_mode:
@@ -511,17 +515,23 @@ def present(
             backupdest = module.backup_local(dest)
         write_changes(module, b_lines, dest)
 
+    diff["after"]["state"] = "present"
+    if changed:
+        diff["before"]["state"] = "absent"
+    else:
+        diff["before"]["state"] = "present"
+
     if module.check_mode and not os.path.exists(b_dest):
         module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
 
-    attr_diff = {}
-    msg, changed = check_file_attrs(module, changed, msg, attr_diff)
+    attrs_message, attrs_changed = check_file_attrs(module, diff)
+    if attrs_changed:
+        if msg:
+            msg += " and "
+        msg += attrs_message
+        changed = True
 
-    attr_diff["before_header"] = "%s (file attributes)" % dest
-    attr_diff["after_header"] = "%s (file attributes)" % dest
-
-    difflist = [diff, attr_diff]
-    module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=difflist)
+    module.exit_json(changed=changed, msg=msg, backup=backupdest, diff=diff)
 
 
 def absent(module, dest, regexp, search_string, line, backup):
@@ -531,17 +541,19 @@ def absent(module, dest, regexp, search_string, line, backup):
 
     msg = ""
     diff = {
-        "before": "",
-        "after": "",
-        "before_header": "%s (content)" % dest,
-        "after_header": "%s (content)" % dest,
+        "before": {
+            "path": dest,
+        },
+        "after": {
+            "path": dest,
+        },
     }
 
     with open(b_dest, "rb") as f:
         b_lines = f.readlines()
 
     if module._diff:
-        diff["before"] = to_native(b"".join(b_lines))
+        diff["before"]["content"] = to_native(b"".join(b_lines))
 
     if regexp is not None:
         bre_c = re.compile(to_bytes(regexp, errors="surrogate_or_strict"))
@@ -566,7 +578,7 @@ def absent(module, dest, regexp, search_string, line, backup):
     changed = len(found) > 0
 
     if module._diff:
-        diff["after"] = to_native(b"".join(b_lines))
+        diff["after"]["content"] = to_native(b"".join(b_lines))
 
     backupdest = ""
     if changed and not module.check_mode:
@@ -574,19 +586,26 @@ def absent(module, dest, regexp, search_string, line, backup):
             backupdest = module.backup_local(dest)
         write_changes(module, b_lines, dest)
 
+    diff["after"]["state"] = "absent"
     if changed:
+        diff["before"]["state"] = "present"
         msg = "%s line(s) removed" % len(found)
+    else:
+        diff["before"]["state"] = "absent"
 
-    attr_diff = {}
-    msg, changed = check_file_attrs(module, changed, msg, attr_diff)
-
-    attr_diff["before_header"] = "%s (file attributes)" % dest
-    attr_diff["after_header"] = "%s (file attributes)" % dest
-
-    difflist = [diff, attr_diff]
+    attrs_message, attrs_changed = check_file_attrs(module, diff)
+    if attrs_changed:
+        if msg:
+            msg += " and "
+        msg += attrs_message
+        changed = True
 
     module.exit_json(
-        changed=changed, found=len(found), msg=msg, backup=backupdest, diff=difflist
+        changed=changed,
+        found=len(found),
+        msg=msg,
+        backup=backupdest,
+        diff=diff,
     )
 
 
