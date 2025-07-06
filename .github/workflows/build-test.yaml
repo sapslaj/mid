@@ -128,7 +128,7 @@ jobs:
       - name: go test
         run: |
           go test \
-            -timeout=10m \
+            -timeout=15m \
             -v \
             -race \
             -covermode atomic \
@@ -179,7 +179,7 @@ jobs:
           set -x
           export GOCOVERDIR="$(pwd)/covdatafiles.out"
           mkdir "$GOCOVERDIR"
-          go test -timeout=1h -v -race ./tests/acceptance/...
+          go test -timeout=15m -v -race ./tests/acceptance/...
       - name: Gather coverage
         if: ${{ always() }}
         run: |
