@@ -101,41 +101,49 @@ func New(t *testing.T, config Config) (*TestMachine, error) {
 
 	var tm *TestMachine
 	var err error
-	switch config.Backend {
-	case DockerBackend:
-		tm, err = NewDocker(t, config)
-	case QEMUBackend:
-		tm, err = NewQEMU(t, config)
-	default:
-		return nil, fmt.Errorf("unknown backend: %q", config.Backend)
-	}
-	tm.SSHUsername = config.SSHUsername
-	tm.SSHPassword = "hunter2" // NOTE: hardcoded password
-	if tm.SSHAddress == "" {
-		tm.SSHAddress = fmt.Sprintf("%s:%d", tm.SSHHost, tm.SSHPort)
-	}
-	if err != nil {
-		return tm, err
-	}
 
-	for attempt := 1; attempt <= 10; attempt++ {
-		t.Logf("(attempt %d/10) connecting to test machine at address %s over SSH", attempt, tm.SSHAddress)
-		tm.SSHClient, err = ssh.Dial(
-			"tcp",
-			tm.SSHAddress,
-			&ssh.ClientConfig{
-				User:            config.SSHUsername,
-				Auth:            []ssh.AuthMethod{ssh.Password(tm.SSHPassword)},
-				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-			},
-		)
-		if attempt == 10 || err == nil {
-			break
+	for createAttempt := 1; createAttempt <= 10; createAttempt++ {
+		switch config.Backend {
+		case DockerBackend:
+			tm, err = NewDocker(t, config)
+		case QEMUBackend:
+			tm, err = NewQEMU(t, config)
+		default:
+			return nil, fmt.Errorf("unknown backend: %q", config.Backend)
 		}
-		wait := time.Duration(attempt) * 5 * time.Second
-		t.Logf("(attempt %d/10) error connecting to test machine: %v", attempt, err)
-		t.Logf("(attempt %d/10) trying again in %s", attempt, wait)
-		time.Sleep(wait)
+		tm.SSHUsername = config.SSHUsername
+		tm.SSHPassword = "hunter2" // NOTE: hardcoded password
+		if tm.SSHAddress == "" {
+			tm.SSHAddress = fmt.Sprintf("%s:%d", tm.SSHHost, tm.SSHPort)
+		}
+		if err != nil {
+			return tm, err
+		}
+
+		for connectAttempt := 1; connectAttempt <= 10; connectAttempt++ {
+			t.Logf("(create attempt: %d/10; connect attempt: %d/10) connecting to test machine at address %s over SSH", createAttempt, connectAttempt, tm.SSHAddress)
+			tm.SSHClient, err = ssh.Dial(
+				"tcp",
+				tm.SSHAddress,
+				&ssh.ClientConfig{
+					User:            config.SSHUsername,
+					Auth:            []ssh.AuthMethod{ssh.Password(tm.SSHPassword)},
+					HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+				},
+			)
+			if connectAttempt == 10 || err == nil {
+				break
+			}
+			wait := time.Duration(connectAttempt) * 5 * time.Second
+			t.Logf("(create attempt: %d/10; connect attempt: %d/10) error connecting to test machine: %v", createAttempt, connectAttempt, err)
+			t.Logf("(create attempt: %d/10; connect attempt: %d/10) trying again in %s", createAttempt, connectAttempt, wait)
+			time.Sleep(wait)
+		}
+		if createAttempt == 10 || err == nil {
+			break
+		} else {
+			tm.Close()
+		}
 	}
 	if err != nil {
 		return tm, err
