@@ -14,5 +14,8 @@ func TestFileOperations(t *testing.T) {
 		Dependencies: []string{
 			"@sapslaj/pulumi-mid",
 		},
+		AllowEmptyPreviewChanges: true,
+		AllowEmptyUpdateChanges:  true,
+		ExpectRefreshChanges:     true,
 	})
 }
