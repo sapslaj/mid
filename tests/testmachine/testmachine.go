@@ -102,7 +102,7 @@ func New(t *testing.T, config Config) (*TestMachine, error) {
 	var tm *TestMachine
 	var err error
 
-	for createAttempt := 1; createAttempt <= 10; createAttempt++ {
+	for createAttempt := 1; createAttempt <= 5; createAttempt++ {
 		switch config.Backend {
 		case DockerBackend:
 			tm, err = NewDocker(t, config)
@@ -120,8 +120,8 @@ func New(t *testing.T, config Config) (*TestMachine, error) {
 			return tm, err
 		}
 
-		for connectAttempt := 1; connectAttempt <= 10; connectAttempt++ {
-			t.Logf("(create attempt: %d/10; connect attempt: %d/10) connecting to test machine at address %s over SSH", createAttempt, connectAttempt, tm.SSHAddress)
+		for connectAttempt := 1; connectAttempt <= 5; connectAttempt++ {
+			t.Logf("(create attempt: %d/5; connect attempt: %d/10) connecting to test machine at address %s over SSH", createAttempt, connectAttempt, tm.SSHAddress)
 			tm.SSHClient, err = ssh.Dial(
 				"tcp",
 				tm.SSHAddress,
@@ -131,15 +131,15 @@ func New(t *testing.T, config Config) (*TestMachine, error) {
 					HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 				},
 			)
-			if connectAttempt == 10 || err == nil {
+			if connectAttempt == 5 || err == nil {
 				break
 			}
 			wait := time.Duration(connectAttempt) * 5 * time.Second
-			t.Logf("(create attempt: %d/10; connect attempt: %d/10) error connecting to test machine: %v", createAttempt, connectAttempt, err)
-			t.Logf("(create attempt: %d/10; connect attempt: %d/10) trying again in %s", createAttempt, connectAttempt, wait)
+			t.Logf("(create attempt: %d/5; connect attempt: %d/10) error connecting to test machine: %v", createAttempt, connectAttempt, err)
+			t.Logf("(create attempt: %d/5; connect attempt: %d/10) trying again in %s", createAttempt, connectAttempt, wait)
 			time.Sleep(wait)
 		}
-		if createAttempt == 10 || err == nil {
+		if createAttempt == 5 || err == nil {
 			break
 		} else {
 			tm.Close()
@@ -166,11 +166,23 @@ func NewDocker(t *testing.T, config Config) (*TestMachine, error) {
 		return tm, err
 	}
 
-	existing, exists := tm.DockertestPool.ContainerByName(config.Name)
-	if exists {
-		t.Logf("removing orphaned container")
+	for purgeAttempt := 1; purgeAttempt <= 10; purgeAttempt++ {
+		existing, exists := tm.DockertestPool.ContainerByName(config.Name)
+		if !exists {
+			break
+		}
+
+		t.Logf("(purge attempt: %d/10) removing orphaned container", purgeAttempt)
 		err = tm.DockertestPool.Purge(existing)
-		if err != nil {
+		if err == nil {
+			break
+		}
+		if strings.Contains(err.Error(), "API error (409)") {
+			wait := time.Duration(purgeAttempt) * 5 * time.Second
+			t.Logf("(purge attempt: %d/10) error: %v", purgeAttempt, err)
+			t.Logf("(purge attempt: %d/10) trying again in %s", purgeAttempt, wait)
+			time.Sleep(wait)
+		} else {
 			return tm, err
 		}
 	}
