@@ -114,7 +114,7 @@ type Operation struct {
 	ExpectedOutput *property.Map
 
 	// A function called on the output of this operation.
-	Hook func(inputs, output property.Map)
+	Hook func(t *testing.T, inputs property.Map, output property.Map)
 
 	// If the test should expect the operation to signal an error.
 	ExpectFailure bool
@@ -146,7 +146,7 @@ type Operation struct {
 	ExpectRefreshFailure bool
 
 	// A function called on the read outputs
-	RefreshHook func(p.ReadResponse, error)
+	RefreshHook func(t *testing.T, res p.ReadResponse, err error)
 
 	// Command to run after refresh (if enabled)
 	AssertAfterRefreshCommand string
@@ -243,7 +243,7 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 
 		if op.Hook != nil {
 			t.Log("running operation hook")
-			op.Hook(checkResponse.Inputs, createResponse.Properties)
+			op.Hook(t, checkResponse.Inputs, createResponse.Properties)
 		}
 
 		if op.ExpectedOutput != nil {
@@ -292,7 +292,7 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 
 			if update.RefreshHook != nil {
 				t.Log("running refresh hook")
-				update.RefreshHook(readResponse, err)
+				update.RefreshHook(t, readResponse, err)
 			}
 
 			if update.ExpectRefreshFailure {
@@ -477,7 +477,7 @@ func (l LifeCycleTest) Run(t *testing.T, harness *ProviderTestHarness) {
 
 			if update.Hook != nil {
 				t.Log("running operation hook")
-				update.Hook(check.Inputs, result.Properties)
+				update.Hook(t, check.Inputs, result.Properties)
 			}
 
 			if update.ExpectedOutput != nil {

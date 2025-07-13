@@ -517,7 +517,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
 					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
 				},
@@ -545,7 +545,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
 						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
 					},
@@ -577,7 +577,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
 					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
 				},
@@ -606,7 +606,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
 						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
 					},
@@ -638,7 +638,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
 					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
 				},
@@ -667,7 +667,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
 						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
 					},
@@ -699,7 +699,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
 					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
 				},
@@ -728,7 +728,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
 						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
 					},
@@ -760,7 +760,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "", output.Get("stdout").AsString())
 					assert.Equal(t, "", output.Get("stderr").AsString())
 				},
@@ -789,7 +789,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "", output.Get("stdout").AsString())
 						assert.Equal(t, "", output.Get("stderr").AsString())
 					},
@@ -822,7 +822,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "", output.Get("stdout").AsString())
 					assert.Equal(t, "", output.Get("stderr").AsString())
 				},
@@ -852,7 +852,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "", output.Get("stdout").AsString())
 						assert.Equal(t, "", output.Get("stderr").AsString())
 					},
@@ -884,7 +884,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
 					assert.Equal(t, "", output.Get("stderr").AsString())
 				},
@@ -913,7 +913,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
 						assert.Equal(t, "", output.Get("stderr").AsString())
 					},
@@ -946,7 +946,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
 					assert.Equal(t, "", output.Get("stderr").AsString())
 				},
@@ -976,7 +976,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
 						assert.Equal(t, "", output.Get("stderr").AsString())
 					},
@@ -1008,7 +1008,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "", output.Get("stdout").AsString())
 					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
 				},
@@ -1037,7 +1037,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "", output.Get("stdout").AsString())
 						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
 					},
@@ -1070,7 +1070,7 @@ func TestResourceExec(t *testing.T) {
 						})),
 					})),
 				}),
-				Hook: func(inputs, output property.Map) {
+				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 					assert.Equal(t, "", output.Get("stdout").AsString())
 					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
 				},
@@ -1100,7 +1100,7 @@ func TestResourceExec(t *testing.T) {
 							})),
 						})),
 					}),
-					Hook: func(inputs, output property.Map) {
+					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
 						assert.Equal(t, "", output.Get("stdout").AsString())
 						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
 					},
