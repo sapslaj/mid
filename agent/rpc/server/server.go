@@ -18,10 +18,9 @@ func (s *Server) Start() error {
 	encoder := json.NewEncoder(os.Stdout)
 	decoder := json.NewDecoder(os.Stdin)
 	mutex := sync.Mutex{}
+	wg := sync.WaitGroup{}
 
 	for {
-		logger := s.Logger.With()
-
 		s.Logger.Info("waiting for next call")
 
 		var err error
@@ -55,8 +54,18 @@ func (s *Server) Start() error {
 			continue
 		}
 
+		if call.RPCFunction == rpc.RPCClose {
+			s.Logger.Info("received close, waiting for inflight to finish")
+			wg.Wait()
+			s.Logger.Info("closing")
+			return nil
+		}
+
+		wg.Add(1)
 		go func(call rpc.RPCCall[any]) {
-			logger = logger.With(
+			defer wg.Done()
+
+			logger := s.Logger.With(
 				slog.String("uuid", call.UUID),
 				slog.Any("name", call.RPCFunction),
 				log.SlogJSON("args", call.Args),
