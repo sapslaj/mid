@@ -306,13 +306,12 @@ EOF
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			tc.Resource = "mid:resource:FileLine"
-
 			harness := NewProviderTestHarness(t, testmachine.Config{
 				Backend: testmachine.DockerBackend,
 			})
 			defer harness.Close()
 
+			tc.Resource = "mid:resource:FileLine"
 			tc.Run(t, harness)
 		})
 	}

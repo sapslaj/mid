@@ -12,11 +12,6 @@ import (
 func TestResourceSystemdService(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.QEMUBackend,
-	})
-	defer harness.Close()
-
 	tests := map[string]LifeCycleTest{
 		"start service": {
 			Create: Operation{
@@ -374,10 +369,14 @@ systemctl status mid-systemd-service-test.service || true
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			// WARN: do not use t.Parallel() here
+			t.Parallel()
+
+			harness := NewProviderTestHarness(t, testmachine.Config{
+				Backend: testmachine.QEMUBackend,
+			})
+			defer harness.Close()
 
 			tc.Resource = "mid:resource:SystemdService"
-
 			tc.Run(t, harness)
 		})
 	}

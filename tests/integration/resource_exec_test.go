@@ -1113,13 +1113,12 @@ func TestResourceExec(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			tc.Resource = "mid:resource:Exec"
-
 			harness := NewProviderTestHarness(t, testmachine.Config{
 				Backend: testmachine.DockerBackend,
 			})
 			defer harness.Close()
 
+			tc.Resource = "mid:resource:Exec"
 			tc.Run(t, harness)
 		})
 	}

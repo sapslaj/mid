@@ -330,13 +330,12 @@ func TestResourceFile(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			tc.Resource = "mid:resource:File"
-
 			harness := NewProviderTestHarness(t, testmachine.Config{
 				Backend: testmachine.DockerBackend,
 			})
 			defer harness.Close()
 
+			tc.Resource = "mid:resource:File"
 			tc.Run(t, harness)
 		})
 	}

@@ -11,11 +11,6 @@ import (
 func TestResourceService(t *testing.T) {
 	t.Parallel()
 
-	harness := NewProviderTestHarness(t, testmachine.Config{
-		Backend: testmachine.QEMUBackend,
-	})
-	defer harness.Close()
-
 	tests := map[string]LifeCycleTest{
 		"start service": {
 			Create: Operation{
@@ -96,10 +91,14 @@ func TestResourceService(t *testing.T) {
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
-			// WARN: do not use t.Parallel() here
+			t.Parallel()
+
+			harness := NewProviderTestHarness(t, testmachine.Config{
+				Backend: testmachine.QEMUBackend,
+			})
+			defer harness.Close()
 
 			tc.Resource = "mid:resource:Service"
-
 			tc.Run(t, harness)
 		})
 	}
