@@ -37,6 +37,7 @@ _utilities.register(
   "mod": "resource",
   "fqn": "pulumi_mid.resource",
   "classes": {
+   "mid:resource:AnsibleTaskList": "AnsibleTaskList",
    "mid:resource:Apt": "Apt",
    "mid:resource:Exec": "Exec",
    "mid:resource:File": "File",

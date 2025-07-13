@@ -7,6 +7,7 @@ from .. import _utilities
 import typing
 
 # Export this package's modules as members:
+from .ansible_task_list import *
 from .apt import *
 from .exec_ import *
 from .file import *
@@ -16,3 +17,5 @@ from .package import *
 from .service import *
 from .systemd_service import *
 from .user import *
+from ._inputs import *
+from . import outputs

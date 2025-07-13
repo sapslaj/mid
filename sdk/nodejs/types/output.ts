@@ -7,6 +7,40 @@ import * as outputs from "../types/output";
 
 import * as utilities from "../utilities";
 
+export namespace resource {
+  export interface AnsibleTaskListArgsTask {
+    args: { [key: string]: any };
+    check?: boolean;
+    environment?: { [key: string]: string };
+    ignoreErrors?: boolean;
+    module: string;
+  }
+
+  export interface AnsibleTaskListArgsTasks {
+    create: outputs.resource.AnsibleTaskListArgsTask[];
+    delete?: outputs.resource.AnsibleTaskListArgsTask[];
+    update?: outputs.resource.AnsibleTaskListArgsTask[];
+  }
+
+  export interface AnsibleTaskListStateResults {
+    lifecycle: string;
+    tasks: outputs.resource.AnsibleTaskListStateTaskResult[];
+  }
+
+  export interface AnsibleTaskListStateTaskResult {
+    args: { [key: string]: any };
+    check?: boolean;
+    environment?: { [key: string]: string };
+    exitCode: number;
+    ignoreErrors?: boolean;
+    module: string;
+    result: { [key: string]: any };
+    stderr: string;
+    stdout: string;
+    success: boolean;
+  }
+}
+
 export namespace types {
   /**
    * Instructions for how to connect to a remote endpoint.

@@ -5,6 +5,11 @@ import * as pulumi from "@pulumi/pulumi";
 import * as utilities from "../utilities";
 
 // Export members:
+export { AnsibleTaskListArgs } from "./ansibleTaskList";
+export type AnsibleTaskList = import("./ansibleTaskList").AnsibleTaskList;
+export const AnsibleTaskList: typeof import("./ansibleTaskList").AnsibleTaskList = null as any;
+utilities.lazyLoad(exports, ["AnsibleTaskList"], () => require("./ansibleTaskList"));
+
 export { AptArgs } from "./apt";
 export type Apt = import("./apt").Apt;
 export const Apt: typeof import("./apt").Apt = null as any;
@@ -54,6 +59,8 @@ const _module = {
   version: utilities.getVersion(),
   construct: (name: string, type: string, urn: string): pulumi.Resource => {
     switch (type) {
+      case "mid:resource:AnsibleTaskList":
+        return new AnsibleTaskList(name, <any> undefined, { urn });
       case "mid:resource:Apt":
         return new Apt(name, <any> undefined, { urn });
       case "mid:resource:Exec":

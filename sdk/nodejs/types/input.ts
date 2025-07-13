@@ -7,6 +7,22 @@ import * as outputs from "../types/output";
 
 import * as utilities from "../utilities";
 
+export namespace resource {
+  export interface AnsibleTaskListArgsTaskArgs {
+    args: pulumi.Input<{ [key: string]: any }>;
+    check?: pulumi.Input<boolean>;
+    environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+    ignoreErrors?: pulumi.Input<boolean>;
+    module: pulumi.Input<string>;
+  }
+
+  export interface AnsibleTaskListArgsTasksArgs {
+    create: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[]>;
+    delete?: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[]>;
+    update?: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[]>;
+  }
+}
+
 export namespace types {
   /**
    * Instructions for how to connect to a remote endpoint.
