@@ -8,10 +8,11 @@ import (
 )
 
 type ExecArgs struct {
-	Command     []string
-	Dir         string
-	Environment map[string]string
-	Stdin       []byte
+	Command            []string
+	Dir                string
+	Environment        map[string]string
+	Stdin              []byte
+	ExpandArgumentVars bool
 }
 
 type ExecResult struct {
@@ -25,6 +26,21 @@ func Exec(args ExecArgs) (ExecResult, error) {
 	if len(args.Command) == 0 {
 		return ExecResult{}, errors.New("no command specified")
 	}
+
+	if args.ExpandArgumentVars {
+		mapping := func(key string) string {
+			value, ok := args.Environment[key]
+			if ok {
+				return value
+			}
+			return os.Getenv(key)
+		}
+
+		for i := range args.Command {
+			args.Command[i] = os.Expand(args.Command[i], mapping)
+		}
+	}
+
 	stdin := bytes.NewReader(args.Stdin)
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

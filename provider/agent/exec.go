@@ -15,10 +15,11 @@ import (
 type Exec struct{}
 
 type ExecInput struct {
-	Command     []string          `pulumi:"command"`
-	Dir         string            `pulumi:"dir,optional"`
-	Environment map[string]string `pulumi:"environment,optional"`
-	Stdin       string            `pulumi:"stdin,optional"`
+	Command            []string          `pulumi:"command"`
+	Dir                string            `pulumi:"dir,optional"`
+	Environment        map[string]string `pulumi:"environment,optional"`
+	Stdin              string            `pulumi:"stdin,optional"`
+	ExpandArgumentVars bool              `pulumi:"expandArgumentVars,optional"`
 }
 
 type ExecOutput struct {
@@ -40,10 +41,11 @@ func (f Exec) Invoke(
 	defer span.End()
 
 	out, err := CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, rpc.RPCExec, rpc.ExecArgs{
-		Command:     req.Input.Command,
-		Dir:         req.Input.Dir,
-		Environment: req.Input.Environment,
-		Stdin:       []byte(req.Input.Stdin),
+		Command:            req.Input.Command,
+		Dir:                req.Input.Dir,
+		Environment:        req.Input.Environment,
+		Stdin:              []byte(req.Input.Stdin),
+		ExpandArgumentVars: req.Input.ExpandArgumentVars,
 	})
 
 	if err == nil {

@@ -198,68 +198,6 @@ func TestResourceExec(t *testing.T) {
 			AssertDeleteCommand: "test ! -f /tmp/create && test ! -f /tmp/update",
 		},
 
-		"dir with expandArgumentVars": {
-			Create: Operation{
-				Inputs: property.NewMap(map[string]property.Value{
-					"create": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("touch"),
-							property.New("create"),
-						}),
-					}),
-					"update": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("touch"),
-							property.New("./tmp/update"),
-						}),
-						"dir": property.New("/"),
-					}),
-					"delete": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("rm"),
-							property.New("-rf"),
-							property.New("create"),
-							property.New("update"),
-						}),
-					}),
-					"dir":                property.New("/tmp"),
-					"expandArgumentVars": property.New(true),
-				}),
-				AssertCommand: "test -f /tmp/create",
-			},
-			Updates: []Operation{
-				{
-					Inputs: property.NewMap(map[string]property.Value{
-						"create": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("touch"),
-								property.New("create"),
-							}),
-						}),
-						"update": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("touch"),
-								property.New("./tmp/update"),
-							}),
-							"dir": property.New("/"),
-						}),
-						"delete": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("rm"),
-								property.New("-rf"),
-								property.New("create"),
-								property.New("update"),
-							}),
-						}),
-						"dir":                property.New("/tmp"),
-						"expandArgumentVars": property.New(true),
-					}),
-					AssertCommand: "test -f /tmp/update",
-				},
-			},
-			AssertDeleteCommand: "test ! -f /tmp/create && test ! -f /tmp/update",
-		},
-
 		"environment": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -453,47 +391,6 @@ func TestResourceExec(t *testing.T) {
 			AssertDeleteCommand: "test -f /create",
 		},
 
-		"only create with expandArgumentVars": {
-			Create: Operation{
-				Inputs: property.NewMap(map[string]property.Value{
-					"create": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("touch"),
-							property.New("/create"),
-						}),
-					}),
-					"expandArgumentVars": property.New(true),
-					"triggers": property.New(property.NewMap(map[string]property.Value{
-						"refresh": property.New(property.NewArray([]property.Value{
-							property.New("1"),
-						})),
-					})),
-				}),
-				AssertCommand: "test -f /create",
-			},
-			Updates: []Operation{
-				{
-					Inputs: property.NewMap(map[string]property.Value{
-						"create": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("touch"),
-								property.New("/create"),
-							}),
-						}),
-						"expandArgumentVars": property.New(true),
-						"triggers": property.New(property.NewMap(map[string]property.Value{
-							"refresh": property.New(property.NewArray([]property.Value{
-								property.New("2"),
-							})),
-						})),
-					}),
-					AssertBeforeCommand: "sudo rm -f /create",
-					AssertCommand:       "test -f /create",
-				},
-			},
-			AssertDeleteCommand: "test -f /create",
-		},
-
 		"logging with defaults": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -539,67 +436,6 @@ func TestResourceExec(t *testing.T) {
 								property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
 							}),
 						}),
-						"triggers": property.New(property.NewMap(map[string]property.Value{
-							"refresh": property.New(property.NewArray([]property.Value{
-								property.New("2"),
-							})),
-						})),
-					}),
-					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
-						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
-					},
-				},
-			},
-		},
-
-		"logging with defaults with expandArgumentVars": {
-			Create: Operation{
-				Inputs: property.NewMap(map[string]property.Value{
-					"create": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-						}),
-					}),
-					"update": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-						}),
-					}),
-					"expandArgumentVars": property.New(true),
-					"triggers": property.New(property.NewMap(map[string]property.Value{
-						"refresh": property.New(property.NewArray([]property.Value{
-							property.New("1"),
-						})),
-					})),
-				}),
-				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
-					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
-				},
-			},
-			Updates: []Operation{
-				{
-					Inputs: property.NewMap(map[string]property.Value{
-						"create": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-							}),
-						}),
-						"update": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-							}),
-						}),
-						"expandArgumentVars": property.New(true),
 						"triggers": property.New(property.NewMap(map[string]property.Value{
 							"refresh": property.New(property.NewArray([]property.Value{
 								property.New("2"),
@@ -675,67 +511,6 @@ func TestResourceExec(t *testing.T) {
 			},
 		},
 
-		"logging with ExecLoggingStdoutAndStderr with expandArgumentVars": {
-			Create: Operation{
-				Inputs: property.NewMap(map[string]property.Value{
-					"create": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-						}),
-					}),
-					"update": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-						}),
-					}),
-					"expandArgumentVars": property.New(true),
-					"triggers": property.New(property.NewMap(map[string]property.Value{
-						"refresh": property.New(property.NewArray([]property.Value{
-							property.New("1"),
-						})),
-					})),
-				}),
-				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
-					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
-				},
-			},
-			Updates: []Operation{
-				{
-					Inputs: property.NewMap(map[string]property.Value{
-						"create": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-							}),
-						}),
-						"update": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-							}),
-						}),
-						"expandArgumentVars": property.New(true),
-						"triggers": property.New(property.NewMap(map[string]property.Value{
-							"refresh": property.New(property.NewArray([]property.Value{
-								property.New("2"),
-							})),
-						})),
-					}),
-					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
-						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
-					},
-				},
-			},
-		},
-
 		"logging with ExecLoggingNone": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -783,69 +558,6 @@ func TestResourceExec(t *testing.T) {
 							}),
 						}),
 						"logging": property.New("none"),
-						"triggers": property.New(property.NewMap(map[string]property.Value{
-							"refresh": property.New(property.NewArray([]property.Value{
-								property.New("2"),
-							})),
-						})),
-					}),
-					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-						assert.Equal(t, "", output.Get("stdout").AsString())
-						assert.Equal(t, "", output.Get("stderr").AsString())
-					},
-				},
-			},
-		},
-
-		"logging with ExecLoggingNone with expandArgumentVars": {
-			Create: Operation{
-				Inputs: property.NewMap(map[string]property.Value{
-					"create": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-						}),
-					}),
-					"update": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-						}),
-					}),
-					"expandArgumentVars": property.New(true),
-					"logging":            property.New("none"),
-					"triggers": property.New(property.NewMap(map[string]property.Value{
-						"refresh": property.New(property.NewArray([]property.Value{
-							property.New("1"),
-						})),
-					})),
-				}),
-				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-					assert.Equal(t, "", output.Get("stdout").AsString())
-					assert.Equal(t, "", output.Get("stderr").AsString())
-				},
-			},
-			Updates: []Operation{
-				{
-					Inputs: property.NewMap(map[string]property.Value{
-						"create": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-							}),
-						}),
-						"update": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-							}),
-						}),
-						"expandArgumentVars": property.New(true),
-						"logging":            property.New("none"),
 						"triggers": property.New(property.NewMap(map[string]property.Value{
 							"refresh": property.New(property.NewArray([]property.Value{
 								property.New("2"),
@@ -921,69 +633,6 @@ func TestResourceExec(t *testing.T) {
 			},
 		},
 
-		"logging with ExecLoggingStdout with expandArgumentVars": {
-			Create: Operation{
-				Inputs: property.NewMap(map[string]property.Value{
-					"create": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-						}),
-					}),
-					"update": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-						}),
-					}),
-					"expandArgumentVars": property.New(true),
-					"logging":            property.New("stdout"),
-					"triggers": property.New(property.NewMap(map[string]property.Value{
-						"refresh": property.New(property.NewArray([]property.Value{
-							property.New("1"),
-						})),
-					})),
-				}),
-				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-					assert.Equal(t, "this is create stdout\n", output.Get("stdout").AsString())
-					assert.Equal(t, "", output.Get("stderr").AsString())
-				},
-			},
-			Updates: []Operation{
-				{
-					Inputs: property.NewMap(map[string]property.Value{
-						"create": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-							}),
-						}),
-						"update": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-							}),
-						}),
-						"expandArgumentVars": property.New(true),
-						"logging":            property.New("stdout"),
-						"triggers": property.New(property.NewMap(map[string]property.Value{
-							"refresh": property.New(property.NewArray([]property.Value{
-								property.New("2"),
-							})),
-						})),
-					}),
-					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-						assert.Equal(t, "this is update stdout\n", output.Get("stdout").AsString())
-						assert.Equal(t, "", output.Get("stderr").AsString())
-					},
-				},
-			},
-		},
-
 		"logging with ExecLoggingStderr": {
 			Create: Operation{
 				Inputs: property.NewMap(map[string]property.Value{
@@ -1031,69 +680,6 @@ func TestResourceExec(t *testing.T) {
 							}),
 						}),
 						"logging": property.New("stderr"),
-						"triggers": property.New(property.NewMap(map[string]property.Value{
-							"refresh": property.New(property.NewArray([]property.Value{
-								property.New("2"),
-							})),
-						})),
-					}),
-					Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-						assert.Equal(t, "", output.Get("stdout").AsString())
-						assert.Equal(t, "this is update stderr\n", output.Get("stderr").AsString())
-					},
-				},
-			},
-		},
-
-		"logging with ExecLoggingStderr with expandArgumentVars": {
-			Create: Operation{
-				Inputs: property.NewMap(map[string]property.Value{
-					"create": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-						}),
-					}),
-					"update": property.New(map[string]property.Value{
-						"command": property.New([]property.Value{
-							property.New("/bin/sh"),
-							property.New("-c"),
-							property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-						}),
-					}),
-					"logging":            property.New("stderr"),
-					"expandArgumentVars": property.New(true),
-					"triggers": property.New(property.NewMap(map[string]property.Value{
-						"refresh": property.New(property.NewArray([]property.Value{
-							property.New("1"),
-						})),
-					})),
-				}),
-				Hook: func(t *testing.T, inputs property.Map, output property.Map) {
-					assert.Equal(t, "", output.Get("stdout").AsString())
-					assert.Equal(t, "this is create stderr\n", output.Get("stderr").AsString())
-				},
-			},
-			Updates: []Operation{
-				{
-					Inputs: property.NewMap(map[string]property.Value{
-						"create": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is create stdout\necho this is create stderr 1>&2\n"),
-							}),
-						}),
-						"update": property.New(map[string]property.Value{
-							"command": property.New([]property.Value{
-								property.New("/bin/sh"),
-								property.New("-c"),
-								property.New("echo this is update stdout\necho this is update stderr 1>&2\n"),
-							}),
-						}),
-						"expandArgumentVars": property.New(true),
-						"logging":            property.New("stderr"),
 						"triggers": property.New(property.NewMap(map[string]property.Value{
 							"refresh": property.New(property.NewArray([]property.Value{
 								property.New("2"),
