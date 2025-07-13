@@ -57,6 +57,7 @@ func Provider() (p.Provider, error) {
 		}).
 		WithConfig(infer.Config(&types.Config{})).
 		WithResources(
+			infer.Resource(&resource.AnsibleTaskList{}),
 			infer.Resource(&resource.Apt{}),
 			infer.Resource(&resource.Exec{}),
 			infer.Resource(&resource.File{}),

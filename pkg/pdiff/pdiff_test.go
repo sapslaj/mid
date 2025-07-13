@@ -657,6 +657,130 @@ func TestDiffAllAttributes(t *testing.T) {
 			},
 		},
 
+		"AnsibleTaskList": {
+			inputs: resource.AnsibleTaskListArgs{
+				Tasks: resource.AnsibleTaskListArgsTasks{
+					Create: []resource.AnsibleTaskListArgsTask{
+						{
+							Module: "file",
+							Args: map[string]any{
+								"path":  "/testing",
+								"state": "touch",
+							},
+						},
+						{
+							Module: "blockinfile",
+							Args: map[string]any{
+								"path":  "/testing",
+								"state": "present",
+								"block": "updating",
+							},
+						},
+					},
+					Update: &[]resource.AnsibleTaskListArgsTask{
+						{
+							Module: "blockinfile",
+							Args: map[string]any{
+								"path":  "/testing",
+								"state": "present",
+								"block": "updating",
+							},
+						},
+					},
+					Delete: &[]resource.AnsibleTaskListArgsTask{
+						{
+							Module: "file",
+							Args: map[string]any{
+								"path":  "/testing",
+								"state": "absent",
+							},
+						},
+					},
+				},
+			},
+			state: resource.AnsibleTaskListState{
+				AnsibleTaskListArgs: resource.AnsibleTaskListArgs{
+					Tasks: resource.AnsibleTaskListArgsTasks{
+						Create: []resource.AnsibleTaskListArgsTask{
+							{
+								Module: "file",
+								Args: map[string]any{
+									"path":  "/testing",
+									"state": "touch",
+								},
+							},
+							{
+								Module: "blockinfile",
+								Args: map[string]any{
+									"path":  "/testing",
+									"state": "present",
+									"block": "creating",
+								},
+							},
+						},
+						Update: &[]resource.AnsibleTaskListArgsTask{
+							{
+								Module: "blockinfile",
+								Args: map[string]any{
+									"path":  "/testing",
+									"state": "present",
+									"block": "creating",
+								},
+							},
+						},
+						Delete: &[]resource.AnsibleTaskListArgsTask{
+							{
+								Module: "file",
+								Args: map[string]any{
+									"path":  "/testing",
+									"state": "absent",
+								},
+							},
+						},
+					},
+				},
+				Results: resource.AnsibleTaskListStateResults{
+					Lifecycle: "create",
+					Tasks: []resource.AnsibleTaskListStateTaskResult{
+						{
+							AnsibleTaskListArgsTask: resource.AnsibleTaskListArgsTask{
+								Module: "file",
+								Args: map[string]any{
+									"path":  "/testing",
+									"state": "touch",
+								},
+							},
+							Success: true,
+						},
+						{
+							AnsibleTaskListArgsTask: resource.AnsibleTaskListArgsTask{
+								Module: "blockinfile",
+								Args: map[string]any{
+									"path":  "/testing",
+									"state": "present",
+									"block": "creating",
+								},
+							},
+							Success: true,
+						},
+					},
+				},
+			},
+			expect: p.DiffResponse{
+				HasChanges:          true,
+				DeleteBeforeReplace: false,
+				DetailedDiff: map[string]p.PropertyDiff{
+					"tasks.create[1].args.block": {
+						Kind:      p.Update,
+						InputDiff: true,
+					},
+					"tasks.update[0].args.block": {
+						Kind:      p.Update,
+						InputDiff: true,
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
