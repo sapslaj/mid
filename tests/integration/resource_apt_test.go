@@ -238,6 +238,8 @@ func TestResourceApt(t *testing.T) {
 			})
 			defer harness.Close()
 
+			harness.AssertCommand(t, "sudo apt-get update -y && sudo apt-get install python3-apt -y")
+
 			tc.Resource = "mid:resource:Apt"
 			tc.Run(t, harness)
 		})
