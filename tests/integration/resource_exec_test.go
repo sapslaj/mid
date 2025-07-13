@@ -693,6 +693,21 @@ func TestResourceExec(t *testing.T) {
 				},
 			},
 		},
+
+		"failure": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"create": property.New(map[string]property.Value{
+						"command": property.New([]property.Value{
+							property.New("/bin/sh"),
+							property.New("-c"),
+							property.New("false"),
+						}),
+					}),
+				}),
+				ExpectFailure: true,
+			},
+		},
 	}
 
 	for name, tc := range tests {
