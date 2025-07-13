@@ -550,9 +550,6 @@ func TestDiffAllAttributes(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("unchanged"),
-				Triggers: &types.TriggersInput{
-					Refresh: &[]any{1},
-				},
 			},
 			state: resource.FileState{
 				FileArgs: resource.FileArgs{
@@ -560,15 +557,8 @@ func TestDiffAllAttributes(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
-						Refresh: &[]any{1},
-					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
-					LastChanged: "now",
-					Refresh:     &[]any{1},
-				},
 			},
 			expect: p.DiffResponse{
 				HasChanges:          false,
@@ -583,9 +573,6 @@ func TestDiffAllAttributes(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("changed"),
-				Triggers: &types.TriggersInput{
-					Refresh: &[]any{1},
-				},
 			},
 			state: resource.FileState{
 				FileArgs: resource.FileArgs{
@@ -593,15 +580,8 @@ func TestDiffAllAttributes(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
-						Refresh: &[]any{1},
-					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
-					LastChanged: "now",
-					Refresh:     &[]any{1},
-				},
 			},
 			expect: p.DiffResponse{
 				HasChanges:          true,
@@ -621,9 +601,6 @@ func TestDiffAllAttributes(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("changed"),
-				Triggers: &types.TriggersInput{
-					Refresh: &[]any{1},
-				},
 			},
 			state: resource.FileState{
 				FileArgs: resource.FileArgs{
@@ -631,15 +608,8 @@ func TestDiffAllAttributes(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
-						Refresh: &[]any{1},
-					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
-					LastChanged: "now",
-					Refresh:     &[]any{1},
-				},
 			},
 			expect: p.DiffResponse{
 				HasChanges:          true,
