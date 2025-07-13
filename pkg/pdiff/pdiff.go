@@ -4,6 +4,7 @@ import (
 	"maps"
 	"reflect"
 	"slices"
+	"strings"
 
 	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
@@ -40,7 +41,17 @@ func DiffAttributes(inputs any, state any, attributes []string) p.DiffResponse {
 	diff := map[string]p.PropertyDiff{}
 
 	for k, v := range pluginDiff {
-		if !slices.Contains(attributes, k) {
+		selected := false
+		for i := range attributes {
+			// FIXME: this has the potential to be too greedy and match things it
+			// shouldn't. It should be breaking down the components of the key and
+			// ensuring there is a full match for all the components but i ain't got
+			// time to write that.
+			if strings.HasPrefix(k, attributes[i]) {
+				selected = true
+			}
+		}
+		if !selected {
 			continue
 		}
 

@@ -163,6 +163,111 @@ func TestDiffAttributes(t *testing.T) {
 				},
 			},
 		},
+
+		"File replacement diff": {
+			inputs: resource.FileArgs{
+				Path:    "/changed",
+				Ensure:  ptr.Of(resource.FileEnsureFile),
+				Owner:   ptr.Of("nobody"),
+				Content: ptr.Of("changed"),
+				Triggers: &types.TriggersInput{
+					Refresh: &[]any{1},
+				},
+			},
+			state: resource.FileState{
+				FileArgs: resource.FileArgs{
+					Path:    "/testing",
+					Ensure:  ptr.Of(resource.FileEnsureFile),
+					Owner:   ptr.Of("nobody"),
+					Content: ptr.Of("unchanged"),
+					Triggers: &types.TriggersInput{
+						Refresh: &[]any{1},
+					},
+				},
+				BackupFile: ptr.Of("/testing.backup"),
+				Triggers: types.TriggersOutput{
+					LastChanged: "now",
+					Refresh:     &[]any{1},
+				},
+			},
+			attributes: []string{
+				"path",
+				"ensure",
+				"owner",
+				"content",
+			},
+			expect: p.DiffResponse{
+				HasChanges:          true,
+				DeleteBeforeReplace: false,
+				DetailedDiff: map[string]p.PropertyDiff{
+					"path": {
+						Kind:      p.UpdateReplace,
+						InputDiff: true,
+					},
+					"content": {
+						Kind:      p.Update,
+						InputDiff: true,
+					},
+				},
+			},
+		},
+
+		"deeply nested attributes": {
+			inputs: struct {
+				First struct {
+					Second []struct {
+						Third string `pulumi:"third"`
+					} `pulumi:"second"`
+				} `pulumi:"first"`
+			}{
+				First: struct {
+					Second []struct {
+						Third string `pulumi:"third"`
+					} `pulumi:"second"`
+				}{
+					Second: []struct {
+						Third string `pulumi:"third"`
+					}{
+						{
+							Third: "changed",
+						},
+					},
+				},
+			},
+			state: struct {
+				First struct {
+					Second []struct {
+						Third string `pulumi:"third"`
+					} `pulumi:"second"`
+				} `pulumi:"first"`
+			}{
+				First: struct {
+					Second []struct {
+						Third string `pulumi:"third"`
+					} `pulumi:"second"`
+				}{
+					Second: []struct {
+						Third string `pulumi:"third"`
+					}{
+						{
+							Third: "unchanged",
+						},
+					},
+				},
+			},
+			attributes: []string{
+				"first",
+			},
+			expect: p.DiffResponse{
+				HasChanges: true,
+				DetailedDiff: map[string]p.PropertyDiff{
+					"first.second[0].third": {
+						Kind:      p.Update,
+						InputDiff: true,
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
@@ -324,6 +429,51 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 				},
 			},
 		},
+
+		"File replacement diff": {
+			inputs: resource.FileArgs{
+				Path:    "/changed",
+				Ensure:  ptr.Of(resource.FileEnsureFile),
+				Owner:   ptr.Of("nobody"),
+				Content: ptr.Of("changed"),
+				Triggers: &types.TriggersInput{
+					Refresh: &[]any{1},
+				},
+			},
+			state: resource.FileState{
+				FileArgs: resource.FileArgs{
+					Path:    "/testing",
+					Ensure:  ptr.Of(resource.FileEnsureFile),
+					Owner:   ptr.Of("nobody"),
+					Content: ptr.Of("unchanged"),
+					Triggers: &types.TriggersInput{
+						Refresh: &[]any{1},
+					},
+				},
+				BackupFile: ptr.Of("/testing.backup"),
+				Triggers: types.TriggersOutput{
+					LastChanged: "now",
+					Refresh:     &[]any{1},
+				},
+			},
+			exceptAttributes: []string{
+				"triggers",
+			},
+			expect: p.DiffResponse{
+				HasChanges:          true,
+				DeleteBeforeReplace: false,
+				DetailedDiff: map[string]p.PropertyDiff{
+					"path": {
+						Kind:      p.UpdateReplace,
+						InputDiff: true,
+					},
+					"content": {
+						Kind:      p.Update,
+						InputDiff: true,
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {
@@ -393,6 +543,120 @@ func TestDiffAllAttributes(t *testing.T) {
 				},
 			},
 		},
+
+		"File no diff": {
+			inputs: resource.FileArgs{
+				Path:    "/testing",
+				Ensure:  ptr.Of(resource.FileEnsureFile),
+				Owner:   ptr.Of("nobody"),
+				Content: ptr.Of("unchanged"),
+				Triggers: &types.TriggersInput{
+					Refresh: &[]any{1},
+				},
+			},
+			state: resource.FileState{
+				FileArgs: resource.FileArgs{
+					Path:    "/testing",
+					Ensure:  ptr.Of(resource.FileEnsureFile),
+					Owner:   ptr.Of("nobody"),
+					Content: ptr.Of("unchanged"),
+					Triggers: &types.TriggersInput{
+						Refresh: &[]any{1},
+					},
+				},
+				BackupFile: ptr.Of("/testing.backup"),
+				Triggers: types.TriggersOutput{
+					LastChanged: "now",
+					Refresh:     &[]any{1},
+				},
+			},
+			expect: p.DiffResponse{
+				HasChanges:          false,
+				DeleteBeforeReplace: false,
+				DetailedDiff:        map[string]p.PropertyDiff{},
+			},
+		},
+
+		"File non-replacement diff": {
+			inputs: resource.FileArgs{
+				Path:    "/testing",
+				Ensure:  ptr.Of(resource.FileEnsureFile),
+				Owner:   ptr.Of("nobody"),
+				Content: ptr.Of("changed"),
+				Triggers: &types.TriggersInput{
+					Refresh: &[]any{1},
+				},
+			},
+			state: resource.FileState{
+				FileArgs: resource.FileArgs{
+					Path:    "/testing",
+					Ensure:  ptr.Of(resource.FileEnsureFile),
+					Owner:   ptr.Of("nobody"),
+					Content: ptr.Of("unchanged"),
+					Triggers: &types.TriggersInput{
+						Refresh: &[]any{1},
+					},
+				},
+				BackupFile: ptr.Of("/testing.backup"),
+				Triggers: types.TriggersOutput{
+					LastChanged: "now",
+					Refresh:     &[]any{1},
+				},
+			},
+			expect: p.DiffResponse{
+				HasChanges:          true,
+				DeleteBeforeReplace: false,
+				DetailedDiff: map[string]p.PropertyDiff{
+					"content": {
+						Kind:      p.Update,
+						InputDiff: true,
+					},
+				},
+			},
+		},
+
+		"File replacement diff": {
+			inputs: resource.FileArgs{
+				Path:    "/changed",
+				Ensure:  ptr.Of(resource.FileEnsureFile),
+				Owner:   ptr.Of("nobody"),
+				Content: ptr.Of("changed"),
+				Triggers: &types.TriggersInput{
+					Refresh: &[]any{1},
+				},
+			},
+			state: resource.FileState{
+				FileArgs: resource.FileArgs{
+					Path:    "/testing",
+					Ensure:  ptr.Of(resource.FileEnsureFile),
+					Owner:   ptr.Of("nobody"),
+					Content: ptr.Of("unchanged"),
+					Triggers: &types.TriggersInput{
+						Refresh: &[]any{1},
+					},
+				},
+				BackupFile: ptr.Of("/testing.backup"),
+				Triggers: types.TriggersOutput{
+					LastChanged: "now",
+					Refresh:     &[]any{1},
+				},
+			},
+			expect: p.DiffResponse{
+				HasChanges:          true,
+				DeleteBeforeReplace: false,
+				DetailedDiff: map[string]p.PropertyDiff{
+					"path": {
+						Kind:      p.UpdateReplace,
+						InputDiff: true,
+					},
+					"content": {
+						Kind:      p.Update,
+						InputDiff: true,
+					},
+				},
+			},
+		},
+
 	}
 
 	for name, tc := range tests {
