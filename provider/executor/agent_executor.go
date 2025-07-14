@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"os"
 	"os/user"
 	"sync"
 	"time"
@@ -17,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 
 	midagent "github.com/sapslaj/mid/agent"
 	"github.com/sapslaj/mid/agent/rpc"
@@ -608,29 +610,58 @@ func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (
 }
 
 func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfig, string, error) {
-	username := "root"
+	sshConfig := &ssh.ClientConfig{}
+
+	port := types.DefaultConnectionPort
+	if connection.Port != nil {
+		port = int(*connection.Port)
+	}
+
+	endpoint := net.JoinHostPort(*connection.Host, fmt.Sprintf("%d", port))
+
+	sshConfig.User = types.DefaultConnectionUser
 	if connection.User == nil {
 		current, err := user.Current()
 		if err == nil {
-			username = current.Username
+			sshConfig.User = current.Username
 		}
 	} else {
-		username = *connection.User
+		sshConfig.User = *connection.User
 	}
-	sshConfig := &ssh.ClientConfig{
-		User:            username,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         15 * time.Second, // TODO: make this configurable
+
+	sshConfig.Timeout = time.Second * time.Duration(types.DefaultConnectionPerDialTimeout)
+	if connection.PerDialTimeout != nil {
+		sshConfig.Timeout = time.Second * time.Duration(*connection.PerDialTimeout)
 	}
+
+	if connection.HostKey != nil {
+		publicKey, _, _, _, err := ssh.ParseAuthorizedKey([]byte(*connection.HostKey))
+		if err != nil {
+			return sshConfig, endpoint, fmt.Errorf("failed to parse host key: %w", err)
+		}
+		sshConfig.HostKeyCallback = ssh.FixedHostKey(publicKey)
+		sshConfig.HostKeyAlgorithms = []string{publicKey.Type()}
+	} else {
+		sshConfig.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	}
+
 	if connection.PrivateKey != nil {
 		var signer ssh.Signer
 		var err error
-		signer, err = ssh.ParsePrivateKey([]byte(*connection.PrivateKey))
+		if connection.PrivateKeyPassword != nil {
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(
+				[]byte(*connection.PrivateKey),
+				[]byte(*connection.PrivateKeyPassword),
+			)
+		} else {
+			signer, err = ssh.ParsePrivateKey([]byte(*connection.PrivateKey))
+		}
 		if err != nil {
-			return nil, "", err
+			return sshConfig, endpoint, err
 		}
 		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signer))
 	}
+
 	if connection.Password != nil {
 		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(*connection.Password))
 		sshConfig.Auth = append(sshConfig.Auth, ssh.KeyboardInteractive(
@@ -644,11 +675,23 @@ func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfi
 		))
 	}
 
-	port := 22
-	if connection.Port != nil {
-		port = int(*connection.Port)
+	sshAgent := false
+	sshAgentSocketPath := os.Getenv("SSH_AUTH_SOCK")
+	if connection.SSHAgentSocketPath != nil {
+		sshAgent = true
+		sshAgentSocketPath = *connection.SSHAgentSocketPath
 	}
-	endpoint := net.JoinHostPort(*connection.Host, fmt.Sprintf("%d", port))
+	if connection.SSHAgent != nil && *connection.SSHAgent {
+		sshAgent = true
+	}
+	if sshAgent && sshAgentSocketPath != "" {
+		agentConn, err := net.Dial("unix", sshAgentSocketPath)
+		if err != nil {
+			return sshConfig, endpoint, err
+		}
+		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeysCallback(agent.NewClient(agentConn).Signers))
+	}
+
 	return sshConfig, endpoint, nil
 }
 

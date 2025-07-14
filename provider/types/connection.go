@@ -2,17 +2,25 @@ package types
 
 import "github.com/pulumi/pulumi-go-provider/infer"
 
+const (
+	DefaultConnectionUser           = "root"
+	DefaultConnectionPort           = 22
+	DefaultConnectionPerDialTimeout = 15
+)
+
 type ConnectionBase struct {
-	User       *string  `pulumi:"user,optional"`
-	Password   *string  `pulumi:"password,optional" provider:"secret"`
-	Host       *string  `pulumi:"host"`
-	Port       *float64 `pulumi:"port,optional"`
-	PrivateKey *string  `pulumi:"privateKey,optional" provider:"secret"`
+	User               *string  `pulumi:"user,optional"`
+	Password           *string  `pulumi:"password,optional" provider:"secret"`
+	Host               *string  `pulumi:"host"`
+	Port               *float64 `pulumi:"port,optional"`
+	PrivateKey         *string  `pulumi:"privateKey,optional" provider:"secret"`
+	PrivateKeyPassword *string  `pulumi:"privateKeyPassword,optional" provider:"secret"`
+	SSHAgent           *bool    `pulumi:"sshAgent,optional"`
+	SSHAgentSocketPath *string  `pulumi:"sshAgentSocketPath,optional"`
+	PerDialTimeout     *int     `pulumi:"perDialTimeout,optional"`
+	HostKey            *string  `pulumi:"hostKey,optional"`
 	// TODO: add support for below
-	// PrivateKeyPassword *string  `pulumi:"privateKeyPassword,optional" provider:"secret"`
-	// AgentSocketPath    *string  `pulumi:"agentSocketPath,optional"`
 	// DialErrorLimit     *int     `pulumi:"dialErrorLimit,optional"`
-	// PerDialTimeout     *int     `pulumi:"perDialTimeout,optional"`
 }
 
 type ProxyConnection struct {
