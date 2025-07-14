@@ -432,6 +432,21 @@ func InstallAgent(ctx context.Context, agent *Agent) error {
 		return err
 	}
 
+	stagingClean, err := RunRemoteCommand(ctx, agent, "/bin/sh -c 'if test -d .mid/staging; then rm -rf .mid/staging/*; fi'")
+	span.SetAttributes(
+		attribute.String("staging_clean.output", string(stagingClean)),
+	)
+	if err != nil {
+		span.SetAttributes(
+			attribute.Bool("staging_clean.success", false),
+			attribute.String("staging_clean.error", err.Error()),
+		)
+	} else {
+		span.SetAttributes(
+			attribute.Bool("staging_clean.success", true),
+		)
+	}
+
 	return nil
 }
 
