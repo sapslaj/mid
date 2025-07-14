@@ -32,6 +32,7 @@ class ExecResult:
         dir=None,
         environment=None,
         exit_code=None,
+        expand_argument_vars=None,
         pid=None,
         stderr=None,
         stdin=None,
@@ -49,6 +50,9 @@ class ExecResult:
         if exit_code and not isinstance(exit_code, int):
             raise TypeError("Expected argument 'exit_code' to be a int")
         pulumi.set(__self__, "exit_code", exit_code)
+        if expand_argument_vars and not isinstance(expand_argument_vars, bool):
+            raise TypeError("Expected argument 'expand_argument_vars' to be a bool")
+        pulumi.set(__self__, "expand_argument_vars", expand_argument_vars)
         if pid and not isinstance(pid, int):
             raise TypeError("Expected argument 'pid' to be a int")
         pulumi.set(__self__, "pid", pid)
@@ -83,6 +87,11 @@ class ExecResult:
         return pulumi.get(self, "exit_code")
 
     @property
+    @pulumi.getter(name="expandArgumentVars")
+    def expand_argument_vars(self) -> Optional[builtins.bool]:
+        return pulumi.get(self, "expand_argument_vars")
+
+    @property
     @pulumi.getter
     def pid(self) -> builtins.int:
         return pulumi.get(self, "pid")
@@ -113,6 +122,7 @@ class AwaitableExecResult(ExecResult):
             dir=self.dir,
             environment=self.environment,
             exit_code=self.exit_code,
+            expand_argument_vars=self.expand_argument_vars,
             pid=self.pid,
             stderr=self.stderr,
             stdin=self.stdin,
@@ -124,6 +134,7 @@ def exec_(
     command: Optional[Sequence[builtins.str]] = None,
     dir: Optional[builtins.str] = None,
     environment: Optional[Mapping[str, builtins.str]] = None,
+    expand_argument_vars: Optional[builtins.bool] = None,
     stdin: Optional[builtins.str] = None,
     opts: Optional[pulumi.InvokeOptions] = None,
 ) -> AwaitableExecResult:
@@ -134,6 +145,7 @@ def exec_(
     __args__["command"] = command
     __args__["dir"] = dir
     __args__["environment"] = environment
+    __args__["expandArgumentVars"] = expand_argument_vars
     __args__["stdin"] = stdin
     opts = pulumi.InvokeOptions.merge(_utilities.get_invoke_opts_defaults(), opts)
     __ret__ = pulumi.runtime.invoke(
@@ -145,6 +157,7 @@ def exec_(
         dir=pulumi.get(__ret__, "dir"),
         environment=pulumi.get(__ret__, "environment"),
         exit_code=pulumi.get(__ret__, "exit_code"),
+        expand_argument_vars=pulumi.get(__ret__, "expand_argument_vars"),
         pid=pulumi.get(__ret__, "pid"),
         stderr=pulumi.get(__ret__, "stderr"),
         stdin=pulumi.get(__ret__, "stdin"),
@@ -156,6 +169,7 @@ def exec__output(
     command: Optional[pulumi.Input[Sequence[builtins.str]]] = None,
     dir: Optional[pulumi.Input[Optional[builtins.str]]] = None,
     environment: Optional[pulumi.Input[Optional[Mapping[str, builtins.str]]]] = None,
+    expand_argument_vars: Optional[pulumi.Input[Optional[builtins.bool]]] = None,
     stdin: Optional[pulumi.Input[Optional[builtins.str]]] = None,
     opts: Optional[Union[pulumi.InvokeOptions, pulumi.InvokeOutputOptions]] = None,
 ) -> pulumi.Output[ExecResult]:
@@ -166,6 +180,7 @@ def exec__output(
     __args__["command"] = command
     __args__["dir"] = dir
     __args__["environment"] = environment
+    __args__["expandArgumentVars"] = expand_argument_vars
     __args__["stdin"] = stdin
     opts = pulumi.InvokeOutputOptions.merge(_utilities.get_invoke_opts_defaults(), opts)
     __ret__ = pulumi.runtime.invoke_output(
@@ -177,6 +192,7 @@ def exec__output(
             dir=pulumi.get(__response__, "dir"),
             environment=pulumi.get(__response__, "environment"),
             exit_code=pulumi.get(__response__, "exit_code"),
+            expand_argument_vars=pulumi.get(__response__, "expand_argument_vars"),
             pid=pulumi.get(__response__, "pid"),
             stderr=pulumi.get(__response__, "stderr"),
             stdin=pulumi.get(__response__, "stdin"),

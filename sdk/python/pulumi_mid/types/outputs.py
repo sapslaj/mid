@@ -36,9 +36,14 @@ class Connection(dict):
         __self__,
         *,
         host: builtins.str,
+        host_key: Optional[builtins.str] = None,
         password: Optional[builtins.str] = None,
+        per_dial_timeout: Optional[builtins.int] = None,
         port: Optional[builtins.float] = None,
         private_key: Optional[builtins.str] = None,
+        private_key_password: Optional[builtins.str] = None,
+        ssh_agent: Optional[builtins.bool] = None,
+        ssh_agent_socket_path: Optional[builtins.str] = None,
         user: Optional[builtins.str] = None,
     ):
         """
@@ -51,14 +56,24 @@ class Connection(dict):
         :param builtins.str user: The user that we should use for the connection.
         """
         pulumi.set(__self__, "host", host)
+        if host_key is not None:
+            pulumi.set(__self__, "host_key", host_key)
         if password is not None:
             pulumi.set(__self__, "password", password)
+        if per_dial_timeout is not None:
+            pulumi.set(__self__, "per_dial_timeout", per_dial_timeout)
         if port is None:
             port = 22
         if port is not None:
             pulumi.set(__self__, "port", port)
         if private_key is not None:
             pulumi.set(__self__, "private_key", private_key)
+        if private_key_password is not None:
+            pulumi.set(__self__, "private_key_password", private_key_password)
+        if ssh_agent is not None:
+            pulumi.set(__self__, "ssh_agent", ssh_agent)
+        if ssh_agent_socket_path is not None:
+            pulumi.set(__self__, "ssh_agent_socket_path", ssh_agent_socket_path)
         if user is None:
             user = "root"
         if user is not None:
@@ -73,12 +88,22 @@ class Connection(dict):
         return pulumi.get(self, "host")
 
     @property
+    @pulumi.getter(name="hostKey")
+    def host_key(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "host_key")
+
+    @property
     @pulumi.getter
     def password(self) -> Optional[builtins.str]:
         """
         The password we should use for the connection.
         """
         return pulumi.get(self, "password")
+
+    @property
+    @pulumi.getter(name="perDialTimeout")
+    def per_dial_timeout(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "per_dial_timeout")
 
     @property
     @pulumi.getter
@@ -96,6 +121,21 @@ class Connection(dict):
         connection. This takes preference over the password if provided.
         """
         return pulumi.get(self, "private_key")
+
+    @property
+    @pulumi.getter(name="privateKeyPassword")
+    def private_key_password(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "private_key_password")
+
+    @property
+    @pulumi.getter(name="sshAgent")
+    def ssh_agent(self) -> Optional[builtins.bool]:
+        return pulumi.get(self, "ssh_agent")
+
+    @property
+    @pulumi.getter(name="sshAgentSocketPath")
+    def ssh_agent_socket_path(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "ssh_agent_socket_path")
 
     @property
     @pulumi.getter

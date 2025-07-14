@@ -22,21 +22,23 @@ func Exec(ctx *pulumi.Context, args *ExecArgs, opts ...pulumi.InvokeOption) (*Ex
 }
 
 type ExecArgs struct {
-	Command     []string          `pulumi:"command"`
-	Dir         *string           `pulumi:"dir"`
-	Environment map[string]string `pulumi:"environment"`
-	Stdin       *string           `pulumi:"stdin"`
+	Command            []string          `pulumi:"command"`
+	Dir                *string           `pulumi:"dir"`
+	Environment        map[string]string `pulumi:"environment"`
+	ExpandArgumentVars *bool             `pulumi:"expandArgumentVars"`
+	Stdin              *string           `pulumi:"stdin"`
 }
 
 type ExecResult struct {
-	Command     []string          `pulumi:"command"`
-	Dir         *string           `pulumi:"dir"`
-	Environment map[string]string `pulumi:"environment"`
-	ExitCode    int               `pulumi:"exitCode"`
-	Pid         int               `pulumi:"pid"`
-	Stderr      string            `pulumi:"stderr"`
-	Stdin       *string           `pulumi:"stdin"`
-	Stdout      string            `pulumi:"stdout"`
+	Command            []string          `pulumi:"command"`
+	Dir                *string           `pulumi:"dir"`
+	Environment        map[string]string `pulumi:"environment"`
+	ExitCode           int               `pulumi:"exitCode"`
+	ExpandArgumentVars *bool             `pulumi:"expandArgumentVars"`
+	Pid                int               `pulumi:"pid"`
+	Stderr             string            `pulumi:"stderr"`
+	Stdin              *string           `pulumi:"stdin"`
+	Stdout             string            `pulumi:"stdout"`
 }
 
 func ExecOutput(ctx *pulumi.Context, args ExecOutputArgs, opts ...pulumi.InvokeOption) ExecResultOutput {
@@ -49,10 +51,11 @@ func ExecOutput(ctx *pulumi.Context, args ExecOutputArgs, opts ...pulumi.InvokeO
 }
 
 type ExecOutputArgs struct {
-	Command     pulumi.StringArrayInput `pulumi:"command"`
-	Dir         pulumi.StringPtrInput   `pulumi:"dir"`
-	Environment pulumi.StringMapInput   `pulumi:"environment"`
-	Stdin       pulumi.StringPtrInput   `pulumi:"stdin"`
+	Command            pulumi.StringArrayInput `pulumi:"command"`
+	Dir                pulumi.StringPtrInput   `pulumi:"dir"`
+	Environment        pulumi.StringMapInput   `pulumi:"environment"`
+	ExpandArgumentVars pulumi.BoolPtrInput     `pulumi:"expandArgumentVars"`
+	Stdin              pulumi.StringPtrInput   `pulumi:"stdin"`
 }
 
 func (ExecOutputArgs) ElementType() reflect.Type {
@@ -87,6 +90,10 @@ func (o ExecResultOutput) Environment() pulumi.StringMapOutput {
 
 func (o ExecResultOutput) ExitCode() pulumi.IntOutput {
 	return o.ApplyT(func(v ExecResult) int { return v.ExitCode }).(pulumi.IntOutput)
+}
+
+func (o ExecResultOutput) ExpandArgumentVars() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v ExecResult) *bool { return v.ExpandArgumentVars }).(pulumi.BoolPtrOutput)
 }
 
 func (o ExecResultOutput) Pid() pulumi.IntOutput {

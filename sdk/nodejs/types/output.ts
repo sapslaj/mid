@@ -50,10 +50,12 @@ export namespace types {
      * The address of the resource to connect to.
      */
     host: string;
+    hostKey?: string;
     /**
      * The password we should use for the connection.
      */
     password?: string;
+    perDialTimeout?: number;
     /**
      * The port to connect to. Defaults to 22.
      */
@@ -63,6 +65,9 @@ export namespace types {
      * connection. This takes preference over the password if provided.
      */
     privateKey?: string;
+    privateKeyPassword?: string;
+    sshAgent?: boolean;
+    sshAgentSocketPath?: string;
     /**
      * The user that we should use for the connection.
      */

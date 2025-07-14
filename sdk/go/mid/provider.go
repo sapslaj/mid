@@ -48,6 +48,7 @@ type providerArgs struct {
 	// with an unreachable remote endpoint from Pulumi state. It can also be
 	// sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
 	DeleteUnreachable *bool `pulumi:"deleteUnreachable"`
+	Parallel          *int  `pulumi:"parallel"`
 }
 
 // The set of arguments for constructing a Provider resource.
@@ -58,6 +59,7 @@ type ProviderArgs struct {
 	// with an unreachable remote endpoint from Pulumi state. It can also be
 	// sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
 	DeleteUnreachable pulumi.BoolPtrInput
+	Parallel          pulumi.IntPtrInput
 }
 
 func (ProviderArgs) ElementType() reflect.Type {

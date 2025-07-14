@@ -32,3 +32,11 @@ Object.defineProperty(exports, "deleteUnreachable", {
   },
   enumerable: true,
 });
+
+export declare const parallel: number | undefined;
+Object.defineProperty(exports, "parallel", {
+  get() {
+    return __config.getObject<number>("parallel");
+  },
+  enumerable: true,
+});

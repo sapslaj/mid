@@ -38,3 +38,7 @@ class _ExportableConfig(types.ModuleType):
         sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
         """
         return __config__.get_bool("deleteUnreachable")
+
+    @property
+    def parallel(self) -> Optional[int]:
+        return __config__.get_int("parallel")

@@ -16,14 +16,19 @@ var _ = internal.GetEnvOrDefault
 // Instructions for how to connect to a remote endpoint.
 type Connection struct {
 	// The address of the resource to connect to.
-	Host string `pulumi:"host"`
+	Host    string  `pulumi:"host"`
+	HostKey *string `pulumi:"hostKey"`
 	// The password we should use for the connection.
-	Password *string `pulumi:"password"`
+	Password       *string `pulumi:"password"`
+	PerDialTimeout *int    `pulumi:"perDialTimeout"`
 	// The port to connect to. Defaults to 22.
 	Port *float64 `pulumi:"port"`
 	// The contents of an SSH key to use for the
 	// connection. This takes preference over the password if provided.
-	PrivateKey *string `pulumi:"privateKey"`
+	PrivateKey         *string `pulumi:"privateKey"`
+	PrivateKeyPassword *string `pulumi:"privateKeyPassword"`
+	SshAgent           *bool   `pulumi:"sshAgent"`
+	SshAgentSocketPath *string `pulumi:"sshAgentSocketPath"`
 	// The user that we should use for the connection.
 	User *string `pulumi:"user"`
 }
@@ -59,14 +64,19 @@ type ConnectionInput interface {
 // Instructions for how to connect to a remote endpoint.
 type ConnectionArgs struct {
 	// The address of the resource to connect to.
-	Host pulumi.StringInput `pulumi:"host"`
+	Host    pulumi.StringInput    `pulumi:"host"`
+	HostKey pulumi.StringPtrInput `pulumi:"hostKey"`
 	// The password we should use for the connection.
-	Password pulumi.StringPtrInput `pulumi:"password"`
+	Password       pulumi.StringPtrInput `pulumi:"password"`
+	PerDialTimeout pulumi.IntPtrInput    `pulumi:"perDialTimeout"`
 	// The port to connect to. Defaults to 22.
 	Port pulumi.Float64PtrInput `pulumi:"port"`
 	// The contents of an SSH key to use for the
 	// connection. This takes preference over the password if provided.
-	PrivateKey pulumi.StringPtrInput `pulumi:"privateKey"`
+	PrivateKey         pulumi.StringPtrInput `pulumi:"privateKey"`
+	PrivateKeyPassword pulumi.StringPtrInput `pulumi:"privateKeyPassword"`
+	SshAgent           pulumi.BoolPtrInput   `pulumi:"sshAgent"`
+	SshAgentSocketPath pulumi.StringPtrInput `pulumi:"sshAgentSocketPath"`
 	// The user that we should use for the connection.
 	User pulumi.StringPtrInput `pulumi:"user"`
 }
@@ -168,9 +178,17 @@ func (o ConnectionOutput) Host() pulumi.StringOutput {
 	return o.ApplyT(func(v Connection) string { return v.Host }).(pulumi.StringOutput)
 }
 
+func (o ConnectionOutput) HostKey() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v Connection) *string { return v.HostKey }).(pulumi.StringPtrOutput)
+}
+
 // The password we should use for the connection.
 func (o ConnectionOutput) Password() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v Connection) *string { return v.Password }).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionOutput) PerDialTimeout() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v Connection) *int { return v.PerDialTimeout }).(pulumi.IntPtrOutput)
 }
 
 // The port to connect to. Defaults to 22.
@@ -182,6 +200,18 @@ func (o ConnectionOutput) Port() pulumi.Float64PtrOutput {
 // connection. This takes preference over the password if provided.
 func (o ConnectionOutput) PrivateKey() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v Connection) *string { return v.PrivateKey }).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionOutput) PrivateKeyPassword() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v Connection) *string { return v.PrivateKeyPassword }).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionOutput) SshAgent() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v Connection) *bool { return v.SshAgent }).(pulumi.BoolPtrOutput)
+}
+
+func (o ConnectionOutput) SshAgentSocketPath() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v Connection) *string { return v.SshAgentSocketPath }).(pulumi.StringPtrOutput)
 }
 
 // The user that we should use for the connection.
@@ -223,6 +253,15 @@ func (o ConnectionPtrOutput) Host() pulumi.StringPtrOutput {
 	}).(pulumi.StringPtrOutput)
 }
 
+func (o ConnectionPtrOutput) HostKey() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Connection) *string {
+		if v == nil {
+			return nil
+		}
+		return v.HostKey
+	}).(pulumi.StringPtrOutput)
+}
+
 // The password we should use for the connection.
 func (o ConnectionPtrOutput) Password() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Connection) *string {
@@ -231,6 +270,15 @@ func (o ConnectionPtrOutput) Password() pulumi.StringPtrOutput {
 		}
 		return v.Password
 	}).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionPtrOutput) PerDialTimeout() pulumi.IntPtrOutput {
+	return o.ApplyT(func(v *Connection) *int {
+		if v == nil {
+			return nil
+		}
+		return v.PerDialTimeout
+	}).(pulumi.IntPtrOutput)
 }
 
 // The port to connect to. Defaults to 22.
@@ -251,6 +299,33 @@ func (o ConnectionPtrOutput) PrivateKey() pulumi.StringPtrOutput {
 			return nil
 		}
 		return v.PrivateKey
+	}).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionPtrOutput) PrivateKeyPassword() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Connection) *string {
+		if v == nil {
+			return nil
+		}
+		return v.PrivateKeyPassword
+	}).(pulumi.StringPtrOutput)
+}
+
+func (o ConnectionPtrOutput) SshAgent() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v *Connection) *bool {
+		if v == nil {
+			return nil
+		}
+		return v.SshAgent
+	}).(pulumi.BoolPtrOutput)
+}
+
+func (o ConnectionPtrOutput) SshAgentSocketPath() pulumi.StringPtrOutput {
+	return o.ApplyT(func(v *Connection) *string {
+		if v == nil {
+			return nil
+		}
+		return v.SshAgentSocketPath
 	}).(pulumi.StringPtrOutput)
 }
 

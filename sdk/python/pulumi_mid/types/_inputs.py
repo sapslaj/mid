@@ -38,10 +38,12 @@ if not MYPY:
         """
         The address of the resource to connect to.
         """
+        host_key: NotRequired[pulumi.Input[builtins.str]]
         password: NotRequired[pulumi.Input[builtins.str]]
         """
         The password we should use for the connection.
         """
+        per_dial_timeout: NotRequired[pulumi.Input[builtins.int]]
         port: NotRequired[pulumi.Input[builtins.float]]
         """
         The port to connect to. Defaults to 22.
@@ -51,6 +53,9 @@ if not MYPY:
         The contents of an SSH key to use for the
         connection. This takes preference over the password if provided.
         """
+        private_key_password: NotRequired[pulumi.Input[builtins.str]]
+        ssh_agent: NotRequired[pulumi.Input[builtins.bool]]
+        ssh_agent_socket_path: NotRequired[pulumi.Input[builtins.str]]
         user: NotRequired[pulumi.Input[builtins.str]]
         """
         The user that we should use for the connection.
@@ -65,9 +70,14 @@ class ConnectionArgs:
         __self__,
         *,
         host: pulumi.Input[builtins.str],
+        host_key: Optional[pulumi.Input[builtins.str]] = None,
         password: Optional[pulumi.Input[builtins.str]] = None,
+        per_dial_timeout: Optional[pulumi.Input[builtins.int]] = None,
         port: Optional[pulumi.Input[builtins.float]] = None,
         private_key: Optional[pulumi.Input[builtins.str]] = None,
+        private_key_password: Optional[pulumi.Input[builtins.str]] = None,
+        ssh_agent: Optional[pulumi.Input[builtins.bool]] = None,
+        ssh_agent_socket_path: Optional[pulumi.Input[builtins.str]] = None,
         user: Optional[pulumi.Input[builtins.str]] = None,
     ):
         """
@@ -80,14 +90,24 @@ class ConnectionArgs:
         :param pulumi.Input[builtins.str] user: The user that we should use for the connection.
         """
         pulumi.set(__self__, "host", host)
+        if host_key is not None:
+            pulumi.set(__self__, "host_key", host_key)
         if password is not None:
             pulumi.set(__self__, "password", password)
+        if per_dial_timeout is not None:
+            pulumi.set(__self__, "per_dial_timeout", per_dial_timeout)
         if port is None:
             port = 22
         if port is not None:
             pulumi.set(__self__, "port", port)
         if private_key is not None:
             pulumi.set(__self__, "private_key", private_key)
+        if private_key_password is not None:
+            pulumi.set(__self__, "private_key_password", private_key_password)
+        if ssh_agent is not None:
+            pulumi.set(__self__, "ssh_agent", ssh_agent)
+        if ssh_agent_socket_path is not None:
+            pulumi.set(__self__, "ssh_agent_socket_path", ssh_agent_socket_path)
         if user is None:
             user = "root"
         if user is not None:
@@ -106,6 +126,15 @@ class ConnectionArgs:
         pulumi.set(self, "host", value)
 
     @property
+    @pulumi.getter(name="hostKey")
+    def host_key(self) -> Optional[pulumi.Input[builtins.str]]:
+        return pulumi.get(self, "host_key")
+
+    @host_key.setter
+    def host_key(self, value: Optional[pulumi.Input[builtins.str]]):
+        pulumi.set(self, "host_key", value)
+
+    @property
     @pulumi.getter
     def password(self) -> Optional[pulumi.Input[builtins.str]]:
         """
@@ -116,6 +145,15 @@ class ConnectionArgs:
     @password.setter
     def password(self, value: Optional[pulumi.Input[builtins.str]]):
         pulumi.set(self, "password", value)
+
+    @property
+    @pulumi.getter(name="perDialTimeout")
+    def per_dial_timeout(self) -> Optional[pulumi.Input[builtins.int]]:
+        return pulumi.get(self, "per_dial_timeout")
+
+    @per_dial_timeout.setter
+    def per_dial_timeout(self, value: Optional[pulumi.Input[builtins.int]]):
+        pulumi.set(self, "per_dial_timeout", value)
 
     @property
     @pulumi.getter
@@ -141,6 +179,33 @@ class ConnectionArgs:
     @private_key.setter
     def private_key(self, value: Optional[pulumi.Input[builtins.str]]):
         pulumi.set(self, "private_key", value)
+
+    @property
+    @pulumi.getter(name="privateKeyPassword")
+    def private_key_password(self) -> Optional[pulumi.Input[builtins.str]]:
+        return pulumi.get(self, "private_key_password")
+
+    @private_key_password.setter
+    def private_key_password(self, value: Optional[pulumi.Input[builtins.str]]):
+        pulumi.set(self, "private_key_password", value)
+
+    @property
+    @pulumi.getter(name="sshAgent")
+    def ssh_agent(self) -> Optional[pulumi.Input[builtins.bool]]:
+        return pulumi.get(self, "ssh_agent")
+
+    @ssh_agent.setter
+    def ssh_agent(self, value: Optional[pulumi.Input[builtins.bool]]):
+        pulumi.set(self, "ssh_agent", value)
+
+    @property
+    @pulumi.getter(name="sshAgentSocketPath")
+    def ssh_agent_socket_path(self) -> Optional[pulumi.Input[builtins.str]]:
+        return pulumi.get(self, "ssh_agent_socket_path")
+
+    @ssh_agent_socket_path.setter
+    def ssh_agent_socket_path(self, value: Optional[pulumi.Input[builtins.str]]):
+        pulumi.set(self, "ssh_agent_socket_path", value)
 
     @property
     @pulumi.getter

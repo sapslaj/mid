@@ -10,6 +10,7 @@ export function exec(args: ExecArgs, opts?: pulumi.InvokeOptions): Promise<ExecR
     "command": args.command,
     "dir": args.dir,
     "environment": args.environment,
+    "expandArgumentVars": args.expandArgumentVars,
     "stdin": args.stdin,
   }, opts);
 }
@@ -18,6 +19,7 @@ export interface ExecArgs {
   command: string[];
   dir?: string;
   environment?: { [key: string]: string };
+  expandArgumentVars?: boolean;
   stdin?: string;
 }
 
@@ -26,6 +28,7 @@ export interface ExecResult {
   readonly dir?: string;
   readonly environment?: { [key: string]: string };
   readonly exitCode: number;
+  readonly expandArgumentVars?: boolean;
   readonly pid: number;
   readonly stderr: string;
   readonly stdin?: string;
@@ -37,6 +40,7 @@ export function execOutput(args: ExecOutputArgs, opts?: pulumi.InvokeOutputOptio
     "command": args.command,
     "dir": args.dir,
     "environment": args.environment,
+    "expandArgumentVars": args.expandArgumentVars,
     "stdin": args.stdin,
   }, opts);
 }
@@ -45,5 +49,6 @@ export interface ExecOutputArgs {
   command: pulumi.Input<pulumi.Input<string>[]>;
   dir?: pulumi.Input<string>;
   environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+  expandArgumentVars?: pulumi.Input<boolean>;
   stdin?: pulumi.Input<string>;
 }

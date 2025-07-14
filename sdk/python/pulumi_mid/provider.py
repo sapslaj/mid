@@ -27,6 +27,7 @@ class ProviderArgs:
         *,
         connection: pulumi.Input["_types.ConnectionArgs"],
         delete_unreachable: Optional[pulumi.Input[builtins.bool]] = None,
+        parallel: Optional[pulumi.Input[builtins.int]] = None,
     ):
         """
         The set of arguments for constructing a Provider resource.
@@ -38,6 +39,8 @@ class ProviderArgs:
         pulumi.set(__self__, "connection", connection)
         if delete_unreachable is not None:
             pulumi.set(__self__, "delete_unreachable", delete_unreachable)
+        if parallel is not None:
+            pulumi.set(__self__, "parallel", parallel)
 
     @property
     @pulumi.getter
@@ -65,6 +68,15 @@ class ProviderArgs:
     def delete_unreachable(self, value: Optional[pulumi.Input[builtins.bool]]):
         pulumi.set(self, "delete_unreachable", value)
 
+    @property
+    @pulumi.getter
+    def parallel(self) -> Optional[pulumi.Input[builtins.int]]:
+        return pulumi.get(self, "parallel")
+
+    @parallel.setter
+    def parallel(self, value: Optional[pulumi.Input[builtins.int]]):
+        pulumi.set(self, "parallel", value)
+
 
 @pulumi.type_token("pulumi:providers:mid")
 class Provider(pulumi.ProviderResource):
@@ -77,6 +89,7 @@ class Provider(pulumi.ProviderResource):
             pulumi.Input[Union["_types.ConnectionArgs", "_types.ConnectionArgsDict"]]
         ] = None,
         delete_unreachable: Optional[pulumi.Input[builtins.bool]] = None,
+        parallel: Optional[pulumi.Input[builtins.int]] = None,
         __props__=None,
     ):
         """
@@ -124,6 +137,7 @@ class Provider(pulumi.ProviderResource):
             pulumi.Input[Union["_types.ConnectionArgs", "_types.ConnectionArgsDict"]]
         ] = None,
         delete_unreachable: Optional[pulumi.Input[builtins.bool]] = None,
+        parallel: Optional[pulumi.Input[builtins.int]] = None,
         __props__=None,
     ):
         opts = pulumi.ResourceOptions.merge(
@@ -152,6 +166,11 @@ class Provider(pulumi.ProviderResource):
                     pulumi.runtime.to_json
                 )
                 if delete_unreachable is not None
+                else None
+            )
+            __props__.__dict__["parallel"] = (
+                pulumi.Output.from_input(parallel).apply(pulumi.runtime.to_json)
+                if parallel is not None
                 else None
             )
         super(Provider, __self__).__init__("mid", resource_name, __props__, opts)

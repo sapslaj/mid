@@ -50,6 +50,7 @@ export class Provider extends pulumi.ProviderResource {
       resourceInputs["deleteUnreachable"] = pulumi.output(args ? args.deleteUnreachable : undefined).apply(
         JSON.stringify,
       );
+      resourceInputs["parallel"] = pulumi.output(args ? args.parallel : undefined).apply(JSON.stringify);
     }
     opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
     super(Provider.__pulumiType, name, resourceInputs, opts);
@@ -70,4 +71,5 @@ export interface ProviderArgs {
    * sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
    */
   deleteUnreachable?: pulumi.Input<boolean>;
+  parallel?: pulumi.Input<number>;
 }

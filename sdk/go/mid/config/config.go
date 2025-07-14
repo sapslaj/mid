@@ -22,3 +22,6 @@ func GetConnection(ctx *pulumi.Context) string {
 func GetDeleteUnreachable(ctx *pulumi.Context) bool {
 	return config.GetBool(ctx, "mid:deleteUnreachable")
 }
+func GetParallel(ctx *pulumi.Context) int {
+	return config.GetInt(ctx, "mid:parallel")
+}
