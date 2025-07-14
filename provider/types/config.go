@@ -15,6 +15,11 @@ type Config struct {
 	// generally a better idea to use `GetDeleteUnreachable()` instead of looking
 	// at this property directly.
 	DeleteUnreachable bool `pulumi:"deleteUnreachable,optional"`
+
+	// Parallel sets the maximum number of parallel tasks to execute against the
+	// remote system. If not set or set to `0`, it will use the remote host's
+	// number of CPU cores. If set to `-1` it will be unlimited.
+	Parallel int `pulumi:"parallel,optional"`
 }
 
 func (i *Config) Annotate(a infer.Annotator) {

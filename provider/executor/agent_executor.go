@@ -9,10 +9,13 @@ import (
 	"net"
 	"os"
 	"os/user"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
+	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/retry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -24,6 +27,7 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/cast"
 	"github.com/sapslaj/mid/pkg/hashstructure"
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/syncmap"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/types"
@@ -37,8 +41,11 @@ type ConnectionState struct {
 	ID              uint64
 	Reachable       bool
 	Unreachable     bool
+	MaxParallel     int
+	TaskCount       int
 	SetupAgentMutex sync.Mutex
 	CanConnectMutex sync.Mutex
+	TaskCountMutex  sync.Mutex
 	Agent           *midagent.Agent
 	Connection      *types.Connection
 }
@@ -118,14 +125,35 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 	}
 
 	cs.Reachable = true
-	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(
 		attribute.Bool("agent.running", true),
 		attribute.Bool("agent.can_connect", cs.Reachable),
 	)
 
+	if cs.MaxParallel == 0 {
+		nprocOutput, err := midagent.RunRemoteCommand(ctx, cs.Agent, "nproc")
+		if err != nil {
+			logger.ErrorContext(ctx, "SetupAgent: error calling nproc", slog.Any("error", err))
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
+		cs.MaxParallel, err = strconv.Atoi(strings.TrimSpace(string(nprocOutput)))
+		if err != nil {
+			logger.ErrorContext(ctx, "SetupAgent: error parsing nproc output", slog.Any("error", err))
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
+	}
+
 	logger.DebugContext(ctx, "SetupAgent: finished agent setup")
+	span.SetStatus(codes.Ok, "")
 	return nil
+}
+
+func (cs *ConnectionState) FinishedTask() {
+	cs.TaskCountMutex.Lock()
+	cs.TaskCount = max(cs.TaskCount-1, 0)
+	cs.TaskCountMutex.Unlock()
 }
 
 func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionState, error) {
@@ -148,17 +176,48 @@ func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionStat
 	logger = logger.With(slog.Uint64("agent.connection_id", id))
 
 	logger.DebugContext(ctx, "Acquire: querying pool")
+
 	cs, loaded := AgentPool.LoadOrStore(id, &ConnectionState{
 		ID:         id,
 		Connection: connection,
 	})
 
+	if !loaded && cs.MaxParallel == 0 {
+		config := func() (c *types.Config) {
+			defer func() {
+				if r := recover(); r != nil {
+					c = nil
+					return
+				}
+			}()
+			c = ptr.Of(infer.GetConfig[types.Config](ctx))
+			return
+		}()
+		if config != nil {
+			cs.MaxParallel = config.Parallel
+		}
+	}
+
 	logger = logger.With(slog.Bool("agent.loaded", loaded))
 	span.SetAttributes(attribute.Bool("agent.loaded", loaded))
-	span.SetStatus(codes.Ok, "")
+
+	if cs.Agent != nil && cs.MaxParallel > 0 {
+		logger.DebugContext(ctx, "Acquire: MaxParallel is set, spinlocking")
+		for {
+			cs.TaskCountMutex.Lock()
+			if cs.TaskCount <= cs.MaxParallel {
+				cs.TaskCountMutex.Unlock()
+				break
+			}
+			cs.TaskCountMutex.Unlock()
+			time.Sleep(time.Millisecond)
+		}
+		logger.DebugContext(ctx, "Acquire: spinlock finished")
+	}
 
 	logger.DebugContext(ctx, "Acquire: returning ConnectionState handle")
 
+	span.SetStatus(codes.Ok, "")
 	return cs, nil
 }
 
@@ -179,6 +238,7 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
 	}
+	defer cs.FinishedTask()
 
 	logger.DebugContext(ctx, "CanConnect: waiting for lock")
 	p.GetLogger(ctx).InfoStatus("waiting for existing connection attempts to finish...")
@@ -361,6 +421,7 @@ func CallAgent[I any, O any](
 		span.SetStatus(codes.Error, err.Error())
 		return zero, err
 	}
+	defer cs.FinishedTask()
 
 	if cs.Unreachable {
 		err = ErrUnreachable
@@ -588,6 +649,7 @@ func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (
 		span.SetStatus(codes.Error, err.Error())
 		return "", err
 	}
+	defer cs.FinishedTask()
 
 	err = cs.SetupAgent(ctx)
 	if err != nil {
