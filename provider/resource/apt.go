@@ -238,6 +238,9 @@ func (r Apt) runApt(
 		if result.Stderr != nil && strings.Contains(string(*result.Stderr), "Unable to acquire the dpkg frontend lock") {
 			shouldRetry = true
 		}
+		if strings.Contains(result.GetMsg(), "apt-get clean failed") {
+			shouldRetry = true
+		}
 
 		if !shouldRetry {
 			break
