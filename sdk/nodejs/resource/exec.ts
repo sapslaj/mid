@@ -33,8 +33,10 @@ export class Exec extends pulumi.CustomResource {
     return obj["__pulumiType"] === Exec.__pulumiType;
   }
 
-  public readonly create!: pulumi.Output<outputs.types.ExecCommand>;
-  public readonly delete!: pulumi.Output<outputs.types.ExecCommand | undefined>;
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
+  public readonly create!: pulumi.Output<outputs.ExecCommand>;
+  public readonly delete!: pulumi.Output<outputs.ExecCommand | undefined>;
   public readonly deleteBeforeReplace!: pulumi.Output<boolean | undefined>;
   public readonly dir!: pulumi.Output<string | undefined>;
   public readonly environment!: pulumi.Output<{ [key: string]: string } | undefined>;
@@ -42,8 +44,8 @@ export class Exec extends pulumi.CustomResource {
   public readonly logging!: pulumi.Output<string | undefined>;
   public readonly /*out*/ stderr!: pulumi.Output<string>;
   public readonly /*out*/ stdout!: pulumi.Output<string>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
-  public readonly update!: pulumi.Output<outputs.types.ExecCommand | undefined>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
+  public readonly update!: pulumi.Output<outputs.ExecCommand | undefined>;
 
   /**
    * Create a Exec resource with the given unique name, arguments, and options.
@@ -59,6 +61,10 @@ export class Exec extends pulumi.CustomResource {
       if ((!args || args.create === undefined) && !opts.urn) {
         throw new Error("Missing required property 'create'");
       }
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["create"] = args ? args.create : undefined;
       resourceInputs["delete"] = args ? args.delete : undefined;
       resourceInputs["deleteBeforeReplace"] = args ? args.deleteBeforeReplace : undefined;
@@ -71,6 +77,8 @@ export class Exec extends pulumi.CustomResource {
       resourceInputs["stderr"] = undefined /*out*/;
       resourceInputs["stdout"] = undefined /*out*/;
     } else {
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["create"] = undefined /*out*/;
       resourceInputs["delete"] = undefined /*out*/;
       resourceInputs["deleteBeforeReplace"] = undefined /*out*/;
@@ -92,13 +100,15 @@ export class Exec extends pulumi.CustomResource {
  * The set of arguments for constructing a Exec resource.
  */
 export interface ExecArgs {
-  create: pulumi.Input<inputs.types.ExecCommandArgs>;
-  delete?: pulumi.Input<inputs.types.ExecCommandArgs>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
+  create: pulumi.Input<inputs.ExecCommandArgs>;
+  delete?: pulumi.Input<inputs.ExecCommandArgs>;
   deleteBeforeReplace?: pulumi.Input<boolean>;
   dir?: pulumi.Input<string>;
   environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
   expandArgumentVars?: pulumi.Input<boolean>;
   logging?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
-  update?: pulumi.Input<inputs.types.ExecCommandArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
+  update?: pulumi.Input<inputs.ExecCommandArgs>;
 }

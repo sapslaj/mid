@@ -19,43 +19,45 @@ import (
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type Apt struct{}
 
 type AptArgs struct {
-	Name                     *string              `pulumi:"name,optional"`
-	Names                    *[]string            `pulumi:"names,optional"`
-	Ensure                   *string              `pulumi:"ensure,optional"`
-	AllowChangeHeldPackages  *bool                `pulumi:"allowChangeHeldPackages,optional"`
-	AllowDowngrade           *bool                `pulumi:"allowDowngrade,optional"`
-	AllowUnauthenticated     *bool                `pulumi:"allowUnauthenticated,optional"`
-	Autoclean                *bool                `pulumi:"autoclean,optional"`
-	Autoremove               *bool                `pulumi:"autoremove,optional"`
-	CacheValidTime           *int                 `pulumi:"cacheValidTime,optional"`
-	Clean                    *bool                `pulumi:"clean,optional"`
-	Deb                      *string              `pulumi:"deb,optional"`
-	DefaultRelease           *string              `pulumi:"defaultRelease,optional"`
-	DpkgOptions              *string              `pulumi:"dpkgOptions,optional"`
-	FailOnAutoremove         *bool                `pulumi:"failOnAutoremove,optional"`
-	Force                    *bool                `pulumi:"force,optional"`
-	ForceAptGet              *bool                `pulumi:"forceAptGet,optional"`
-	InstallRecommends        *bool                `pulumi:"installRecommends,optional"`
-	LockTimeout              *int                 `pulumi:"lockTimeout,optional"`
-	OnlyUpgrade              *bool                `pulumi:"onlyUpgrade,optional"`
-	PolicyRcD                *int                 `pulumi:"policyRcD,optional"`
-	Purge                    *bool                `pulumi:"purge,optional"`
-	UpdateCache              *bool                `pulumi:"updateCache,optional"`
-	UpdateCacheRetries       *int                 `pulumi:"updateCacheRetries,optional"`
-	UpdateCacheRetryMaxDelay *int                 `pulumi:"updateCacheRetryMaxDelay,optional"`
-	Upgrade                  *string              `pulumi:"upgrade,optional"`
-	Triggers                 *types.TriggersInput `pulumi:"triggers,optional"`
+	Name                     *string                  `pulumi:"name,optional"`
+	Names                    *[]string                `pulumi:"names,optional"`
+	Ensure                   *string                  `pulumi:"ensure,optional"`
+	AllowChangeHeldPackages  *bool                    `pulumi:"allowChangeHeldPackages,optional"`
+	AllowDowngrade           *bool                    `pulumi:"allowDowngrade,optional"`
+	AllowUnauthenticated     *bool                    `pulumi:"allowUnauthenticated,optional"`
+	Autoclean                *bool                    `pulumi:"autoclean,optional"`
+	Autoremove               *bool                    `pulumi:"autoremove,optional"`
+	CacheValidTime           *int                     `pulumi:"cacheValidTime,optional"`
+	Clean                    *bool                    `pulumi:"clean,optional"`
+	Deb                      *string                  `pulumi:"deb,optional"`
+	DefaultRelease           *string                  `pulumi:"defaultRelease,optional"`
+	DpkgOptions              *string                  `pulumi:"dpkgOptions,optional"`
+	FailOnAutoremove         *bool                    `pulumi:"failOnAutoremove,optional"`
+	Force                    *bool                    `pulumi:"force,optional"`
+	ForceAptGet              *bool                    `pulumi:"forceAptGet,optional"`
+	InstallRecommends        *bool                    `pulumi:"installRecommends,optional"`
+	LockTimeout              *int                     `pulumi:"lockTimeout,optional"`
+	OnlyUpgrade              *bool                    `pulumi:"onlyUpgrade,optional"`
+	PolicyRcD                *int                     `pulumi:"policyRcD,optional"`
+	Purge                    *bool                    `pulumi:"purge,optional"`
+	UpdateCache              *bool                    `pulumi:"updateCache,optional"`
+	UpdateCacheRetries       *int                     `pulumi:"updateCacheRetries,optional"`
+	UpdateCacheRetryMaxDelay *int                     `pulumi:"updateCacheRetryMaxDelay,optional"`
+	Upgrade                  *string                  `pulumi:"upgrade,optional"`
+	Connection               *midtypes.Connection     `pulumi:"connection,optional"`
+	Config                   *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers                 *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type AptState struct {
 	AptArgs
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r Apt) canAssumeEnsure(inputs AptArgs) bool {
@@ -121,13 +123,14 @@ func (r Apt) updateState(olds AptState, news AptArgs, changed bool) AptState {
 	if olds.Ensure == nil && r.canAssumeEnsure(news) {
 		olds.Ensure = ptr.Of("present")
 	}
-	olds.Triggers = types.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
+	olds.Triggers = midtypes.UpdateTriggerState(olds.Triggers, news.Triggers, changed)
 	return olds
 }
 
 func (r Apt) runApt(
 	ctx context.Context,
-	connection *types.Connection,
+	connection midtypes.Connection,
+	config midtypes.ResourceConfig,
 	parameters ansible.AptParameters,
 	dryRun bool,
 ) (ansible.AptReturn, error) {
@@ -168,7 +171,7 @@ func (r Apt) runApt(
 	}
 	call.Args.Check = dryRun
 
-	if executor.PreviewUnreachable(ctx, connection, dryRun) {
+	if executor.PreviewUnreachable(ctx, connection, config, dryRun) {
 		span.SetAttributes(attribute.Bool("unreachable", true))
 		span.SetStatus(codes.Ok, "")
 		return returnUnreachable(err), nil
@@ -189,7 +192,7 @@ func (r Apt) runApt(
 		callResult, err = executor.CallAgent[
 			rpc.AnsibleExecuteArgs,
 			rpc.AnsibleExecuteResult,
-		](attemptCtx, connection, call)
+		](attemptCtx, connection, config, call)
 		if err != nil {
 			if errors.Is(err, executor.ErrUnreachable) && dryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
@@ -297,7 +300,7 @@ func (r Apt) Diff(ctx context.Context, req infer.DiffRequest[AptArgs, AptState])
 	if req.Inputs.Ensure == nil && r.canAssumeEnsure(req.Inputs) && req.State.Ensure != nil {
 		// special diff for "ensure" since we compute it dynamically sometimes
 		req.Inputs.Ensure = ptr.Of("present")
-		pdiff := types.DiffAttribute(req.State.Ensure, req.Inputs.Ensure)
+		pdiff := midtypes.DiffAttribute(req.State.Ensure, req.Inputs.Ensure)
 		if pdiff != nil {
 			diff.HasChanges = true
 			diff.DetailedDiff["ensure"] = *pdiff
@@ -307,10 +310,10 @@ func (r Apt) Diff(ctx context.Context, req infer.DiffRequest[AptArgs, AptState])
 		attrs = append(attrs, "ensure")
 	}
 
-	diff = types.MergeDiffResponses(
+	diff = midtypes.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(req.State, req.Inputs, attrs),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffAttributes(req.State, req.Inputs, attrs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
@@ -328,7 +331,8 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := r.updateState(AptState{}, req.Inputs, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -352,7 +356,7 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 		}, err
 	}
 
-	_, err = r.runApt(ctx, config.Connection, parameters, req.DryRun)
+	_, err = r.runApt(ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[AptState]{
@@ -381,7 +385,8 @@ func (r Apt) Read(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -396,7 +401,7 @@ func (r Apt) Read(
 		}, err
 	}
 
-	result, err := r.runApt(ctx, config.Connection, parameters, true)
+	result, err := r.runApt(ctx, connection, config, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -443,7 +448,8 @@ func (r Apt) Update(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -457,7 +463,7 @@ func (r Apt) Update(
 			}, err
 		}
 
-		result, err := r.runApt(ctx, config.Connection, parameters, req.DryRun)
+		result, err := r.runApt(ctx, connection, config, parameters, req.DryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return infer.UpdateResponse[AptState]{
@@ -537,7 +543,7 @@ func (r Apt) Update(
 		}
 		parameters.Name = &absents
 		parameters.State = ansible.OptionalAptState("absent")
-		result, err := r.runApt(ctx, config.Connection, parameters, req.DryRun)
+		result, err := r.runApt(ctx, connection, config, parameters, req.DryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return infer.UpdateResponse[AptState]{
@@ -559,7 +565,7 @@ func (r Apt) Update(
 		}
 		parameters.Name = &presents
 		parameters.State = ansible.OptionalAptState(newState)
-		result, err := r.runApt(ctx, config.Connection, parameters, req.DryRun)
+		result, err := r.runApt(ctx, connection, config, parameters, req.DryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return infer.UpdateResponse[AptState]{
@@ -597,7 +603,8 @@ func (r Apt) Delete(ctx context.Context, req infer.DeleteRequest[AptState]) (inf
 		return infer.DeleteResponse{}, nil
 	}
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	parameters, err := r.argsToTaskParameters(req.State.AptArgs)
 	parameters.State = ansible.OptionalAptState("absent")
@@ -606,7 +613,7 @@ func (r Apt) Delete(ctx context.Context, req infer.DeleteRequest[AptState]) (inf
 		return infer.DeleteResponse{}, err
 	}
 
-	_, err = r.runApt(ctx, config.Connection, parameters, false)
+	_, err = r.runApt(ctx, connection, config, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))

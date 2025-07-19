@@ -8,8 +8,8 @@ import (
 
 	"github.com/sapslaj/mid/pkg/pdiff"
 	"github.com/sapslaj/mid/pkg/ptr"
+	"github.com/sapslaj/mid/provider/midtypes"
 	"github.com/sapslaj/mid/provider/resource"
-	"github.com/sapslaj/mid/provider/types"
 )
 
 func TestDiffAttributes(t *testing.T) {
@@ -87,7 +87,7 @@ func TestDiffAttributes(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("unchanged"),
-				Triggers: &types.TriggersInput{
+				Triggers: &midtypes.TriggersInput{
 					Refresh: &[]any{1},
 				},
 			},
@@ -97,12 +97,12 @@ func TestDiffAttributes(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
+					Triggers: &midtypes.TriggersInput{
 						Refresh: &[]any{1},
 					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
+				Triggers: midtypes.TriggersOutput{
 					LastChanged: "now",
 					Refresh:     &[]any{1},
 				},
@@ -126,7 +126,7 @@ func TestDiffAttributes(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("changed"),
-				Triggers: &types.TriggersInput{
+				Triggers: &midtypes.TriggersInput{
 					Refresh: &[]any{1},
 				},
 			},
@@ -136,12 +136,12 @@ func TestDiffAttributes(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
+					Triggers: &midtypes.TriggersInput{
 						Refresh: &[]any{1},
 					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
+				Triggers: midtypes.TriggersOutput{
 					LastChanged: "now",
 					Refresh:     &[]any{1},
 				},
@@ -170,7 +170,7 @@ func TestDiffAttributes(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("changed"),
-				Triggers: &types.TriggersInput{
+				Triggers: &midtypes.TriggersInput{
 					Refresh: &[]any{1},
 				},
 			},
@@ -180,12 +180,12 @@ func TestDiffAttributes(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
+					Triggers: &midtypes.TriggersInput{
 						Refresh: &[]any{1},
 					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
+				Triggers: midtypes.TriggersOutput{
 					LastChanged: "now",
 					Refresh:     &[]any{1},
 				},
@@ -359,7 +359,7 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("unchanged"),
-				Triggers: &types.TriggersInput{
+				Triggers: &midtypes.TriggersInput{
 					Refresh: &[]any{1},
 				},
 			},
@@ -369,12 +369,12 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
+					Triggers: &midtypes.TriggersInput{
 						Refresh: &[]any{1},
 					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
+				Triggers: midtypes.TriggersOutput{
 					LastChanged: "now",
 					Refresh:     &[]any{1},
 				},
@@ -395,7 +395,7 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("changed"),
-				Triggers: &types.TriggersInput{
+				Triggers: &midtypes.TriggersInput{
 					Refresh: &[]any{1},
 				},
 			},
@@ -405,12 +405,12 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
+					Triggers: &midtypes.TriggersInput{
 						Refresh: &[]any{1},
 					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
+				Triggers: midtypes.TriggersOutput{
 					LastChanged: "now",
 					Refresh:     &[]any{1},
 				},
@@ -436,7 +436,7 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 				Ensure:  ptr.Of(resource.FileEnsureFile),
 				Owner:   ptr.Of("nobody"),
 				Content: ptr.Of("changed"),
-				Triggers: &types.TriggersInput{
+				Triggers: &midtypes.TriggersInput{
 					Refresh: &[]any{1},
 				},
 			},
@@ -446,12 +446,12 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 					Ensure:  ptr.Of(resource.FileEnsureFile),
 					Owner:   ptr.Of("nobody"),
 					Content: ptr.Of("unchanged"),
-					Triggers: &types.TriggersInput{
+					Triggers: &midtypes.TriggersInput{
 						Refresh: &[]any{1},
 					},
 				},
 				BackupFile: ptr.Of("/testing.backup"),
-				Triggers: types.TriggersOutput{
+				Triggers: midtypes.TriggersOutput{
 					LastChanged: "now",
 					Refresh:     &[]any{1},
 				},

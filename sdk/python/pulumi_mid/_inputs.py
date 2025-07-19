@@ -14,13 +14,19 @@ if sys.version_info >= (3, 11):
     from typing import NotRequired, TypedDict, TypeAlias
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
-from .. import _utilities
+from . import _utilities
 
 __all__ = [
+    "Connection",
+    "ConnectionDict",
     "ConnectionArgs",
     "ConnectionArgsDict",
     "ExecCommandArgs",
     "ExecCommandArgsDict",
+    "ResourceConfig",
+    "ResourceConfigDict",
+    "ResourceConfigArgs",
+    "ResourceConfigArgsDict",
     "TriggersInputArgs",
     "TriggersInputArgsDict",
 ]
@@ -29,12 +35,206 @@ MYPY = False
 
 if not MYPY:
 
+    class ConnectionDict(TypedDict):
+        """
+        Instructions for how to connect to a remote endpoint.
+        """
+
+        host: NotRequired[builtins.str]
+        """
+        The address of the resource to connect to.
+        """
+        host_key: NotRequired[builtins.str]
+        password: NotRequired[builtins.str]
+        """
+        The password we should use for the connection.
+        """
+        per_dial_timeout: NotRequired[builtins.int]
+        port: NotRequired[builtins.float]
+        """
+        The port to connect to. Defaults to 22.
+        """
+        private_key: NotRequired[builtins.str]
+        """
+        The contents of an SSH key to use for the
+        connection. This takes preference over the password if provided.
+        """
+        private_key_password: NotRequired[builtins.str]
+        ssh_agent: NotRequired[builtins.bool]
+        ssh_agent_socket_path: NotRequired[builtins.str]
+        user: NotRequired[builtins.str]
+        """
+        The user that we should use for the connection.
+        """
+elif False:
+    ConnectionDict: TypeAlias = Mapping[str, Any]
+
+
+@pulumi.input_type
+class Connection:
+    def __init__(
+        __self__,
+        *,
+        host: Optional[builtins.str] = None,
+        host_key: Optional[builtins.str] = None,
+        password: Optional[builtins.str] = None,
+        per_dial_timeout: Optional[builtins.int] = None,
+        port: Optional[builtins.float] = None,
+        private_key: Optional[builtins.str] = None,
+        private_key_password: Optional[builtins.str] = None,
+        ssh_agent: Optional[builtins.bool] = None,
+        ssh_agent_socket_path: Optional[builtins.str] = None,
+        user: Optional[builtins.str] = None,
+    ):
+        """
+        Instructions for how to connect to a remote endpoint.
+        :param builtins.str host: The address of the resource to connect to.
+        :param builtins.str password: The password we should use for the connection.
+        :param builtins.float port: The port to connect to. Defaults to 22.
+        :param builtins.str private_key: The contents of an SSH key to use for the
+               connection. This takes preference over the password if provided.
+        :param builtins.str user: The user that we should use for the connection.
+        """
+        if host is not None:
+            pulumi.set(__self__, "host", host)
+        if host_key is not None:
+            pulumi.set(__self__, "host_key", host_key)
+        if password is not None:
+            pulumi.set(__self__, "password", password)
+        if per_dial_timeout is not None:
+            pulumi.set(__self__, "per_dial_timeout", per_dial_timeout)
+        if port is None:
+            port = 22
+        if port is not None:
+            pulumi.set(__self__, "port", port)
+        if private_key is not None:
+            pulumi.set(__self__, "private_key", private_key)
+        if private_key_password is not None:
+            pulumi.set(__self__, "private_key_password", private_key_password)
+        if ssh_agent is not None:
+            pulumi.set(__self__, "ssh_agent", ssh_agent)
+        if ssh_agent_socket_path is not None:
+            pulumi.set(__self__, "ssh_agent_socket_path", ssh_agent_socket_path)
+        if user is None:
+            user = "root"
+        if user is not None:
+            pulumi.set(__self__, "user", user)
+
+    @property
+    @pulumi.getter
+    def host(self) -> Optional[builtins.str]:
+        """
+        The address of the resource to connect to.
+        """
+        return pulumi.get(self, "host")
+
+    @host.setter
+    def host(self, value: Optional[builtins.str]):
+        pulumi.set(self, "host", value)
+
+    @property
+    @pulumi.getter(name="hostKey")
+    def host_key(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "host_key")
+
+    @host_key.setter
+    def host_key(self, value: Optional[builtins.str]):
+        pulumi.set(self, "host_key", value)
+
+    @property
+    @pulumi.getter
+    def password(self) -> Optional[builtins.str]:
+        """
+        The password we should use for the connection.
+        """
+        return pulumi.get(self, "password")
+
+    @password.setter
+    def password(self, value: Optional[builtins.str]):
+        pulumi.set(self, "password", value)
+
+    @property
+    @pulumi.getter(name="perDialTimeout")
+    def per_dial_timeout(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "per_dial_timeout")
+
+    @per_dial_timeout.setter
+    def per_dial_timeout(self, value: Optional[builtins.int]):
+        pulumi.set(self, "per_dial_timeout", value)
+
+    @property
+    @pulumi.getter
+    def port(self) -> Optional[builtins.float]:
+        """
+        The port to connect to. Defaults to 22.
+        """
+        return pulumi.get(self, "port")
+
+    @port.setter
+    def port(self, value: Optional[builtins.float]):
+        pulumi.set(self, "port", value)
+
+    @property
+    @pulumi.getter(name="privateKey")
+    def private_key(self) -> Optional[builtins.str]:
+        """
+        The contents of an SSH key to use for the
+        connection. This takes preference over the password if provided.
+        """
+        return pulumi.get(self, "private_key")
+
+    @private_key.setter
+    def private_key(self, value: Optional[builtins.str]):
+        pulumi.set(self, "private_key", value)
+
+    @property
+    @pulumi.getter(name="privateKeyPassword")
+    def private_key_password(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "private_key_password")
+
+    @private_key_password.setter
+    def private_key_password(self, value: Optional[builtins.str]):
+        pulumi.set(self, "private_key_password", value)
+
+    @property
+    @pulumi.getter(name="sshAgent")
+    def ssh_agent(self) -> Optional[builtins.bool]:
+        return pulumi.get(self, "ssh_agent")
+
+    @ssh_agent.setter
+    def ssh_agent(self, value: Optional[builtins.bool]):
+        pulumi.set(self, "ssh_agent", value)
+
+    @property
+    @pulumi.getter(name="sshAgentSocketPath")
+    def ssh_agent_socket_path(self) -> Optional[builtins.str]:
+        return pulumi.get(self, "ssh_agent_socket_path")
+
+    @ssh_agent_socket_path.setter
+    def ssh_agent_socket_path(self, value: Optional[builtins.str]):
+        pulumi.set(self, "ssh_agent_socket_path", value)
+
+    @property
+    @pulumi.getter
+    def user(self) -> Optional[builtins.str]:
+        """
+        The user that we should use for the connection.
+        """
+        return pulumi.get(self, "user")
+
+    @user.setter
+    def user(self, value: Optional[builtins.str]):
+        pulumi.set(self, "user", value)
+
+
+if not MYPY:
+
     class ConnectionArgsDict(TypedDict):
         """
         Instructions for how to connect to a remote endpoint.
         """
 
-        host: pulumi.Input[builtins.str]
+        host: NotRequired[pulumi.Input[builtins.str]]
         """
         The address of the resource to connect to.
         """
@@ -69,7 +269,7 @@ class ConnectionArgs:
     def __init__(
         __self__,
         *,
-        host: pulumi.Input[builtins.str],
+        host: Optional[pulumi.Input[builtins.str]] = None,
         host_key: Optional[pulumi.Input[builtins.str]] = None,
         password: Optional[pulumi.Input[builtins.str]] = None,
         per_dial_timeout: Optional[pulumi.Input[builtins.int]] = None,
@@ -89,7 +289,8 @@ class ConnectionArgs:
                connection. This takes preference over the password if provided.
         :param pulumi.Input[builtins.str] user: The user that we should use for the connection.
         """
-        pulumi.set(__self__, "host", host)
+        if host is not None:
+            pulumi.set(__self__, "host", host)
         if host_key is not None:
             pulumi.set(__self__, "host_key", host_key)
         if password is not None:
@@ -115,14 +316,14 @@ class ConnectionArgs:
 
     @property
     @pulumi.getter
-    def host(self) -> pulumi.Input[builtins.str]:
+    def host(self) -> Optional[pulumi.Input[builtins.str]]:
         """
         The address of the resource to connect to.
         """
         return pulumi.get(self, "host")
 
     @host.setter
-    def host(self, value: pulumi.Input[builtins.str]):
+    def host(self, value: Optional[pulumi.Input[builtins.str]]):
         pulumi.set(self, "host", value)
 
     @property
@@ -329,6 +530,88 @@ class ExecCommandArgs:
     @stdin.setter
     def stdin(self, value: Optional[pulumi.Input[builtins.str]]):
         pulumi.set(self, "stdin", value)
+
+
+if not MYPY:
+
+    class ResourceConfigDict(TypedDict):
+        delete_unreachable: NotRequired[builtins.bool]
+        parallel: NotRequired[builtins.int]
+elif False:
+    ResourceConfigDict: TypeAlias = Mapping[str, Any]
+
+
+@pulumi.input_type
+class ResourceConfig:
+    def __init__(
+        __self__,
+        *,
+        delete_unreachable: Optional[builtins.bool] = None,
+        parallel: Optional[builtins.int] = None,
+    ):
+        if delete_unreachable is not None:
+            pulumi.set(__self__, "delete_unreachable", delete_unreachable)
+        if parallel is not None:
+            pulumi.set(__self__, "parallel", parallel)
+
+    @property
+    @pulumi.getter(name="deleteUnreachable")
+    def delete_unreachable(self) -> Optional[builtins.bool]:
+        return pulumi.get(self, "delete_unreachable")
+
+    @delete_unreachable.setter
+    def delete_unreachable(self, value: Optional[builtins.bool]):
+        pulumi.set(self, "delete_unreachable", value)
+
+    @property
+    @pulumi.getter
+    def parallel(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "parallel")
+
+    @parallel.setter
+    def parallel(self, value: Optional[builtins.int]):
+        pulumi.set(self, "parallel", value)
+
+
+if not MYPY:
+
+    class ResourceConfigArgsDict(TypedDict):
+        delete_unreachable: NotRequired[pulumi.Input[builtins.bool]]
+        parallel: NotRequired[pulumi.Input[builtins.int]]
+elif False:
+    ResourceConfigArgsDict: TypeAlias = Mapping[str, Any]
+
+
+@pulumi.input_type
+class ResourceConfigArgs:
+    def __init__(
+        __self__,
+        *,
+        delete_unreachable: Optional[pulumi.Input[builtins.bool]] = None,
+        parallel: Optional[pulumi.Input[builtins.int]] = None,
+    ):
+        if delete_unreachable is not None:
+            pulumi.set(__self__, "delete_unreachable", delete_unreachable)
+        if parallel is not None:
+            pulumi.set(__self__, "parallel", parallel)
+
+    @property
+    @pulumi.getter(name="deleteUnreachable")
+    def delete_unreachable(self) -> Optional[pulumi.Input[builtins.bool]]:
+        return pulumi.get(self, "delete_unreachable")
+
+    @delete_unreachable.setter
+    def delete_unreachable(self, value: Optional[pulumi.Input[builtins.bool]]):
+        pulumi.set(self, "delete_unreachable", value)
+
+    @property
+    @pulumi.getter
+    def parallel(self) -> Optional[pulumi.Input[builtins.int]]:
+        return pulumi.get(self, "parallel")
+
+    @parallel.setter
+    def parallel(self, value: Optional[pulumi.Input[builtins.int]]):
+        pulumi.set(self, "parallel", value)
 
 
 if not MYPY:

@@ -11,14 +11,9 @@ import (
 
 var _ = internal.GetEnvOrDefault
 
-// remote endpoint connection configuration
 func GetConnection(ctx *pulumi.Context) string {
 	return config.Get(ctx, "mid:connection")
 }
-
-// If present and set to true, the provider will delete resources associated
-// with an unreachable remote endpoint from Pulumi state. It can also be
-// sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
 func GetDeleteUnreachable(ctx *pulumi.Context) bool {
 	return config.GetBool(ctx, "mid:deleteUnreachable")
 }

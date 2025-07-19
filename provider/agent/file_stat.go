@@ -10,15 +10,17 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type FileStat struct{}
 
 type FileStatInput struct {
-	Path              string `pulumi:"path"`
-	FollowSymlinks    bool   `pulumi:"followSymlinks,optional"`
-	CalculateChecksum bool   `pulumi:"calculateChecksum,optional"`
+	Path              string                   `pulumi:"path"`
+	FollowSymlinks    bool                     `pulumi:"followSymlinks,optional"`
+	CalculateChecksum bool                     `pulumi:"calculateChecksum,optional"`
+	Connection        *midtypes.Connection     `pulumi:"connection,optional"`
+	Config            *midtypes.ResourceConfig `pulumi:"config,optional"`
 }
 
 type FileStatFileMode struct {
@@ -31,7 +33,7 @@ type FileStatFileMode struct {
 
 type FileStatOutput struct {
 	FileStatInput
-	types.FileStatState
+	midtypes.FileStatState
 }
 
 func (f FileStat) Invoke(
@@ -44,11 +46,17 @@ func (f FileStat) Invoke(
 	))
 	defer span.End()
 
-	out, err := CallAgent[rpc.FileStatArgs, rpc.FileStatResult](ctx, rpc.RPCFileStat, rpc.FileStatArgs{
-		Path:              req.Input.Path,
-		FollowSymlinks:    req.Input.FollowSymlinks,
-		CalculateChecksum: req.Input.CalculateChecksum,
-	})
+	out, err := CallAgent[rpc.FileStatArgs, rpc.FileStatResult](
+		ctx,
+		req.Input.Connection,
+		req.Input.Config,
+		rpc.RPCFileStat,
+		rpc.FileStatArgs{
+			Path:              req.Input.Path,
+			FollowSymlinks:    req.Input.FollowSymlinks,
+			CalculateChecksum: req.Input.CalculateChecksum,
+		},
+	)
 
 	if err == nil {
 		span.SetStatus(codes.Ok, "")
@@ -58,7 +66,7 @@ func (f FileStat) Invoke(
 
 	output := FileStatOutput{
 		FileStatInput: req.Input,
-		FileStatState: types.FileStatStateFromRPCResult(out),
+		FileStatState: midtypes.FileStatStateFromRPCResult(out),
 	}
 
 	span.SetAttributes(telemetry.OtelJSON("pulumi.output", output))

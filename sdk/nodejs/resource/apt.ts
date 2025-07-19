@@ -40,6 +40,8 @@ export class Apt extends pulumi.CustomResource {
   public readonly autoremove!: pulumi.Output<boolean | undefined>;
   public readonly cacheValidTime!: pulumi.Output<number | undefined>;
   public readonly clean!: pulumi.Output<boolean | undefined>;
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly deb!: pulumi.Output<string | undefined>;
   public readonly defaultRelease!: pulumi.Output<string | undefined>;
   public readonly dpkgOptions!: pulumi.Output<string | undefined>;
@@ -54,7 +56,7 @@ export class Apt extends pulumi.CustomResource {
   public readonly onlyUpgrade!: pulumi.Output<boolean | undefined>;
   public readonly policyRcD!: pulumi.Output<number | undefined>;
   public readonly purge!: pulumi.Output<boolean | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
   public readonly updateCache!: pulumi.Output<boolean | undefined>;
   public readonly updateCacheRetries!: pulumi.Output<number | undefined>;
   public readonly updateCacheRetryMaxDelay!: pulumi.Output<number | undefined>;
@@ -78,6 +80,10 @@ export class Apt extends pulumi.CustomResource {
       resourceInputs["autoremove"] = args ? args.autoremove : undefined;
       resourceInputs["cacheValidTime"] = args ? args.cacheValidTime : undefined;
       resourceInputs["clean"] = args ? args.clean : undefined;
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["deb"] = args ? args.deb : undefined;
       resourceInputs["defaultRelease"] = args ? args.defaultRelease : undefined;
       resourceInputs["dpkgOptions"] = args ? args.dpkgOptions : undefined;
@@ -105,6 +111,8 @@ export class Apt extends pulumi.CustomResource {
       resourceInputs["autoremove"] = undefined /*out*/;
       resourceInputs["cacheValidTime"] = undefined /*out*/;
       resourceInputs["clean"] = undefined /*out*/;
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["deb"] = undefined /*out*/;
       resourceInputs["defaultRelease"] = undefined /*out*/;
       resourceInputs["dpkgOptions"] = undefined /*out*/;
@@ -141,6 +149,8 @@ export interface AptArgs {
   autoremove?: pulumi.Input<boolean>;
   cacheValidTime?: pulumi.Input<number>;
   clean?: pulumi.Input<boolean>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   deb?: pulumi.Input<string>;
   defaultRelease?: pulumi.Input<string>;
   dpkgOptions?: pulumi.Input<string>;
@@ -155,7 +165,7 @@ export interface AptArgs {
   onlyUpgrade?: pulumi.Input<boolean>;
   policyRcD?: pulumi.Input<number>;
   purge?: pulumi.Input<boolean>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
   updateCache?: pulumi.Input<boolean>;
   updateCacheRetries?: pulumi.Input<number>;
   updateCacheRetryMaxDelay?: pulumi.Input<number>;

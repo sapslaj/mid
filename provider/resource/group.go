@@ -14,27 +14,29 @@ import (
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type Group struct{}
 
 type GroupArgs struct {
-	Name      string               `pulumi:"name"`
-	Ensure    *string              `pulumi:"ensure,optional"`
-	Force     *bool                `pulumi:"force,optional"`
-	Gid       *int                 `pulumi:"gid,optional"`
-	GidMax    *int                 `pulumi:"gidMax,optional"`
-	GidMin    *int                 `pulumi:"gidMin,optional"`
-	Local     *bool                `pulumi:"local,optional"`
-	NonUnique *bool                `pulumi:"nonUnique,optional"`
-	System    *bool                `pulumi:"system,optional"`
-	Triggers  *types.TriggersInput `pulumi:"triggers,optional"`
+	Name       string                   `pulumi:"name"`
+	Ensure     *string                  `pulumi:"ensure,optional"`
+	Force      *bool                    `pulumi:"force,optional"`
+	Gid        *int                     `pulumi:"gid,optional"`
+	GidMax     *int                     `pulumi:"gidMax,optional"`
+	GidMin     *int                     `pulumi:"gidMin,optional"`
+	Local      *bool                    `pulumi:"local,optional"`
+	NonUnique  *bool                    `pulumi:"nonUnique,optional"`
+	System     *bool                    `pulumi:"system,optional"`
+	Connection *midtypes.Connection     `pulumi:"connection,optional"`
+	Config     *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers   *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type GroupState struct {
 	GroupArgs
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r Group) argsToTaskParameters(input GroupArgs) (ansible.GroupParameters, error) {
@@ -53,7 +55,7 @@ func (r Group) argsToTaskParameters(input GroupArgs) (ansible.GroupParameters, e
 
 func (r Group) updateState(inputs GroupArgs, state GroupState, changed bool) GroupState {
 	state.GroupArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -81,9 +83,9 @@ func (r Group) Diff(ctx context.Context, req infer.DiffRequest[GroupArgs, GroupS
 		}
 	}
 
-	diff = types.MergeDiffResponses(
+	diff = midtypes.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(req.State, req.Inputs, []string{
+		midtypes.DiffAttributes(req.State, req.Inputs, []string{
 			"ensure",
 			"force",
 			"gid",
@@ -93,7 +95,7 @@ func (r Group) Diff(ctx context.Context, req infer.DiffRequest[GroupArgs, GroupS
 			"nonUnique",
 			"system",
 		}),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -114,7 +116,8 @@ func (r Group) Create(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := r.updateState(req.Inputs, GroupState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -141,7 +144,7 @@ func (r Group) Create(
 	_, err = executor.AnsibleExecute[
 		ansible.GroupParameters,
 		ansible.GroupReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -178,7 +181,8 @@ func (r Group) Read(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -196,7 +200,7 @@ func (r Group) Read(
 	result, err := executor.AnsibleExecute[
 		ansible.GroupParameters,
 		ansible.GroupReturn,
-	](ctx, config.Connection, parameters, true)
+	](ctx, connection, config, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -239,7 +243,8 @@ func (r Group) Update(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -255,7 +260,7 @@ func (r Group) Update(
 	result, err := executor.AnsibleExecute[
 		ansible.GroupParameters,
 		ansible.GroupReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -292,7 +297,8 @@ func (r Group) Delete(ctx context.Context, req infer.DeleteRequest[GroupState]) 
 		return infer.DeleteResponse{}, nil
 	}
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	parameters, err := r.argsToTaskParameters(req.State.GroupArgs)
 	if err != nil {
@@ -304,7 +310,7 @@ func (r Group) Delete(ctx context.Context, req infer.DeleteRequest[GroupState]) 
 	_, err = executor.AnsibleExecute[
 		ansible.GroupParameters,
 		ansible.GroupReturn,
-	](ctx, config.Connection, parameters, false)
+	](ctx, connection, config, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))

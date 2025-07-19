@@ -15,6 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = [
     "ExecResult",
@@ -29,6 +31,8 @@ class ExecResult:
     def __init__(
         __self__,
         command=None,
+        config=None,
+        connection=None,
         dir=None,
         environment=None,
         exit_code=None,
@@ -41,6 +45,12 @@ class ExecResult:
         if command and not isinstance(command, list):
             raise TypeError("Expected argument 'command' to be a list")
         pulumi.set(__self__, "command", command)
+        if config and not isinstance(config, dict):
+            raise TypeError("Expected argument 'config' to be a dict")
+        pulumi.set(__self__, "config", config)
+        if connection and not isinstance(connection, dict):
+            raise TypeError("Expected argument 'connection' to be a dict")
+        pulumi.set(__self__, "connection", connection)
         if dir and not isinstance(dir, str):
             raise TypeError("Expected argument 'dir' to be a str")
         pulumi.set(__self__, "dir", dir)
@@ -70,6 +80,16 @@ class ExecResult:
     @pulumi.getter
     def command(self) -> Sequence[builtins.str]:
         return pulumi.get(self, "command")
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional["_root_outputs.ResourceConfig"]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional["_root_outputs.Connection"]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter
@@ -119,6 +139,8 @@ class AwaitableExecResult(ExecResult):
             yield self
         return ExecResult(
             command=self.command,
+            config=self.config,
+            connection=self.connection,
             dir=self.dir,
             environment=self.environment,
             exit_code=self.exit_code,
@@ -132,6 +154,12 @@ class AwaitableExecResult(ExecResult):
 
 def exec_(
     command: Optional[Sequence[builtins.str]] = None,
+    config: Optional[
+        Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+    ] = None,
+    connection: Optional[
+        Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]
+    ] = None,
     dir: Optional[builtins.str] = None,
     environment: Optional[Mapping[str, builtins.str]] = None,
     expand_argument_vars: Optional[builtins.bool] = None,
@@ -143,6 +171,8 @@ def exec_(
     """
     __args__ = dict()
     __args__["command"] = command
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["dir"] = dir
     __args__["environment"] = environment
     __args__["expandArgumentVars"] = expand_argument_vars
@@ -154,6 +184,8 @@ def exec_(
 
     return AwaitableExecResult(
         command=pulumi.get(__ret__, "command"),
+        config=pulumi.get(__ret__, "config"),
+        connection=pulumi.get(__ret__, "connection"),
         dir=pulumi.get(__ret__, "dir"),
         environment=pulumi.get(__ret__, "environment"),
         exit_code=pulumi.get(__ret__, "exit_code"),
@@ -167,6 +199,18 @@ def exec_(
 
 def exec__output(
     command: Optional[pulumi.Input[Sequence[builtins.str]]] = None,
+    config: Optional[
+        pulumi.Input[
+            Optional[
+                Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+            ]
+        ]
+    ] = None,
+    connection: Optional[
+        pulumi.Input[
+            Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
+        ]
+    ] = None,
     dir: Optional[pulumi.Input[Optional[builtins.str]]] = None,
     environment: Optional[pulumi.Input[Optional[Mapping[str, builtins.str]]]] = None,
     expand_argument_vars: Optional[pulumi.Input[Optional[builtins.bool]]] = None,
@@ -178,6 +222,8 @@ def exec__output(
     """
     __args__ = dict()
     __args__["command"] = command
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["dir"] = dir
     __args__["environment"] = environment
     __args__["expandArgumentVars"] = expand_argument_vars
@@ -189,6 +235,8 @@ def exec__output(
     return __ret__.apply(
         lambda __response__: ExecResult(
             command=pulumi.get(__response__, "command"),
+            config=pulumi.get(__response__, "config"),
+            connection=pulumi.get(__response__, "connection"),
             dir=pulumi.get(__response__, "dir"),
             environment=pulumi.get(__response__, "environment"),
             exit_code=pulumi.get(__response__, "exit_code"),

@@ -15,7 +15,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from . import _utilities
-from . import types as _types
+from ._inputs import *
 
 __all__ = ["ProviderArgs", "Provider"]
 
@@ -25,18 +25,15 @@ class ProviderArgs:
     def __init__(
         __self__,
         *,
-        connection: pulumi.Input["_types.ConnectionArgs"],
+        connection: Optional[pulumi.Input["ConnectionArgs"]] = None,
         delete_unreachable: Optional[pulumi.Input[builtins.bool]] = None,
         parallel: Optional[pulumi.Input[builtins.int]] = None,
     ):
         """
         The set of arguments for constructing a Provider resource.
-        :param pulumi.Input['_types.ConnectionArgs'] connection: remote endpoint connection configuration
-        :param pulumi.Input[builtins.bool] delete_unreachable: If present and set to true, the provider will delete resources associated
-               with an unreachable remote endpoint from Pulumi state. It can also be
-               sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
         """
-        pulumi.set(__self__, "connection", connection)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if delete_unreachable is not None:
             pulumi.set(__self__, "delete_unreachable", delete_unreachable)
         if parallel is not None:
@@ -44,24 +41,16 @@ class ProviderArgs:
 
     @property
     @pulumi.getter
-    def connection(self) -> pulumi.Input["_types.ConnectionArgs"]:
-        """
-        remote endpoint connection configuration
-        """
+    def connection(self) -> Optional[pulumi.Input["ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: pulumi.Input["_types.ConnectionArgs"]):
+    def connection(self, value: Optional[pulumi.Input["ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @property
     @pulumi.getter(name="deleteUnreachable")
     def delete_unreachable(self) -> Optional[pulumi.Input[builtins.bool]]:
-        """
-        If present and set to true, the provider will delete resources associated
-        with an unreachable remote endpoint from Pulumi state. It can also be
-        sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
-        """
         return pulumi.get(self, "delete_unreachable")
 
     @delete_unreachable.setter
@@ -86,21 +75,16 @@ class Provider(pulumi.ProviderResource):
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
         connection: Optional[
-            pulumi.Input[Union["_types.ConnectionArgs", "_types.ConnectionArgsDict"]]
+            pulumi.Input[Union["ConnectionArgs", "ConnectionArgsDict"]]
         ] = None,
         delete_unreachable: Optional[pulumi.Input[builtins.bool]] = None,
         parallel: Optional[pulumi.Input[builtins.int]] = None,
         __props__=None,
     ):
         """
-        provider configuration
-
+        Create a Mid resource with the given unique name, props, and options.
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
-        :param pulumi.Input[Union['_types.ConnectionArgs', '_types.ConnectionArgsDict']] connection: remote endpoint connection configuration
-        :param pulumi.Input[builtins.bool] delete_unreachable: If present and set to true, the provider will delete resources associated
-               with an unreachable remote endpoint from Pulumi state. It can also be
-               sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
         """
         ...
 
@@ -108,12 +92,11 @@ class Provider(pulumi.ProviderResource):
     def __init__(
         __self__,
         resource_name: str,
-        args: ProviderArgs,
+        args: Optional[ProviderArgs] = None,
         opts: Optional[pulumi.ResourceOptions] = None,
     ):
         """
-        provider configuration
-
+        Create a Mid resource with the given unique name, props, and options.
         :param str resource_name: The name of the resource.
         :param ProviderArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -134,7 +117,7 @@ class Provider(pulumi.ProviderResource):
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
         connection: Optional[
-            pulumi.Input[Union["_types.ConnectionArgs", "_types.ConnectionArgsDict"]]
+            pulumi.Input[Union["ConnectionArgs", "ConnectionArgsDict"]]
         ] = None,
         delete_unreachable: Optional[pulumi.Input[builtins.bool]] = None,
         parallel: Optional[pulumi.Input[builtins.int]] = None,
@@ -154,8 +137,6 @@ class Provider(pulumi.ProviderResource):
                 )
             __props__ = ProviderArgs.__new__(ProviderArgs)
 
-            if connection is None and not opts.urn:
-                raise TypeError("Missing required property 'connection'")
             __props__.__dict__["connection"] = (
                 pulumi.Output.secret(connection).apply(pulumi.runtime.to_json)
                 if connection is not None

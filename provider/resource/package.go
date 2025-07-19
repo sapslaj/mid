@@ -15,22 +15,24 @@ import (
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type Package struct{}
 
 type PackageArgs struct {
-	Name     *string              `pulumi:"name,optional"`
-	Names    *[]string            `pulumi:"names,optional"`
-	Ensure   *string              `pulumi:"ensure,optional"`
-	Triggers *types.TriggersInput `pulumi:"triggers,optional"`
+	Name       *string                  `pulumi:"name,optional"`
+	Names      *[]string                `pulumi:"names,optional"`
+	Ensure     *string                  `pulumi:"ensure,optional"`
+	Connection *midtypes.Connection     `pulumi:"connection,optional"`
+	Config     *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers   *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type PackageState struct {
 	PackageArgs
-	Ensure   string               `pulumi:"ensure"`
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Ensure   string                  `pulumi:"ensure"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r Package) argsToTaskParameters(input PackageArgs) (ansible.PackageParameters, error) {
@@ -60,7 +62,7 @@ func (r Package) updateState(inputs PackageArgs, state PackageState, changed boo
 	} else {
 		state.Ensure = "present"
 	}
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -129,7 +131,7 @@ func (r Package) Diff(
 		}
 	}
 
-	diff = types.MergeDiffResponses(diff, types.DiffTriggers(req.State, req.Inputs))
+	diff = midtypes.MergeDiffResponses(diff, midtypes.DiffTriggers(req.State, req.Inputs))
 
 	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
@@ -149,7 +151,8 @@ func (r Package) Create(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := r.updateState(req.Inputs, PackageState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -176,7 +179,7 @@ func (r Package) Create(
 	_, err = executor.AnsibleExecute[
 		ansible.PackageParameters,
 		ansible.PackageReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -213,7 +216,8 @@ func (r Package) Read(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -231,7 +235,7 @@ func (r Package) Read(
 	result, err := executor.AnsibleExecute[
 		ansible.PackageParameters,
 		ansible.PackageReturn,
-	](ctx, config.Connection, parameters, true)
+	](ctx, connection, config, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -283,7 +287,8 @@ func (r Package) Update(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -300,7 +305,7 @@ func (r Package) Update(
 		result, err := executor.AnsibleExecute[
 			ansible.PackageParameters,
 			ansible.PackageReturn,
-		](ctx, config.Connection, parameters, req.DryRun)
+		](ctx, connection, config, parameters, req.DryRun)
 		if err != nil {
 			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
@@ -383,7 +388,7 @@ func (r Package) Update(
 		result, err := executor.AnsibleExecute[
 			ansible.PackageParameters,
 			ansible.PackageReturn,
-		](ctx, config.Connection, parameters, req.DryRun)
+		](ctx, connection, config, parameters, req.DryRun)
 		if err != nil {
 			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
@@ -410,7 +415,7 @@ func (r Package) Update(
 		result, err := executor.AnsibleExecute[
 			ansible.PackageParameters,
 			ansible.PackageReturn,
-		](ctx, config.Connection, parameters, req.DryRun)
+		](ctx, connection, config, parameters, req.DryRun)
 		if err != nil {
 			if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
@@ -449,7 +454,8 @@ func (r Package) Delete(ctx context.Context, req infer.DeleteRequest[PackageStat
 		return infer.DeleteResponse{}, nil
 	}
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	parameters, err := r.argsToTaskParameters(req.State.PackageArgs)
 	if err != nil {
@@ -461,7 +467,7 @@ func (r Package) Delete(ctx context.Context, req infer.DeleteRequest[PackageStat
 	_, err = executor.AnsibleExecute[
 		ansible.PackageParameters,
 		ansible.PackageReturn,
-	](ctx, config.Connection, parameters, false)
+	](ctx, connection, config, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))

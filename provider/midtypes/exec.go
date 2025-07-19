@@ -1,4 +1,4 @@
-package types
+package midtypes
 
 import "github.com/pulumi/pulumi-go-provider/infer"
 

@@ -29,7 +29,7 @@ import (
 	"github.com/sapslaj/mid/pkg/pulumi-go-provider/introspect"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type File struct{}
@@ -71,20 +71,22 @@ type FileArgs struct {
 	Source                 *infertypes.AssetOrArchive `pulumi:"source,optional"`
 	UnsafeWrites           *bool                      `pulumi:"unsafeWrites,optional"`
 	Validate               *string                    `pulumi:"validate,optional"`
-	Triggers               *types.TriggersInput       `pulumi:"triggers,optional"`
+	Connection             *midtypes.Connection       `pulumi:"connection,optional"`
+	Config                 *midtypes.ResourceConfig   `pulumi:"config,optional"`
+	Triggers               *midtypes.TriggersInput    `pulumi:"triggers,optional"`
 }
 
 type FileState struct {
 	FileArgs
-	BackupFile *string              `pulumi:"backupFile,optional"`
-	Drifted    []string             `pulumi:"_drifted"`
-	Stat       types.FileStatState  `pulumi:"stat"`
-	Triggers   types.TriggersOutput `pulumi:"triggers"`
+	BackupFile *string                 `pulumi:"backupFile,optional"`
+	Drifted    []string                `pulumi:"_drifted"`
+	Stat       midtypes.FileStatState  `pulumi:"stat"`
+	Triggers   midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r File) updateState(inputs FileArgs, state FileState, changed bool) FileState {
 	state.FileArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -261,7 +263,7 @@ func (r File) Diff(
 	diff = pdiff.MergeDiffResponses(
 		diff,
 		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{"triggers"}),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -369,7 +371,8 @@ func (r File) copyNetworkSourceDirectory(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	exists := stat.Exists
 	forceable := false
@@ -384,7 +387,8 @@ func (r File) copyNetworkSourceDirectory(
 			ansible.FileReturn,
 		](
 			ctx,
-			config.Connection,
+			connection,
+			config,
 			ansible.FileParameters{
 				Follow:       inputs.Follow,
 				Force:        inputs.Force,
@@ -408,7 +412,8 @@ func (r File) copyNetworkSourceDirectory(
 			ansible.FileReturn,
 		](
 			ctx,
-			config.Connection,
+			connection,
+			config,
 			ansible.FileParameters{
 				AccessTime:             inputs.AccessTime,
 				AccessTimeFormat:       inputs.AccessTimeFormat,
@@ -459,7 +464,8 @@ func (r File) copyNetworkSourceDirectory(
 			ansible.GetUrlReturn,
 		](
 			ctx,
-			config.Connection,
+			connection,
+			config,
 			ansible.GetUrlParameters{
 				Checksum:     inputs.Checksum,
 				Dest:         tempfilepath,
@@ -504,7 +510,8 @@ func (r File) copyNetworkSourceDirectory(
 			ansible.UnarchiveReturn,
 		](
 			ctx,
-			config.Connection,
+			connection,
+			config,
 			ansible.UnarchiveParameters{
 				Attributes:   inputs.Attributes,
 				Dest:         inputs.Path,
@@ -582,14 +589,16 @@ func (r File) copyNetworkSourceFile(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	result, err := executor.AnsibleExecute[
 		ansible.GetUrlParameters,
 		ansible.GetUrlReturn,
 	](
 		ctx,
-		config.Connection,
+		connection,
+		config,
 		ansible.GetUrlParameters{
 			Attributes:   inputs.Attributes,
 			Backup:       inputs.Backup,
@@ -664,12 +673,13 @@ func (r File) copyRemoteSourceDirectory(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	result, err := executor.AnsibleExecute[
 		ansible.CopyParameters,
 		ansible.CopyReturn,
-	](ctx, config.Connection, r.makeAnsibleCopyParameters(inputs, stat), dryRun)
+	](ctx, connection, config, r.makeAnsibleCopyParameters(inputs, stat), dryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
@@ -710,12 +720,13 @@ func (r File) copyRemoteSourceFile(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	result, err := executor.AnsibleExecute[
 		ansible.CopyParameters,
 		ansible.CopyReturn,
-	](ctx, config.Connection, r.makeAnsibleCopyParameters(inputs, stat), dryRun)
+	](ctx, connection, config, r.makeAnsibleCopyParameters(inputs, stat), dryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
@@ -760,7 +771,8 @@ func (r File) copyRemoteSource(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	source := *inputs.RemoteSource
 	isNetworkSource := strings.Contains(source, "://")
@@ -782,7 +794,7 @@ func (r File) copyRemoteSource(
 		sourceStat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
-		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+		](ctx, connection, config, rpc.RPCCall[rpc.FileStatArgs]{
 			RPCFunction: rpc.RPCFileStat,
 			Args: rpc.FileStatArgs{
 				Path:              source,
@@ -844,7 +856,8 @@ func (r File) copyLocalSourceArchive(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	archive := inputs.Source.Archive
 
@@ -882,7 +895,7 @@ func (r File) copyLocalSourceArchive(
 		if *state.Stat.SHA256Checksum != *stat.SHA256Checksum {
 			state = r.updateStateDrifted(inputs, state, []string{"source"})
 		}
-		state.Stat = types.FileStatStateFromRPCResult(stat)
+		state.Stat = midtypes.FileStatStateFromRPCResult(stat)
 	} else if dryRun {
 		state = r.updateStateDrifted(inputs, state, []string{"source"})
 	} else {
@@ -903,7 +916,7 @@ func (r File) copyLocalSourceArchive(
 			return state, err
 		}
 
-		stagedPath, err := executor.StageFile(ctx, config.Connection, &bbuf)
+		stagedPath, err := executor.StageFile(ctx, connection, config, &bbuf)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
@@ -912,7 +925,7 @@ func (r File) copyLocalSourceArchive(
 		untarResult, err := executor.CallAgent[
 			rpc.UntarArgs,
 			rpc.UntarResult,
-		](ctx, config.Connection, rpc.RPCCall[rpc.UntarArgs]{
+		](ctx, connection, config, rpc.RPCCall[rpc.UntarArgs]{
 			RPCFunction: rpc.RPCUntar,
 			Args: rpc.UntarArgs{
 				SourceFilePath:  stagedPath,
@@ -952,7 +965,8 @@ func (r File) copyLocalSourceAsset(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	var sourceProp string
 	var asset *resource.Asset
@@ -993,7 +1007,7 @@ func (r File) copyLocalSourceAsset(
 			state = r.updateStateDrifted(inputs, state, []string{sourceProp})
 		}
 
-		state.Stat = types.FileStatStateFromRPCResult(stat)
+		state.Stat = midtypes.FileStatStateFromRPCResult(stat)
 	} else {
 		blob, err := asset.Read()
 		if err != nil {
@@ -1002,7 +1016,7 @@ func (r File) copyLocalSourceAsset(
 		}
 		defer blob.Close()
 
-		stagedPath, err := executor.StageFile(ctx, config.Connection, blob)
+		stagedPath, err := executor.StageFile(ctx, connection, config, blob)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
@@ -1014,7 +1028,7 @@ func (r File) copyLocalSourceAsset(
 		result, err := executor.AnsibleExecute[
 			ansible.CopyParameters,
 			ansible.CopyReturn,
-		](ctx, config.Connection, parameters, dryRun)
+		](ctx, connection, config, parameters, dryRun)
 		if err != nil {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
@@ -1103,9 +1117,10 @@ func (r File) createOrUpdate(
 	defer span.End()
 	defer span.SetAttributes(telemetry.OtelJSON("state.final", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
-	if executor.PreviewUnreachable(ctx, config.Connection, dryRun) {
+	if executor.PreviewUnreachable(ctx, connection, config, dryRun) {
 		span.SetAttributes(attribute.Bool("unreachable", true))
 		span.SetStatus(codes.Ok, "")
 		state = r.updateState(inputs, state, true)
@@ -1115,7 +1130,7 @@ func (r File) createOrUpdate(
 	statResult, err := executor.CallAgent[
 		rpc.FileStatArgs,
 		rpc.FileStatResult,
-	](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+	](ctx, connection, config, rpc.RPCCall[rpc.FileStatArgs]{
 		RPCFunction: rpc.RPCFileStat,
 		Args: rpc.FileStatArgs{
 			Path:              inputs.Path,
@@ -1156,7 +1171,7 @@ func (r File) createOrUpdate(
 		dirStat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
-		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+		](ctx, connection, config, rpc.RPCCall[rpc.FileStatArgs]{
 			RPCFunction: rpc.RPCFileStat,
 			Args: rpc.FileStatArgs{
 				Path:              dir,
@@ -1280,7 +1295,7 @@ func (r File) createOrUpdate(
 		result, err := executor.AnsibleExecute[
 			ansible.FileParameters,
 			ansible.FileReturn,
-		](ctx, config.Connection, params, dryRun)
+		](ctx, connection, config, params, dryRun)
 		if err != nil {
 			return err
 		}
@@ -1324,7 +1339,8 @@ func (r File) createOrUpdate(
 			ansible.FileReturn,
 		](
 			ctx,
-			config.Connection,
+			connection,
+			config,
 			ansible.FileParameters{
 				Follow:       inputs.Follow,
 				Force:        inputs.Force,
@@ -1358,7 +1374,7 @@ func (r File) createOrUpdate(
 		statResult, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
-		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+		](ctx, connection, config, rpc.RPCCall[rpc.FileStatArgs]{
 			RPCFunction: rpc.RPCFileStat,
 			Args: rpc.FileStatArgs{
 				Path:              inputs.Path,
@@ -1376,7 +1392,7 @@ func (r File) createOrUpdate(
 			return state, err
 		}
 
-		state.Stat = types.FileStatStateFromRPCResult(statResult.Result)
+		state.Stat = midtypes.FileStatStateFromRPCResult(statResult.Result)
 		span.SetAttributes(telemetry.OtelJSON("stat.final", stat))
 	}
 
@@ -1502,14 +1518,16 @@ func (r File) Delete(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	_, err := executor.AnsibleExecute[
 		ansible.FileParameters,
 		ansible.FileReturn,
 	](
 		ctx,
-		config.Connection,
+		connection,
+		config,
 		ansible.FileParameters{
 			Path:  req.State.Path,
 			State: ansible.OptionalFileState(ansible.FileStateAbsent),

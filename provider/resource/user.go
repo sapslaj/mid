@@ -15,39 +15,41 @@ import (
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type User struct{}
 
 type UserArgs struct {
 	// TODO: support more features
-	Name            string               `pulumi:"name"`
-	Ensure          *string              `pulumi:"ensure,optional"`
-	GroupsExclusive *bool                `pulumi:"groupsExclusive,optional"`
-	Comment         *string              `pulumi:"comment,optional"`
-	Local           *bool                `pulumi:"local,optional"`
-	Group           *string              `pulumi:"group,optional"`
-	Groups          *[]string            `pulumi:"groups,optional"`
-	Home            *string              `pulumi:"home,optional"`
-	Force           *bool                `pulumi:"force,optional"`
-	ManageHome      *bool                `pulumi:"manageHome,optional"`
-	NonUnique       *bool                `pulumi:"nonUnique,optional"`
-	Password        *string              `pulumi:"password,optional"`
-	Shell           *string              `pulumi:"shell,optional"`
-	Skeleton        *string              `pulumi:"skeleton,optional"`
-	System          *bool                `pulumi:"system,optional"`
-	Uid             *int                 `pulumi:"uid,optional"`
-	UidMax          *int                 `pulumi:"uidMax,optional"`
-	UidMin          *int                 `pulumi:"uidMin,optional"`
-	Umask           *string              `pulumi:"umask,optional"`
-	UpdatePassword  *string              `pulumi:"updatePassword,optional"`
-	Triggers        *types.TriggersInput `pulumi:"triggers,optional"`
+	Name            string                   `pulumi:"name"`
+	Ensure          *string                  `pulumi:"ensure,optional"`
+	GroupsExclusive *bool                    `pulumi:"groupsExclusive,optional"`
+	Comment         *string                  `pulumi:"comment,optional"`
+	Local           *bool                    `pulumi:"local,optional"`
+	Group           *string                  `pulumi:"group,optional"`
+	Groups          *[]string                `pulumi:"groups,optional"`
+	Home            *string                  `pulumi:"home,optional"`
+	Force           *bool                    `pulumi:"force,optional"`
+	ManageHome      *bool                    `pulumi:"manageHome,optional"`
+	NonUnique       *bool                    `pulumi:"nonUnique,optional"`
+	Password        *string                  `pulumi:"password,optional"`
+	Shell           *string                  `pulumi:"shell,optional"`
+	Skeleton        *string                  `pulumi:"skeleton,optional"`
+	System          *bool                    `pulumi:"system,optional"`
+	Uid             *int                     `pulumi:"uid,optional"`
+	UidMax          *int                     `pulumi:"uidMax,optional"`
+	UidMin          *int                     `pulumi:"uidMin,optional"`
+	Umask           *string                  `pulumi:"umask,optional"`
+	UpdatePassword  *string                  `pulumi:"updatePassword,optional"`
+	Connection      *midtypes.Connection     `pulumi:"connection,optional"`
+	Config          *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers        *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type UserState struct {
 	UserArgs
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r User) argsToTaskParameters(input UserArgs) (ansible.UserParameters, error) {
@@ -83,7 +85,7 @@ func (r User) argsToTaskParameters(input UserArgs) (ansible.UserParameters, erro
 
 func (r User) updateState(inputs UserArgs, state UserState, changed bool) UserState {
 	state.UserArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -111,9 +113,9 @@ func (r User) Diff(ctx context.Context, req infer.DiffRequest[UserArgs, UserStat
 		}
 	}
 
-	diff = types.MergeDiffResponses(
+	diff = midtypes.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(req.State, req.Inputs, []string{
+		midtypes.DiffAttributes(req.State, req.Inputs, []string{
 			"ensure",
 			"groupsExclusive",
 			"comment",
@@ -134,7 +136,7 @@ func (r User) Diff(ctx context.Context, req infer.DiffRequest[UserArgs, UserStat
 			"umask",
 			"updatePassword",
 		}),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -155,7 +157,8 @@ func (r User) Create(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := r.updateState(req.Inputs, UserState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -182,7 +185,7 @@ func (r User) Create(
 	_, err = executor.AnsibleExecute[
 		ansible.UserParameters,
 		ansible.UserReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -219,7 +222,8 @@ func (r User) Read(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -237,7 +241,7 @@ func (r User) Read(
 	result, err := executor.AnsibleExecute[
 		ansible.UserParameters,
 		ansible.UserReturn,
-	](ctx, config.Connection, parameters, true)
+	](ctx, connection, config, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -280,7 +284,8 @@ func (r User) Update(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -296,7 +301,7 @@ func (r User) Update(
 	result, err := executor.AnsibleExecute[
 		ansible.UserParameters,
 		ansible.UserReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -333,7 +338,8 @@ func (r User) Delete(ctx context.Context, req infer.DeleteRequest[UserState]) (i
 		return infer.DeleteResponse{}, nil
 	}
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	parameters, err := r.argsToTaskParameters(req.State.UserArgs)
 	if err != nil {
@@ -345,7 +351,7 @@ func (r User) Delete(ctx context.Context, req infer.DeleteRequest[UserState]) (i
 	_, err = executor.AnsibleExecute[
 		ansible.UserParameters,
 		ansible.UserReturn,
-	](ctx, config.Connection, parameters, false)
+	](ctx, connection, config, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))

@@ -16,34 +16,36 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type Exec struct{}
 
 type ExecArgs struct {
-	Create              types.ExecCommand    `pulumi:"create"`
-	Update              *types.ExecCommand   `pulumi:"update,optional"`
-	Delete              *types.ExecCommand   `pulumi:"delete,optional"`
-	ExpandArgumentVars  *bool                `pulumi:"expandArgumentVars,optional"`
-	DeleteBeforeReplace *bool                `pulumi:"deleteBeforeReplace,optional"`
-	Dir                 *string              `pulumi:"dir,optional"`
-	Environment         *map[string]string   `pulumi:"environment,optional"`
-	Logging             *types.ExecLogging   `pulumi:"logging,optional"`
-	Triggers            *types.TriggersInput `pulumi:"triggers,optional"`
+	Create              midtypes.ExecCommand     `pulumi:"create"`
+	Update              *midtypes.ExecCommand    `pulumi:"update,optional"`
+	Delete              *midtypes.ExecCommand    `pulumi:"delete,optional"`
+	ExpandArgumentVars  *bool                    `pulumi:"expandArgumentVars,optional"`
+	DeleteBeforeReplace *bool                    `pulumi:"deleteBeforeReplace,optional"`
+	Dir                 *string                  `pulumi:"dir,optional"`
+	Environment         *map[string]string       `pulumi:"environment,optional"`
+	Logging             *midtypes.ExecLogging    `pulumi:"logging,optional"`
+	Connection          *midtypes.Connection     `pulumi:"connection,optional"`
+	Config              *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers            *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type ExecState struct {
 	ExecArgs
-	Stdout   string               `pulumi:"stdout"`
-	Stderr   string               `pulumi:"stderr"`
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Stdout   string                  `pulumi:"stdout"`
+	Stderr   string                  `pulumi:"stderr"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r Exec) argsToRPCCall(input ExecArgs, lifecycle string) (rpc.RPCCall[rpc.ExecArgs], error) {
 	environment := map[string]string{}
 
-	var execCommand types.ExecCommand
+	var execCommand midtypes.ExecCommand
 	switch lifecycle {
 	case "create":
 		execCommand = input.Create
@@ -96,7 +98,7 @@ func (r Exec) argsToRPCCall(input ExecArgs, lifecycle string) (rpc.RPCCall[rpc.E
 
 func (r Exec) updateState(inputs ExecArgs, state ExecState, changed bool) ExecState {
 	state.ExecArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -105,21 +107,21 @@ func (r Exec) updateStateFromRPCResult(
 	state ExecState,
 	result rpc.RPCResult[rpc.ExecResult],
 ) ExecState {
-	logging := types.ExecLoggingStdoutAndStderr
+	logging := midtypes.ExecLoggingStdoutAndStderr
 	if inputs.Logging != nil {
 		logging = *inputs.Logging
 	}
 	switch logging {
-	case types.ExecLoggingNone:
+	case midtypes.ExecLoggingNone:
 		state.Stderr = ""
 		state.Stdout = ""
-	case types.ExecLoggingStderr:
+	case midtypes.ExecLoggingStderr:
 		state.Stderr = string(result.Result.Stderr)
 		state.Stdout = ""
-	case types.ExecLoggingStdout:
+	case midtypes.ExecLoggingStdout:
 		state.Stderr = ""
 		state.Stdout = string(result.Result.Stdout)
-	case types.ExecLoggingStdoutAndStderr:
+	case midtypes.ExecLoggingStdoutAndStderr:
 		state.Stderr = string(result.Result.Stderr)
 		state.Stdout = string(result.Result.Stdout)
 	default:
@@ -130,7 +132,8 @@ func (r Exec) updateStateFromRPCResult(
 
 func (r Exec) runRPCExec(
 	ctx context.Context,
-	connection *types.Connection,
+	connection midtypes.Connection,
+	config midtypes.ResourceConfig,
 	inputs ExecArgs,
 	state ExecState,
 	lifecycle string,
@@ -149,7 +152,7 @@ func (r Exec) runRPCExec(
 		return state, err
 	}
 
-	result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, connection, call)
+	result, err := executor.CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, connection, config, call)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
@@ -202,9 +205,9 @@ func (r Exec) Diff(ctx context.Context, req infer.DiffRequest[ExecArgs, ExecStat
 		diff.DeleteBeforeReplace = *req.Inputs.DeleteBeforeReplace
 	}
 
-	diff = types.MergeDiffResponses(
+	diff = midtypes.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(req.State, req.Inputs, []string{
+		midtypes.DiffAttributes(req.State, req.Inputs, []string{
 			"create",
 			"update",
 			"delete",
@@ -213,7 +216,7 @@ func (r Exec) Diff(ctx context.Context, req infer.DiffRequest[ExecArgs, ExecStat
 			"environment",
 			"logging",
 		}),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -234,7 +237,8 @@ func (r Exec) Create(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := r.updateState(req.Inputs, ExecState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -256,7 +260,7 @@ func (r Exec) Create(
 		}, nil
 	}
 
-	state, err = r.runRPCExec(ctx, config.Connection, req.Inputs, state, "create")
+	state, err = r.runRPCExec(ctx, connection, config, req.Inputs, state, "create")
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[ExecState]{
@@ -286,7 +290,8 @@ func (r Exec) Update(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -298,7 +303,7 @@ func (r Exec) Update(
 	}
 
 	var err error
-	state, err = r.runRPCExec(ctx, config.Connection, req.Inputs, state, "update")
+	state, err = r.runRPCExec(ctx, connection, config, req.Inputs, state, "update")
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.UpdateResponse[ExecState]{
@@ -326,9 +331,10 @@ func (r Exec) Delete(ctx context.Context, req infer.DeleteRequest[ExecState]) (i
 		return infer.DeleteResponse{}, nil
 	}
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
-	_, err := r.runRPCExec(ctx, config.Connection, req.State.ExecArgs, req.State, "delete")
+	_, err := r.runRPCExec(ctx, connection, config, req.State.ExecArgs, req.State, "delete")
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))

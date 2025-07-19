@@ -19,32 +19,34 @@ import (
 	"github.com/sapslaj/mid/pkg/pulumi-go-provider/introspect"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type FileLine struct{}
 
 type FileLineArgs struct {
-	Ensure       *string              `pulumi:"ensure,optional"`
-	Path         string               `pulumi:"path"`
-	Backrefs     *bool                `pulumi:"backrefs,optional"`
-	Backup       *bool                `pulumi:"backup,optional"`
-	Create       *bool                `pulumi:"create,optional"`
-	FirstMatch   *bool                `pulumi:"firstMatch,optional"`
-	InsertBefore *string              `pulumi:"insertBefore,optional"`
-	InsertAfter  *string              `pulumi:"insertAfter,optional"`
-	Line         *string              `pulumi:"line,optional"`
-	Regexp       *string              `pulumi:"regexp,optional"`
-	SearchString *string              `pulumi:"searchString,optional"`
-	UnsafeWrites *bool                `pulumi:"unsafeWrites,optional"`
-	Validate     *string              `pulumi:"validate,optional"`
-	Triggers     *types.TriggersInput `pulumi:"triggers,optional"`
+	Ensure       *string                  `pulumi:"ensure,optional"`
+	Path         string                   `pulumi:"path"`
+	Backrefs     *bool                    `pulumi:"backrefs,optional"`
+	Backup       *bool                    `pulumi:"backup,optional"`
+	Create       *bool                    `pulumi:"create,optional"`
+	FirstMatch   *bool                    `pulumi:"firstMatch,optional"`
+	InsertBefore *string                  `pulumi:"insertBefore,optional"`
+	InsertAfter  *string                  `pulumi:"insertAfter,optional"`
+	Line         *string                  `pulumi:"line,optional"`
+	Regexp       *string                  `pulumi:"regexp,optional"`
+	SearchString *string                  `pulumi:"searchString,optional"`
+	UnsafeWrites *bool                    `pulumi:"unsafeWrites,optional"`
+	Validate     *string                  `pulumi:"validate,optional"`
+	Connection   *midtypes.Connection     `pulumi:"connection,optional"`
+	Config       *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers     *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type FileLineState struct {
 	FileLineArgs
-	Drifted  []string             `pulumi:"_drifted"`
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Drifted  []string                `pulumi:"_drifted"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r FileLine) argsToTaskParameters(inputs FileLineArgs) (ansible.LineinfileParameters, error) {
@@ -67,7 +69,7 @@ func (r FileLine) argsToTaskParameters(inputs FileLineArgs) (ansible.LineinfileP
 
 func (r FileLine) updateState(inputs FileLineArgs, state FileLineState, changed bool) FileLineState {
 	state.FileLineArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -173,7 +175,7 @@ func (r FileLine) Diff(
 	diff = pdiff.MergeDiffResponses(
 		diff,
 		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{"triggers"}),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -194,7 +196,8 @@ func (r FileLine) Create(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := r.updateState(req.Inputs, FileLineState{}, true)
 	state.Drifted = []string{}
@@ -223,7 +226,7 @@ func (r FileLine) Create(
 		stat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
-		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+		](ctx, connection, config, rpc.RPCCall[rpc.FileStatArgs]{
 			RPCFunction: rpc.RPCFileStat,
 			Args: rpc.FileStatArgs{
 				Path: req.Inputs.Path,
@@ -257,7 +260,7 @@ func (r FileLine) Create(
 	_, err = executor.AnsibleExecute[
 		ansible.LineinfileParameters,
 		ansible.LineinfileReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -294,7 +297,8 @@ func (r FileLine) Read(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -312,7 +316,7 @@ func (r FileLine) Read(
 	result, err := executor.AnsibleExecute[
 		ansible.LineinfileParameters,
 		ansible.LineinfileReturn,
-	](ctx, config.Connection, parameters, true)
+	](ctx, connection, config, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -357,7 +361,8 @@ func (r FileLine) Update(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -374,7 +379,7 @@ func (r FileLine) Update(
 		stat, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
-		](ctx, config.Connection, rpc.RPCCall[rpc.FileStatArgs]{
+		](ctx, connection, config, rpc.RPCCall[rpc.FileStatArgs]{
 			RPCFunction: rpc.RPCFileStat,
 			Args: rpc.FileStatArgs{
 				Path: req.Inputs.Path,
@@ -406,7 +411,7 @@ func (r FileLine) Update(
 	result, err := executor.AnsibleExecute[
 		ansible.LineinfileParameters,
 		ansible.LineinfileReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))

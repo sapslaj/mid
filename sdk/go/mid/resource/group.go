@@ -9,23 +9,25 @@ import (
 
 	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type Group struct {
 	pulumi.CustomResourceState
 
-	Ensure    pulumi.StringPtrOutput     `pulumi:"ensure"`
-	Force     pulumi.BoolPtrOutput       `pulumi:"force"`
-	Gid       pulumi.IntPtrOutput        `pulumi:"gid"`
-	GidMax    pulumi.IntPtrOutput        `pulumi:"gidMax"`
-	GidMin    pulumi.IntPtrOutput        `pulumi:"gidMin"`
-	Local     pulumi.BoolPtrOutput       `pulumi:"local"`
-	Name      pulumi.StringOutput        `pulumi:"name"`
-	NonUnique pulumi.BoolPtrOutput       `pulumi:"nonUnique"`
-	System    pulumi.BoolPtrOutput       `pulumi:"system"`
-	Triggers  types.TriggersOutputOutput `pulumi:"triggers"`
+	Config     mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection mid.ConnectionPtrOutput     `pulumi:"connection"`
+	Ensure     pulumi.StringPtrOutput      `pulumi:"ensure"`
+	Force      pulumi.BoolPtrOutput        `pulumi:"force"`
+	Gid        pulumi.IntPtrOutput         `pulumi:"gid"`
+	GidMax     pulumi.IntPtrOutput         `pulumi:"gidMax"`
+	GidMin     pulumi.IntPtrOutput         `pulumi:"gidMin"`
+	Local      pulumi.BoolPtrOutput        `pulumi:"local"`
+	Name       pulumi.StringOutput         `pulumi:"name"`
+	NonUnique  pulumi.BoolPtrOutput        `pulumi:"nonUnique"`
+	System     pulumi.BoolPtrOutput        `pulumi:"system"`
+	Triggers   mid.TriggersOutputOutput    `pulumi:"triggers"`
 }
 
 // NewGroup registers a new resource with the given unique name, arguments, and options.
@@ -37,6 +39,9 @@ func NewGroup(ctx *pulumi.Context,
 
 	if args.Name == nil {
 		return nil, errors.New("invalid value for required argument 'Name'")
+	}
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
 	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Group
@@ -71,30 +76,34 @@ func (GroupState) ElementType() reflect.Type {
 }
 
 type groupArgs struct {
-	Ensure    *string              `pulumi:"ensure"`
-	Force     *bool                `pulumi:"force"`
-	Gid       *int                 `pulumi:"gid"`
-	GidMax    *int                 `pulumi:"gidMax"`
-	GidMin    *int                 `pulumi:"gidMin"`
-	Local     *bool                `pulumi:"local"`
-	Name      string               `pulumi:"name"`
-	NonUnique *bool                `pulumi:"nonUnique"`
-	System    *bool                `pulumi:"system"`
-	Triggers  *types.TriggersInput `pulumi:"triggers"`
+	Config     *mid.ResourceConfig `pulumi:"config"`
+	Connection *mid.Connection     `pulumi:"connection"`
+	Ensure     *string             `pulumi:"ensure"`
+	Force      *bool               `pulumi:"force"`
+	Gid        *int                `pulumi:"gid"`
+	GidMax     *int                `pulumi:"gidMax"`
+	GidMin     *int                `pulumi:"gidMin"`
+	Local      *bool               `pulumi:"local"`
+	Name       string              `pulumi:"name"`
+	NonUnique  *bool               `pulumi:"nonUnique"`
+	System     *bool               `pulumi:"system"`
+	Triggers   *mid.TriggersInput  `pulumi:"triggers"`
 }
 
 // The set of arguments for constructing a Group resource.
 type GroupArgs struct {
-	Ensure    pulumi.StringPtrInput
-	Force     pulumi.BoolPtrInput
-	Gid       pulumi.IntPtrInput
-	GidMax    pulumi.IntPtrInput
-	GidMin    pulumi.IntPtrInput
-	Local     pulumi.BoolPtrInput
-	Name      pulumi.StringInput
-	NonUnique pulumi.BoolPtrInput
-	System    pulumi.BoolPtrInput
-	Triggers  types.TriggersInputPtrInput
+	Config     mid.ResourceConfigPtrInput
+	Connection mid.ConnectionPtrInput
+	Ensure     pulumi.StringPtrInput
+	Force      pulumi.BoolPtrInput
+	Gid        pulumi.IntPtrInput
+	GidMax     pulumi.IntPtrInput
+	GidMin     pulumi.IntPtrInput
+	Local      pulumi.BoolPtrInput
+	Name       pulumi.StringInput
+	NonUnique  pulumi.BoolPtrInput
+	System     pulumi.BoolPtrInput
+	Triggers   mid.TriggersInputPtrInput
 }
 
 func (GroupArgs) ElementType() reflect.Type {
@@ -184,6 +193,14 @@ func (o GroupOutput) ToGroupOutputWithContext(ctx context.Context) GroupOutput {
 	return o
 }
 
+func (o GroupOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *Group) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o GroupOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *Group) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o GroupOutput) Ensure() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Group) pulumi.StringPtrOutput { return v.Ensure }).(pulumi.StringPtrOutput)
 }
@@ -220,8 +237,8 @@ func (o GroupOutput) System() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *Group) pulumi.BoolPtrOutput { return v.System }).(pulumi.BoolPtrOutput)
 }
 
-func (o GroupOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *Group) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o GroupOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *Group) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 type GroupArrayOutput struct{ *pulumi.OutputState }

@@ -16,7 +16,8 @@ else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
 from . import outputs
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 from ._inputs import *
 
 __all__ = ["AnsibleTaskListArgs", "AnsibleTaskList"]
@@ -28,12 +29,18 @@ class AnsibleTaskListArgs:
         __self__,
         *,
         tasks: pulumi.Input["AnsibleTaskListArgsTasksArgs"],
-        triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
+        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
+        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
     ):
         """
         The set of arguments for constructing a AnsibleTaskList resource.
         """
         pulumi.set(__self__, "tasks", tasks)
+        if config is not None:
+            pulumi.set(__self__, "config", config)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if triggers is not None:
             pulumi.set(__self__, "triggers", triggers)
 
@@ -48,11 +55,29 @@ class AnsibleTaskListArgs:
 
     @property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_types.TriggersInputArgs"]]:
+    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+        return pulumi.get(self, "config")
+
+    @config.setter
+    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+        pulumi.set(self, "config", value)
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+        return pulumi.get(self, "connection")
+
+    @connection.setter
+    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+        pulumi.set(self, "connection", value)
+
+    @property
+    @pulumi.getter
+    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_types.TriggersInputArgs"]]):
+    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
 
@@ -63,6 +88,19 @@ class AnsibleTaskList(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         tasks: Optional[
             pulumi.Input[
                 Union[
@@ -72,7 +110,10 @@ class AnsibleTaskList(pulumi.CustomResource):
         ] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         __props__=None,
@@ -112,6 +153,19 @@ class AnsibleTaskList(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         tasks: Optional[
             pulumi.Input[
                 Union[
@@ -121,7 +175,10 @@ class AnsibleTaskList(pulumi.CustomResource):
         ] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         __props__=None,
@@ -140,6 +197,8 @@ class AnsibleTaskList(pulumi.CustomResource):
                 )
             __props__ = AnsibleTaskListArgs.__new__(AnsibleTaskListArgs)
 
+            __props__.__dict__["config"] = config
+            __props__.__dict__["connection"] = connection
             if tasks is None and not opts.urn:
                 raise TypeError("Missing required property 'tasks'")
             __props__.__dict__["tasks"] = tasks
@@ -167,10 +226,22 @@ class AnsibleTaskList(pulumi.CustomResource):
 
         __props__ = AnsibleTaskListArgs.__new__(AnsibleTaskListArgs)
 
+        __props__.__dict__["config"] = None
+        __props__.__dict__["connection"] = None
         __props__.__dict__["results"] = None
         __props__.__dict__["tasks"] = None
         __props__.__dict__["triggers"] = None
         return AnsibleTaskList(resource_name, opts=opts, __props__=__props__)
+
+    @property
+    @pulumi.getter
+    def config(self) -> pulumi.Output[Optional["_root_outputs.ResourceConfig"]]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> pulumi.Output[Optional["_root_outputs.Connection"]]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter
@@ -184,5 +255,5 @@ class AnsibleTaskList(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def triggers(self) -> pulumi.Output["_types.outputs.TriggersOutput"]:
+    def triggers(self) -> pulumi.Output["_root_outputs.TriggersOutput"]:
         return pulumi.get(self, "triggers")

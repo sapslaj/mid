@@ -14,7 +14,7 @@ if sys.version_info >= (3, 11):
     from typing import NotRequired, TypedDict, TypeAlias
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
-from .. import _utilities
+from . import _utilities
 from . import outputs
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "ExecCommand",
     "FileStatFileMode",
     "FileStatState",
+    "ResourceConfig",
     "TriggersOutput",
 ]
 
@@ -32,10 +33,39 @@ class Connection(dict):
     Instructions for how to connect to a remote endpoint.
     """
 
+    @staticmethod
+    def __key_warning(key: str):
+        suggest = None
+        if key == "hostKey":
+            suggest = "host_key"
+        elif key == "perDialTimeout":
+            suggest = "per_dial_timeout"
+        elif key == "privateKey":
+            suggest = "private_key"
+        elif key == "privateKeyPassword":
+            suggest = "private_key_password"
+        elif key == "sshAgent":
+            suggest = "ssh_agent"
+        elif key == "sshAgentSocketPath":
+            suggest = "ssh_agent_socket_path"
+
+        if suggest:
+            pulumi.log.warn(
+                f"Key '{key}' not found in Connection. Access the value via the '{suggest}' property getter instead."
+            )
+
+    def __getitem__(self, key: str) -> Any:
+        Connection.__key_warning(key)
+        return super().__getitem__(key)
+
+    def get(self, key: str, default=None) -> Any:
+        Connection.__key_warning(key)
+        return super().get(key, default)
+
     def __init__(
         __self__,
         *,
-        host: builtins.str,
+        host: Optional[builtins.str] = None,
         host_key: Optional[builtins.str] = None,
         password: Optional[builtins.str] = None,
         per_dial_timeout: Optional[builtins.int] = None,
@@ -55,7 +85,8 @@ class Connection(dict):
                connection. This takes preference over the password if provided.
         :param builtins.str user: The user that we should use for the connection.
         """
-        pulumi.set(__self__, "host", host)
+        if host is not None:
+            pulumi.set(__self__, "host", host)
         if host_key is not None:
             pulumi.set(__self__, "host_key", host_key)
         if password is not None:
@@ -81,7 +112,7 @@ class Connection(dict):
 
     @property
     @pulumi.getter
-    def host(self) -> builtins.str:
+    def host(self) -> Optional[builtins.str]:
         """
         The address of the resource to connect to.
         """
@@ -431,6 +462,49 @@ class FileStatState(dict):
     @pulumi.getter(name="userName")
     def user_name(self) -> Optional[builtins.str]:
         return pulumi.get(self, "user_name")
+
+
+@pulumi.output_type
+class ResourceConfig(dict):
+    @staticmethod
+    def __key_warning(key: str):
+        suggest = None
+        if key == "deleteUnreachable":
+            suggest = "delete_unreachable"
+
+        if suggest:
+            pulumi.log.warn(
+                f"Key '{key}' not found in ResourceConfig. Access the value via the '{suggest}' property getter instead."
+            )
+
+    def __getitem__(self, key: str) -> Any:
+        ResourceConfig.__key_warning(key)
+        return super().__getitem__(key)
+
+    def get(self, key: str, default=None) -> Any:
+        ResourceConfig.__key_warning(key)
+        return super().get(key, default)
+
+    def __init__(
+        __self__,
+        *,
+        delete_unreachable: Optional[builtins.bool] = None,
+        parallel: Optional[builtins.int] = None,
+    ):
+        if delete_unreachable is not None:
+            pulumi.set(__self__, "delete_unreachable", delete_unreachable)
+        if parallel is not None:
+            pulumi.set(__self__, "parallel", parallel)
+
+    @property
+    @pulumi.getter(name="deleteUnreachable")
+    def delete_unreachable(self) -> Optional[builtins.bool]:
+        return pulumi.get(self, "delete_unreachable")
+
+    @property
+    @pulumi.getter
+    def parallel(self) -> Optional[builtins.int]:
+        return pulumi.get(self, "parallel")
 
 
 @pulumi.output_type

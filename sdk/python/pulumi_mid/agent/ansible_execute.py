@@ -15,6 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = [
     "AnsibleExecuteResult",
@@ -30,6 +32,8 @@ class AnsibleExecuteResult:
         __self__,
         args=None,
         check=None,
+        config=None,
+        connection=None,
         debug_keep_temp_files=None,
         debug_temp_dir=None,
         environment=None,
@@ -45,6 +49,12 @@ class AnsibleExecuteResult:
         if check and not isinstance(check, bool):
             raise TypeError("Expected argument 'check' to be a bool")
         pulumi.set(__self__, "check", check)
+        if config and not isinstance(config, dict):
+            raise TypeError("Expected argument 'config' to be a dict")
+        pulumi.set(__self__, "config", config)
+        if connection and not isinstance(connection, dict):
+            raise TypeError("Expected argument 'connection' to be a dict")
+        pulumi.set(__self__, "connection", connection)
         if debug_keep_temp_files and not isinstance(debug_keep_temp_files, bool):
             raise TypeError("Expected argument 'debug_keep_temp_files' to be a bool")
         pulumi.set(__self__, "debug_keep_temp_files", debug_keep_temp_files)
@@ -79,6 +89,16 @@ class AnsibleExecuteResult:
     @pulumi.getter
     def check(self) -> Optional[builtins.bool]:
         return pulumi.get(self, "check")
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional["_root_outputs.ResourceConfig"]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional["_root_outputs.Connection"]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter(name="debugKeepTempFiles")
@@ -129,6 +149,8 @@ class AwaitableAnsibleExecuteResult(AnsibleExecuteResult):
         return AnsibleExecuteResult(
             args=self.args,
             check=self.check,
+            config=self.config,
+            connection=self.connection,
             debug_keep_temp_files=self.debug_keep_temp_files,
             debug_temp_dir=self.debug_temp_dir,
             environment=self.environment,
@@ -143,6 +165,12 @@ class AwaitableAnsibleExecuteResult(AnsibleExecuteResult):
 def ansible_execute(
     args: Optional[Mapping[str, Any]] = None,
     check: Optional[builtins.bool] = None,
+    config: Optional[
+        Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+    ] = None,
+    connection: Optional[
+        Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]
+    ] = None,
     debug_keep_temp_files: Optional[builtins.bool] = None,
     environment: Optional[Mapping[str, builtins.str]] = None,
     name: Optional[builtins.str] = None,
@@ -154,6 +182,8 @@ def ansible_execute(
     __args__ = dict()
     __args__["args"] = args
     __args__["check"] = check
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["debugKeepTempFiles"] = debug_keep_temp_files
     __args__["environment"] = environment
     __args__["name"] = name
@@ -165,6 +195,8 @@ def ansible_execute(
     return AwaitableAnsibleExecuteResult(
         args=pulumi.get(__ret__, "args"),
         check=pulumi.get(__ret__, "check"),
+        config=pulumi.get(__ret__, "config"),
+        connection=pulumi.get(__ret__, "connection"),
         debug_keep_temp_files=pulumi.get(__ret__, "debug_keep_temp_files"),
         debug_temp_dir=pulumi.get(__ret__, "debug_temp_dir"),
         environment=pulumi.get(__ret__, "environment"),
@@ -179,6 +211,18 @@ def ansible_execute(
 def ansible_execute_output(
     args: Optional[pulumi.Input[Mapping[str, Any]]] = None,
     check: Optional[pulumi.Input[Optional[builtins.bool]]] = None,
+    config: Optional[
+        pulumi.Input[
+            Optional[
+                Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+            ]
+        ]
+    ] = None,
+    connection: Optional[
+        pulumi.Input[
+            Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
+        ]
+    ] = None,
     debug_keep_temp_files: Optional[pulumi.Input[Optional[builtins.bool]]] = None,
     environment: Optional[pulumi.Input[Optional[Mapping[str, builtins.str]]]] = None,
     name: Optional[pulumi.Input[builtins.str]] = None,
@@ -190,6 +234,8 @@ def ansible_execute_output(
     __args__ = dict()
     __args__["args"] = args
     __args__["check"] = check
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["debugKeepTempFiles"] = debug_keep_temp_files
     __args__["environment"] = environment
     __args__["name"] = name
@@ -201,6 +247,8 @@ def ansible_execute_output(
         lambda __response__: AnsibleExecuteResult(
             args=pulumi.get(__response__, "args"),
             check=pulumi.get(__response__, "check"),
+            config=pulumi.get(__response__, "config"),
+            connection=pulumi.get(__response__, "connection"),
             debug_keep_temp_files=pulumi.get(__response__, "debug_keep_temp_files"),
             debug_temp_dir=pulumi.get(__response__, "debug_temp_dir"),
             environment=pulumi.get(__response__, "environment"),

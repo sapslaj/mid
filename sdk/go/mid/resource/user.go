@@ -9,34 +9,36 @@ import (
 
 	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type User struct {
 	pulumi.CustomResourceState
 
-	Comment         pulumi.StringPtrOutput     `pulumi:"comment"`
-	Ensure          pulumi.StringPtrOutput     `pulumi:"ensure"`
-	Force           pulumi.BoolPtrOutput       `pulumi:"force"`
-	Group           pulumi.StringPtrOutput     `pulumi:"group"`
-	Groups          pulumi.StringArrayOutput   `pulumi:"groups"`
-	GroupsExclusive pulumi.BoolPtrOutput       `pulumi:"groupsExclusive"`
-	Home            pulumi.StringPtrOutput     `pulumi:"home"`
-	Local           pulumi.BoolPtrOutput       `pulumi:"local"`
-	ManageHome      pulumi.BoolPtrOutput       `pulumi:"manageHome"`
-	Name            pulumi.StringOutput        `pulumi:"name"`
-	NonUnique       pulumi.BoolPtrOutput       `pulumi:"nonUnique"`
-	Password        pulumi.StringPtrOutput     `pulumi:"password"`
-	Shell           pulumi.StringPtrOutput     `pulumi:"shell"`
-	Skeleton        pulumi.StringPtrOutput     `pulumi:"skeleton"`
-	System          pulumi.BoolPtrOutput       `pulumi:"system"`
-	Triggers        types.TriggersOutputOutput `pulumi:"triggers"`
-	Uid             pulumi.IntPtrOutput        `pulumi:"uid"`
-	UidMax          pulumi.IntPtrOutput        `pulumi:"uidMax"`
-	UidMin          pulumi.IntPtrOutput        `pulumi:"uidMin"`
-	Umask           pulumi.StringPtrOutput     `pulumi:"umask"`
-	UpdatePassword  pulumi.StringPtrOutput     `pulumi:"updatePassword"`
+	Comment         pulumi.StringPtrOutput      `pulumi:"comment"`
+	Config          mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection      mid.ConnectionPtrOutput     `pulumi:"connection"`
+	Ensure          pulumi.StringPtrOutput      `pulumi:"ensure"`
+	Force           pulumi.BoolPtrOutput        `pulumi:"force"`
+	Group           pulumi.StringPtrOutput      `pulumi:"group"`
+	Groups          pulumi.StringArrayOutput    `pulumi:"groups"`
+	GroupsExclusive pulumi.BoolPtrOutput        `pulumi:"groupsExclusive"`
+	Home            pulumi.StringPtrOutput      `pulumi:"home"`
+	Local           pulumi.BoolPtrOutput        `pulumi:"local"`
+	ManageHome      pulumi.BoolPtrOutput        `pulumi:"manageHome"`
+	Name            pulumi.StringOutput         `pulumi:"name"`
+	NonUnique       pulumi.BoolPtrOutput        `pulumi:"nonUnique"`
+	Password        pulumi.StringPtrOutput      `pulumi:"password"`
+	Shell           pulumi.StringPtrOutput      `pulumi:"shell"`
+	Skeleton        pulumi.StringPtrOutput      `pulumi:"skeleton"`
+	System          pulumi.BoolPtrOutput        `pulumi:"system"`
+	Triggers        mid.TriggersOutputOutput    `pulumi:"triggers"`
+	Uid             pulumi.IntPtrOutput         `pulumi:"uid"`
+	UidMax          pulumi.IntPtrOutput         `pulumi:"uidMax"`
+	UidMin          pulumi.IntPtrOutput         `pulumi:"uidMin"`
+	Umask           pulumi.StringPtrOutput      `pulumi:"umask"`
+	UpdatePassword  pulumi.StringPtrOutput      `pulumi:"updatePassword"`
 }
 
 // NewUser registers a new resource with the given unique name, arguments, and options.
@@ -48,6 +50,9 @@ func NewUser(ctx *pulumi.Context,
 
 	if args.Name == nil {
 		return nil, errors.New("invalid value for required argument 'Name'")
+	}
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
 	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource User
@@ -82,32 +87,36 @@ func (UserState) ElementType() reflect.Type {
 }
 
 type userArgs struct {
-	Comment         *string              `pulumi:"comment"`
-	Ensure          *string              `pulumi:"ensure"`
-	Force           *bool                `pulumi:"force"`
-	Group           *string              `pulumi:"group"`
-	Groups          []string             `pulumi:"groups"`
-	GroupsExclusive *bool                `pulumi:"groupsExclusive"`
-	Home            *string              `pulumi:"home"`
-	Local           *bool                `pulumi:"local"`
-	ManageHome      *bool                `pulumi:"manageHome"`
-	Name            string               `pulumi:"name"`
-	NonUnique       *bool                `pulumi:"nonUnique"`
-	Password        *string              `pulumi:"password"`
-	Shell           *string              `pulumi:"shell"`
-	Skeleton        *string              `pulumi:"skeleton"`
-	System          *bool                `pulumi:"system"`
-	Triggers        *types.TriggersInput `pulumi:"triggers"`
-	Uid             *int                 `pulumi:"uid"`
-	UidMax          *int                 `pulumi:"uidMax"`
-	UidMin          *int                 `pulumi:"uidMin"`
-	Umask           *string              `pulumi:"umask"`
-	UpdatePassword  *string              `pulumi:"updatePassword"`
+	Comment         *string             `pulumi:"comment"`
+	Config          *mid.ResourceConfig `pulumi:"config"`
+	Connection      *mid.Connection     `pulumi:"connection"`
+	Ensure          *string             `pulumi:"ensure"`
+	Force           *bool               `pulumi:"force"`
+	Group           *string             `pulumi:"group"`
+	Groups          []string            `pulumi:"groups"`
+	GroupsExclusive *bool               `pulumi:"groupsExclusive"`
+	Home            *string             `pulumi:"home"`
+	Local           *bool               `pulumi:"local"`
+	ManageHome      *bool               `pulumi:"manageHome"`
+	Name            string              `pulumi:"name"`
+	NonUnique       *bool               `pulumi:"nonUnique"`
+	Password        *string             `pulumi:"password"`
+	Shell           *string             `pulumi:"shell"`
+	Skeleton        *string             `pulumi:"skeleton"`
+	System          *bool               `pulumi:"system"`
+	Triggers        *mid.TriggersInput  `pulumi:"triggers"`
+	Uid             *int                `pulumi:"uid"`
+	UidMax          *int                `pulumi:"uidMax"`
+	UidMin          *int                `pulumi:"uidMin"`
+	Umask           *string             `pulumi:"umask"`
+	UpdatePassword  *string             `pulumi:"updatePassword"`
 }
 
 // The set of arguments for constructing a User resource.
 type UserArgs struct {
 	Comment         pulumi.StringPtrInput
+	Config          mid.ResourceConfigPtrInput
+	Connection      mid.ConnectionPtrInput
 	Ensure          pulumi.StringPtrInput
 	Force           pulumi.BoolPtrInput
 	Group           pulumi.StringPtrInput
@@ -122,7 +131,7 @@ type UserArgs struct {
 	Shell           pulumi.StringPtrInput
 	Skeleton        pulumi.StringPtrInput
 	System          pulumi.BoolPtrInput
-	Triggers        types.TriggersInputPtrInput
+	Triggers        mid.TriggersInputPtrInput
 	Uid             pulumi.IntPtrInput
 	UidMax          pulumi.IntPtrInput
 	UidMin          pulumi.IntPtrInput
@@ -221,6 +230,14 @@ func (o UserOutput) Comment() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *User) pulumi.StringPtrOutput { return v.Comment }).(pulumi.StringPtrOutput)
 }
 
+func (o UserOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *User) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o UserOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *User) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o UserOutput) Ensure() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *User) pulumi.StringPtrOutput { return v.Ensure }).(pulumi.StringPtrOutput)
 }
@@ -277,8 +294,8 @@ func (o UserOutput) System() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *User) pulumi.BoolPtrOutput { return v.System }).(pulumi.BoolPtrOutput)
 }
 
-func (o UserOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *User) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o UserOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *User) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 func (o UserOutput) Uid() pulumi.IntPtrOutput {

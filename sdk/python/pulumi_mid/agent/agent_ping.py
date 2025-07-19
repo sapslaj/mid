@@ -15,6 +15,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
+from .. import _inputs as _root_inputs
 
 __all__ = [
     "AgentPingResult",
@@ -54,12 +55,21 @@ class AwaitableAgentPingResult(AgentPingResult):
 
 
 def agent_ping(
-    ping: Optional[builtins.str] = None, opts: Optional[pulumi.InvokeOptions] = None
+    config: Optional[
+        Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+    ] = None,
+    connection: Optional[
+        Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]
+    ] = None,
+    ping: Optional[builtins.str] = None,
+    opts: Optional[pulumi.InvokeOptions] = None,
 ) -> AwaitableAgentPingResult:
     """
     Use this data source to access information about an existing resource.
     """
     __args__ = dict()
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["ping"] = ping
     opts = pulumi.InvokeOptions.merge(_utilities.get_invoke_opts_defaults(), opts)
     __ret__ = pulumi.runtime.invoke(
@@ -72,6 +82,18 @@ def agent_ping(
 
 
 def agent_ping_output(
+    config: Optional[
+        pulumi.Input[
+            Optional[
+                Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+            ]
+        ]
+    ] = None,
+    connection: Optional[
+        pulumi.Input[
+            Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
+        ]
+    ] = None,
     ping: Optional[pulumi.Input[Optional[builtins.str]]] = None,
     opts: Optional[Union[pulumi.InvokeOptions, pulumi.InvokeOutputOptions]] = None,
 ) -> pulumi.Output[AgentPingResult]:
@@ -79,6 +101,8 @@ def agent_ping_output(
     Use this data source to access information about an existing resource.
     """
     __args__ = dict()
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["ping"] = ping
     opts = pulumi.InvokeOutputOptions.merge(_utilities.get_invoke_opts_defaults(), opts)
     __ret__ = pulumi.runtime.invoke_output(

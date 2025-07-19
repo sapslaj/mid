@@ -6,9 +6,6 @@ import * as inputs from "./types/input";
 import * as outputs from "./types/output";
 import * as utilities from "./utilities";
 
-/**
- * provider configuration
- */
 export class Provider extends pulumi.ProviderResource {
   /** @internal */
   public static readonly __pulumiType = "mid";
@@ -31,19 +28,14 @@ export class Provider extends pulumi.ProviderResource {
    * @param args The arguments to use to populate this resource's properties.
    * @param opts A bag of options that control this resource's behavior.
    */
-  constructor(name: string, args: ProviderArgs, opts?: pulumi.ResourceOptions) {
+  constructor(name: string, args?: ProviderArgs, opts?: pulumi.ResourceOptions) {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     {
-      if ((!args || args.connection === undefined) && !opts.urn) {
-        throw new Error("Missing required property 'connection'");
-      }
       resourceInputs["connection"] = pulumi.output(
         args?.connection
           ? pulumi.secret(
-            args.connection
-              ? pulumi.output(args.connection).apply(inputs.types.connectionArgsProvideDefaults)
-              : undefined,
+            args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined,
           )
           : undefined,
       ).apply(JSON.stringify);
@@ -61,15 +53,7 @@ export class Provider extends pulumi.ProviderResource {
  * The set of arguments for constructing a Provider resource.
  */
 export interface ProviderArgs {
-  /**
-   * remote endpoint connection configuration
-   */
-  connection: pulumi.Input<inputs.types.ConnectionArgs>;
-  /**
-   * If present and set to true, the provider will delete resources associated
-   * with an unreachable remote endpoint from Pulumi state. It can also be
-   * sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
-   */
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   deleteUnreachable?: pulumi.Input<boolean>;
   parallel?: pulumi.Input<number>;
 }

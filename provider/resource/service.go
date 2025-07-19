@@ -15,26 +15,28 @@ import (
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type Service struct{}
 
 type ServiceArgs struct {
-	Arguments *string              `pulumi:"arguments,optional"`
-	Enabled   *bool                `pulumi:"enabled,optional"`
-	Name      string               `pulumi:"name"`
-	Pattern   *string              `pulumi:"pattern,optional"`
-	Runlevel  *string              `pulumi:"runlevel,optional"`
-	Sleep     *int                 `pulumi:"sleep,optional"`
-	State     *string              `pulumi:"state,optional"`
-	Use       *string              `pulumi:"use,optional"`
-	Triggers  *types.TriggersInput `pulumi:"triggers,optional"`
+	Arguments  *string                  `pulumi:"arguments,optional"`
+	Enabled    *bool                    `pulumi:"enabled,optional"`
+	Name       string                   `pulumi:"name"`
+	Pattern    *string                  `pulumi:"pattern,optional"`
+	Runlevel   *string                  `pulumi:"runlevel,optional"`
+	Sleep      *int                     `pulumi:"sleep,optional"`
+	State      *string                  `pulumi:"state,optional"`
+	Use        *string                  `pulumi:"use,optional"`
+	Connection *midtypes.Connection     `pulumi:"connection,optional"`
+	Config     *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers   *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type ServiceState struct {
 	ServiceArgs
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r Service) argsToTaskParameters(input ServiceArgs) (ansible.ServiceParameters, error) {
@@ -52,7 +54,7 @@ func (r Service) argsToTaskParameters(input ServiceArgs) (ansible.ServiceParamet
 
 func (r Service) updateState(inputs ServiceArgs, state ServiceState, changed bool) ServiceState {
 	state.ServiceArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -75,9 +77,9 @@ func (r Service) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	diff = types.MergeDiffResponses(
+	diff = midtypes.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(req.State, req.Inputs, []string{
+		midtypes.DiffAttributes(req.State, req.Inputs, []string{
 			"arguments",
 			"enabled",
 			"name",
@@ -87,7 +89,7 @@ func (r Service) Diff(
 			"state",
 			"use",
 		}),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -108,7 +110,8 @@ func (r Service) Create(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := r.updateState(req.Inputs, ServiceState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -135,7 +138,7 @@ func (r Service) Create(
 	_, err = executor.AnsibleExecute[
 		ansible.ServiceParameters,
 		ansible.ServiceReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -172,7 +175,8 @@ func (r Service) Read(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -190,7 +194,7 @@ func (r Service) Read(
 	result, err := executor.AnsibleExecute[
 		ansible.ServiceParameters,
 		ansible.ServiceReturn,
-	](ctx, config.Connection, parameters, true)
+	](ctx, connection, config, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -233,7 +237,8 @@ func (r Service) Update(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -249,7 +254,7 @@ func (r Service) Update(
 	result, err := executor.AnsibleExecute[
 		ansible.ServiceParameters,
 		ansible.ServiceReturn,
-	](ctx, config.Connection, parameters, req.DryRun)
+	](ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && req.DryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -281,7 +286,8 @@ func (r Service) Delete(ctx context.Context, req infer.DeleteRequest[ServiceStat
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	args := ServiceArgs{
 		Arguments: req.State.Arguments,
@@ -321,7 +327,7 @@ func (r Service) Delete(ctx context.Context, req infer.DeleteRequest[ServiceStat
 	_, err = executor.AnsibleExecute[
 		ansible.ServiceParameters,
 		ansible.ServiceReturn,
-	](ctx, config.Connection, parameters, false)
+	](ctx, connection, config, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))

@@ -10,12 +10,15 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type AgentPing struct{}
 
 type AgentPingInput struct {
-	Ping string `pulumi:"ping,optional"`
+	Ping       string                   `pulumi:"ping,optional"`
+	Connection *midtypes.Connection     `pulumi:"connection,optional"`
+	Config     *midtypes.ResourceConfig `pulumi:"config,optional"`
 }
 
 type AgentPingOutput struct {
@@ -33,9 +36,15 @@ func (f AgentPing) Invoke(
 	))
 	defer span.End()
 
-	out, err := CallAgent[rpc.AgentPingArgs, rpc.AgentPingResult](ctx, rpc.RPCAgentPing, rpc.AgentPingArgs{
-		Ping: req.Input.Ping,
-	})
+	out, err := CallAgent[rpc.AgentPingArgs, rpc.AgentPingResult](
+		ctx,
+		req.Input.Connection,
+		req.Input.Config,
+		rpc.RPCAgentPing,
+		rpc.AgentPingArgs{
+			Ping: req.Input.Ping,
+		},
+	)
 	if err == nil {
 		span.SetStatus(codes.Ok, "")
 	} else {

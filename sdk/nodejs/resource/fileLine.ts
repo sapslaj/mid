@@ -36,6 +36,8 @@ export class FileLine extends pulumi.CustomResource {
   public readonly /*out*/ _drifted!: pulumi.Output<string[]>;
   public readonly backrefs!: pulumi.Output<boolean | undefined>;
   public readonly backup!: pulumi.Output<boolean | undefined>;
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly create!: pulumi.Output<boolean | undefined>;
   public readonly ensure!: pulumi.Output<string | undefined>;
   public readonly firstMatch!: pulumi.Output<boolean | undefined>;
@@ -45,7 +47,7 @@ export class FileLine extends pulumi.CustomResource {
   public readonly path!: pulumi.Output<string>;
   public readonly regexp!: pulumi.Output<string | undefined>;
   public readonly searchString!: pulumi.Output<string | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
   public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
   public readonly validate!: pulumi.Output<string | undefined>;
 
@@ -65,6 +67,10 @@ export class FileLine extends pulumi.CustomResource {
       }
       resourceInputs["backrefs"] = args ? args.backrefs : undefined;
       resourceInputs["backup"] = args ? args.backup : undefined;
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["create"] = args ? args.create : undefined;
       resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["firstMatch"] = args ? args.firstMatch : undefined;
@@ -82,6 +88,8 @@ export class FileLine extends pulumi.CustomResource {
       resourceInputs["_drifted"] = undefined /*out*/;
       resourceInputs["backrefs"] = undefined /*out*/;
       resourceInputs["backup"] = undefined /*out*/;
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["create"] = undefined /*out*/;
       resourceInputs["ensure"] = undefined /*out*/;
       resourceInputs["firstMatch"] = undefined /*out*/;
@@ -106,6 +114,8 @@ export class FileLine extends pulumi.CustomResource {
 export interface FileLineArgs {
   backrefs?: pulumi.Input<boolean>;
   backup?: pulumi.Input<boolean>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   create?: pulumi.Input<boolean>;
   ensure?: pulumi.Input<string>;
   firstMatch?: pulumi.Input<boolean>;
@@ -115,7 +125,7 @@ export interface FileLineArgs {
   path: pulumi.Input<string>;
   regexp?: pulumi.Input<string>;
   searchString?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
   unsafeWrites?: pulumi.Input<boolean>;
   validate?: pulumi.Input<string>;
 }

@@ -15,7 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = ["FileLineArgs", "FileLine"]
 
@@ -28,6 +29,8 @@ class FileLineArgs:
         path: pulumi.Input[builtins.str],
         backrefs: Optional[pulumi.Input[builtins.bool]] = None,
         backup: Optional[pulumi.Input[builtins.bool]] = None,
+        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
         create: Optional[pulumi.Input[builtins.bool]] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
         first_match: Optional[pulumi.Input[builtins.bool]] = None,
@@ -36,7 +39,7 @@ class FileLineArgs:
         line: Optional[pulumi.Input[builtins.str]] = None,
         regexp: Optional[pulumi.Input[builtins.str]] = None,
         search_string: Optional[pulumi.Input[builtins.str]] = None,
-        triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
+        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
         unsafe_writes: Optional[pulumi.Input[builtins.bool]] = None,
         validate: Optional[pulumi.Input[builtins.str]] = None,
     ):
@@ -48,6 +51,10 @@ class FileLineArgs:
             pulumi.set(__self__, "backrefs", backrefs)
         if backup is not None:
             pulumi.set(__self__, "backup", backup)
+        if config is not None:
+            pulumi.set(__self__, "config", config)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if create is not None:
             pulumi.set(__self__, "create", create)
         if ensure is not None:
@@ -97,6 +104,24 @@ class FileLineArgs:
     @backup.setter
     def backup(self, value: Optional[pulumi.Input[builtins.bool]]):
         pulumi.set(self, "backup", value)
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+        return pulumi.get(self, "config")
+
+    @config.setter
+    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+        pulumi.set(self, "config", value)
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+        return pulumi.get(self, "connection")
+
+    @connection.setter
+    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+        pulumi.set(self, "connection", value)
 
     @property
     @pulumi.getter
@@ -172,11 +197,11 @@ class FileLineArgs:
 
     @property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_types.TriggersInputArgs"]]:
+    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_types.TriggersInputArgs"]]):
+    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @property
@@ -207,6 +232,19 @@ class FileLine(pulumi.CustomResource):
         opts: Optional[pulumi.ResourceOptions] = None,
         backrefs: Optional[pulumi.Input[builtins.bool]] = None,
         backup: Optional[pulumi.Input[builtins.bool]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         create: Optional[pulumi.Input[builtins.bool]] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
         first_match: Optional[pulumi.Input[builtins.bool]] = None,
@@ -218,7 +256,10 @@ class FileLine(pulumi.CustomResource):
         search_string: Optional[pulumi.Input[builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         unsafe_writes: Optional[pulumi.Input[builtins.bool]] = None,
@@ -262,6 +303,19 @@ class FileLine(pulumi.CustomResource):
         opts: Optional[pulumi.ResourceOptions] = None,
         backrefs: Optional[pulumi.Input[builtins.bool]] = None,
         backup: Optional[pulumi.Input[builtins.bool]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         create: Optional[pulumi.Input[builtins.bool]] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
         first_match: Optional[pulumi.Input[builtins.bool]] = None,
@@ -273,7 +327,10 @@ class FileLine(pulumi.CustomResource):
         search_string: Optional[pulumi.Input[builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         unsafe_writes: Optional[pulumi.Input[builtins.bool]] = None,
@@ -296,6 +353,8 @@ class FileLine(pulumi.CustomResource):
 
             __props__.__dict__["backrefs"] = backrefs
             __props__.__dict__["backup"] = backup
+            __props__.__dict__["config"] = config
+            __props__.__dict__["connection"] = connection
             __props__.__dict__["create"] = create
             __props__.__dict__["ensure"] = ensure
             __props__.__dict__["first_match"] = first_match
@@ -336,6 +395,8 @@ class FileLine(pulumi.CustomResource):
         __props__.__dict__["_drifted"] = None
         __props__.__dict__["backrefs"] = None
         __props__.__dict__["backup"] = None
+        __props__.__dict__["config"] = None
+        __props__.__dict__["connection"] = None
         __props__.__dict__["create"] = None
         __props__.__dict__["ensure"] = None
         __props__.__dict__["first_match"] = None
@@ -364,6 +425,16 @@ class FileLine(pulumi.CustomResource):
     @pulumi.getter
     def backup(self) -> pulumi.Output[Optional[builtins.bool]]:
         return pulumi.get(self, "backup")
+
+    @property
+    @pulumi.getter
+    def config(self) -> pulumi.Output[Optional["_root_outputs.ResourceConfig"]]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> pulumi.Output[Optional["_root_outputs.Connection"]]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter
@@ -412,7 +483,7 @@ class FileLine(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def triggers(self) -> pulumi.Output["_types.outputs.TriggersOutput"]:
+    def triggers(self) -> pulumi.Output["_root_outputs.TriggersOutput"]:
         return pulumi.get(self, "triggers")
 
     @property

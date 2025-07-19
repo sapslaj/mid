@@ -8,60 +8,87 @@ import (
 	"reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 func FileStat(ctx *pulumi.Context, args *FileStatArgs, opts ...pulumi.InvokeOption) (*FileStatResult, error) {
 	opts = internal.PkgInvokeDefaultOpts(opts)
 	var rv FileStatResult
-	err := ctx.Invoke("mid:agent:fileStat", args, &rv, opts...)
+	err := ctx.Invoke("mid:agent:fileStat", args.Defaults(), &rv, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return &rv, nil
+	return rv.Defaults(), nil
 }
 
 type FileStatArgs struct {
-	CalculateChecksum *bool  `pulumi:"calculateChecksum"`
-	FollowSymlinks    *bool  `pulumi:"followSymlinks"`
-	Path              string `pulumi:"path"`
+	CalculateChecksum *bool               `pulumi:"calculateChecksum"`
+	Config            *mid.ResourceConfig `pulumi:"config"`
+	Connection        *mid.Connection     `pulumi:"connection"`
+	FollowSymlinks    *bool               `pulumi:"followSymlinks"`
+	Path              string              `pulumi:"path"`
+}
+
+// Defaults sets the appropriate defaults for FileStatArgs
+func (val *FileStatArgs) Defaults() *FileStatArgs {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	tmp.Connection = tmp.Connection.Defaults()
+
+	return &tmp
 }
 
 type FileStatResult struct {
-	AccessTime        *string                 `pulumi:"accessTime"`
-	BaseName          *string                 `pulumi:"baseName"`
-	CalculateChecksum *bool                   `pulumi:"calculateChecksum"`
-	CreateTime        *string                 `pulumi:"createTime"`
-	Dev               *int                    `pulumi:"dev"`
-	Exists            bool                    `pulumi:"exists"`
-	FileMode          *types.FileStatFileMode `pulumi:"fileMode"`
-	FollowSymlinks    *bool                   `pulumi:"followSymlinks"`
-	Gid               *int                    `pulumi:"gid"`
-	GroupName         *string                 `pulumi:"groupName"`
-	Inode             *int                    `pulumi:"inode"`
-	ModifiedTime      *string                 `pulumi:"modifiedTime"`
-	Nlink             *int                    `pulumi:"nlink"`
-	Path              string                  `pulumi:"path"`
-	Sha256Checksum    *string                 `pulumi:"sha256Checksum"`
-	Size              *int                    `pulumi:"size"`
-	Uid               *int                    `pulumi:"uid"`
-	UserName          *string                 `pulumi:"userName"`
+	AccessTime        *string               `pulumi:"accessTime"`
+	BaseName          *string               `pulumi:"baseName"`
+	CalculateChecksum *bool                 `pulumi:"calculateChecksum"`
+	Config            *mid.ResourceConfig   `pulumi:"config"`
+	Connection        *mid.Connection       `pulumi:"connection"`
+	CreateTime        *string               `pulumi:"createTime"`
+	Dev               *int                  `pulumi:"dev"`
+	Exists            bool                  `pulumi:"exists"`
+	FileMode          *mid.FileStatFileMode `pulumi:"fileMode"`
+	FollowSymlinks    *bool                 `pulumi:"followSymlinks"`
+	Gid               *int                  `pulumi:"gid"`
+	GroupName         *string               `pulumi:"groupName"`
+	Inode             *int                  `pulumi:"inode"`
+	ModifiedTime      *string               `pulumi:"modifiedTime"`
+	Nlink             *int                  `pulumi:"nlink"`
+	Path              string                `pulumi:"path"`
+	Sha256Checksum    *string               `pulumi:"sha256Checksum"`
+	Size              *int                  `pulumi:"size"`
+	Uid               *int                  `pulumi:"uid"`
+	UserName          *string               `pulumi:"userName"`
 }
 
+// Defaults sets the appropriate defaults for FileStatResult
+func (val *FileStatResult) Defaults() *FileStatResult {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	tmp.Connection = tmp.Connection.Defaults()
+
+	return &tmp
+}
 func FileStatOutput(ctx *pulumi.Context, args FileStatOutputArgs, opts ...pulumi.InvokeOption) FileStatResultOutput {
 	return pulumi.ToOutputWithContext(ctx.Context(), args).
 		ApplyT(func(v interface{}) (FileStatResultOutput, error) {
 			args := v.(FileStatArgs)
 			options := pulumi.InvokeOutputOptions{InvokeOptions: internal.PkgInvokeDefaultOpts(opts)}
-			return ctx.InvokeOutput("mid:agent:fileStat", args, FileStatResultOutput{}, options).(FileStatResultOutput), nil
+			return ctx.InvokeOutput("mid:agent:fileStat", args.Defaults(), FileStatResultOutput{}, options).(FileStatResultOutput), nil
 		}).(FileStatResultOutput)
 }
 
 type FileStatOutputArgs struct {
-	CalculateChecksum pulumi.BoolPtrInput `pulumi:"calculateChecksum"`
-	FollowSymlinks    pulumi.BoolPtrInput `pulumi:"followSymlinks"`
-	Path              pulumi.StringInput  `pulumi:"path"`
+	CalculateChecksum pulumi.BoolPtrInput        `pulumi:"calculateChecksum"`
+	Config            mid.ResourceConfigPtrInput `pulumi:"config"`
+	Connection        mid.ConnectionPtrInput     `pulumi:"connection"`
+	FollowSymlinks    pulumi.BoolPtrInput        `pulumi:"followSymlinks"`
+	Path              pulumi.StringInput         `pulumi:"path"`
 }
 
 func (FileStatOutputArgs) ElementType() reflect.Type {
@@ -94,6 +121,14 @@ func (o FileStatResultOutput) CalculateChecksum() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v FileStatResult) *bool { return v.CalculateChecksum }).(pulumi.BoolPtrOutput)
 }
 
+func (o FileStatResultOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v FileStatResult) *mid.ResourceConfig { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o FileStatResultOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v FileStatResult) *mid.Connection { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o FileStatResultOutput) CreateTime() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v FileStatResult) *string { return v.CreateTime }).(pulumi.StringPtrOutput)
 }
@@ -106,8 +141,8 @@ func (o FileStatResultOutput) Exists() pulumi.BoolOutput {
 	return o.ApplyT(func(v FileStatResult) bool { return v.Exists }).(pulumi.BoolOutput)
 }
 
-func (o FileStatResultOutput) FileMode() types.FileStatFileModePtrOutput {
-	return o.ApplyT(func(v FileStatResult) *types.FileStatFileMode { return v.FileMode }).(types.FileStatFileModePtrOutput)
+func (o FileStatResultOutput) FileMode() mid.FileStatFileModePtrOutput {
+	return o.ApplyT(func(v FileStatResult) *mid.FileStatFileMode { return v.FileMode }).(mid.FileStatFileModePtrOutput)
 }
 
 func (o FileStatResultOutput) FollowSymlinks() pulumi.BoolPtrOutput {

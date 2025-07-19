@@ -8,30 +8,46 @@ import (
 	"reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
 )
 
 func AnsibleExecute(ctx *pulumi.Context, args *AnsibleExecuteArgs, opts ...pulumi.InvokeOption) (*AnsibleExecuteResult, error) {
 	opts = internal.PkgInvokeDefaultOpts(opts)
 	var rv AnsibleExecuteResult
-	err := ctx.Invoke("mid:agent:ansibleExecute", args, &rv, opts...)
+	err := ctx.Invoke("mid:agent:ansibleExecute", args.Defaults(), &rv, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return &rv, nil
+	return rv.Defaults(), nil
 }
 
 type AnsibleExecuteArgs struct {
 	Args               map[string]interface{} `pulumi:"args"`
 	Check              *bool                  `pulumi:"check"`
+	Config             *mid.ResourceConfig    `pulumi:"config"`
+	Connection         *mid.Connection        `pulumi:"connection"`
 	DebugKeepTempFiles *bool                  `pulumi:"debugKeepTempFiles"`
 	Environment        map[string]string      `pulumi:"environment"`
 	Name               string                 `pulumi:"name"`
 }
 
+// Defaults sets the appropriate defaults for AnsibleExecuteArgs
+func (val *AnsibleExecuteArgs) Defaults() *AnsibleExecuteArgs {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	tmp.Connection = tmp.Connection.Defaults()
+
+	return &tmp
+}
+
 type AnsibleExecuteResult struct {
 	Args               map[string]interface{} `pulumi:"args"`
 	Check              *bool                  `pulumi:"check"`
+	Config             *mid.ResourceConfig    `pulumi:"config"`
+	Connection         *mid.Connection        `pulumi:"connection"`
 	DebugKeepTempFiles *bool                  `pulumi:"debugKeepTempFiles"`
 	DebugTempDir       *string                `pulumi:"debugTempDir"`
 	Environment        map[string]string      `pulumi:"environment"`
@@ -42,21 +58,33 @@ type AnsibleExecuteResult struct {
 	Stdout             string                 `pulumi:"stdout"`
 }
 
+// Defaults sets the appropriate defaults for AnsibleExecuteResult
+func (val *AnsibleExecuteResult) Defaults() *AnsibleExecuteResult {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	tmp.Connection = tmp.Connection.Defaults()
+
+	return &tmp
+}
 func AnsibleExecuteOutput(ctx *pulumi.Context, args AnsibleExecuteOutputArgs, opts ...pulumi.InvokeOption) AnsibleExecuteResultOutput {
 	return pulumi.ToOutputWithContext(ctx.Context(), args).
 		ApplyT(func(v interface{}) (AnsibleExecuteResultOutput, error) {
 			args := v.(AnsibleExecuteArgs)
 			options := pulumi.InvokeOutputOptions{InvokeOptions: internal.PkgInvokeDefaultOpts(opts)}
-			return ctx.InvokeOutput("mid:agent:ansibleExecute", args, AnsibleExecuteResultOutput{}, options).(AnsibleExecuteResultOutput), nil
+			return ctx.InvokeOutput("mid:agent:ansibleExecute", args.Defaults(), AnsibleExecuteResultOutput{}, options).(AnsibleExecuteResultOutput), nil
 		}).(AnsibleExecuteResultOutput)
 }
 
 type AnsibleExecuteOutputArgs struct {
-	Args               pulumi.MapInput       `pulumi:"args"`
-	Check              pulumi.BoolPtrInput   `pulumi:"check"`
-	DebugKeepTempFiles pulumi.BoolPtrInput   `pulumi:"debugKeepTempFiles"`
-	Environment        pulumi.StringMapInput `pulumi:"environment"`
-	Name               pulumi.StringInput    `pulumi:"name"`
+	Args               pulumi.MapInput            `pulumi:"args"`
+	Check              pulumi.BoolPtrInput        `pulumi:"check"`
+	Config             mid.ResourceConfigPtrInput `pulumi:"config"`
+	Connection         mid.ConnectionPtrInput     `pulumi:"connection"`
+	DebugKeepTempFiles pulumi.BoolPtrInput        `pulumi:"debugKeepTempFiles"`
+	Environment        pulumi.StringMapInput      `pulumi:"environment"`
+	Name               pulumi.StringInput         `pulumi:"name"`
 }
 
 func (AnsibleExecuteOutputArgs) ElementType() reflect.Type {
@@ -83,6 +111,14 @@ func (o AnsibleExecuteResultOutput) Args() pulumi.MapOutput {
 
 func (o AnsibleExecuteResultOutput) Check() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v AnsibleExecuteResult) *bool { return v.Check }).(pulumi.BoolPtrOutput)
+}
+
+func (o AnsibleExecuteResultOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v AnsibleExecuteResult) *mid.ResourceConfig { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o AnsibleExecuteResultOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v AnsibleExecuteResult) *mid.Connection { return v.Connection }).(mid.ConnectionPtrOutput)
 }
 
 func (o AnsibleExecuteResultOutput) DebugKeepTempFiles() pulumi.BoolPtrOutput {

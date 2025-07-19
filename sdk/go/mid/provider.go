@@ -7,13 +7,10 @@ import (
 	"context"
 	"reflect"
 
-	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
-// provider configuration
 type Provider struct {
 	pulumi.ProviderResourceState
 }
@@ -22,15 +19,14 @@ type Provider struct {
 func NewProvider(ctx *pulumi.Context,
 	name string, args *ProviderArgs, opts ...pulumi.ResourceOption) (*Provider, error) {
 	if args == nil {
-		return nil, errors.New("missing one or more required arguments")
+		args = &ProviderArgs{}
 	}
 
-	if args.Connection == nil {
-		return nil, errors.New("invalid value for required argument 'Connection'")
-	}
-	args.Connection = args.Connection.ToConnectionOutput().ApplyT(func(v types.Connection) types.Connection { return *v.Defaults() }).(types.ConnectionOutput)
 	if args.Connection != nil {
-		args.Connection = pulumi.ToSecret(args.Connection).(types.ConnectionInput)
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *Connection) *Connection { return v.Defaults() }).(ConnectionPtrOutput)
+	}
+	if args.Connection != nil {
+		args.Connection = pulumi.ToSecret(args.Connection).(ConnectionPtrInput)
 	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Provider
@@ -42,22 +38,14 @@ func NewProvider(ctx *pulumi.Context,
 }
 
 type providerArgs struct {
-	// remote endpoint connection configuration
-	Connection types.Connection `pulumi:"connection"`
-	// If present and set to true, the provider will delete resources associated
-	// with an unreachable remote endpoint from Pulumi state. It can also be
-	// sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
-	DeleteUnreachable *bool `pulumi:"deleteUnreachable"`
-	Parallel          *int  `pulumi:"parallel"`
+	Connection        *Connection `pulumi:"connection"`
+	DeleteUnreachable *bool       `pulumi:"deleteUnreachable"`
+	Parallel          *int        `pulumi:"parallel"`
 }
 
 // The set of arguments for constructing a Provider resource.
 type ProviderArgs struct {
-	// remote endpoint connection configuration
-	Connection types.ConnectionInput
-	// If present and set to true, the provider will delete resources associated
-	// with an unreachable remote endpoint from Pulumi state. It can also be
-	// sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
+	Connection        ConnectionPtrInput
 	DeleteUnreachable pulumi.BoolPtrInput
 	Parallel          pulumi.IntPtrInput
 }

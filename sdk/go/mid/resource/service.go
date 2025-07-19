@@ -9,22 +9,24 @@ import (
 
 	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type Service struct {
 	pulumi.CustomResourceState
 
-	Arguments pulumi.StringPtrOutput     `pulumi:"arguments"`
-	Enabled   pulumi.BoolPtrOutput       `pulumi:"enabled"`
-	Name      pulumi.StringOutput        `pulumi:"name"`
-	Pattern   pulumi.StringPtrOutput     `pulumi:"pattern"`
-	Runlevel  pulumi.StringPtrOutput     `pulumi:"runlevel"`
-	Sleep     pulumi.IntPtrOutput        `pulumi:"sleep"`
-	State     pulumi.StringPtrOutput     `pulumi:"state"`
-	Triggers  types.TriggersOutputOutput `pulumi:"triggers"`
-	Use       pulumi.StringPtrOutput     `pulumi:"use"`
+	Arguments  pulumi.StringPtrOutput      `pulumi:"arguments"`
+	Config     mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection mid.ConnectionPtrOutput     `pulumi:"connection"`
+	Enabled    pulumi.BoolPtrOutput        `pulumi:"enabled"`
+	Name       pulumi.StringOutput         `pulumi:"name"`
+	Pattern    pulumi.StringPtrOutput      `pulumi:"pattern"`
+	Runlevel   pulumi.StringPtrOutput      `pulumi:"runlevel"`
+	Sleep      pulumi.IntPtrOutput         `pulumi:"sleep"`
+	State      pulumi.StringPtrOutput      `pulumi:"state"`
+	Triggers   mid.TriggersOutputOutput    `pulumi:"triggers"`
+	Use        pulumi.StringPtrOutput      `pulumi:"use"`
 }
 
 // NewService registers a new resource with the given unique name, arguments, and options.
@@ -36,6 +38,9 @@ func NewService(ctx *pulumi.Context,
 
 	if args.Name == nil {
 		return nil, errors.New("invalid value for required argument 'Name'")
+	}
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
 	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Service
@@ -70,28 +75,32 @@ func (ServiceState) ElementType() reflect.Type {
 }
 
 type serviceArgs struct {
-	Arguments *string              `pulumi:"arguments"`
-	Enabled   *bool                `pulumi:"enabled"`
-	Name      string               `pulumi:"name"`
-	Pattern   *string              `pulumi:"pattern"`
-	Runlevel  *string              `pulumi:"runlevel"`
-	Sleep     *int                 `pulumi:"sleep"`
-	State     *string              `pulumi:"state"`
-	Triggers  *types.TriggersInput `pulumi:"triggers"`
-	Use       *string              `pulumi:"use"`
+	Arguments  *string             `pulumi:"arguments"`
+	Config     *mid.ResourceConfig `pulumi:"config"`
+	Connection *mid.Connection     `pulumi:"connection"`
+	Enabled    *bool               `pulumi:"enabled"`
+	Name       string              `pulumi:"name"`
+	Pattern    *string             `pulumi:"pattern"`
+	Runlevel   *string             `pulumi:"runlevel"`
+	Sleep      *int                `pulumi:"sleep"`
+	State      *string             `pulumi:"state"`
+	Triggers   *mid.TriggersInput  `pulumi:"triggers"`
+	Use        *string             `pulumi:"use"`
 }
 
 // The set of arguments for constructing a Service resource.
 type ServiceArgs struct {
-	Arguments pulumi.StringPtrInput
-	Enabled   pulumi.BoolPtrInput
-	Name      pulumi.StringInput
-	Pattern   pulumi.StringPtrInput
-	Runlevel  pulumi.StringPtrInput
-	Sleep     pulumi.IntPtrInput
-	State     pulumi.StringPtrInput
-	Triggers  types.TriggersInputPtrInput
-	Use       pulumi.StringPtrInput
+	Arguments  pulumi.StringPtrInput
+	Config     mid.ResourceConfigPtrInput
+	Connection mid.ConnectionPtrInput
+	Enabled    pulumi.BoolPtrInput
+	Name       pulumi.StringInput
+	Pattern    pulumi.StringPtrInput
+	Runlevel   pulumi.StringPtrInput
+	Sleep      pulumi.IntPtrInput
+	State      pulumi.StringPtrInput
+	Triggers   mid.TriggersInputPtrInput
+	Use        pulumi.StringPtrInput
 }
 
 func (ServiceArgs) ElementType() reflect.Type {
@@ -185,6 +194,14 @@ func (o ServiceOutput) Arguments() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Service) pulumi.StringPtrOutput { return v.Arguments }).(pulumi.StringPtrOutput)
 }
 
+func (o ServiceOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *Service) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o ServiceOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *Service) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o ServiceOutput) Enabled() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *Service) pulumi.BoolPtrOutput { return v.Enabled }).(pulumi.BoolPtrOutput)
 }
@@ -209,8 +226,8 @@ func (o ServiceOutput) State() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Service) pulumi.StringPtrOutput { return v.State }).(pulumi.StringPtrOutput)
 }
 
-func (o ServiceOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *Service) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o ServiceOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *Service) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 func (o ServiceOutput) Use() pulumi.StringPtrOutput {

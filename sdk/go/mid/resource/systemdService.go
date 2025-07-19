@@ -8,23 +8,25 @@ import (
 	"reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type SystemdService struct {
 	pulumi.CustomResourceState
 
-	DaemonReexec pulumi.BoolPtrOutput       `pulumi:"daemonReexec"`
-	DaemonReload pulumi.BoolPtrOutput       `pulumi:"daemonReload"`
-	Enabled      pulumi.BoolPtrOutput       `pulumi:"enabled"`
-	Ensure       pulumi.StringPtrOutput     `pulumi:"ensure"`
-	Force        pulumi.BoolPtrOutput       `pulumi:"force"`
-	Masked       pulumi.BoolPtrOutput       `pulumi:"masked"`
-	Name         pulumi.StringPtrOutput     `pulumi:"name"`
-	NoBlock      pulumi.BoolPtrOutput       `pulumi:"noBlock"`
-	Scope        pulumi.StringPtrOutput     `pulumi:"scope"`
-	Triggers     types.TriggersOutputOutput `pulumi:"triggers"`
+	Config       mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection   mid.ConnectionPtrOutput     `pulumi:"connection"`
+	DaemonReexec pulumi.BoolPtrOutput        `pulumi:"daemonReexec"`
+	DaemonReload pulumi.BoolPtrOutput        `pulumi:"daemonReload"`
+	Enabled      pulumi.BoolPtrOutput        `pulumi:"enabled"`
+	Ensure       pulumi.StringPtrOutput      `pulumi:"ensure"`
+	Force        pulumi.BoolPtrOutput        `pulumi:"force"`
+	Masked       pulumi.BoolPtrOutput        `pulumi:"masked"`
+	Name         pulumi.StringPtrOutput      `pulumi:"name"`
+	NoBlock      pulumi.BoolPtrOutput        `pulumi:"noBlock"`
+	Scope        pulumi.StringPtrOutput      `pulumi:"scope"`
+	Triggers     mid.TriggersOutputOutput    `pulumi:"triggers"`
 }
 
 // NewSystemdService registers a new resource with the given unique name, arguments, and options.
@@ -34,6 +36,9 @@ func NewSystemdService(ctx *pulumi.Context,
 		args = &SystemdServiceArgs{}
 	}
 
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource SystemdService
 	err := ctx.RegisterResource("mid:resource:SystemdService", name, args, &resource, opts...)
@@ -67,20 +72,24 @@ func (SystemdServiceState) ElementType() reflect.Type {
 }
 
 type systemdServiceArgs struct {
-	DaemonReexec *bool                `pulumi:"daemonReexec"`
-	DaemonReload *bool                `pulumi:"daemonReload"`
-	Enabled      *bool                `pulumi:"enabled"`
-	Ensure       *string              `pulumi:"ensure"`
-	Force        *bool                `pulumi:"force"`
-	Masked       *bool                `pulumi:"masked"`
-	Name         *string              `pulumi:"name"`
-	NoBlock      *bool                `pulumi:"noBlock"`
-	Scope        *string              `pulumi:"scope"`
-	Triggers     *types.TriggersInput `pulumi:"triggers"`
+	Config       *mid.ResourceConfig `pulumi:"config"`
+	Connection   *mid.Connection     `pulumi:"connection"`
+	DaemonReexec *bool               `pulumi:"daemonReexec"`
+	DaemonReload *bool               `pulumi:"daemonReload"`
+	Enabled      *bool               `pulumi:"enabled"`
+	Ensure       *string             `pulumi:"ensure"`
+	Force        *bool               `pulumi:"force"`
+	Masked       *bool               `pulumi:"masked"`
+	Name         *string             `pulumi:"name"`
+	NoBlock      *bool               `pulumi:"noBlock"`
+	Scope        *string             `pulumi:"scope"`
+	Triggers     *mid.TriggersInput  `pulumi:"triggers"`
 }
 
 // The set of arguments for constructing a SystemdService resource.
 type SystemdServiceArgs struct {
+	Config       mid.ResourceConfigPtrInput
+	Connection   mid.ConnectionPtrInput
 	DaemonReexec pulumi.BoolPtrInput
 	DaemonReload pulumi.BoolPtrInput
 	Enabled      pulumi.BoolPtrInput
@@ -90,7 +99,7 @@ type SystemdServiceArgs struct {
 	Name         pulumi.StringPtrInput
 	NoBlock      pulumi.BoolPtrInput
 	Scope        pulumi.StringPtrInput
-	Triggers     types.TriggersInputPtrInput
+	Triggers     mid.TriggersInputPtrInput
 }
 
 func (SystemdServiceArgs) ElementType() reflect.Type {
@@ -180,6 +189,14 @@ func (o SystemdServiceOutput) ToSystemdServiceOutputWithContext(ctx context.Cont
 	return o
 }
 
+func (o SystemdServiceOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *SystemdService) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o SystemdServiceOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *SystemdService) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o SystemdServiceOutput) DaemonReexec() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *SystemdService) pulumi.BoolPtrOutput { return v.DaemonReexec }).(pulumi.BoolPtrOutput)
 }
@@ -216,8 +233,8 @@ func (o SystemdServiceOutput) Scope() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *SystemdService) pulumi.StringPtrOutput { return v.Scope }).(pulumi.StringPtrOutput)
 }
 
-func (o SystemdServiceOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *SystemdService) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o SystemdServiceOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *SystemdService) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 type SystemdServiceArrayOutput struct{ *pulumi.OutputState }

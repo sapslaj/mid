@@ -7,6 +7,119 @@ import * as outputs from "../types/output";
 
 import * as utilities from "../utilities";
 
+/**
+ * Instructions for how to connect to a remote endpoint.
+ */
+export interface Connection {
+  /**
+   * The address of the resource to connect to.
+   */
+  host?: string;
+  hostKey?: string;
+  /**
+   * The password we should use for the connection.
+   */
+  password?: string;
+  perDialTimeout?: number;
+  /**
+   * The port to connect to. Defaults to 22.
+   */
+  port?: number;
+  /**
+   * The contents of an SSH key to use for the
+   * connection. This takes preference over the password if provided.
+   */
+  privateKey?: string;
+  privateKeyPassword?: string;
+  sshAgent?: boolean;
+  sshAgentSocketPath?: string;
+  /**
+   * The user that we should use for the connection.
+   */
+  user?: string;
+}
+/**
+ * connectionProvideDefaults sets the appropriate defaults for Connection
+ */
+export function connectionProvideDefaults(val: Connection): Connection {
+  return {
+    ...val,
+    port: (val.port) ?? 22,
+    user: (val.user) ?? "root",
+  };
+}
+
+export interface ExecCommand {
+  /**
+   * List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
+   */
+  command: string[];
+  /**
+   * Directory path to chdir to before executing the command. Defaults to the
+   * default working directory for the SSH user and session, usually the user's
+   * home.
+   */
+  dir?: string;
+  /**
+   * Key-value pairs of environment variables to pass to the process. These are
+   * merged with any system-wide environment variables.
+   */
+  environment?: { [key: string]: string };
+  /**
+   * Pass a string to the command's process as standard in.
+   */
+  stdin?: string;
+}
+
+export interface FileStatFileMode {
+  int: number;
+  isDir: boolean;
+  isRegular: boolean;
+  octal: string;
+  string: string;
+}
+
+export interface FileStatState {
+  accessTime?: string;
+  baseName?: string;
+  createTime?: string;
+  dev?: number;
+  exists: boolean;
+  fileMode?: outputs.FileStatFileMode;
+  gid?: number;
+  groupName?: string;
+  inode?: number;
+  modifiedTime?: string;
+  nlink?: number;
+  sha256Checksum?: string;
+  size?: number;
+  uid?: number;
+  userName?: string;
+}
+
+export interface ResourceConfig {
+  deleteUnreachable?: boolean;
+  parallel?: number;
+}
+
+export interface TriggersOutput {
+  /**
+   * RFC 3339 timestamp of when this resource last changed. Use this property
+   * to chain into other resources' `refresh` and `replace` triggers.
+   */
+  lastChanged: string;
+  /**
+   * Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+   * any value in this list changes.
+   */
+  refresh?: any[];
+  /**
+   * Completely delete and replace the resource if any value in this list
+   * changes.
+   */
+  replace?: any[];
+}
+
 export namespace resource {
   export interface AnsibleTaskListArgsTask {
     args: { [key: string]: any };
@@ -38,115 +151,5 @@ export namespace resource {
     stderr: string;
     stdout: string;
     success: boolean;
-  }
-}
-
-export namespace types {
-  /**
-   * Instructions for how to connect to a remote endpoint.
-   */
-  export interface Connection {
-    /**
-     * The address of the resource to connect to.
-     */
-    host: string;
-    hostKey?: string;
-    /**
-     * The password we should use for the connection.
-     */
-    password?: string;
-    perDialTimeout?: number;
-    /**
-     * The port to connect to. Defaults to 22.
-     */
-    port?: number;
-    /**
-     * The contents of an SSH key to use for the
-     * connection. This takes preference over the password if provided.
-     */
-    privateKey?: string;
-    privateKeyPassword?: string;
-    sshAgent?: boolean;
-    sshAgentSocketPath?: string;
-    /**
-     * The user that we should use for the connection.
-     */
-    user?: string;
-  }
-  /**
-   * connectionProvideDefaults sets the appropriate defaults for Connection
-   */
-  export function connectionProvideDefaults(val: Connection): Connection {
-    return {
-      ...val,
-      port: (val.port) ?? 22,
-      user: (val.user) ?? "root",
-    };
-  }
-
-  export interface ExecCommand {
-    /**
-     * List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
-     */
-    command: string[];
-    /**
-     * Directory path to chdir to before executing the command. Defaults to the
-     * default working directory for the SSH user and session, usually the user's
-     * home.
-     */
-    dir?: string;
-    /**
-     * Key-value pairs of environment variables to pass to the process. These are
-     * merged with any system-wide environment variables.
-     */
-    environment?: { [key: string]: string };
-    /**
-     * Pass a string to the command's process as standard in.
-     */
-    stdin?: string;
-  }
-
-  export interface FileStatFileMode {
-    int: number;
-    isDir: boolean;
-    isRegular: boolean;
-    octal: string;
-    string: string;
-  }
-
-  export interface FileStatState {
-    accessTime?: string;
-    baseName?: string;
-    createTime?: string;
-    dev?: number;
-    exists: boolean;
-    fileMode?: outputs.types.FileStatFileMode;
-    gid?: number;
-    groupName?: string;
-    inode?: number;
-    modifiedTime?: string;
-    nlink?: number;
-    sha256Checksum?: string;
-    size?: number;
-    uid?: number;
-    userName?: string;
-  }
-
-  export interface TriggersOutput {
-    /**
-     * RFC 3339 timestamp of when this resource last changed. Use this property
-     * to chain into other resources' `refresh` and `replace` triggers.
-     */
-    lastChanged: string;
-    /**
-     * Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
-     * any value in this list changes.
-     */
-    refresh?: any[];
-    /**
-     * Completely delete and replace the resource if any value in this list
-     * changes.
-     */
-    replace?: any[];
   }
 }

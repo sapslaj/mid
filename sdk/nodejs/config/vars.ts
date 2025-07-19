@@ -9,22 +9,14 @@ import * as utilities from "../utilities";
 declare var exports: any;
 const __config = new pulumi.Config("mid");
 
-/**
- * remote endpoint connection configuration
- */
-export declare const connection: outputs.types.Connection | undefined;
+export declare const connection: outputs.Connection | undefined;
 Object.defineProperty(exports, "connection", {
   get() {
-    return __config.getObject<outputs.types.Connection>("connection");
+    return __config.getObject<outputs.Connection>("connection");
   },
   enumerable: true,
 });
 
-/**
- * If present and set to true, the provider will delete resources associated
- * with an unreachable remote endpoint from Pulumi state. It can also be
- * sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
- */
 export declare const deleteUnreachable: boolean | undefined;
 Object.defineProperty(exports, "deleteUnreachable", {
   get() {

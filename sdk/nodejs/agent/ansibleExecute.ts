@@ -2,6 +2,8 @@
 // *** Do not edit by hand unless you're certain you know what you are doing! ***
 
 import * as pulumi from "@pulumi/pulumi";
+import * as inputs from "../types/input";
+import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export function ansibleExecute(args: AnsibleExecuteArgs, opts?: pulumi.InvokeOptions): Promise<AnsibleExecuteResult> {
@@ -9,6 +11,8 @@ export function ansibleExecute(args: AnsibleExecuteArgs, opts?: pulumi.InvokeOpt
   return pulumi.runtime.invoke("mid:agent:ansibleExecute", {
     "args": args.args,
     "check": args.check,
+    "config": args.config,
+    "connection": args.connection ? inputs.connectionProvideDefaults(args.connection) : undefined,
     "debugKeepTempFiles": args.debugKeepTempFiles,
     "environment": args.environment,
     "name": args.name,
@@ -18,6 +22,8 @@ export function ansibleExecute(args: AnsibleExecuteArgs, opts?: pulumi.InvokeOpt
 export interface AnsibleExecuteArgs {
   args: { [key: string]: any };
   check?: boolean;
+  config?: inputs.ResourceConfig;
+  connection?: inputs.Connection;
   debugKeepTempFiles?: boolean;
   environment?: { [key: string]: string };
   name: string;
@@ -26,6 +32,8 @@ export interface AnsibleExecuteArgs {
 export interface AnsibleExecuteResult {
   readonly args: { [key: string]: any };
   readonly check?: boolean;
+  readonly config?: outputs.ResourceConfig;
+  readonly connection?: outputs.Connection;
   readonly debugKeepTempFiles?: boolean;
   readonly debugTempDir?: string;
   readonly environment?: { [key: string]: string };
@@ -43,6 +51,8 @@ export function ansibleExecuteOutput(
   return pulumi.runtime.invokeOutput("mid:agent:ansibleExecute", {
     "args": args.args,
     "check": args.check,
+    "config": args.config,
+    "connection": args.connection ? pulumi.output(args.connection).apply(inputs.connectionProvideDefaults) : undefined,
     "debugKeepTempFiles": args.debugKeepTempFiles,
     "environment": args.environment,
     "name": args.name,
@@ -52,6 +62,8 @@ export function ansibleExecuteOutput(
 export interface AnsibleExecuteOutputArgs {
   args: pulumi.Input<{ [key: string]: any }>;
   check?: pulumi.Input<boolean>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   debugKeepTempFiles?: pulumi.Input<boolean>;
   environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
   name: pulumi.Input<string>;

@@ -15,7 +15,6 @@ import (
 	"time"
 
 	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/retry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -27,10 +26,9 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/cast"
 	"github.com/sapslaj/mid/pkg/hashstructure"
-	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/syncmap"
 	"github.com/sapslaj/mid/pkg/telemetry"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 var (
@@ -47,7 +45,7 @@ type ConnectionState struct {
 	CanConnectMutex sync.Mutex
 	TaskCountMutex  sync.Mutex
 	Agent           *midagent.Agent
-	Connection      *types.Connection
+	Connection      midtypes.Connection
 }
 
 var AgentPool = syncmap.Map[uint64, *ConnectionState]{}
@@ -156,7 +154,11 @@ func (cs *ConnectionState) FinishedTask() {
 	cs.TaskCountMutex.Unlock()
 }
 
-func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionState, error) {
+func Acquire(
+	ctx context.Context,
+	connection midtypes.Connection,
+	resourceConfig midtypes.ResourceConfig,
+) (*ConnectionState, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.Acquire", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
 		attribute.String("connection.host", *connection.Host),
@@ -183,19 +185,7 @@ func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionStat
 	})
 
 	if !loaded && cs.MaxParallel == 0 {
-		config := func() (c *types.Config) {
-			defer func() {
-				if r := recover(); r != nil {
-					c = nil
-					return
-				}
-			}()
-			c = ptr.Of(infer.GetConfig[types.Config](ctx))
-			return
-		}()
-		if config != nil {
-			cs.MaxParallel = config.Parallel
-		}
+		cs.MaxParallel = resourceConfig.GetParallel()
 	}
 
 	logger = logger.With(slog.Bool("agent.loaded", loaded))
@@ -221,7 +211,12 @@ func Acquire(ctx context.Context, connection *types.Connection) (*ConnectionStat
 	return cs, nil
 }
 
-func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts int) (bool, error) {
+func CanConnect(
+	ctx context.Context,
+	connection midtypes.Connection,
+	resourceConfig midtypes.ResourceConfig,
+	maxAttempts int,
+) (bool, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CanConnect", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
 		attribute.String("connection.host", *connection.Host),
@@ -233,7 +228,7 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 	)
 
 	logger.DebugContext(ctx, "CanConnect: acquiring ConnectionState handle")
-	cs, err := Acquire(ctx, connection)
+	cs, err := Acquire(ctx, connection, resourceConfig)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return false, err
@@ -342,7 +337,12 @@ func CanConnect(ctx context.Context, connection *types.Connection, maxAttempts i
 	return cs.Reachable, nil
 }
 
-func PreviewUnreachable(ctx context.Context, connection *types.Connection, preview bool) bool {
+func PreviewUnreachable(
+	ctx context.Context,
+	connection midtypes.Connection,
+	resourceConfig midtypes.ResourceConfig,
+	preview bool,
+) bool {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.PreviewUnreachable", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
 		attribute.String("connection.host", *connection.Host),
@@ -368,7 +368,7 @@ func PreviewUnreachable(ctx context.Context, connection *types.Connection, previ
 		slog.Int("connection_attempts", connectAttempts),
 	)
 
-	canConnect, err := CanConnect(ctx, connection, connectAttempts)
+	canConnect, err := CanConnect(ctx, connection, resourceConfig, connectAttempts)
 
 	span.SetAttributes(attribute.Bool("agent.can_connect", canConnect))
 
@@ -395,7 +395,8 @@ func PreviewUnreachable(ctx context.Context, connection *types.Connection, previ
 
 func CallAgent[I any, O any](
 	ctx context.Context,
-	connection *types.Connection,
+	connection midtypes.Connection,
+	resourceConfig midtypes.ResourceConfig,
 	call rpc.RPCCall[I],
 ) (rpc.RPCResult[O], error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CallAgent", trace.WithAttributes(
@@ -416,7 +417,7 @@ func CallAgent[I any, O any](
 
 	var zero rpc.RPCResult[O]
 
-	cs, err := Acquire(ctx, connection)
+	cs, err := Acquire(ctx, connection, resourceConfig)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return zero, err
@@ -481,7 +482,8 @@ type AnsibleExecuteReturn interface {
 
 func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 	ctx context.Context,
-	connection *types.Connection,
+	connection midtypes.Connection,
+	resourceConfig midtypes.ResourceConfig,
 	args I,
 	preview bool,
 ) (O, error) {
@@ -515,7 +517,7 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 
 	span.SetAttributes(attribute.String("ansible.name", call.Args.Name))
 
-	if PreviewUnreachable(ctx, connection, preview) {
+	if PreviewUnreachable(ctx, connection, resourceConfig, preview) {
 		err = ErrUnreachable
 		span.SetAttributes(attribute.Bool("unreachable", true))
 		span.SetAttributes(attribute.Bool("ansible.success", false))
@@ -524,7 +526,15 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 		return zero, err
 	}
 
-	callResult, err := CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](ctx, connection, call)
+	callResult, err := CallAgent[
+		rpc.AnsibleExecuteArgs,
+		rpc.AnsibleExecuteResult,
+	](
+		ctx,
+		connection,
+		resourceConfig,
+		call,
+	)
 	if err != nil {
 		span.SetAttributes(attribute.Bool("ansible.success", false))
 		span.SetStatus(codes.Error, err.Error())
@@ -637,14 +647,19 @@ func DisconnectAll(ctx context.Context) error {
 	return multierr
 }
 
-func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (string, error) {
+func StageFile(
+	ctx context.Context,
+	connection midtypes.Connection,
+	resourceConfig midtypes.ResourceConfig,
+	f io.Reader,
+) (string, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.StageFile")
 	defer span.End()
 	logger := telemetry.LoggerFromContext(ctx).With(
 		slog.String("connection.host", *connection.Host),
 	)
 
-	cs, err := Acquire(ctx, connection)
+	cs, err := Acquire(ctx, connection, resourceConfig)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return "", err
@@ -671,17 +686,17 @@ func StageFile(ctx context.Context, connection *types.Connection, f io.Reader) (
 	return remotePath, nil
 }
 
-func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfig, string, error) {
+func ConnectionToSSHClientConfig(connection midtypes.Connection) (*ssh.ClientConfig, string, error) {
 	sshConfig := &ssh.ClientConfig{}
 
-	port := types.DefaultConnectionPort
+	port := midtypes.DefaultConnectionPort
 	if connection.Port != nil {
 		port = int(*connection.Port)
 	}
 
 	endpoint := net.JoinHostPort(*connection.Host, fmt.Sprintf("%d", port))
 
-	sshConfig.User = types.DefaultConnectionUser
+	sshConfig.User = midtypes.DefaultConnectionUser
 	if connection.User == nil {
 		current, err := user.Current()
 		if err == nil {
@@ -691,7 +706,7 @@ func ConnectionToSSHClientConfig(connection *types.Connection) (*ssh.ClientConfi
 		sshConfig.User = *connection.User
 	}
 
-	sshConfig.Timeout = time.Second * time.Duration(types.DefaultConnectionPerDialTimeout)
+	sshConfig.Timeout = time.Second * time.Duration(midtypes.DefaultConnectionPerDialTimeout)
 	if connection.PerDialTimeout != nil {
 		sshConfig.Timeout = time.Second * time.Duration(*connection.PerDialTimeout)
 	}

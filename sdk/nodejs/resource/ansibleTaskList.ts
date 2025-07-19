@@ -33,9 +33,11 @@ export class AnsibleTaskList extends pulumi.CustomResource {
     return obj["__pulumiType"] === AnsibleTaskList.__pulumiType;
   }
 
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly /*out*/ results!: pulumi.Output<outputs.resource.AnsibleTaskListStateResults>;
   public readonly tasks!: pulumi.Output<outputs.resource.AnsibleTaskListArgsTasks>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a AnsibleTaskList resource with the given unique name, arguments, and options.
@@ -51,10 +53,16 @@ export class AnsibleTaskList extends pulumi.CustomResource {
       if ((!args || args.tasks === undefined) && !opts.urn) {
         throw new Error("Missing required property 'tasks'");
       }
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["tasks"] = args ? args.tasks : undefined;
       resourceInputs["triggers"] = args ? args.triggers : undefined;
       resourceInputs["results"] = undefined /*out*/;
     } else {
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["results"] = undefined /*out*/;
       resourceInputs["tasks"] = undefined /*out*/;
       resourceInputs["triggers"] = undefined /*out*/;
@@ -68,6 +76,8 @@ export class AnsibleTaskList extends pulumi.CustomResource {
  * The set of arguments for constructing a AnsibleTaskList resource.
  */
 export interface AnsibleTaskListArgs {
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   tasks: pulumi.Input<inputs.resource.AnsibleTaskListArgsTasksArgs>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
 }

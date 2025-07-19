@@ -8,17 +8,19 @@ import (
 	"reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type Package struct {
 	pulumi.CustomResourceState
 
-	Ensure   pulumi.StringOutput        `pulumi:"ensure"`
-	Name     pulumi.StringPtrOutput     `pulumi:"name"`
-	Names    pulumi.StringArrayOutput   `pulumi:"names"`
-	Triggers types.TriggersOutputOutput `pulumi:"triggers"`
+	Config     mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection mid.ConnectionPtrOutput     `pulumi:"connection"`
+	Ensure     pulumi.StringOutput         `pulumi:"ensure"`
+	Name       pulumi.StringPtrOutput      `pulumi:"name"`
+	Names      pulumi.StringArrayOutput    `pulumi:"names"`
+	Triggers   mid.TriggersOutputOutput    `pulumi:"triggers"`
 }
 
 // NewPackage registers a new resource with the given unique name, arguments, and options.
@@ -28,6 +30,9 @@ func NewPackage(ctx *pulumi.Context,
 		args = &PackageArgs{}
 	}
 
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Package
 	err := ctx.RegisterResource("mid:resource:Package", name, args, &resource, opts...)
@@ -61,18 +66,22 @@ func (PackageState) ElementType() reflect.Type {
 }
 
 type packageArgs struct {
-	Ensure   *string              `pulumi:"ensure"`
-	Name     *string              `pulumi:"name"`
-	Names    []string             `pulumi:"names"`
-	Triggers *types.TriggersInput `pulumi:"triggers"`
+	Config     *mid.ResourceConfig `pulumi:"config"`
+	Connection *mid.Connection     `pulumi:"connection"`
+	Ensure     *string             `pulumi:"ensure"`
+	Name       *string             `pulumi:"name"`
+	Names      []string            `pulumi:"names"`
+	Triggers   *mid.TriggersInput  `pulumi:"triggers"`
 }
 
 // The set of arguments for constructing a Package resource.
 type PackageArgs struct {
-	Ensure   pulumi.StringPtrInput
-	Name     pulumi.StringPtrInput
-	Names    pulumi.StringArrayInput
-	Triggers types.TriggersInputPtrInput
+	Config     mid.ResourceConfigPtrInput
+	Connection mid.ConnectionPtrInput
+	Ensure     pulumi.StringPtrInput
+	Name       pulumi.StringPtrInput
+	Names      pulumi.StringArrayInput
+	Triggers   mid.TriggersInputPtrInput
 }
 
 func (PackageArgs) ElementType() reflect.Type {
@@ -162,6 +171,14 @@ func (o PackageOutput) ToPackageOutputWithContext(ctx context.Context) PackageOu
 	return o
 }
 
+func (o PackageOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *Package) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o PackageOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *Package) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o PackageOutput) Ensure() pulumi.StringOutput {
 	return o.ApplyT(func(v *Package) pulumi.StringOutput { return v.Ensure }).(pulumi.StringOutput)
 }
@@ -174,8 +191,8 @@ func (o PackageOutput) Names() pulumi.StringArrayOutput {
 	return o.ApplyT(func(v *Package) pulumi.StringArrayOutput { return v.Names }).(pulumi.StringArrayOutput)
 }
 
-func (o PackageOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *Package) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o PackageOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *Package) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 type PackageArrayOutput struct{ *pulumi.OutputState }

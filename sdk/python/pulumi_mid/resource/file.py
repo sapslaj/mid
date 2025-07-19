@@ -15,7 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = ["FileArgs", "File"]
 
@@ -31,6 +32,8 @@ class FileArgs:
         attributes: Optional[pulumi.Input[builtins.str]] = None,
         backup: Optional[pulumi.Input[builtins.bool]] = None,
         checksum: Optional[pulumi.Input[builtins.str]] = None,
+        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
         content: Optional[pulumi.Input[builtins.str]] = None,
         directory_mode: Optional[pulumi.Input[builtins.str]] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
@@ -49,7 +52,7 @@ class FileArgs:
         setype: Optional[pulumi.Input[builtins.str]] = None,
         seuser: Optional[pulumi.Input[builtins.str]] = None,
         source: Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]] = None,
-        triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
+        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
         unsafe_writes: Optional[pulumi.Input[builtins.bool]] = None,
         validate: Optional[pulumi.Input[builtins.str]] = None,
     ):
@@ -67,6 +70,10 @@ class FileArgs:
             pulumi.set(__self__, "backup", backup)
         if checksum is not None:
             pulumi.set(__self__, "checksum", checksum)
+        if config is not None:
+            pulumi.set(__self__, "config", config)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if content is not None:
             pulumi.set(__self__, "content", content)
         if directory_mode is not None:
@@ -163,6 +170,24 @@ class FileArgs:
     @checksum.setter
     def checksum(self, value: Optional[pulumi.Input[builtins.str]]):
         pulumi.set(self, "checksum", value)
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+        return pulumi.get(self, "config")
+
+    @config.setter
+    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+        pulumi.set(self, "config", value)
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+        return pulumi.get(self, "connection")
+
+    @connection.setter
+    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+        pulumi.set(self, "connection", value)
 
     @property
     @pulumi.getter
@@ -330,11 +355,11 @@ class FileArgs:
 
     @property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_types.TriggersInputArgs"]]:
+    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_types.TriggersInputArgs"]]):
+    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @property
@@ -368,6 +393,19 @@ class File(pulumi.CustomResource):
         attributes: Optional[pulumi.Input[builtins.str]] = None,
         backup: Optional[pulumi.Input[builtins.bool]] = None,
         checksum: Optional[pulumi.Input[builtins.str]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         content: Optional[pulumi.Input[builtins.str]] = None,
         directory_mode: Optional[pulumi.Input[builtins.str]] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
@@ -389,7 +427,10 @@ class File(pulumi.CustomResource):
         source: Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         unsafe_writes: Optional[pulumi.Input[builtins.bool]] = None,
@@ -436,6 +477,19 @@ class File(pulumi.CustomResource):
         attributes: Optional[pulumi.Input[builtins.str]] = None,
         backup: Optional[pulumi.Input[builtins.bool]] = None,
         checksum: Optional[pulumi.Input[builtins.str]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         content: Optional[pulumi.Input[builtins.str]] = None,
         directory_mode: Optional[pulumi.Input[builtins.str]] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
@@ -457,7 +511,10 @@ class File(pulumi.CustomResource):
         source: Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         unsafe_writes: Optional[pulumi.Input[builtins.bool]] = None,
@@ -483,6 +540,8 @@ class File(pulumi.CustomResource):
             __props__.__dict__["attributes"] = attributes
             __props__.__dict__["backup"] = backup
             __props__.__dict__["checksum"] = checksum
+            __props__.__dict__["config"] = config
+            __props__.__dict__["connection"] = connection
             __props__.__dict__["content"] = content
             __props__.__dict__["directory_mode"] = directory_mode
             __props__.__dict__["ensure"] = ensure
@@ -541,6 +600,8 @@ class File(pulumi.CustomResource):
         __props__.__dict__["backup"] = None
         __props__.__dict__["backup_file"] = None
         __props__.__dict__["checksum"] = None
+        __props__.__dict__["config"] = None
+        __props__.__dict__["connection"] = None
         __props__.__dict__["content"] = None
         __props__.__dict__["directory_mode"] = None
         __props__.__dict__["ensure"] = None
@@ -600,6 +661,16 @@ class File(pulumi.CustomResource):
     @pulumi.getter
     def checksum(self) -> pulumi.Output[Optional[builtins.str]]:
         return pulumi.get(self, "checksum")
+
+    @property
+    @pulumi.getter
+    def config(self) -> pulumi.Output[Optional["_root_outputs.ResourceConfig"]]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> pulumi.Output[Optional["_root_outputs.Connection"]]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter
@@ -698,12 +769,12 @@ class File(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def stat(self) -> pulumi.Output["_types.outputs.FileStatState"]:
+    def stat(self) -> pulumi.Output["_root_outputs.FileStatState"]:
         return pulumi.get(self, "stat")
 
     @property
     @pulumi.getter
-    def triggers(self) -> pulumi.Output["_types.outputs.TriggersOutput"]:
+    def triggers(self) -> pulumi.Output["_root_outputs.TriggersOutput"]:
         return pulumi.get(self, "triggers")
 
     @property

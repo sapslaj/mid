@@ -2,17 +2,23 @@
 // *** Do not edit by hand unless you're certain you know what you are doing! ***
 
 import * as pulumi from "@pulumi/pulumi";
+import * as inputs from "../types/input";
+import * as outputs from "../types/output";
 import * as utilities from "../utilities";
 
 export function agentPing(args?: AgentPingArgs, opts?: pulumi.InvokeOptions): Promise<AgentPingResult> {
   args = args || {};
   opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
   return pulumi.runtime.invoke("mid:agent:agentPing", {
+    "config": args.config,
+    "connection": args.connection ? inputs.connectionProvideDefaults(args.connection) : undefined,
     "ping": args.ping,
   }, opts);
 }
 
 export interface AgentPingArgs {
+  config?: inputs.ResourceConfig;
+  connection?: inputs.Connection;
   ping?: string;
 }
 
@@ -27,10 +33,14 @@ export function agentPingOutput(
   args = args || {};
   opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
   return pulumi.runtime.invokeOutput("mid:agent:agentPing", {
+    "config": args.config,
+    "connection": args.connection ? pulumi.output(args.connection).apply(inputs.connectionProvideDefaults) : undefined,
     "ping": args.ping,
   }, opts);
 }
 
 export interface AgentPingOutputArgs {
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   ping?: pulumi.Input<string>;
 }

@@ -33,6 +33,8 @@ export class Group extends pulumi.CustomResource {
     return obj["__pulumiType"] === Group.__pulumiType;
   }
 
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly ensure!: pulumi.Output<string | undefined>;
   public readonly force!: pulumi.Output<boolean | undefined>;
   public readonly gid!: pulumi.Output<number | undefined>;
@@ -42,7 +44,7 @@ export class Group extends pulumi.CustomResource {
   public readonly name!: pulumi.Output<string>;
   public readonly nonUnique!: pulumi.Output<boolean | undefined>;
   public readonly system!: pulumi.Output<boolean | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a Group resource with the given unique name, arguments, and options.
@@ -58,6 +60,10 @@ export class Group extends pulumi.CustomResource {
       if ((!args || args.name === undefined) && !opts.urn) {
         throw new Error("Missing required property 'name'");
       }
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["force"] = args ? args.force : undefined;
       resourceInputs["gid"] = args ? args.gid : undefined;
@@ -69,6 +75,8 @@ export class Group extends pulumi.CustomResource {
       resourceInputs["system"] = args ? args.system : undefined;
       resourceInputs["triggers"] = args ? args.triggers : undefined;
     } else {
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["ensure"] = undefined /*out*/;
       resourceInputs["force"] = undefined /*out*/;
       resourceInputs["gid"] = undefined /*out*/;
@@ -89,6 +97,8 @@ export class Group extends pulumi.CustomResource {
  * The set of arguments for constructing a Group resource.
  */
 export interface GroupArgs {
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   ensure?: pulumi.Input<string>;
   force?: pulumi.Input<boolean>;
   gid?: pulumi.Input<number>;
@@ -98,5 +108,5 @@ export interface GroupArgs {
   name: pulumi.Input<string>;
   nonUnique?: pulumi.Input<boolean>;
   system?: pulumi.Input<boolean>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
 }

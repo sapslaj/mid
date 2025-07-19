@@ -33,6 +33,8 @@ export class SystemdService extends pulumi.CustomResource {
     return obj["__pulumiType"] === SystemdService.__pulumiType;
   }
 
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly daemonReexec!: pulumi.Output<boolean | undefined>;
   public readonly daemonReload!: pulumi.Output<boolean | undefined>;
   public readonly enabled!: pulumi.Output<boolean | undefined>;
@@ -42,7 +44,7 @@ export class SystemdService extends pulumi.CustomResource {
   public readonly name!: pulumi.Output<string | undefined>;
   public readonly noBlock!: pulumi.Output<boolean | undefined>;
   public readonly scope!: pulumi.Output<string | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a SystemdService resource with the given unique name, arguments, and options.
@@ -55,6 +57,10 @@ export class SystemdService extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["daemonReexec"] = args ? args.daemonReexec : undefined;
       resourceInputs["daemonReload"] = args ? args.daemonReload : undefined;
       resourceInputs["enabled"] = args ? args.enabled : undefined;
@@ -66,6 +72,8 @@ export class SystemdService extends pulumi.CustomResource {
       resourceInputs["scope"] = args ? args.scope : undefined;
       resourceInputs["triggers"] = args ? args.triggers : undefined;
     } else {
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["daemonReexec"] = undefined /*out*/;
       resourceInputs["daemonReload"] = undefined /*out*/;
       resourceInputs["enabled"] = undefined /*out*/;
@@ -86,6 +94,8 @@ export class SystemdService extends pulumi.CustomResource {
  * The set of arguments for constructing a SystemdService resource.
  */
 export interface SystemdServiceArgs {
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   daemonReexec?: pulumi.Input<boolean>;
   daemonReload?: pulumi.Input<boolean>;
   enabled?: pulumi.Input<boolean>;
@@ -95,5 +105,5 @@ export interface SystemdServiceArgs {
   name?: pulumi.Input<string>;
   noBlock?: pulumi.Input<boolean>;
   scope?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
 }

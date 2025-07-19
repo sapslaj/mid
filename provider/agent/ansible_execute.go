@@ -10,16 +10,19 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type AnsibleExecute struct{}
 
 type AnsibleExecuteInput struct {
-	Name               string            `pulumi:"name"`
-	Args               map[string]any    `pulumi:"args"`
-	Environment        map[string]string `pulumi:"environment,optional"`
-	Check              bool              `pulumi:"check,optional"`
-	DebugKeepTempFiles bool              `pulumi:"debugKeepTempFiles,optional"`
+	Name               string                   `pulumi:"name"`
+	Args               map[string]any           `pulumi:"args"`
+	Environment        map[string]string        `pulumi:"environment,optional"`
+	Check              bool                     `pulumi:"check,optional"`
+	DebugKeepTempFiles bool                     `pulumi:"debugKeepTempFiles,optional"`
+	Connection         *midtypes.Connection     `pulumi:"connection,optional"`
+	Config             *midtypes.ResourceConfig `pulumi:"config,optional"`
 }
 
 type AnsibleExecuteOutput struct {
@@ -43,6 +46,8 @@ func (f AnsibleExecute) Invoke(
 
 	out, err := CallAgent[rpc.AnsibleExecuteArgs, rpc.AnsibleExecuteResult](
 		ctx,
+		req.Input.Connection,
+		req.Input.Config,
 		rpc.RPCAnsibleExecute,
 		rpc.AnsibleExecuteArgs{
 			Name:               req.Input.Name,

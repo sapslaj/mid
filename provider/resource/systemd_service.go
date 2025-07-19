@@ -16,7 +16,7 @@ import (
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type SystemdService struct{}
@@ -31,21 +31,23 @@ const (
 )
 
 type SystemdServiceArgs struct {
-	DaemonReexec *bool                 `pulumi:"daemonReexec,optional"`
-	DaemonReload *bool                 `pulumi:"daemonReload,optional"`
-	Enabled      *bool                 `pulumi:"enabled,optional"`
-	Force        *bool                 `pulumi:"force,optional"`
-	Masked       *bool                 `pulumi:"masked,optional"`
-	Name         *string               `pulumi:"name,optional"`
-	NoBlock      *bool                 `pulumi:"noBlock,optional"`
-	Scope        *string               `pulumi:"scope,optional"`
-	Ensure       *SystemdServiceEnsure `pulumi:"ensure,optional"`
-	Triggers     *types.TriggersInput  `pulumi:"triggers,optional"`
+	DaemonReexec *bool                    `pulumi:"daemonReexec,optional"`
+	DaemonReload *bool                    `pulumi:"daemonReload,optional"`
+	Enabled      *bool                    `pulumi:"enabled,optional"`
+	Force        *bool                    `pulumi:"force,optional"`
+	Masked       *bool                    `pulumi:"masked,optional"`
+	Name         *string                  `pulumi:"name,optional"`
+	NoBlock      *bool                    `pulumi:"noBlock,optional"`
+	Scope        *string                  `pulumi:"scope,optional"`
+	Ensure       *SystemdServiceEnsure    `pulumi:"ensure,optional"`
+	Connection   *midtypes.Connection     `pulumi:"connection,optional"`
+	Config       *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers     *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type SystemdServiceState struct {
 	SystemdServiceArgs
-	Triggers types.TriggersOutput `pulumi:"triggers"`
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r SystemdService) argsToTaskParameters(input SystemdServiceArgs) (ansible.SystemdServiceParameters, error) {
@@ -72,13 +74,14 @@ func (r SystemdService) updateState(
 	changed bool,
 ) SystemdServiceState {
 	state.SystemdServiceArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
 func (r SystemdService) doesUnitExist(
 	ctx context.Context,
-	connection *types.Connection,
+	connection midtypes.Connection,
+	config midtypes.ResourceConfig,
 	name string,
 ) (bool, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/SystemdService.doesUnitExist", trace.WithAttributes(
@@ -90,7 +93,7 @@ func (r SystemdService) doesUnitExist(
 	result, err := executor.CallAgent[
 		rpc.SystemdUnitShortStatusArgs,
 		rpc.SystemdUnitShortStatusResult,
-	](ctx, connection, rpc.RPCCall[rpc.SystemdUnitShortStatusArgs]{
+	](ctx, connection, config, rpc.RPCCall[rpc.SystemdUnitShortStatusArgs]{
 		RPCFunction: rpc.RPCSystemdUnitShortStatus,
 		Args: rpc.SystemdUnitShortStatusArgs{
 			Name: name,
@@ -120,7 +123,8 @@ func (r SystemdService) updateService(
 
 	defer span.SetAttributes(telemetry.OtelJSON("state", state))
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
@@ -130,7 +134,7 @@ func (r SystemdService) updateService(
 
 	refresh := false
 	if state.Triggers.Refresh != nil || inputs.Triggers != nil {
-		triggerDiff := types.DiffTriggers(state, inputs)
+		triggerDiff := midtypes.DiffTriggers(state, inputs)
 		if triggerDiff.HasChanges {
 			refresh = true
 		}
@@ -143,7 +147,7 @@ func (r SystemdService) updateService(
 	}
 
 	if dryRun && inputs.Name != nil {
-		unitPresent, err := r.doesUnitExist(ctx, config.Connection, *inputs.Name)
+		unitPresent, err := r.doesUnitExist(ctx, connection, config, *inputs.Name)
 		if err != nil {
 			if errors.Is(err, executor.ErrUnreachable) && dryRun {
 				span.SetAttributes(attribute.Bool("unreachable", true))
@@ -164,7 +168,7 @@ func (r SystemdService) updateService(
 	result, err := executor.AnsibleExecute[
 		ansible.SystemdServiceParameters,
 		ansible.SystemdServiceReturn,
-	](ctx, config.Connection, parameters, dryRun)
+	](ctx, connection, config, parameters, dryRun)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && dryRun {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -199,9 +203,9 @@ func (r SystemdService) Diff(
 		DeleteBeforeReplace: false,
 	}
 
-	diff = types.MergeDiffResponses(
+	diff = midtypes.MergeDiffResponses(
 		diff,
-		types.DiffAttributes(req.State, req.Inputs, []string{
+		midtypes.DiffAttributes(req.State, req.Inputs, []string{
 			"daemonReexec",
 			"daemonReload",
 			"enabled",
@@ -212,7 +216,7 @@ func (r SystemdService) Diff(
 			"noBlock",
 			"scope",
 		}),
-		types.DiffTriggers(req.State, req.Inputs),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -277,7 +281,8 @@ func (r SystemdService) Read(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
@@ -295,7 +300,7 @@ func (r SystemdService) Read(
 	result, err := executor.AnsibleExecute[
 		ansible.SystemdServiceParameters,
 		ansible.SystemdServiceReturn,
-	](ctx, config.Connection, parameters, true)
+	](ctx, connection, config, parameters, true)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -368,7 +373,8 @@ func (r SystemdService) Delete(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, req.State.Connection)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	args := SystemdServiceArgs{
 		DaemonReexec: req.State.DaemonReexec,
@@ -411,7 +417,7 @@ func (r SystemdService) Delete(
 		return infer.DeleteResponse{}, err
 	}
 
-	unitPresent, err := r.doesUnitExist(ctx, config.Connection, *args.Name)
+	unitPresent, err := r.doesUnitExist(ctx, connection, config, *args.Name)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))
@@ -432,7 +438,7 @@ func (r SystemdService) Delete(
 	_, err = executor.AnsibleExecute[
 		ansible.SystemdServiceParameters,
 		ansible.SystemdServiceReturn,
-	](ctx, config.Connection, parameters, false)
+	](ctx, connection, config, parameters, false)
 	if err != nil {
 		if errors.Is(err, executor.ErrUnreachable) && config.GetDeleteUnreachable() {
 			span.SetAttributes(attribute.Bool("unreachable", true))

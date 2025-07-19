@@ -15,7 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = ["ServiceArgs", "Service"]
 
@@ -27,12 +28,14 @@ class ServiceArgs:
         *,
         name: pulumi.Input[builtins.str],
         arguments: Optional[pulumi.Input[builtins.str]] = None,
+        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
         enabled: Optional[pulumi.Input[builtins.bool]] = None,
         pattern: Optional[pulumi.Input[builtins.str]] = None,
         runlevel: Optional[pulumi.Input[builtins.str]] = None,
         sleep: Optional[pulumi.Input[builtins.int]] = None,
         state: Optional[pulumi.Input[builtins.str]] = None,
-        triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
+        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
         use: Optional[pulumi.Input[builtins.str]] = None,
     ):
         """
@@ -41,6 +44,10 @@ class ServiceArgs:
         pulumi.set(__self__, "name", name)
         if arguments is not None:
             pulumi.set(__self__, "arguments", arguments)
+        if config is not None:
+            pulumi.set(__self__, "config", config)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if enabled is not None:
             pulumi.set(__self__, "enabled", enabled)
         if pattern is not None:
@@ -73,6 +80,24 @@ class ServiceArgs:
     @arguments.setter
     def arguments(self, value: Optional[pulumi.Input[builtins.str]]):
         pulumi.set(self, "arguments", value)
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+        return pulumi.get(self, "config")
+
+    @config.setter
+    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+        pulumi.set(self, "config", value)
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+        return pulumi.get(self, "connection")
+
+    @connection.setter
+    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+        pulumi.set(self, "connection", value)
 
     @property
     @pulumi.getter
@@ -121,11 +146,11 @@ class ServiceArgs:
 
     @property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_types.TriggersInputArgs"]]:
+    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_types.TriggersInputArgs"]]):
+    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @property
@@ -146,6 +171,19 @@ class Service(pulumi.CustomResource):
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
         arguments: Optional[pulumi.Input[builtins.str]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         enabled: Optional[pulumi.Input[builtins.bool]] = None,
         name: Optional[pulumi.Input[builtins.str]] = None,
         pattern: Optional[pulumi.Input[builtins.str]] = None,
@@ -154,7 +192,10 @@ class Service(pulumi.CustomResource):
         state: Optional[pulumi.Input[builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         use: Optional[pulumi.Input[builtins.str]] = None,
@@ -196,6 +237,19 @@ class Service(pulumi.CustomResource):
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
         arguments: Optional[pulumi.Input[builtins.str]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         enabled: Optional[pulumi.Input[builtins.bool]] = None,
         name: Optional[pulumi.Input[builtins.str]] = None,
         pattern: Optional[pulumi.Input[builtins.str]] = None,
@@ -204,7 +258,10 @@ class Service(pulumi.CustomResource):
         state: Optional[pulumi.Input[builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         use: Optional[pulumi.Input[builtins.str]] = None,
@@ -225,6 +282,8 @@ class Service(pulumi.CustomResource):
             __props__ = ServiceArgs.__new__(ServiceArgs)
 
             __props__.__dict__["arguments"] = arguments
+            __props__.__dict__["config"] = config
+            __props__.__dict__["connection"] = connection
             __props__.__dict__["enabled"] = enabled
             if name is None and not opts.urn:
                 raise TypeError("Missing required property 'name'")
@@ -258,6 +317,8 @@ class Service(pulumi.CustomResource):
         __props__ = ServiceArgs.__new__(ServiceArgs)
 
         __props__.__dict__["arguments"] = None
+        __props__.__dict__["config"] = None
+        __props__.__dict__["connection"] = None
         __props__.__dict__["enabled"] = None
         __props__.__dict__["name"] = None
         __props__.__dict__["pattern"] = None
@@ -272,6 +333,16 @@ class Service(pulumi.CustomResource):
     @pulumi.getter
     def arguments(self) -> pulumi.Output[Optional[builtins.str]]:
         return pulumi.get(self, "arguments")
+
+    @property
+    @pulumi.getter
+    def config(self) -> pulumi.Output[Optional["_root_outputs.ResourceConfig"]]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> pulumi.Output[Optional["_root_outputs.Connection"]]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter
@@ -305,7 +376,7 @@ class Service(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def triggers(self) -> pulumi.Output["_types.outputs.TriggersOutput"]:
+    def triggers(self) -> pulumi.Output["_root_outputs.TriggersOutput"]:
         return pulumi.get(self, "triggers")
 
     @property

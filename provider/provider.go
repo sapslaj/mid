@@ -20,8 +20,8 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 
 	"github.com/sapslaj/mid/provider/agent"
+	"github.com/sapslaj/mid/provider/midtypes"
 	"github.com/sapslaj/mid/provider/resource"
-	"github.com/sapslaj/mid/provider/types"
 )
 
 const Name string = "mid"
@@ -54,8 +54,9 @@ func Provider() (p.Provider, error) {
 		}).
 		WithModuleMap(map[tokens.ModuleName]tokens.ModuleName{
 			"provider": "index",
+			"midtypes": "index",
 		}).
-		WithConfig(infer.Config(&types.Config{})).
+		WithConfig(infer.Config(&midtypes.ProviderConfig{})).
 		WithResources(
 			infer.Resource(&resource.AnsibleTaskList{}),
 			infer.Resource(&resource.Apt{}),

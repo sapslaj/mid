@@ -8,39 +8,41 @@ import (
 	"reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type Apt struct {
 	pulumi.CustomResourceState
 
-	AllowChangeHeldPackages  pulumi.BoolPtrOutput       `pulumi:"allowChangeHeldPackages"`
-	AllowDowngrade           pulumi.BoolPtrOutput       `pulumi:"allowDowngrade"`
-	AllowUnauthenticated     pulumi.BoolPtrOutput       `pulumi:"allowUnauthenticated"`
-	Autoclean                pulumi.BoolPtrOutput       `pulumi:"autoclean"`
-	Autoremove               pulumi.BoolPtrOutput       `pulumi:"autoremove"`
-	CacheValidTime           pulumi.IntPtrOutput        `pulumi:"cacheValidTime"`
-	Clean                    pulumi.BoolPtrOutput       `pulumi:"clean"`
-	Deb                      pulumi.StringPtrOutput     `pulumi:"deb"`
-	DefaultRelease           pulumi.StringPtrOutput     `pulumi:"defaultRelease"`
-	DpkgOptions              pulumi.StringPtrOutput     `pulumi:"dpkgOptions"`
-	Ensure                   pulumi.StringPtrOutput     `pulumi:"ensure"`
-	FailOnAutoremove         pulumi.BoolPtrOutput       `pulumi:"failOnAutoremove"`
-	Force                    pulumi.BoolPtrOutput       `pulumi:"force"`
-	ForceAptGet              pulumi.BoolPtrOutput       `pulumi:"forceAptGet"`
-	InstallRecommends        pulumi.BoolPtrOutput       `pulumi:"installRecommends"`
-	LockTimeout              pulumi.IntPtrOutput        `pulumi:"lockTimeout"`
-	Name                     pulumi.StringPtrOutput     `pulumi:"name"`
-	Names                    pulumi.StringArrayOutput   `pulumi:"names"`
-	OnlyUpgrade              pulumi.BoolPtrOutput       `pulumi:"onlyUpgrade"`
-	PolicyRcD                pulumi.IntPtrOutput        `pulumi:"policyRcD"`
-	Purge                    pulumi.BoolPtrOutput       `pulumi:"purge"`
-	Triggers                 types.TriggersOutputOutput `pulumi:"triggers"`
-	UpdateCache              pulumi.BoolPtrOutput       `pulumi:"updateCache"`
-	UpdateCacheRetries       pulumi.IntPtrOutput        `pulumi:"updateCacheRetries"`
-	UpdateCacheRetryMaxDelay pulumi.IntPtrOutput        `pulumi:"updateCacheRetryMaxDelay"`
-	Upgrade                  pulumi.StringPtrOutput     `pulumi:"upgrade"`
+	AllowChangeHeldPackages  pulumi.BoolPtrOutput        `pulumi:"allowChangeHeldPackages"`
+	AllowDowngrade           pulumi.BoolPtrOutput        `pulumi:"allowDowngrade"`
+	AllowUnauthenticated     pulumi.BoolPtrOutput        `pulumi:"allowUnauthenticated"`
+	Autoclean                pulumi.BoolPtrOutput        `pulumi:"autoclean"`
+	Autoremove               pulumi.BoolPtrOutput        `pulumi:"autoremove"`
+	CacheValidTime           pulumi.IntPtrOutput         `pulumi:"cacheValidTime"`
+	Clean                    pulumi.BoolPtrOutput        `pulumi:"clean"`
+	Config                   mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection               mid.ConnectionPtrOutput     `pulumi:"connection"`
+	Deb                      pulumi.StringPtrOutput      `pulumi:"deb"`
+	DefaultRelease           pulumi.StringPtrOutput      `pulumi:"defaultRelease"`
+	DpkgOptions              pulumi.StringPtrOutput      `pulumi:"dpkgOptions"`
+	Ensure                   pulumi.StringPtrOutput      `pulumi:"ensure"`
+	FailOnAutoremove         pulumi.BoolPtrOutput        `pulumi:"failOnAutoremove"`
+	Force                    pulumi.BoolPtrOutput        `pulumi:"force"`
+	ForceAptGet              pulumi.BoolPtrOutput        `pulumi:"forceAptGet"`
+	InstallRecommends        pulumi.BoolPtrOutput        `pulumi:"installRecommends"`
+	LockTimeout              pulumi.IntPtrOutput         `pulumi:"lockTimeout"`
+	Name                     pulumi.StringPtrOutput      `pulumi:"name"`
+	Names                    pulumi.StringArrayOutput    `pulumi:"names"`
+	OnlyUpgrade              pulumi.BoolPtrOutput        `pulumi:"onlyUpgrade"`
+	PolicyRcD                pulumi.IntPtrOutput         `pulumi:"policyRcD"`
+	Purge                    pulumi.BoolPtrOutput        `pulumi:"purge"`
+	Triggers                 mid.TriggersOutputOutput    `pulumi:"triggers"`
+	UpdateCache              pulumi.BoolPtrOutput        `pulumi:"updateCache"`
+	UpdateCacheRetries       pulumi.IntPtrOutput         `pulumi:"updateCacheRetries"`
+	UpdateCacheRetryMaxDelay pulumi.IntPtrOutput         `pulumi:"updateCacheRetryMaxDelay"`
+	Upgrade                  pulumi.StringPtrOutput      `pulumi:"upgrade"`
 }
 
 // NewApt registers a new resource with the given unique name, arguments, and options.
@@ -50,6 +52,9 @@ func NewApt(ctx *pulumi.Context,
 		args = &AptArgs{}
 	}
 
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
+	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Apt
 	err := ctx.RegisterResource("mid:resource:Apt", name, args, &resource, opts...)
@@ -83,32 +88,34 @@ func (AptState) ElementType() reflect.Type {
 }
 
 type aptArgs struct {
-	AllowChangeHeldPackages  *bool                `pulumi:"allowChangeHeldPackages"`
-	AllowDowngrade           *bool                `pulumi:"allowDowngrade"`
-	AllowUnauthenticated     *bool                `pulumi:"allowUnauthenticated"`
-	Autoclean                *bool                `pulumi:"autoclean"`
-	Autoremove               *bool                `pulumi:"autoremove"`
-	CacheValidTime           *int                 `pulumi:"cacheValidTime"`
-	Clean                    *bool                `pulumi:"clean"`
-	Deb                      *string              `pulumi:"deb"`
-	DefaultRelease           *string              `pulumi:"defaultRelease"`
-	DpkgOptions              *string              `pulumi:"dpkgOptions"`
-	Ensure                   *string              `pulumi:"ensure"`
-	FailOnAutoremove         *bool                `pulumi:"failOnAutoremove"`
-	Force                    *bool                `pulumi:"force"`
-	ForceAptGet              *bool                `pulumi:"forceAptGet"`
-	InstallRecommends        *bool                `pulumi:"installRecommends"`
-	LockTimeout              *int                 `pulumi:"lockTimeout"`
-	Name                     *string              `pulumi:"name"`
-	Names                    []string             `pulumi:"names"`
-	OnlyUpgrade              *bool                `pulumi:"onlyUpgrade"`
-	PolicyRcD                *int                 `pulumi:"policyRcD"`
-	Purge                    *bool                `pulumi:"purge"`
-	Triggers                 *types.TriggersInput `pulumi:"triggers"`
-	UpdateCache              *bool                `pulumi:"updateCache"`
-	UpdateCacheRetries       *int                 `pulumi:"updateCacheRetries"`
-	UpdateCacheRetryMaxDelay *int                 `pulumi:"updateCacheRetryMaxDelay"`
-	Upgrade                  *string              `pulumi:"upgrade"`
+	AllowChangeHeldPackages  *bool               `pulumi:"allowChangeHeldPackages"`
+	AllowDowngrade           *bool               `pulumi:"allowDowngrade"`
+	AllowUnauthenticated     *bool               `pulumi:"allowUnauthenticated"`
+	Autoclean                *bool               `pulumi:"autoclean"`
+	Autoremove               *bool               `pulumi:"autoremove"`
+	CacheValidTime           *int                `pulumi:"cacheValidTime"`
+	Clean                    *bool               `pulumi:"clean"`
+	Config                   *mid.ResourceConfig `pulumi:"config"`
+	Connection               *mid.Connection     `pulumi:"connection"`
+	Deb                      *string             `pulumi:"deb"`
+	DefaultRelease           *string             `pulumi:"defaultRelease"`
+	DpkgOptions              *string             `pulumi:"dpkgOptions"`
+	Ensure                   *string             `pulumi:"ensure"`
+	FailOnAutoremove         *bool               `pulumi:"failOnAutoremove"`
+	Force                    *bool               `pulumi:"force"`
+	ForceAptGet              *bool               `pulumi:"forceAptGet"`
+	InstallRecommends        *bool               `pulumi:"installRecommends"`
+	LockTimeout              *int                `pulumi:"lockTimeout"`
+	Name                     *string             `pulumi:"name"`
+	Names                    []string            `pulumi:"names"`
+	OnlyUpgrade              *bool               `pulumi:"onlyUpgrade"`
+	PolicyRcD                *int                `pulumi:"policyRcD"`
+	Purge                    *bool               `pulumi:"purge"`
+	Triggers                 *mid.TriggersInput  `pulumi:"triggers"`
+	UpdateCache              *bool               `pulumi:"updateCache"`
+	UpdateCacheRetries       *int                `pulumi:"updateCacheRetries"`
+	UpdateCacheRetryMaxDelay *int                `pulumi:"updateCacheRetryMaxDelay"`
+	Upgrade                  *string             `pulumi:"upgrade"`
 }
 
 // The set of arguments for constructing a Apt resource.
@@ -120,6 +127,8 @@ type AptArgs struct {
 	Autoremove               pulumi.BoolPtrInput
 	CacheValidTime           pulumi.IntPtrInput
 	Clean                    pulumi.BoolPtrInput
+	Config                   mid.ResourceConfigPtrInput
+	Connection               mid.ConnectionPtrInput
 	Deb                      pulumi.StringPtrInput
 	DefaultRelease           pulumi.StringPtrInput
 	DpkgOptions              pulumi.StringPtrInput
@@ -134,7 +143,7 @@ type AptArgs struct {
 	OnlyUpgrade              pulumi.BoolPtrInput
 	PolicyRcD                pulumi.IntPtrInput
 	Purge                    pulumi.BoolPtrInput
-	Triggers                 types.TriggersInputPtrInput
+	Triggers                 mid.TriggersInputPtrInput
 	UpdateCache              pulumi.BoolPtrInput
 	UpdateCacheRetries       pulumi.IntPtrInput
 	UpdateCacheRetryMaxDelay pulumi.IntPtrInput
@@ -256,6 +265,14 @@ func (o AptOutput) Clean() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *Apt) pulumi.BoolPtrOutput { return v.Clean }).(pulumi.BoolPtrOutput)
 }
 
+func (o AptOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *Apt) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o AptOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *Apt) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o AptOutput) Deb() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *Apt) pulumi.StringPtrOutput { return v.Deb }).(pulumi.StringPtrOutput)
 }
@@ -312,8 +329,8 @@ func (o AptOutput) Purge() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *Apt) pulumi.BoolPtrOutput { return v.Purge }).(pulumi.BoolPtrOutput)
 }
 
-func (o AptOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *Apt) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o AptOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *Apt) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 func (o AptOutput) UpdateCache() pulumi.BoolPtrOutput {

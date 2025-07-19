@@ -34,13 +34,15 @@ export class Service extends pulumi.CustomResource {
   }
 
   public readonly arguments!: pulumi.Output<string | undefined>;
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly enabled!: pulumi.Output<boolean | undefined>;
   public readonly name!: pulumi.Output<string>;
   public readonly pattern!: pulumi.Output<string | undefined>;
   public readonly runlevel!: pulumi.Output<string | undefined>;
   public readonly sleep!: pulumi.Output<number | undefined>;
   public readonly state!: pulumi.Output<string | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
   public readonly use!: pulumi.Output<string | undefined>;
 
   /**
@@ -58,6 +60,10 @@ export class Service extends pulumi.CustomResource {
         throw new Error("Missing required property 'name'");
       }
       resourceInputs["arguments"] = args ? args.arguments : undefined;
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["enabled"] = args ? args.enabled : undefined;
       resourceInputs["name"] = args ? args.name : undefined;
       resourceInputs["pattern"] = args ? args.pattern : undefined;
@@ -68,6 +74,8 @@ export class Service extends pulumi.CustomResource {
       resourceInputs["use"] = args ? args.use : undefined;
     } else {
       resourceInputs["arguments"] = undefined /*out*/;
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["enabled"] = undefined /*out*/;
       resourceInputs["name"] = undefined /*out*/;
       resourceInputs["pattern"] = undefined /*out*/;
@@ -87,12 +95,14 @@ export class Service extends pulumi.CustomResource {
  */
 export interface ServiceArgs {
   arguments?: pulumi.Input<string>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   enabled?: pulumi.Input<boolean>;
   name: pulumi.Input<string>;
   pattern?: pulumi.Input<string>;
   runlevel?: pulumi.Input<string>;
   sleep?: pulumi.Input<number>;
   state?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
   use?: pulumi.Input<string>;
 }

@@ -40,6 +40,8 @@ export class File extends pulumi.CustomResource {
   public readonly backup!: pulumi.Output<boolean | undefined>;
   public readonly /*out*/ backupFile!: pulumi.Output<string | undefined>;
   public readonly checksum!: pulumi.Output<string | undefined>;
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly content!: pulumi.Output<string | undefined>;
   public readonly directoryMode!: pulumi.Output<string | undefined>;
   public readonly ensure!: pulumi.Output<string | undefined>;
@@ -59,8 +61,8 @@ export class File extends pulumi.CustomResource {
   public readonly setype!: pulumi.Output<string | undefined>;
   public readonly seuser!: pulumi.Output<string | undefined>;
   public readonly source!: pulumi.Output<pulumi.asset.Asset | pulumi.asset.Archive | undefined>;
-  public readonly /*out*/ stat!: pulumi.Output<outputs.types.FileStatState>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly /*out*/ stat!: pulumi.Output<outputs.FileStatState>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
   public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
   public readonly validate!: pulumi.Output<string | undefined>;
 
@@ -83,6 +85,10 @@ export class File extends pulumi.CustomResource {
       resourceInputs["attributes"] = args ? args.attributes : undefined;
       resourceInputs["backup"] = args ? args.backup : undefined;
       resourceInputs["checksum"] = args ? args.checksum : undefined;
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["content"] = args ? args.content : undefined;
       resourceInputs["directoryMode"] = args ? args.directoryMode : undefined;
       resourceInputs["ensure"] = args ? args.ensure : undefined;
@@ -116,6 +122,8 @@ export class File extends pulumi.CustomResource {
       resourceInputs["backup"] = undefined /*out*/;
       resourceInputs["backupFile"] = undefined /*out*/;
       resourceInputs["checksum"] = undefined /*out*/;
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["content"] = undefined /*out*/;
       resourceInputs["directoryMode"] = undefined /*out*/;
       resourceInputs["ensure"] = undefined /*out*/;
@@ -156,6 +164,8 @@ export interface FileArgs {
   attributes?: pulumi.Input<string>;
   backup?: pulumi.Input<boolean>;
   checksum?: pulumi.Input<string>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   content?: pulumi.Input<string>;
   directoryMode?: pulumi.Input<string>;
   ensure?: pulumi.Input<string>;
@@ -175,7 +185,7 @@ export interface FileArgs {
   setype?: pulumi.Input<string>;
   seuser?: pulumi.Input<string>;
   source?: pulumi.Input<pulumi.asset.Asset | pulumi.asset.Archive>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
   unsafeWrites?: pulumi.Input<boolean>;
   validate?: pulumi.Input<string>;
 }

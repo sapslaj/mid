@@ -10,6 +10,8 @@ export function fileStat(args: FileStatArgs, opts?: pulumi.InvokeOptions): Promi
   opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
   return pulumi.runtime.invoke("mid:agent:fileStat", {
     "calculateChecksum": args.calculateChecksum,
+    "config": args.config,
+    "connection": args.connection ? inputs.connectionProvideDefaults(args.connection) : undefined,
     "followSymlinks": args.followSymlinks,
     "path": args.path,
   }, opts);
@@ -17,6 +19,8 @@ export function fileStat(args: FileStatArgs, opts?: pulumi.InvokeOptions): Promi
 
 export interface FileStatArgs {
   calculateChecksum?: boolean;
+  config?: inputs.ResourceConfig;
+  connection?: inputs.Connection;
   followSymlinks?: boolean;
   path: string;
 }
@@ -25,10 +29,12 @@ export interface FileStatResult {
   readonly accessTime?: string;
   readonly baseName?: string;
   readonly calculateChecksum?: boolean;
+  readonly config?: outputs.ResourceConfig;
+  readonly connection?: outputs.Connection;
   readonly createTime?: string;
   readonly dev?: number;
   readonly exists: boolean;
-  readonly fileMode?: outputs.types.FileStatFileMode;
+  readonly fileMode?: outputs.FileStatFileMode;
   readonly followSymlinks?: boolean;
   readonly gid?: number;
   readonly groupName?: string;
@@ -48,6 +54,8 @@ export function fileStatOutput(
   opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
   return pulumi.runtime.invokeOutput("mid:agent:fileStat", {
     "calculateChecksum": args.calculateChecksum,
+    "config": args.config,
+    "connection": args.connection ? pulumi.output(args.connection).apply(inputs.connectionProvideDefaults) : undefined,
     "followSymlinks": args.followSymlinks,
     "path": args.path,
   }, opts);
@@ -55,6 +63,8 @@ export function fileStatOutput(
 
 export interface FileStatOutputArgs {
   calculateChecksum?: pulumi.Input<boolean>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   followSymlinks?: pulumi.Input<boolean>;
   path: pulumi.Input<string>;
 }

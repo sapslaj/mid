@@ -9,8 +9,8 @@ import (
 
 	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type File struct {
@@ -23,6 +23,8 @@ type File struct {
 	Backup                 pulumi.BoolPtrOutput        `pulumi:"backup"`
 	BackupFile             pulumi.StringPtrOutput      `pulumi:"backupFile"`
 	Checksum               pulumi.StringPtrOutput      `pulumi:"checksum"`
+	Config                 mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection             mid.ConnectionPtrOutput     `pulumi:"connection"`
 	Content                pulumi.StringPtrOutput      `pulumi:"content"`
 	DirectoryMode          pulumi.StringPtrOutput      `pulumi:"directoryMode"`
 	Ensure                 pulumi.StringPtrOutput      `pulumi:"ensure"`
@@ -42,8 +44,8 @@ type File struct {
 	Setype                 pulumi.StringPtrOutput      `pulumi:"setype"`
 	Seuser                 pulumi.StringPtrOutput      `pulumi:"seuser"`
 	Source                 pulumi.AssetOrArchiveOutput `pulumi:"source"`
-	Stat                   types.FileStatStateOutput   `pulumi:"stat"`
-	Triggers               types.TriggersOutputOutput  `pulumi:"triggers"`
+	Stat                   mid.FileStatStateOutput     `pulumi:"stat"`
+	Triggers               mid.TriggersOutputOutput    `pulumi:"triggers"`
 	UnsafeWrites           pulumi.BoolPtrOutput        `pulumi:"unsafeWrites"`
 	Validate               pulumi.StringPtrOutput      `pulumi:"validate"`
 }
@@ -57,6 +59,9 @@ func NewFile(ctx *pulumi.Context,
 
 	if args.Path == nil {
 		return nil, errors.New("invalid value for required argument 'Path'")
+	}
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
 	}
 	replaceOnChanges := pulumi.ReplaceOnChanges([]string{
 		"path",
@@ -100,6 +105,8 @@ type fileArgs struct {
 	Attributes             *string               `pulumi:"attributes"`
 	Backup                 *bool                 `pulumi:"backup"`
 	Checksum               *string               `pulumi:"checksum"`
+	Config                 *mid.ResourceConfig   `pulumi:"config"`
+	Connection             *mid.Connection       `pulumi:"connection"`
 	Content                *string               `pulumi:"content"`
 	DirectoryMode          *string               `pulumi:"directoryMode"`
 	Ensure                 *string               `pulumi:"ensure"`
@@ -119,7 +126,7 @@ type fileArgs struct {
 	Setype                 *string               `pulumi:"setype"`
 	Seuser                 *string               `pulumi:"seuser"`
 	Source                 pulumi.AssetOrArchive `pulumi:"source"`
-	Triggers               *types.TriggersInput  `pulumi:"triggers"`
+	Triggers               *mid.TriggersInput    `pulumi:"triggers"`
 	UnsafeWrites           *bool                 `pulumi:"unsafeWrites"`
 	Validate               *string               `pulumi:"validate"`
 }
@@ -131,6 +138,8 @@ type FileArgs struct {
 	Attributes             pulumi.StringPtrInput
 	Backup                 pulumi.BoolPtrInput
 	Checksum               pulumi.StringPtrInput
+	Config                 mid.ResourceConfigPtrInput
+	Connection             mid.ConnectionPtrInput
 	Content                pulumi.StringPtrInput
 	DirectoryMode          pulumi.StringPtrInput
 	Ensure                 pulumi.StringPtrInput
@@ -150,7 +159,7 @@ type FileArgs struct {
 	Setype                 pulumi.StringPtrInput
 	Seuser                 pulumi.StringPtrInput
 	Source                 pulumi.AssetOrArchiveInput
-	Triggers               types.TriggersInputPtrInput
+	Triggers               mid.TriggersInputPtrInput
 	UnsafeWrites           pulumi.BoolPtrInput
 	Validate               pulumi.StringPtrInput
 }
@@ -270,6 +279,14 @@ func (o FileOutput) Checksum() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *File) pulumi.StringPtrOutput { return v.Checksum }).(pulumi.StringPtrOutput)
 }
 
+func (o FileOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *File) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o FileOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *File) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o FileOutput) Content() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *File) pulumi.StringPtrOutput { return v.Content }).(pulumi.StringPtrOutput)
 }
@@ -346,12 +363,12 @@ func (o FileOutput) Source() pulumi.AssetOrArchiveOutput {
 	return o.ApplyT(func(v *File) pulumi.AssetOrArchiveOutput { return v.Source }).(pulumi.AssetOrArchiveOutput)
 }
 
-func (o FileOutput) Stat() types.FileStatStateOutput {
-	return o.ApplyT(func(v *File) types.FileStatStateOutput { return v.Stat }).(types.FileStatStateOutput)
+func (o FileOutput) Stat() mid.FileStatStateOutput {
+	return o.ApplyT(func(v *File) mid.FileStatStateOutput { return v.Stat }).(mid.FileStatStateOutput)
 }
 
-func (o FileOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *File) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o FileOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *File) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 func (o FileOutput) UnsafeWrites() pulumi.BoolPtrOutput {

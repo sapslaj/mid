@@ -15,7 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = ["SystemdServiceArgs", "SystemdService"]
 
@@ -25,6 +26,8 @@ class SystemdServiceArgs:
     def __init__(
         __self__,
         *,
+        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
         daemon_reexec: Optional[pulumi.Input[builtins.bool]] = None,
         daemon_reload: Optional[pulumi.Input[builtins.bool]] = None,
         enabled: Optional[pulumi.Input[builtins.bool]] = None,
@@ -34,11 +37,15 @@ class SystemdServiceArgs:
         name: Optional[pulumi.Input[builtins.str]] = None,
         no_block: Optional[pulumi.Input[builtins.bool]] = None,
         scope: Optional[pulumi.Input[builtins.str]] = None,
-        triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
+        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
     ):
         """
         The set of arguments for constructing a SystemdService resource.
         """
+        if config is not None:
+            pulumi.set(__self__, "config", config)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if daemon_reexec is not None:
             pulumi.set(__self__, "daemon_reexec", daemon_reexec)
         if daemon_reload is not None:
@@ -59,6 +66,24 @@ class SystemdServiceArgs:
             pulumi.set(__self__, "scope", scope)
         if triggers is not None:
             pulumi.set(__self__, "triggers", triggers)
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+        return pulumi.get(self, "config")
+
+    @config.setter
+    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+        pulumi.set(self, "config", value)
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+        return pulumi.get(self, "connection")
+
+    @connection.setter
+    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+        pulumi.set(self, "connection", value)
 
     @property
     @pulumi.getter(name="daemonReexec")
@@ -143,11 +168,11 @@ class SystemdServiceArgs:
 
     @property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_types.TriggersInputArgs"]]:
+    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_types.TriggersInputArgs"]]):
+    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
 
@@ -158,6 +183,19 @@ class SystemdService(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         daemon_reexec: Optional[pulumi.Input[builtins.bool]] = None,
         daemon_reload: Optional[pulumi.Input[builtins.bool]] = None,
         enabled: Optional[pulumi.Input[builtins.bool]] = None,
@@ -169,7 +207,10 @@ class SystemdService(pulumi.CustomResource):
         scope: Optional[pulumi.Input[builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         __props__=None,
@@ -209,6 +250,19 @@ class SystemdService(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         daemon_reexec: Optional[pulumi.Input[builtins.bool]] = None,
         daemon_reload: Optional[pulumi.Input[builtins.bool]] = None,
         enabled: Optional[pulumi.Input[builtins.bool]] = None,
@@ -220,7 +274,10 @@ class SystemdService(pulumi.CustomResource):
         scope: Optional[pulumi.Input[builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         __props__=None,
@@ -239,6 +296,8 @@ class SystemdService(pulumi.CustomResource):
                 )
             __props__ = SystemdServiceArgs.__new__(SystemdServiceArgs)
 
+            __props__.__dict__["config"] = config
+            __props__.__dict__["connection"] = connection
             __props__.__dict__["daemon_reexec"] = daemon_reexec
             __props__.__dict__["daemon_reload"] = daemon_reload
             __props__.__dict__["enabled"] = enabled
@@ -271,6 +330,8 @@ class SystemdService(pulumi.CustomResource):
 
         __props__ = SystemdServiceArgs.__new__(SystemdServiceArgs)
 
+        __props__.__dict__["config"] = None
+        __props__.__dict__["connection"] = None
         __props__.__dict__["daemon_reexec"] = None
         __props__.__dict__["daemon_reload"] = None
         __props__.__dict__["enabled"] = None
@@ -282,6 +343,16 @@ class SystemdService(pulumi.CustomResource):
         __props__.__dict__["scope"] = None
         __props__.__dict__["triggers"] = None
         return SystemdService(resource_name, opts=opts, __props__=__props__)
+
+    @property
+    @pulumi.getter
+    def config(self) -> pulumi.Output[Optional["_root_outputs.ResourceConfig"]]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> pulumi.Output[Optional["_root_outputs.Connection"]]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter(name="daemonReexec")
@@ -330,5 +401,5 @@ class SystemdService(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def triggers(self) -> pulumi.Output["_types.outputs.TriggersOutput"]:
+    def triggers(self) -> pulumi.Output["_root_outputs.TriggersOutput"]:
         return pulumi.get(self, "triggers")

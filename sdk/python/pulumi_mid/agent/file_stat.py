@@ -15,7 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = [
     "FileStatResult",
@@ -32,6 +33,8 @@ class FileStatResult:
         access_time=None,
         base_name=None,
         calculate_checksum=None,
+        config=None,
+        connection=None,
         create_time=None,
         dev=None,
         exists=None,
@@ -57,6 +60,12 @@ class FileStatResult:
         if calculate_checksum and not isinstance(calculate_checksum, bool):
             raise TypeError("Expected argument 'calculate_checksum' to be a bool")
         pulumi.set(__self__, "calculate_checksum", calculate_checksum)
+        if config and not isinstance(config, dict):
+            raise TypeError("Expected argument 'config' to be a dict")
+        pulumi.set(__self__, "config", config)
+        if connection and not isinstance(connection, dict):
+            raise TypeError("Expected argument 'connection' to be a dict")
+        pulumi.set(__self__, "connection", connection)
         if create_time and not isinstance(create_time, str):
             raise TypeError("Expected argument 'create_time' to be a str")
         pulumi.set(__self__, "create_time", create_time)
@@ -119,6 +128,16 @@ class FileStatResult:
         return pulumi.get(self, "calculate_checksum")
 
     @property
+    @pulumi.getter
+    def config(self) -> Optional["_root_outputs.ResourceConfig"]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional["_root_outputs.Connection"]:
+        return pulumi.get(self, "connection")
+
+    @property
     @pulumi.getter(name="createTime")
     def create_time(self) -> Optional[builtins.str]:
         return pulumi.get(self, "create_time")
@@ -135,7 +154,7 @@ class FileStatResult:
 
     @property
     @pulumi.getter(name="fileMode")
-    def file_mode(self) -> Optional["_types.outputs.FileStatFileMode"]:
+    def file_mode(self) -> Optional["_root_outputs.FileStatFileMode"]:
         return pulumi.get(self, "file_mode")
 
     @property
@@ -203,6 +222,8 @@ class AwaitableFileStatResult(FileStatResult):
             access_time=self.access_time,
             base_name=self.base_name,
             calculate_checksum=self.calculate_checksum,
+            config=self.config,
+            connection=self.connection,
             create_time=self.create_time,
             dev=self.dev,
             exists=self.exists,
@@ -223,6 +244,12 @@ class AwaitableFileStatResult(FileStatResult):
 
 def file_stat(
     calculate_checksum: Optional[builtins.bool] = None,
+    config: Optional[
+        Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+    ] = None,
+    connection: Optional[
+        Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]
+    ] = None,
     follow_symlinks: Optional[builtins.bool] = None,
     path: Optional[builtins.str] = None,
     opts: Optional[pulumi.InvokeOptions] = None,
@@ -232,6 +259,8 @@ def file_stat(
     """
     __args__ = dict()
     __args__["calculateChecksum"] = calculate_checksum
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["followSymlinks"] = follow_symlinks
     __args__["path"] = path
     opts = pulumi.InvokeOptions.merge(_utilities.get_invoke_opts_defaults(), opts)
@@ -243,6 +272,8 @@ def file_stat(
         access_time=pulumi.get(__ret__, "access_time"),
         base_name=pulumi.get(__ret__, "base_name"),
         calculate_checksum=pulumi.get(__ret__, "calculate_checksum"),
+        config=pulumi.get(__ret__, "config"),
+        connection=pulumi.get(__ret__, "connection"),
         create_time=pulumi.get(__ret__, "create_time"),
         dev=pulumi.get(__ret__, "dev"),
         exists=pulumi.get(__ret__, "exists"),
@@ -263,6 +294,18 @@ def file_stat(
 
 def file_stat_output(
     calculate_checksum: Optional[pulumi.Input[Optional[builtins.bool]]] = None,
+    config: Optional[
+        pulumi.Input[
+            Optional[
+                Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
+            ]
+        ]
+    ] = None,
+    connection: Optional[
+        pulumi.Input[
+            Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
+        ]
+    ] = None,
     follow_symlinks: Optional[pulumi.Input[Optional[builtins.bool]]] = None,
     path: Optional[pulumi.Input[builtins.str]] = None,
     opts: Optional[Union[pulumi.InvokeOptions, pulumi.InvokeOutputOptions]] = None,
@@ -272,6 +315,8 @@ def file_stat_output(
     """
     __args__ = dict()
     __args__["calculateChecksum"] = calculate_checksum
+    __args__["config"] = config
+    __args__["connection"] = connection
     __args__["followSymlinks"] = follow_symlinks
     __args__["path"] = path
     opts = pulumi.InvokeOutputOptions.merge(_utilities.get_invoke_opts_defaults(), opts)
@@ -283,6 +328,8 @@ def file_stat_output(
             access_time=pulumi.get(__response__, "access_time"),
             base_name=pulumi.get(__response__, "base_name"),
             calculate_checksum=pulumi.get(__response__, "calculate_checksum"),
+            config=pulumi.get(__response__, "config"),
+            connection=pulumi.get(__response__, "connection"),
             create_time=pulumi.get(__response__, "create_time"),
             dev=pulumi.get(__response__, "dev"),
             exists=pulumi.get(__response__, "exists"),

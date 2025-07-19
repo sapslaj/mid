@@ -15,7 +15,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import outputs as _root_outputs
 
 import types
 
@@ -25,18 +25,10 @@ __config__ = pulumi.Config("mid")
 class _ExportableConfig(types.ModuleType):
     @property
     def connection(self) -> Optional[str]:
-        """
-        remote endpoint connection configuration
-        """
         return __config__.get("connection")
 
     @property
     def delete_unreachable(self) -> Optional[bool]:
-        """
-        If present and set to true, the provider will delete resources associated
-        with an unreachable remote endpoint from Pulumi state. It can also be
-        sourced from the following environment variable:`PULUMI_MID_DELETE_UNREACHABLE`
-        """
         return __config__.get_bool("deleteUnreachable")
 
     @property

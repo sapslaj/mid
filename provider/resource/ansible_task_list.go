@@ -15,7 +15,7 @@ import (
 	"github.com/sapslaj/mid/pkg/pdiff"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"
-	"github.com/sapslaj/mid/provider/types"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type AnsibleTaskList struct{}
@@ -35,8 +35,10 @@ type AnsibleTaskListArgsTasks struct {
 }
 
 type AnsibleTaskListArgs struct {
-	Tasks    AnsibleTaskListArgsTasks `pulumi:"tasks"`
-	Triggers *types.TriggersInput     `pulumi:"triggers,optional"`
+	Tasks      AnsibleTaskListArgsTasks `pulumi:"tasks"`
+	Connection *midtypes.Connection     `pulumi:"connection,optional"`
+	Config     *midtypes.ResourceConfig `pulumi:"config,optional"`
+	Triggers   *midtypes.TriggersInput  `pulumi:"triggers,optional"`
 }
 
 type AnsibleTaskListStateTaskResult struct {
@@ -56,7 +58,7 @@ type AnsibleTaskListStateResults struct {
 type AnsibleTaskListState struct {
 	AnsibleTaskListArgs
 	Results  AnsibleTaskListStateResults `pulumi:"results"`
-	Triggers types.TriggersOutput        `pulumi:"triggers"`
+	Triggers midtypes.TriggersOutput     `pulumi:"triggers"`
 }
 
 func (r AnsibleTaskList) updateState(
@@ -65,7 +67,7 @@ func (r AnsibleTaskList) updateState(
 	changed bool,
 ) AnsibleTaskListState {
 	state.AnsibleTaskListArgs = inputs
-	state.Triggers = types.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
+	state.Triggers = midtypes.UpdateTriggerState(state.Triggers, inputs.Triggers, changed)
 	return state
 }
 
@@ -88,8 +90,12 @@ func (r AnsibleTaskList) Diff(
 
 	diff = pdiff.MergeDiffResponses(
 		diff,
-		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{"triggers"}),
-		types.DiffTriggers(req.State, req.Inputs),
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
+			"connection",
+			"config",
+			"triggers",
+		}),
+		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
 	span.SetStatus(codes.Ok, "")
@@ -129,9 +135,10 @@ func (r AnsibleTaskList) run(
 		taskList = *inputs.Tasks.Delete
 	}
 
-	config := infer.GetConfig[types.Config](ctx)
+	connection := midtypes.GetConnection(ctx, inputs.Connection)
+	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
-	canConnect, err := executor.CanConnect(ctx, config.Connection, 10)
+	canConnect, err := executor.CanConnect(ctx, connection, config, 10)
 	if !canConnect && err == nil {
 		err = executor.ErrUnreachable
 	}
@@ -164,7 +171,7 @@ func (r AnsibleTaskList) run(
 		callResult, err := executor.CallAgent[
 			rpc.AnsibleExecuteArgs,
 			rpc.AnsibleExecuteResult,
-		](ctx, config.Connection, call)
+		](ctx, connection, config, call)
 		if err != nil && !ignoreErrors {
 			span.SetStatus(codes.Error, err.Error())
 			return state, err
@@ -293,7 +300,7 @@ func (r AnsibleTaskList) Delete(
 	))
 	defer span.End()
 
-	config := infer.GetConfig[types.Config](ctx)
+	config := midtypes.GetResourceConfig(ctx, req.State.Config)
 
 	_, err := r.run(ctx, req.State.AnsibleTaskListArgs, req.State, "delete")
 	if err != nil {

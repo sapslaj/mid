@@ -15,7 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = ["GroupArgs", "Group"]
 
@@ -26,6 +27,8 @@ class GroupArgs:
         __self__,
         *,
         name: pulumi.Input[builtins.str],
+        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
         force: Optional[pulumi.Input[builtins.bool]] = None,
         gid: Optional[pulumi.Input[builtins.int]] = None,
@@ -34,12 +37,16 @@ class GroupArgs:
         local: Optional[pulumi.Input[builtins.bool]] = None,
         non_unique: Optional[pulumi.Input[builtins.bool]] = None,
         system: Optional[pulumi.Input[builtins.bool]] = None,
-        triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
+        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
     ):
         """
         The set of arguments for constructing a Group resource.
         """
         pulumi.set(__self__, "name", name)
+        if config is not None:
+            pulumi.set(__self__, "config", config)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if ensure is not None:
             pulumi.set(__self__, "ensure", ensure)
         if force is not None:
@@ -67,6 +74,24 @@ class GroupArgs:
     @name.setter
     def name(self, value: pulumi.Input[builtins.str]):
         pulumi.set(self, "name", value)
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+        return pulumi.get(self, "config")
+
+    @config.setter
+    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+        pulumi.set(self, "config", value)
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+        return pulumi.get(self, "connection")
+
+    @connection.setter
+    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+        pulumi.set(self, "connection", value)
 
     @property
     @pulumi.getter
@@ -142,11 +167,11 @@ class GroupArgs:
 
     @property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_types.TriggersInputArgs"]]:
+    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_types.TriggersInputArgs"]]):
+    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
 
@@ -157,6 +182,19 @@ class Group(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
         force: Optional[pulumi.Input[builtins.bool]] = None,
         gid: Optional[pulumi.Input[builtins.int]] = None,
@@ -168,7 +206,10 @@ class Group(pulumi.CustomResource):
         system: Optional[pulumi.Input[builtins.bool]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         __props__=None,
@@ -208,6 +249,19 @@ class Group(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         ensure: Optional[pulumi.Input[builtins.str]] = None,
         force: Optional[pulumi.Input[builtins.bool]] = None,
         gid: Optional[pulumi.Input[builtins.int]] = None,
@@ -219,7 +273,10 @@ class Group(pulumi.CustomResource):
         system: Optional[pulumi.Input[builtins.bool]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         __props__=None,
@@ -238,6 +295,8 @@ class Group(pulumi.CustomResource):
                 )
             __props__ = GroupArgs.__new__(GroupArgs)
 
+            __props__.__dict__["config"] = config
+            __props__.__dict__["connection"] = connection
             __props__.__dict__["ensure"] = ensure
             __props__.__dict__["force"] = force
             __props__.__dict__["gid"] = gid
@@ -272,6 +331,8 @@ class Group(pulumi.CustomResource):
 
         __props__ = GroupArgs.__new__(GroupArgs)
 
+        __props__.__dict__["config"] = None
+        __props__.__dict__["connection"] = None
         __props__.__dict__["ensure"] = None
         __props__.__dict__["force"] = None
         __props__.__dict__["gid"] = None
@@ -283,6 +344,16 @@ class Group(pulumi.CustomResource):
         __props__.__dict__["system"] = None
         __props__.__dict__["triggers"] = None
         return Group(resource_name, opts=opts, __props__=__props__)
+
+    @property
+    @pulumi.getter
+    def config(self) -> pulumi.Output[Optional["_root_outputs.ResourceConfig"]]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> pulumi.Output[Optional["_root_outputs.Connection"]]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter
@@ -331,5 +402,5 @@ class Group(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def triggers(self) -> pulumi.Output["_types.outputs.TriggersOutput"]:
+    def triggers(self) -> pulumi.Output["_root_outputs.TriggersOutput"]:
         return pulumi.get(self, "triggers")

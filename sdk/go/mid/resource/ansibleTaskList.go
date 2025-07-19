@@ -9,16 +9,18 @@ import (
 
 	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type AnsibleTaskList struct {
 	pulumi.CustomResourceState
 
-	Results  AnsibleTaskListStateResultsOutput `pulumi:"results"`
-	Tasks    AnsibleTaskListArgsTasksOutput    `pulumi:"tasks"`
-	Triggers types.TriggersOutputOutput        `pulumi:"triggers"`
+	Config     mid.ResourceConfigPtrOutput       `pulumi:"config"`
+	Connection mid.ConnectionPtrOutput           `pulumi:"connection"`
+	Results    AnsibleTaskListStateResultsOutput `pulumi:"results"`
+	Tasks      AnsibleTaskListArgsTasksOutput    `pulumi:"tasks"`
+	Triggers   mid.TriggersOutputOutput          `pulumi:"triggers"`
 }
 
 // NewAnsibleTaskList registers a new resource with the given unique name, arguments, and options.
@@ -30,6 +32,9 @@ func NewAnsibleTaskList(ctx *pulumi.Context,
 
 	if args.Tasks == nil {
 		return nil, errors.New("invalid value for required argument 'Tasks'")
+	}
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
 	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource AnsibleTaskList
@@ -64,14 +69,18 @@ func (AnsibleTaskListState) ElementType() reflect.Type {
 }
 
 type ansibleTaskListArgs struct {
-	Tasks    AnsibleTaskListArgsTasks `pulumi:"tasks"`
-	Triggers *types.TriggersInput     `pulumi:"triggers"`
+	Config     *mid.ResourceConfig      `pulumi:"config"`
+	Connection *mid.Connection          `pulumi:"connection"`
+	Tasks      AnsibleTaskListArgsTasks `pulumi:"tasks"`
+	Triggers   *mid.TriggersInput       `pulumi:"triggers"`
 }
 
 // The set of arguments for constructing a AnsibleTaskList resource.
 type AnsibleTaskListArgs struct {
-	Tasks    AnsibleTaskListArgsTasksInput
-	Triggers types.TriggersInputPtrInput
+	Config     mid.ResourceConfigPtrInput
+	Connection mid.ConnectionPtrInput
+	Tasks      AnsibleTaskListArgsTasksInput
+	Triggers   mid.TriggersInputPtrInput
 }
 
 func (AnsibleTaskListArgs) ElementType() reflect.Type {
@@ -161,6 +170,14 @@ func (o AnsibleTaskListOutput) ToAnsibleTaskListOutputWithContext(ctx context.Co
 	return o
 }
 
+func (o AnsibleTaskListOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *AnsibleTaskList) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o AnsibleTaskListOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *AnsibleTaskList) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o AnsibleTaskListOutput) Results() AnsibleTaskListStateResultsOutput {
 	return o.ApplyT(func(v *AnsibleTaskList) AnsibleTaskListStateResultsOutput { return v.Results }).(AnsibleTaskListStateResultsOutput)
 }
@@ -169,8 +186,8 @@ func (o AnsibleTaskListOutput) Tasks() AnsibleTaskListArgsTasksOutput {
 	return o.ApplyT(func(v *AnsibleTaskList) AnsibleTaskListArgsTasksOutput { return v.Tasks }).(AnsibleTaskListArgsTasksOutput)
 }
 
-func (o AnsibleTaskListOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *AnsibleTaskList) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o AnsibleTaskListOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *AnsibleTaskList) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 type AnsibleTaskListArrayOutput struct{ *pulumi.OutputState }

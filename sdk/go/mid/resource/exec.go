@@ -9,24 +9,26 @@ import (
 
 	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type Exec struct {
 	pulumi.CustomResourceState
 
-	Create              types.ExecCommandOutput    `pulumi:"create"`
-	Delete              types.ExecCommandPtrOutput `pulumi:"delete"`
-	DeleteBeforeReplace pulumi.BoolPtrOutput       `pulumi:"deleteBeforeReplace"`
-	Dir                 pulumi.StringPtrOutput     `pulumi:"dir"`
-	Environment         pulumi.StringMapOutput     `pulumi:"environment"`
-	ExpandArgumentVars  pulumi.BoolPtrOutput       `pulumi:"expandArgumentVars"`
-	Logging             pulumi.StringPtrOutput     `pulumi:"logging"`
-	Stderr              pulumi.StringOutput        `pulumi:"stderr"`
-	Stdout              pulumi.StringOutput        `pulumi:"stdout"`
-	Triggers            types.TriggersOutputOutput `pulumi:"triggers"`
-	Update              types.ExecCommandPtrOutput `pulumi:"update"`
+	Config              mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection          mid.ConnectionPtrOutput     `pulumi:"connection"`
+	Create              mid.ExecCommandOutput       `pulumi:"create"`
+	Delete              mid.ExecCommandPtrOutput    `pulumi:"delete"`
+	DeleteBeforeReplace pulumi.BoolPtrOutput        `pulumi:"deleteBeforeReplace"`
+	Dir                 pulumi.StringPtrOutput      `pulumi:"dir"`
+	Environment         pulumi.StringMapOutput      `pulumi:"environment"`
+	ExpandArgumentVars  pulumi.BoolPtrOutput        `pulumi:"expandArgumentVars"`
+	Logging             pulumi.StringPtrOutput      `pulumi:"logging"`
+	Stderr              pulumi.StringOutput         `pulumi:"stderr"`
+	Stdout              pulumi.StringOutput         `pulumi:"stdout"`
+	Triggers            mid.TriggersOutputOutput    `pulumi:"triggers"`
+	Update              mid.ExecCommandPtrOutput    `pulumi:"update"`
 }
 
 // NewExec registers a new resource with the given unique name, arguments, and options.
@@ -38,6 +40,9 @@ func NewExec(ctx *pulumi.Context,
 
 	if args.Create == nil {
 		return nil, errors.New("invalid value for required argument 'Create'")
+	}
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
 	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource Exec
@@ -72,28 +77,32 @@ func (ExecState) ElementType() reflect.Type {
 }
 
 type execArgs struct {
-	Create              types.ExecCommand    `pulumi:"create"`
-	Delete              *types.ExecCommand   `pulumi:"delete"`
-	DeleteBeforeReplace *bool                `pulumi:"deleteBeforeReplace"`
-	Dir                 *string              `pulumi:"dir"`
-	Environment         map[string]string    `pulumi:"environment"`
-	ExpandArgumentVars  *bool                `pulumi:"expandArgumentVars"`
-	Logging             *string              `pulumi:"logging"`
-	Triggers            *types.TriggersInput `pulumi:"triggers"`
-	Update              *types.ExecCommand   `pulumi:"update"`
+	Config              *mid.ResourceConfig `pulumi:"config"`
+	Connection          *mid.Connection     `pulumi:"connection"`
+	Create              mid.ExecCommand     `pulumi:"create"`
+	Delete              *mid.ExecCommand    `pulumi:"delete"`
+	DeleteBeforeReplace *bool               `pulumi:"deleteBeforeReplace"`
+	Dir                 *string             `pulumi:"dir"`
+	Environment         map[string]string   `pulumi:"environment"`
+	ExpandArgumentVars  *bool               `pulumi:"expandArgumentVars"`
+	Logging             *string             `pulumi:"logging"`
+	Triggers            *mid.TriggersInput  `pulumi:"triggers"`
+	Update              *mid.ExecCommand    `pulumi:"update"`
 }
 
 // The set of arguments for constructing a Exec resource.
 type ExecArgs struct {
-	Create              types.ExecCommandInput
-	Delete              types.ExecCommandPtrInput
+	Config              mid.ResourceConfigPtrInput
+	Connection          mid.ConnectionPtrInput
+	Create              mid.ExecCommandInput
+	Delete              mid.ExecCommandPtrInput
 	DeleteBeforeReplace pulumi.BoolPtrInput
 	Dir                 pulumi.StringPtrInput
 	Environment         pulumi.StringMapInput
 	ExpandArgumentVars  pulumi.BoolPtrInput
 	Logging             pulumi.StringPtrInput
-	Triggers            types.TriggersInputPtrInput
-	Update              types.ExecCommandPtrInput
+	Triggers            mid.TriggersInputPtrInput
+	Update              mid.ExecCommandPtrInput
 }
 
 func (ExecArgs) ElementType() reflect.Type {
@@ -183,12 +192,20 @@ func (o ExecOutput) ToExecOutputWithContext(ctx context.Context) ExecOutput {
 	return o
 }
 
-func (o ExecOutput) Create() types.ExecCommandOutput {
-	return o.ApplyT(func(v *Exec) types.ExecCommandOutput { return v.Create }).(types.ExecCommandOutput)
+func (o ExecOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *Exec) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
 }
 
-func (o ExecOutput) Delete() types.ExecCommandPtrOutput {
-	return o.ApplyT(func(v *Exec) types.ExecCommandPtrOutput { return v.Delete }).(types.ExecCommandPtrOutput)
+func (o ExecOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *Exec) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
+func (o ExecOutput) Create() mid.ExecCommandOutput {
+	return o.ApplyT(func(v *Exec) mid.ExecCommandOutput { return v.Create }).(mid.ExecCommandOutput)
+}
+
+func (o ExecOutput) Delete() mid.ExecCommandPtrOutput {
+	return o.ApplyT(func(v *Exec) mid.ExecCommandPtrOutput { return v.Delete }).(mid.ExecCommandPtrOutput)
 }
 
 func (o ExecOutput) DeleteBeforeReplace() pulumi.BoolPtrOutput {
@@ -219,12 +236,12 @@ func (o ExecOutput) Stdout() pulumi.StringOutput {
 	return o.ApplyT(func(v *Exec) pulumi.StringOutput { return v.Stdout }).(pulumi.StringOutput)
 }
 
-func (o ExecOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *Exec) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o ExecOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *Exec) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
-func (o ExecOutput) Update() types.ExecCommandPtrOutput {
-	return o.ApplyT(func(v *Exec) types.ExecCommandPtrOutput { return v.Update }).(types.ExecCommandPtrOutput)
+func (o ExecOutput) Update() mid.ExecCommandPtrOutput {
+	return o.ApplyT(func(v *Exec) mid.ExecCommandPtrOutput { return v.Update }).(mid.ExecCommandPtrOutput)
 }
 
 type ExecArrayOutput struct{ *pulumi.OutputState }

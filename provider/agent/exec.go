@@ -10,16 +10,19 @@ import (
 	"github.com/pulumi/pulumi-go-provider/infer"
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/telemetry"
+	"github.com/sapslaj/mid/provider/midtypes"
 )
 
 type Exec struct{}
 
 type ExecInput struct {
-	Command            []string          `pulumi:"command"`
-	Dir                string            `pulumi:"dir,optional"`
-	Environment        map[string]string `pulumi:"environment,optional"`
-	Stdin              string            `pulumi:"stdin,optional"`
-	ExpandArgumentVars bool              `pulumi:"expandArgumentVars,optional"`
+	Command            []string                 `pulumi:"command"`
+	Dir                string                   `pulumi:"dir,optional"`
+	Environment        map[string]string        `pulumi:"environment,optional"`
+	Stdin              string                   `pulumi:"stdin,optional"`
+	ExpandArgumentVars bool                     `pulumi:"expandArgumentVars,optional"`
+	Connection         *midtypes.Connection     `pulumi:"connection,optional"`
+	Config             *midtypes.ResourceConfig `pulumi:"config,optional"`
 }
 
 type ExecOutput struct {
@@ -40,13 +43,19 @@ func (f Exec) Invoke(
 	))
 	defer span.End()
 
-	out, err := CallAgent[rpc.ExecArgs, rpc.ExecResult](ctx, rpc.RPCExec, rpc.ExecArgs{
-		Command:            req.Input.Command,
-		Dir:                req.Input.Dir,
-		Environment:        req.Input.Environment,
-		Stdin:              []byte(req.Input.Stdin),
-		ExpandArgumentVars: req.Input.ExpandArgumentVars,
-	})
+	out, err := CallAgent[rpc.ExecArgs, rpc.ExecResult](
+		ctx,
+		req.Input.Connection,
+		req.Input.Config,
+		rpc.RPCExec,
+		rpc.ExecArgs{
+			Command:            req.Input.Command,
+			Dir:                req.Input.Dir,
+			Environment:        req.Input.Environment,
+			Stdin:              []byte(req.Input.Stdin),
+			ExpandArgumentVars: req.Input.ExpandArgumentVars,
+		},
+	)
 
 	if err == nil {
 		span.SetStatus(codes.Ok, "")

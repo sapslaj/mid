@@ -8,13 +8,14 @@ import (
 	"reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
 )
 
 func AgentPing(ctx *pulumi.Context, args *AgentPingArgs, opts ...pulumi.InvokeOption) (*AgentPingResult, error) {
 	opts = internal.PkgInvokeDefaultOpts(opts)
 	var rv AgentPingResult
-	err := ctx.Invoke("mid:agent:agentPing", args, &rv, opts...)
+	err := ctx.Invoke("mid:agent:agentPing", args.Defaults(), &rv, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +23,20 @@ func AgentPing(ctx *pulumi.Context, args *AgentPingArgs, opts ...pulumi.InvokeOp
 }
 
 type AgentPingArgs struct {
-	Ping *string `pulumi:"ping"`
+	Config     *mid.ResourceConfig `pulumi:"config"`
+	Connection *mid.Connection     `pulumi:"connection"`
+	Ping       *string             `pulumi:"ping"`
+}
+
+// Defaults sets the appropriate defaults for AgentPingArgs
+func (val *AgentPingArgs) Defaults() *AgentPingArgs {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	tmp.Connection = tmp.Connection.Defaults()
+
+	return &tmp
 }
 
 type AgentPingResult struct {
@@ -35,12 +49,14 @@ func AgentPingOutput(ctx *pulumi.Context, args AgentPingOutputArgs, opts ...pulu
 		ApplyT(func(v interface{}) (AgentPingResultOutput, error) {
 			args := v.(AgentPingArgs)
 			options := pulumi.InvokeOutputOptions{InvokeOptions: internal.PkgInvokeDefaultOpts(opts)}
-			return ctx.InvokeOutput("mid:agent:agentPing", args, AgentPingResultOutput{}, options).(AgentPingResultOutput), nil
+			return ctx.InvokeOutput("mid:agent:agentPing", args.Defaults(), AgentPingResultOutput{}, options).(AgentPingResultOutput), nil
 		}).(AgentPingResultOutput)
 }
 
 type AgentPingOutputArgs struct {
-	Ping pulumi.StringPtrInput `pulumi:"ping"`
+	Config     mid.ResourceConfigPtrInput `pulumi:"config"`
+	Connection mid.ConnectionPtrInput     `pulumi:"connection"`
+	Ping       pulumi.StringPtrInput      `pulumi:"ping"`
 }
 
 func (AgentPingOutputArgs) ElementType() reflect.Type {

@@ -8,54 +8,82 @@ import (
 	"reflect"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
 )
 
 func Exec(ctx *pulumi.Context, args *ExecArgs, opts ...pulumi.InvokeOption) (*ExecResult, error) {
 	opts = internal.PkgInvokeDefaultOpts(opts)
 	var rv ExecResult
-	err := ctx.Invoke("mid:agent:exec", args, &rv, opts...)
+	err := ctx.Invoke("mid:agent:exec", args.Defaults(), &rv, opts...)
 	if err != nil {
 		return nil, err
 	}
-	return &rv, nil
+	return rv.Defaults(), nil
 }
 
 type ExecArgs struct {
-	Command            []string          `pulumi:"command"`
-	Dir                *string           `pulumi:"dir"`
-	Environment        map[string]string `pulumi:"environment"`
-	ExpandArgumentVars *bool             `pulumi:"expandArgumentVars"`
-	Stdin              *string           `pulumi:"stdin"`
+	Command            []string            `pulumi:"command"`
+	Config             *mid.ResourceConfig `pulumi:"config"`
+	Connection         *mid.Connection     `pulumi:"connection"`
+	Dir                *string             `pulumi:"dir"`
+	Environment        map[string]string   `pulumi:"environment"`
+	ExpandArgumentVars *bool               `pulumi:"expandArgumentVars"`
+	Stdin              *string             `pulumi:"stdin"`
+}
+
+// Defaults sets the appropriate defaults for ExecArgs
+func (val *ExecArgs) Defaults() *ExecArgs {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	tmp.Connection = tmp.Connection.Defaults()
+
+	return &tmp
 }
 
 type ExecResult struct {
-	Command            []string          `pulumi:"command"`
-	Dir                *string           `pulumi:"dir"`
-	Environment        map[string]string `pulumi:"environment"`
-	ExitCode           int               `pulumi:"exitCode"`
-	ExpandArgumentVars *bool             `pulumi:"expandArgumentVars"`
-	Pid                int               `pulumi:"pid"`
-	Stderr             string            `pulumi:"stderr"`
-	Stdin              *string           `pulumi:"stdin"`
-	Stdout             string            `pulumi:"stdout"`
+	Command            []string            `pulumi:"command"`
+	Config             *mid.ResourceConfig `pulumi:"config"`
+	Connection         *mid.Connection     `pulumi:"connection"`
+	Dir                *string             `pulumi:"dir"`
+	Environment        map[string]string   `pulumi:"environment"`
+	ExitCode           int                 `pulumi:"exitCode"`
+	ExpandArgumentVars *bool               `pulumi:"expandArgumentVars"`
+	Pid                int                 `pulumi:"pid"`
+	Stderr             string              `pulumi:"stderr"`
+	Stdin              *string             `pulumi:"stdin"`
+	Stdout             string              `pulumi:"stdout"`
 }
 
+// Defaults sets the appropriate defaults for ExecResult
+func (val *ExecResult) Defaults() *ExecResult {
+	if val == nil {
+		return nil
+	}
+	tmp := *val
+	tmp.Connection = tmp.Connection.Defaults()
+
+	return &tmp
+}
 func ExecOutput(ctx *pulumi.Context, args ExecOutputArgs, opts ...pulumi.InvokeOption) ExecResultOutput {
 	return pulumi.ToOutputWithContext(ctx.Context(), args).
 		ApplyT(func(v interface{}) (ExecResultOutput, error) {
 			args := v.(ExecArgs)
 			options := pulumi.InvokeOutputOptions{InvokeOptions: internal.PkgInvokeDefaultOpts(opts)}
-			return ctx.InvokeOutput("mid:agent:exec", args, ExecResultOutput{}, options).(ExecResultOutput), nil
+			return ctx.InvokeOutput("mid:agent:exec", args.Defaults(), ExecResultOutput{}, options).(ExecResultOutput), nil
 		}).(ExecResultOutput)
 }
 
 type ExecOutputArgs struct {
-	Command            pulumi.StringArrayInput `pulumi:"command"`
-	Dir                pulumi.StringPtrInput   `pulumi:"dir"`
-	Environment        pulumi.StringMapInput   `pulumi:"environment"`
-	ExpandArgumentVars pulumi.BoolPtrInput     `pulumi:"expandArgumentVars"`
-	Stdin              pulumi.StringPtrInput   `pulumi:"stdin"`
+	Command            pulumi.StringArrayInput    `pulumi:"command"`
+	Config             mid.ResourceConfigPtrInput `pulumi:"config"`
+	Connection         mid.ConnectionPtrInput     `pulumi:"connection"`
+	Dir                pulumi.StringPtrInput      `pulumi:"dir"`
+	Environment        pulumi.StringMapInput      `pulumi:"environment"`
+	ExpandArgumentVars pulumi.BoolPtrInput        `pulumi:"expandArgumentVars"`
+	Stdin              pulumi.StringPtrInput      `pulumi:"stdin"`
 }
 
 func (ExecOutputArgs) ElementType() reflect.Type {
@@ -78,6 +106,14 @@ func (o ExecResultOutput) ToExecResultOutputWithContext(ctx context.Context) Exe
 
 func (o ExecResultOutput) Command() pulumi.StringArrayOutput {
 	return o.ApplyT(func(v ExecResult) []string { return v.Command }).(pulumi.StringArrayOutput)
+}
+
+func (o ExecResultOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v ExecResult) *mid.ResourceConfig { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o ExecResultOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v ExecResult) *mid.Connection { return v.Connection }).(mid.ConnectionPtrOutput)
 }
 
 func (o ExecResultOutput) Dir() pulumi.StringPtrOutput {

@@ -33,10 +33,12 @@ export class Package extends pulumi.CustomResource {
     return obj["__pulumiType"] === Package.__pulumiType;
   }
 
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly ensure!: pulumi.Output<string>;
   public readonly name!: pulumi.Output<string | undefined>;
   public readonly names!: pulumi.Output<string[] | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a Package resource with the given unique name, arguments, and options.
@@ -49,11 +51,17 @@ export class Package extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["name"] = args ? args.name : undefined;
       resourceInputs["names"] = args ? args.names : undefined;
       resourceInputs["triggers"] = args ? args.triggers : undefined;
     } else {
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["ensure"] = undefined /*out*/;
       resourceInputs["name"] = undefined /*out*/;
       resourceInputs["names"] = undefined /*out*/;
@@ -68,8 +76,10 @@ export class Package extends pulumi.CustomResource {
  * The set of arguments for constructing a Package resource.
  */
 export interface PackageArgs {
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   ensure?: pulumi.Input<string>;
   name?: pulumi.Input<string>;
   names?: pulumi.Input<pulumi.Input<string>[]>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
 }

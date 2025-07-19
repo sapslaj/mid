@@ -15,7 +15,8 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import NotRequired, TypedDict, TypeAlias
 from .. import _utilities
-from .. import types as _types
+from .. import _inputs as _root_inputs
+from .. import outputs as _root_outputs
 
 __all__ = ["AptArgs", "Apt"]
 
@@ -32,6 +33,8 @@ class AptArgs:
         autoremove: Optional[pulumi.Input[builtins.bool]] = None,
         cache_valid_time: Optional[pulumi.Input[builtins.int]] = None,
         clean: Optional[pulumi.Input[builtins.bool]] = None,
+        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
         deb: Optional[pulumi.Input[builtins.str]] = None,
         default_release: Optional[pulumi.Input[builtins.str]] = None,
         dpkg_options: Optional[pulumi.Input[builtins.str]] = None,
@@ -46,7 +49,7 @@ class AptArgs:
         only_upgrade: Optional[pulumi.Input[builtins.bool]] = None,
         policy_rc_d: Optional[pulumi.Input[builtins.int]] = None,
         purge: Optional[pulumi.Input[builtins.bool]] = None,
-        triggers: Optional[pulumi.Input["_types.TriggersInputArgs"]] = None,
+        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
         update_cache: Optional[pulumi.Input[builtins.bool]] = None,
         update_cache_retries: Optional[pulumi.Input[builtins.int]] = None,
         update_cache_retry_max_delay: Optional[pulumi.Input[builtins.int]] = None,
@@ -71,6 +74,10 @@ class AptArgs:
             pulumi.set(__self__, "cache_valid_time", cache_valid_time)
         if clean is not None:
             pulumi.set(__self__, "clean", clean)
+        if config is not None:
+            pulumi.set(__self__, "config", config)
+        if connection is not None:
+            pulumi.set(__self__, "connection", connection)
         if deb is not None:
             pulumi.set(__self__, "deb", deb)
         if default_release is not None:
@@ -174,6 +181,24 @@ class AptArgs:
     @clean.setter
     def clean(self, value: Optional[pulumi.Input[builtins.bool]]):
         pulumi.set(self, "clean", value)
+
+    @property
+    @pulumi.getter
+    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+        return pulumi.get(self, "config")
+
+    @config.setter
+    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+        pulumi.set(self, "config", value)
+
+    @property
+    @pulumi.getter
+    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+        return pulumi.get(self, "connection")
+
+    @connection.setter
+    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+        pulumi.set(self, "connection", value)
 
     @property
     @pulumi.getter
@@ -305,11 +330,11 @@ class AptArgs:
 
     @property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_types.TriggersInputArgs"]]:
+    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_types.TriggersInputArgs"]]):
+    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @property
@@ -363,6 +388,19 @@ class Apt(pulumi.CustomResource):
         autoremove: Optional[pulumi.Input[builtins.bool]] = None,
         cache_valid_time: Optional[pulumi.Input[builtins.int]] = None,
         clean: Optional[pulumi.Input[builtins.bool]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         deb: Optional[pulumi.Input[builtins.str]] = None,
         default_release: Optional[pulumi.Input[builtins.str]] = None,
         dpkg_options: Optional[pulumi.Input[builtins.str]] = None,
@@ -379,7 +417,10 @@ class Apt(pulumi.CustomResource):
         purge: Optional[pulumi.Input[builtins.bool]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         update_cache: Optional[pulumi.Input[builtins.bool]] = None,
@@ -430,6 +471,19 @@ class Apt(pulumi.CustomResource):
         autoremove: Optional[pulumi.Input[builtins.bool]] = None,
         cache_valid_time: Optional[pulumi.Input[builtins.int]] = None,
         clean: Optional[pulumi.Input[builtins.bool]] = None,
+        config: Optional[
+            pulumi.Input[
+                Union[
+                    "_root_inputs.ResourceConfigArgs",
+                    "_root_inputs.ResourceConfigArgsDict",
+                ]
+            ]
+        ] = None,
+        connection: Optional[
+            pulumi.Input[
+                Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
+            ]
+        ] = None,
         deb: Optional[pulumi.Input[builtins.str]] = None,
         default_release: Optional[pulumi.Input[builtins.str]] = None,
         dpkg_options: Optional[pulumi.Input[builtins.str]] = None,
@@ -446,7 +500,10 @@ class Apt(pulumi.CustomResource):
         purge: Optional[pulumi.Input[builtins.bool]] = None,
         triggers: Optional[
             pulumi.Input[
-                Union["_types.TriggersInputArgs", "_types.TriggersInputArgsDict"]
+                Union[
+                    "_root_inputs.TriggersInputArgs",
+                    "_root_inputs.TriggersInputArgsDict",
+                ]
             ]
         ] = None,
         update_cache: Optional[pulumi.Input[builtins.bool]] = None,
@@ -478,6 +535,8 @@ class Apt(pulumi.CustomResource):
             __props__.__dict__["autoremove"] = autoremove
             __props__.__dict__["cache_valid_time"] = cache_valid_time
             __props__.__dict__["clean"] = clean
+            __props__.__dict__["config"] = config
+            __props__.__dict__["connection"] = connection
             __props__.__dict__["deb"] = deb
             __props__.__dict__["default_release"] = default_release
             __props__.__dict__["dpkg_options"] = dpkg_options
@@ -528,6 +587,8 @@ class Apt(pulumi.CustomResource):
         __props__.__dict__["autoremove"] = None
         __props__.__dict__["cache_valid_time"] = None
         __props__.__dict__["clean"] = None
+        __props__.__dict__["config"] = None
+        __props__.__dict__["connection"] = None
         __props__.__dict__["deb"] = None
         __props__.__dict__["default_release"] = None
         __props__.__dict__["dpkg_options"] = None
@@ -583,6 +644,16 @@ class Apt(pulumi.CustomResource):
     @pulumi.getter
     def clean(self) -> pulumi.Output[Optional[builtins.bool]]:
         return pulumi.get(self, "clean")
+
+    @property
+    @pulumi.getter
+    def config(self) -> pulumi.Output[Optional["_root_outputs.ResourceConfig"]]:
+        return pulumi.get(self, "config")
+
+    @property
+    @pulumi.getter
+    def connection(self) -> pulumi.Output[Optional["_root_outputs.Connection"]]:
+        return pulumi.get(self, "connection")
 
     @property
     @pulumi.getter
@@ -656,7 +727,7 @@ class Apt(pulumi.CustomResource):
 
     @property
     @pulumi.getter
-    def triggers(self) -> pulumi.Output["_types.outputs.TriggersOutput"]:
+    def triggers(self) -> pulumi.Output["_root_outputs.TriggersOutput"]:
         return pulumi.get(self, "triggers")
 
     @property

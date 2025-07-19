@@ -9,28 +9,30 @@ import (
 
 	"errors"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 type FileLine struct {
 	pulumi.CustomResourceState
 
-	_drifted     pulumi.StringArrayOutput   `pulumi:"_drifted"`
-	Backrefs     pulumi.BoolPtrOutput       `pulumi:"backrefs"`
-	Backup       pulumi.BoolPtrOutput       `pulumi:"backup"`
-	Create       pulumi.BoolPtrOutput       `pulumi:"create"`
-	Ensure       pulumi.StringPtrOutput     `pulumi:"ensure"`
-	FirstMatch   pulumi.BoolPtrOutput       `pulumi:"firstMatch"`
-	InsertAfter  pulumi.StringPtrOutput     `pulumi:"insertAfter"`
-	InsertBefore pulumi.StringPtrOutput     `pulumi:"insertBefore"`
-	Line         pulumi.StringPtrOutput     `pulumi:"line"`
-	Path         pulumi.StringOutput        `pulumi:"path"`
-	Regexp       pulumi.StringPtrOutput     `pulumi:"regexp"`
-	SearchString pulumi.StringPtrOutput     `pulumi:"searchString"`
-	Triggers     types.TriggersOutputOutput `pulumi:"triggers"`
-	UnsafeWrites pulumi.BoolPtrOutput       `pulumi:"unsafeWrites"`
-	Validate     pulumi.StringPtrOutput     `pulumi:"validate"`
+	_drifted     pulumi.StringArrayOutput    `pulumi:"_drifted"`
+	Backrefs     pulumi.BoolPtrOutput        `pulumi:"backrefs"`
+	Backup       pulumi.BoolPtrOutput        `pulumi:"backup"`
+	Config       mid.ResourceConfigPtrOutput `pulumi:"config"`
+	Connection   mid.ConnectionPtrOutput     `pulumi:"connection"`
+	Create       pulumi.BoolPtrOutput        `pulumi:"create"`
+	Ensure       pulumi.StringPtrOutput      `pulumi:"ensure"`
+	FirstMatch   pulumi.BoolPtrOutput        `pulumi:"firstMatch"`
+	InsertAfter  pulumi.StringPtrOutput      `pulumi:"insertAfter"`
+	InsertBefore pulumi.StringPtrOutput      `pulumi:"insertBefore"`
+	Line         pulumi.StringPtrOutput      `pulumi:"line"`
+	Path         pulumi.StringOutput         `pulumi:"path"`
+	Regexp       pulumi.StringPtrOutput      `pulumi:"regexp"`
+	SearchString pulumi.StringPtrOutput      `pulumi:"searchString"`
+	Triggers     mid.TriggersOutputOutput    `pulumi:"triggers"`
+	UnsafeWrites pulumi.BoolPtrOutput        `pulumi:"unsafeWrites"`
+	Validate     pulumi.StringPtrOutput      `pulumi:"validate"`
 }
 
 // NewFileLine registers a new resource with the given unique name, arguments, and options.
@@ -42,6 +44,9 @@ func NewFileLine(ctx *pulumi.Context,
 
 	if args.Path == nil {
 		return nil, errors.New("invalid value for required argument 'Path'")
+	}
+	if args.Connection != nil {
+		args.Connection = args.Connection.ToConnectionPtrOutput().ApplyT(func(v *mid.Connection) *mid.Connection { return v.Defaults() }).(mid.ConnectionPtrOutput)
 	}
 	opts = internal.PkgResourceDefaultOpts(opts)
 	var resource FileLine
@@ -76,26 +81,30 @@ func (FileLineState) ElementType() reflect.Type {
 }
 
 type fileLineArgs struct {
-	Backrefs     *bool                `pulumi:"backrefs"`
-	Backup       *bool                `pulumi:"backup"`
-	Create       *bool                `pulumi:"create"`
-	Ensure       *string              `pulumi:"ensure"`
-	FirstMatch   *bool                `pulumi:"firstMatch"`
-	InsertAfter  *string              `pulumi:"insertAfter"`
-	InsertBefore *string              `pulumi:"insertBefore"`
-	Line         *string              `pulumi:"line"`
-	Path         string               `pulumi:"path"`
-	Regexp       *string              `pulumi:"regexp"`
-	SearchString *string              `pulumi:"searchString"`
-	Triggers     *types.TriggersInput `pulumi:"triggers"`
-	UnsafeWrites *bool                `pulumi:"unsafeWrites"`
-	Validate     *string              `pulumi:"validate"`
+	Backrefs     *bool               `pulumi:"backrefs"`
+	Backup       *bool               `pulumi:"backup"`
+	Config       *mid.ResourceConfig `pulumi:"config"`
+	Connection   *mid.Connection     `pulumi:"connection"`
+	Create       *bool               `pulumi:"create"`
+	Ensure       *string             `pulumi:"ensure"`
+	FirstMatch   *bool               `pulumi:"firstMatch"`
+	InsertAfter  *string             `pulumi:"insertAfter"`
+	InsertBefore *string             `pulumi:"insertBefore"`
+	Line         *string             `pulumi:"line"`
+	Path         string              `pulumi:"path"`
+	Regexp       *string             `pulumi:"regexp"`
+	SearchString *string             `pulumi:"searchString"`
+	Triggers     *mid.TriggersInput  `pulumi:"triggers"`
+	UnsafeWrites *bool               `pulumi:"unsafeWrites"`
+	Validate     *string             `pulumi:"validate"`
 }
 
 // The set of arguments for constructing a FileLine resource.
 type FileLineArgs struct {
 	Backrefs     pulumi.BoolPtrInput
 	Backup       pulumi.BoolPtrInput
+	Config       mid.ResourceConfigPtrInput
+	Connection   mid.ConnectionPtrInput
 	Create       pulumi.BoolPtrInput
 	Ensure       pulumi.StringPtrInput
 	FirstMatch   pulumi.BoolPtrInput
@@ -105,7 +114,7 @@ type FileLineArgs struct {
 	Path         pulumi.StringInput
 	Regexp       pulumi.StringPtrInput
 	SearchString pulumi.StringPtrInput
-	Triggers     types.TriggersInputPtrInput
+	Triggers     mid.TriggersInputPtrInput
 	UnsafeWrites pulumi.BoolPtrInput
 	Validate     pulumi.StringPtrInput
 }
@@ -209,6 +218,14 @@ func (o FileLineOutput) Backup() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *FileLine) pulumi.BoolPtrOutput { return v.Backup }).(pulumi.BoolPtrOutput)
 }
 
+func (o FileLineOutput) Config() mid.ResourceConfigPtrOutput {
+	return o.ApplyT(func(v *FileLine) mid.ResourceConfigPtrOutput { return v.Config }).(mid.ResourceConfigPtrOutput)
+}
+
+func (o FileLineOutput) Connection() mid.ConnectionPtrOutput {
+	return o.ApplyT(func(v *FileLine) mid.ConnectionPtrOutput { return v.Connection }).(mid.ConnectionPtrOutput)
+}
+
 func (o FileLineOutput) Create() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *FileLine) pulumi.BoolPtrOutput { return v.Create }).(pulumi.BoolPtrOutput)
 }
@@ -245,8 +262,8 @@ func (o FileLineOutput) SearchString() pulumi.StringPtrOutput {
 	return o.ApplyT(func(v *FileLine) pulumi.StringPtrOutput { return v.SearchString }).(pulumi.StringPtrOutput)
 }
 
-func (o FileLineOutput) Triggers() types.TriggersOutputOutput {
-	return o.ApplyT(func(v *FileLine) types.TriggersOutputOutput { return v.Triggers }).(types.TriggersOutputOutput)
+func (o FileLineOutput) Triggers() mid.TriggersOutputOutput {
+	return o.ApplyT(func(v *FileLine) mid.TriggersOutputOutput { return v.Triggers }).(mid.TriggersOutputOutput)
 }
 
 func (o FileLineOutput) UnsafeWrites() pulumi.BoolPtrOutput {

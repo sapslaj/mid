@@ -34,6 +34,8 @@ export class User extends pulumi.CustomResource {
   }
 
   public readonly comment!: pulumi.Output<string | undefined>;
+  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
+  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
   public readonly ensure!: pulumi.Output<string | undefined>;
   public readonly force!: pulumi.Output<boolean | undefined>;
   public readonly group!: pulumi.Output<string | undefined>;
@@ -48,7 +50,7 @@ export class User extends pulumi.CustomResource {
   public readonly shell!: pulumi.Output<string | undefined>;
   public readonly skeleton!: pulumi.Output<string | undefined>;
   public readonly system!: pulumi.Output<boolean | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.types.TriggersOutput>;
+  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
   public readonly uid!: pulumi.Output<number | undefined>;
   public readonly uidMax!: pulumi.Output<number | undefined>;
   public readonly uidMin!: pulumi.Output<number | undefined>;
@@ -70,6 +72,10 @@ export class User extends pulumi.CustomResource {
         throw new Error("Missing required property 'name'");
       }
       resourceInputs["comment"] = args ? args.comment : undefined;
+      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["connection"] = args
+        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        : undefined;
       resourceInputs["ensure"] = args ? args.ensure : undefined;
       resourceInputs["force"] = args ? args.force : undefined;
       resourceInputs["group"] = args ? args.group : undefined;
@@ -92,6 +98,8 @@ export class User extends pulumi.CustomResource {
       resourceInputs["updatePassword"] = args ? args.updatePassword : undefined;
     } else {
       resourceInputs["comment"] = undefined /*out*/;
+      resourceInputs["config"] = undefined /*out*/;
+      resourceInputs["connection"] = undefined /*out*/;
       resourceInputs["ensure"] = undefined /*out*/;
       resourceInputs["force"] = undefined /*out*/;
       resourceInputs["group"] = undefined /*out*/;
@@ -123,6 +131,8 @@ export class User extends pulumi.CustomResource {
  */
 export interface UserArgs {
   comment?: pulumi.Input<string>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs>;
+  connection?: pulumi.Input<inputs.ConnectionArgs>;
   ensure?: pulumi.Input<string>;
   force?: pulumi.Input<boolean>;
   group?: pulumi.Input<string>;
@@ -137,7 +147,7 @@ export interface UserArgs {
   shell?: pulumi.Input<string>;
   skeleton?: pulumi.Input<string>;
   system?: pulumi.Input<boolean>;
-  triggers?: pulumi.Input<inputs.types.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
   uid?: pulumi.Input<number>;
   uidMax?: pulumi.Input<number>;
   uidMin?: pulumi.Input<number>;
