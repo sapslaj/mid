@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/sapslaj/mid/pkg/pdiff"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"go.opentelemetry.io/otel/attribute"
@@ -72,22 +73,15 @@ func (r Service) Diff(
 	defer span.End()
 
 	diff := p.DiffResponse{
-		HasChanges:          false,
-		DetailedDiff:        map[string]p.PropertyDiff{},
-		DeleteBeforeReplace: false,
+		DetailedDiff: map[string]p.PropertyDiff{},
 	}
 
-	diff = midtypes.MergeDiffResponses(
+	diff = pdiff.MergeDiffResponses(
 		diff,
-		midtypes.DiffAttributes(req.State, req.Inputs, []string{
-			"arguments",
-			"enabled",
-			"name",
-			"pattern",
-			"runlevel",
-			"sleep",
-			"state",
-			"use",
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
+			"connection",
+			"config",
+			"triggers",
 		}),
 		midtypes.DiffTriggers(req.State, req.Inputs),
 	)

@@ -14,6 +14,7 @@ import (
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
+	"github.com/sapslaj/mid/pkg/pdiff"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/sapslaj/mid/pkg/ptr"
@@ -271,53 +272,16 @@ func (r Apt) Diff(ctx context.Context, req infer.DiffRequest[AptArgs, AptState])
 	defer span.End()
 
 	diff := p.DiffResponse{
-		HasChanges:          false,
-		DetailedDiff:        map[string]p.PropertyDiff{},
-		DeleteBeforeReplace: true,
+		DetailedDiff: map[string]p.PropertyDiff{},
 	}
 
-	attrs := []string{
-		"allowChangeHeldPackages",
-		"allowDowngrade",
-		"allowUnauthenticated",
-		"autoclean",
-		"autoremove",
-		"cacheValidTime",
-		"clean",
-		"deb",
-		"defaultRelease",
-		"dpkgOptions",
-		"failOnAutoremove",
-		"force",
-		"forceAptGet",
-		"installRecommends",
-		"lockTimeout",
-		"name",
-		"names",
-		"onlyUpgrade",
-		"policyRcD",
-		"purge",
-		"updateCache",
-		"updateCacheRetries",
-		"updateCacheRetryMaxDelay",
-		"upgrade",
-	}
-	if req.Inputs.Ensure == nil && r.canAssumeEnsure(req.Inputs) && req.State.Ensure != nil {
-		// special diff for "ensure" since we compute it dynamically sometimes
-		req.Inputs.Ensure = ptr.Of("present")
-		pdiff := midtypes.DiffAttribute(req.State.Ensure, req.Inputs.Ensure)
-		if pdiff != nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["ensure"] = *pdiff
-		}
-	} else {
-		// just do standard diffing
-		attrs = append(attrs, "ensure")
-	}
-
-	diff = midtypes.MergeDiffResponses(
+	diff = pdiff.MergeDiffResponses(
 		diff,
-		midtypes.DiffAttributes(req.State, req.Inputs, attrs),
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
+			"connection",
+			"config",
+			"triggers",
+		}),
 		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 

@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/sapslaj/mid/pkg/pdiff"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"go.opentelemetry.io/otel/attribute"
@@ -80,9 +81,7 @@ func (r Package) Diff(
 	defer span.End()
 
 	diff := p.DiffResponse{
-		HasChanges:          false,
-		DetailedDiff:        map[string]p.PropertyDiff{},
-		DeleteBeforeReplace: true,
+		DetailedDiff: map[string]p.PropertyDiff{},
 	}
 
 	if req.Inputs.Name != nil {
@@ -131,7 +130,10 @@ func (r Package) Diff(
 		}
 	}
 
-	diff = midtypes.MergeDiffResponses(diff, midtypes.DiffTriggers(req.State, req.Inputs))
+	diff = pdiff.MergeDiffResponses(
+		diff,
+		midtypes.DiffTriggers(req.State, req.Inputs),
+	)
 
 	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))

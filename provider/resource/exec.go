@@ -7,6 +7,7 @@ import (
 	"maps"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	"github.com/sapslaj/mid/pkg/pdiff"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"go.opentelemetry.io/otel/attribute"
@@ -201,7 +202,6 @@ func (r Exec) Diff(ctx context.Context, req infer.DiffRequest[ExecArgs, ExecStat
 	defer span.End()
 
 	diff := p.DiffResponse{
-		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
 		DeleteBeforeReplace: false,
 	}
@@ -210,16 +210,12 @@ func (r Exec) Diff(ctx context.Context, req infer.DiffRequest[ExecArgs, ExecStat
 		diff.DeleteBeforeReplace = *req.Inputs.DeleteBeforeReplace
 	}
 
-	diff = midtypes.MergeDiffResponses(
+	diff = pdiff.MergeDiffResponses(
 		diff,
-		midtypes.DiffAttributes(req.State, req.Inputs, []string{
-			"create",
-			"update",
-			"delete",
-			"expandArgumentVars",
-			"dir",
-			"environment",
-			"logging",
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
+			"connection",
+			"config",
+			"triggers",
 		}),
 		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
