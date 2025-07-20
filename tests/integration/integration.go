@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/blang/semver"
-	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi-go-provider/integration"
+	p "github.com/sapslaj/mid/pkg/providerfw"
+	"github.com/sapslaj/mid/pkg/providerfw/integration"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"

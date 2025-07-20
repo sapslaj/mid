@@ -17,7 +17,7 @@ package main
 import (
 	"context"
 
-	p "github.com/pulumi/pulumi-go-provider"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 
 	"github.com/sapslaj/mid/pkg/telemetry"
 	mid "github.com/sapslaj/mid/provider"

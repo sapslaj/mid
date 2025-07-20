@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	p "github.com/pulumi/pulumi-go-provider"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/retry"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"

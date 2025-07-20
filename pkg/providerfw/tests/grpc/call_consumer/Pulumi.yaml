@@ -1,0 +1,9 @@
+name: "call_consumer"
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+plugins:
+  providers:
+    - name: test
+      path: .

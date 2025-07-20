@@ -3,7 +3,7 @@ package tests
 import (
 	"testing"
 
-	p "github.com/pulumi/pulumi-go-provider"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 
 	"github.com/sapslaj/mid/tests/testmachine"

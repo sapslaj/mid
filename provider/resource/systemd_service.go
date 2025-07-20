@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	p "github.com/pulumi/pulumi-go-provider"
-	"github.com/pulumi/pulumi-go-provider/infer"
+	p "github.com/sapslaj/mid/pkg/providerfw"
+	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"

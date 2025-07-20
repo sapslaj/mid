@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	p "github.com/pulumi/pulumi-go-provider"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 )
 

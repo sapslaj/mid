@@ -1,6 +1,6 @@
 package midtypes
 
-import "github.com/pulumi/pulumi-go-provider/infer"
+import "github.com/sapslaj/mid/pkg/providerfw/infer"
 
 type TriggersInput struct {
 	Refresh *[]any `pulumi:"refresh,optional"`

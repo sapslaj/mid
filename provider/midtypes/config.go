@@ -3,7 +3,7 @@ package midtypes
 import (
 	"context"
 
-	"github.com/pulumi/pulumi-go-provider/infer"
+	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/sapslaj/mid/pkg/env"
 )
 

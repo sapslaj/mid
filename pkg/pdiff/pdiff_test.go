@@ -3,9 +3,9 @@ package pdiff_test
 import (
 	"testing"
 
-	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/stretchr/testify/assert"
 
+	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/pdiff"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/provider/midtypes"

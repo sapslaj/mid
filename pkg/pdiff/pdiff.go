@@ -6,13 +6,13 @@ import (
 	"slices"
 	"strings"
 
-	p "github.com/pulumi/pulumi-go-provider"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource/plugin"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/contract"
 
-	"github.com/sapslaj/mid/pkg/pulumi-go-provider/ende"
-	"github.com/sapslaj/mid/pkg/pulumi-go-provider/introspect"
+	p "github.com/sapslaj/mid/pkg/providerfw"
+	"github.com/sapslaj/mid/pkg/providerfw/ende"
+	"github.com/sapslaj/mid/pkg/providerfw/introspect"
 )
 
 // DiffAttributes performs deep equality on two structs only for the attributes
