@@ -21,11 +21,9 @@ jobs:
           - windows
           - darwin
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        id: git
+      - uses: actions/checkout@v4
         with:
-          submodules: "recursive"
+          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
       - name: Setup tools
@@ -82,11 +80,9 @@ jobs:
       packages: read
       actions: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        id: git
+      - uses: actions/checkout@v4
         with:
-          submodules: "recursive"
+          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
       - name: Setup tools
@@ -114,6 +110,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
@@ -146,6 +146,10 @@ jobs:
           - 2375:2375
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
@@ -188,6 +192,10 @@ jobs:
       NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:

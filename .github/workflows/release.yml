@@ -32,6 +32,10 @@ jobs:
           - darwin
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          fetch-tags: true
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
@@ -61,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: "recursive"
+          submodules: recursive
           fetch-depth: 0
           fetch-tags: true
       - uses: webfactory/ssh-agent@v0.9.1
