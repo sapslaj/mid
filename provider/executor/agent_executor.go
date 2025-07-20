@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/common/util/retry"
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -26,6 +25,8 @@ import (
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/cast"
 	"github.com/sapslaj/mid/pkg/hashstructure"
+	p "github.com/sapslaj/mid/pkg/providerfw"
+	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/syncmap"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/midtypes"
@@ -833,6 +834,9 @@ func DialWithRetry[T any](ctx context.Context, msg string, maxAttempts int, f fu
 
 	var userError error
 	ok, data, err := retry.Until(ctx, retry.Acceptor{
+		// TODO: make Delay and MaxDelay configurable
+		Delay:    ptr.Of(time.Second),
+		MaxDelay: ptr.Of(time.Minute),
 		Accept: func(try int, _ time.Duration) (bool, any, error) {
 			_, subspan := Tracer.Start(ctx, "mid/provider/executor.DialWithRetry:Attempt", trace.WithAttributes(
 				attribute.Int("retry.attempt", try),
