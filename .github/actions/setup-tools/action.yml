@@ -44,11 +44,13 @@ runs:
       uses: extractions/setup-just@v3
 
     - name: Install gci
-      if: inputs.tools == 'all' contains(inputs.tools, 'gci')
+      if: inputs.tools == 'all' || contains(inputs.tools, 'gci')
+      shell: bash
       run: just install-tool-gci
 
     - name: Install goimports
-      if: inputs.tools == 'all' contains(inputs.tools, 'goimports')
+      if: inputs.tools == 'all' || contains(inputs.tools, 'goimports')
+      shell: bash
       run: just install-tool-goimports
 
     - name: Setup Node
