@@ -1,2 +1,2 @@
 pulumi>=3.0.0,<4.0.0
-pulumi_mid==0.0.9
+pulumi_mid==0.0.10

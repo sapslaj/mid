@@ -8,7 +8,6 @@ import (
 	"reflect"
 
 	"errors"
-
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/internal"
