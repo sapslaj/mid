@@ -29,7 +29,7 @@ const (
 	FrameworkStateKeyName = "pulumi-go-provider-version"
 )
 
-const VersionStr = version.Version
+var VersionStr = strings.TrimPrefix(version.Version, "v")
 
 // Version is the framework's release version. Be aware that if the framework is installed
 // from a git commit, this will refer to the next proposed release, not a
