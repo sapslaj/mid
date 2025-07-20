@@ -39,11 +39,41 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           set -eux
-          just provider
+          just provider_version=v0.0.0-ci provider
           ls -lh ./agent/mid-agent-*
           file ./agent/mid-agent-*
           ls -lh ./bin/pulumi-resource-mid
           file ./bin/pulumi-resource-mid
+
+  build-sdk-examples:
+    runs-on: ubuntu-latest
+    needs: build-provider
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Setup tools
+        uses: ./.github/actions/setup-tools
+        with:
+          tools: all
+      - name: Build
+        run: |
+          set -eux
+          git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+          just provider_version=v0.0.0-ci build sdk examples
+          just tidy
+          just fmt
+          mkdir dist/
+      - name: Download builds
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          pattern: pulumi-resource-mid-*
 
   smoketest:
     runs-on: ubuntu-latest
