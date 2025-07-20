@@ -65,6 +65,9 @@ func GetConnection(ctx context.Context, connection *Connection) Connection {
 		if connection.Host != nil {
 			result.Host = connection.Host
 		}
+		if connection.Port != nil {
+			result.Port = connection.Port
+		}
 		if connection.PrivateKey != nil {
 			result.PrivateKey = connection.PrivateKey
 		}
