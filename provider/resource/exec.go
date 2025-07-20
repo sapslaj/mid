@@ -213,6 +213,7 @@ func (r Exec) Diff(ctx context.Context, req infer.DiffRequest[ExecArgs, ExecStat
 	diff = pdiff.MergeDiffResponses(
 		diff,
 		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
+			"deleteBeforeReplace",
 			"connection",
 			"config",
 			"triggers",
