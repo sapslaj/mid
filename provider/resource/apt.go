@@ -135,11 +135,16 @@ func (r Apt) runApt(
 	dryRun bool,
 ) (ansible.AptReturn, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Apt.runApt", trace.WithAttributes(
-		attribute.String("connection.host", *connection.Host),
 		telemetry.OtelJSON("parameters", parameters),
 		attribute.Bool("dry_run", dryRun),
 	))
 	defer span.End()
+
+	if connection.Host != nil {
+		span.SetAttributes(
+			attribute.String("connection.host", *connection.Host),
+		)
+	}
 
 	returnFailed := func(err error) ansible.AptReturn {
 		return ansible.AptReturn{

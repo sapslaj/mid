@@ -139,12 +139,17 @@ func (r Exec) runRPCExec(
 	lifecycle string,
 ) (ExecState, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/Exec.runRPCExec", trace.WithAttributes(
-		attribute.String("connection.host", *connection.Host),
 		telemetry.OtelJSON("state", state),
 		telemetry.OtelJSON("inputs", inputs),
 		attribute.String("lifecycle", lifecycle),
 	))
 	defer span.End()
+
+	if connection.Host != nil {
+		span.SetAttributes(
+			attribute.String("connection.host", *connection.Host),
+		)
+	}
 
 	call, err := r.argsToRPCCall(inputs, lifecycle)
 	if err != nil {

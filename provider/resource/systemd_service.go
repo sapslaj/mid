@@ -85,10 +85,15 @@ func (r SystemdService) doesUnitExist(
 	name string,
 ) (bool, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/resource/SystemdService.doesUnitExist", trace.WithAttributes(
-		attribute.String("connection.host", *connection.Host),
 		attribute.String("name", name),
 	))
 	defer span.End()
+
+	if connection.Host != nil {
+		span.SetAttributes(
+			attribute.String("connection.host", *connection.Host),
+		)
+	}
 
 	result, err := executor.CallAgent[
 		rpc.SystemdUnitShortStatusArgs,

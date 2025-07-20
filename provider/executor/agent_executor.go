@@ -33,6 +33,8 @@ import (
 
 var (
 	ErrUnreachable = errors.New("host is unreachable")
+
+	ErrHostUnset = errors.New("host is not set in the connection configuration")
 )
 
 type ConnectionState struct {
@@ -161,10 +163,21 @@ func Acquire(
 ) (*ConnectionState, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.Acquire", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
-		attribute.String("connection.host", *connection.Host),
 	))
 	defer span.End()
-	logger := telemetry.LoggerFromContext(ctx).With(
+	logger := telemetry.LoggerFromContext(ctx).With()
+
+	if connection.Host == nil {
+		logger.ErrorContext(ctx, "Acquire: host not set")
+		err := errors.Join(ErrUnreachable, ErrHostUnset)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, err
+	}
+
+	span.SetAttributes(
+		attribute.String("connection.host", *connection.Host),
+	)
+	logger = logger.With(
 		slog.String("connection.host", *connection.Host),
 	)
 
@@ -219,11 +232,22 @@ func CanConnect(
 ) (bool, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.CanConnect", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
-		attribute.String("connection.host", *connection.Host),
 		attribute.Int("retry.max_attempts", maxAttempts),
 	))
 	defer span.End()
-	logger := telemetry.LoggerFromContext(ctx).With(
+	logger := telemetry.LoggerFromContext(ctx).With()
+
+	if connection.Host == nil {
+		logger.ErrorContext(ctx, "CanConnect: host not set")
+		err := errors.Join(ErrUnreachable, ErrHostUnset)
+		span.SetStatus(codes.Error, err.Error())
+		return false, err
+	}
+
+	span.SetAttributes(
+		attribute.String("connection.host", *connection.Host),
+	)
+	logger = logger.With(
 		slog.String("connection.host", *connection.Host),
 	)
 
@@ -345,14 +369,25 @@ func PreviewUnreachable(
 ) bool {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.PreviewUnreachable", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
-		attribute.String("connection.host", *connection.Host),
 		attribute.Bool("preview", preview),
 	))
 	defer span.End()
 	logger := telemetry.LoggerFromContext(ctx).With(
-		slog.String("connection.host", *connection.Host),
 		slog.Bool("preview", preview),
 	)
+
+	if connection.Host != nil {
+		span.SetAttributes(
+			attribute.String("connection.host", *connection.Host),
+		)
+		logger = logger.With(
+			slog.String("connection.host", *connection.Host),
+		)
+	} else if preview {
+		logger.WarnContext(ctx, "PreviewUnreachable: host not set")
+		span.SetStatus(codes.Ok, "")
+		return true
+	}
 
 	// if preview: attempt connection and return false if unreachable but true if reachable
 	// if not preview: attempt connection but always return false
@@ -489,15 +524,22 @@ func AnsibleExecute[I AnsibleExecuteArgs, O AnsibleExecuteReturn](
 ) (O, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.AnsibleExecute", trace.WithAttributes(
 		attribute.String("exec.strategy", "rpc"),
-		attribute.String("connection.host", *connection.Host),
 		telemetry.OtelJSON("args", args),
 		attribute.Bool("preview", preview),
 	))
 	defer span.End()
 	logger := telemetry.LoggerFromContext(ctx).With(
-		slog.String("connection.host", *connection.Host),
 		slog.Bool("preview", preview),
 	)
+
+	if connection.Host != nil {
+		span.SetAttributes(
+			attribute.String("connection.host", *connection.Host),
+		)
+		logger = logger.With(
+			slog.String("connection.host", *connection.Host),
+		)
+	}
 
 	logger.DebugContext(
 		ctx,
@@ -655,9 +697,16 @@ func StageFile(
 ) (string, error) {
 	ctx, span := Tracer.Start(ctx, "mid/provider/executor.StageFile")
 	defer span.End()
-	logger := telemetry.LoggerFromContext(ctx).With(
-		slog.String("connection.host", *connection.Host),
-	)
+	logger := telemetry.LoggerFromContext(ctx).With()
+
+	if connection.Host != nil {
+		span.SetAttributes(
+			attribute.String("connection.host", *connection.Host),
+		)
+		logger = logger.With(
+			slog.String("connection.host", *connection.Host),
+		)
+	}
 
 	cs, err := Acquire(ctx, connection, resourceConfig)
 	if err != nil {
@@ -692,6 +741,10 @@ func ConnectionToSSHClientConfig(connection midtypes.Connection) (*ssh.ClientCon
 	port := midtypes.DefaultConnectionPort
 	if connection.Port != nil {
 		port = int(*connection.Port)
+	}
+
+	if connection.Host == nil {
+		return nil, "", errors.Join(ErrUnreachable, ErrHostUnset)
 	}
 
 	endpoint := net.JoinHostPort(*connection.Host, fmt.Sprintf("%d", port))
