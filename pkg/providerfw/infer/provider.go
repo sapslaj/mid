@@ -31,11 +31,11 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const inferStateKeyName = "pulumi-go-provider-infer"
+const InferStateKeyName = "pulumi-go-provider-infer"
 
-type configKeyType struct{}
+type ConfigKeyType struct{}
 
-var configKey configKeyType
+var ConfigKey ConfigKeyType
 
 // Options to configure an inferred provider.
 //
@@ -169,7 +169,7 @@ func Wrap(provider p.Provider, opts Options) p.Provider {
 		provider.DiffConfig = config.diffConfig
 		provider.CheckConfig = config.checkConfig
 		provider = mContext.Wrap(provider, func(ctx context.Context) context.Context {
-			return context.WithValue(ctx, configKey, opts.Config)
+			return context.WithValue(ctx, ConfigKey, opts.Config)
 		})
 	}
 
@@ -182,7 +182,7 @@ func Wrap(provider p.Provider, opts Options) p.Provider {
 // Note: GetConfig will panic if the type of T does not match the type of the config or if
 // the provider has not supplied a config.
 func GetConfig[T any](ctx context.Context) T {
-	v := ctx.Value(configKey)
+	v := ctx.Value(ConfigKey)
 	var t T
 	if v == nil {
 		panic(fmt.Sprintf("Config[%T] called on a provider without a config", t))

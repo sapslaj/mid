@@ -89,7 +89,7 @@ func markAsInferProvider(pm resource.PropertyMap) {
 	}
 
 	m := internal.ObjectValue()
-	m[inferStateKeyName] = resource.NewBoolProperty(true)
+	m[InferStateKeyName] = resource.NewBoolProperty(true)
 }
 
 func (c *config[T]) checkConfig(ctx context.Context, req p.CheckRequest) (p.CheckResponse, error) {
