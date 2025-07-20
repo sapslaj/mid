@@ -18,8 +18,8 @@ install: install-provider install-nodejs-sdk
 fmt:
   # TODO: figure out how to run `go fmt` via dprint
   go fmt ./...
-  goimports -w **/*.go
-  gci write --custom-order -s standard -s default -s 'prefix(github.com/sapslaj/mid)' **/*.go
+  `pwd`/bin/goimports -w **/*.go
+  `pwd`/bin/gci write --custom-order -s standard -s default -s 'prefix(github.com/sapslaj/mid)' **/*.go
   dprint fmt
   -pre-commit run -a
 
@@ -175,6 +175,9 @@ install-nodejs-sdk: sdk-nodejs
   fi
 
 [group('tools')]
+install-tools: install-tool-pulumi install-tool-dprint install-tool-gci install-tool-goimports
+
+[group('tools')]
 install-tool-pulumi:
   #!/usr/bin/env sh
   curl -fsSL https://get.pulumi.com | sh
@@ -186,8 +189,10 @@ install-tool-dprint:
 
 [group('tools')]
 install-tool-gci:
-  go install github.com/daixiang0/gci@v0.13.6
+  mkdir -p ./bin
+  GOBIN=`pwd`/bin go install github.com/daixiang0/gci@v0.13.6
 
 [group('goimports')]
 install-tool-goimports:
-  go install golang.org/x/tools/cmd/goimports@latest
+  mkdir -p ./bin
+  GOBIN=`pwd`/bin go install golang.org/x/tools/cmd/goimports@latest
