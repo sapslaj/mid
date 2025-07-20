@@ -96,34 +96,30 @@ const instance = new aws.ec2.Instance("postgresql", {
   keyName: keypair.keyName,
 }, {});
 
-// setup mid provider
-const provider = new mid.Provider("postgresql", {
-  connection: {
-    host: instance.publicIp,
-    user: "ubuntu",
-    privateKey: privateKey.privateKeyOpenssh,
-  },
-});
+const connection: mid.types.input.ConnectionArgs = {
+  host: instance.publicIp,
+  user: "ubuntu",
+  privateKey: privateKey.privateKeyOpenssh,
+};
 
 // configure apt to always `--no-install-recommends`
 const aptNoInstallRecommends = new mid.resource.File("/etc/apt/apt.conf.d/999norecommend", {
+  connection,
   path: "/etc/apt/apt.conf.d/999norecommend",
   content: [
     `APT::Install-Recommends "0";\n`,
     `APT::Install-Suggests "0";\n`,
   ].join(""),
-}, {
-  provider,
 });
 
 // install `python3-apt` and never delete it from the system since this is
 // needed for `Apt` resources to work correctly without `forceAptGet`.
 const python3Apt = new mid.resource.Apt("python3-apt", {
+  connection,
   forceAptGet: true,
   updateCache: true,
   name: "python3-apt",
 }, {
-  provider,
   retainOnDelete: true,
   dependsOn: [
     aptNoInstallRecommends,
@@ -133,12 +129,12 @@ const python3Apt = new mid.resource.Apt("python3-apt", {
 // install pgdg dependencies making sure `python3-apt` is installed and apt
 // uses `--no-install-recommends` as explicit Pulumi dependencies
 const pgdgDeps = new mid.resource.Apt("pgdg-deps", {
+  connection,
   names: [
     "curl",
     "ca-certificates",
   ],
 }, {
-  provider,
   dependsOn: [
     python3Apt,
   ],
@@ -146,18 +142,17 @@ const pgdgDeps = new mid.resource.Apt("pgdg-deps", {
 
 // mkdir -p /usr/share/postgresql-common/pgdg/
 const usrSharePostgresqlCommonPgdg = new mid.resource.File("/usr/share/postgresql-common/pgdg/", {
+  connection,
   path: "/usr/share/postgresql-common/pgdg/",
   ensure: "directory",
-}, {
-  provider,
 });
 
 // curl https://www.postgresql.org/media/keys/ACCC4CF8.asc -O /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc
 const pgdgSig = new mid.resource.File("/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc", {
+  connection,
   path: "/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc",
   source: new pulumi.asset.RemoteAsset("https://www.postgresql.org/media/keys/ACCC4CF8.asc"),
 }, {
-  provider,
   dependsOn: [
     usrSharePostgresqlCommonPgdg,
   ],
@@ -165,11 +160,11 @@ const pgdgSig = new mid.resource.File("/usr/share/postgresql-common/pgdg/apt.pos
 
 // set up apt source
 const pgdgAptSource = new mid.resource.File("/etc/apt/sources.list.d/pgdg.list", {
+  connection,
   path: "/etc/apt/sources.list.d/pgdg.list",
   content:
     "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main\n",
 }, {
-  provider,
   dependsOn: [
     pgdgSig,
   ],
@@ -177,11 +172,11 @@ const pgdgAptSource = new mid.resource.File("/etc/apt/sources.list.d/pgdg.list",
 
 // install PostgreSQL!
 const postgresqlPackage = new mid.resource.Apt("postgresql", {
+  connection,
   // `updateCache` is needed after adding the apt source
   updateCache: true,
   name: "postgresql",
 }, {
-  provider,
   dependsOn: [
     pgdgDeps,
     pgdgSig,
@@ -193,13 +188,13 @@ const postgresqlPackage = new mid.resource.Apt("postgresql", {
 // apt will install the latest version by default, so this command figures out
 // what version _did_ get installed.
 const postgresqlVersion = mid.agent.execOutput({
+  connection,
   command: [
     "/bin/sh",
     "-c",
     `basename "$(find /etc/postgresql -mindepth 1 -maxdepth 1 -type d | head -n 1)"`,
   ],
 }, {
-  provider,
   dependsOn: [
     postgresqlPackage,
   ],
@@ -208,11 +203,11 @@ const postgresqlVersion = mid.agent.execOutput({
 // reduce the default max_connections (not really necessary but just here for
 // an example)
 const postgresqlMaxConnections = new mid.resource.FileLine("postgresql-max-connections", {
+  connection,
   path: pulumi.interpolate`/etc/postgresql/${postgresqlVersion}/main/postgresql.conf`,
   line: "max_connections = 50",
   regexp: "^max_connections ",
 }, {
-  provider,
   dependsOn: [
     postgresqlPackage,
   ],
@@ -220,11 +215,11 @@ const postgresqlMaxConnections = new mid.resource.FileLine("postgresql-max-conne
 
 // open up listen_addresses
 const postgresqlListenAddresses = new mid.resource.FileLine("postgresql-listen-addresses", {
+  connection,
   path: pulumi.interpolate`/etc/postgresql/${postgresqlVersion}/main/postgresql.conf`,
   line: "listen_addresses = '*'",
   regexp: "^listen_addresses ",
 }, {
-  provider,
   dependsOn: [
     // FIXME: cannot edit the same file concurrently or else the changes get
     // eaten. need to implement file locking apparently.
@@ -235,6 +230,7 @@ const postgresqlListenAddresses = new mid.resource.FileLine("postgresql-listen-a
 
 // allow logins from anywhere
 const postgresqlHBA = new mid.resource.FileLine("postgresql-hba", {
+  connection,
   path: pulumi.interpolate`/etc/postgresql/${postgresqlVersion}/main/pg_hba.conf`,
   line: [
     "host", // TYPE
@@ -248,7 +244,6 @@ const postgresqlHBA = new mid.resource.FileLine("postgresql-hba", {
   ].join("\t"),
   regexp: "0\\.0\\.0\\.0\\/0",
 }, {
-  provider,
   dependsOn: [
     postgresqlPackage,
   ],
@@ -257,6 +252,7 @@ const postgresqlHBA = new mid.resource.FileLine("postgresql-hba", {
 // make sure postgresql.service is started and enabled, and restart on any
 // changes to any of the triggers.
 const postgresqlService = new mid.resource.SystemdService("postgresql.service", {
+  connection,
   name: pulumi.interpolate`postgresql@${postgresqlVersion}-main.service`,
   ensure: "started",
   enabled: true,
@@ -268,7 +264,6 @@ const postgresqlService = new mid.resource.SystemdService("postgresql.service", 
     ],
   },
 }, {
-  provider,
   dependsOn: [
     postgresqlPackage,
   ],
@@ -288,6 +283,7 @@ const postgresqlSuperadminPasswordMD5 = postgresqlSuperadminPassword.result.appl
 // do some raw psql to create the "superadmin" user. have to use psql directly
 // here since we only have the `postgres` user.
 const postgresqlSuperadmin = new mid.resource.Exec("postgresql-superadmin", {
+  connection,
   expandArgumentVars: true,
   environment: {
     PGPASSWORD_MD5: postgresqlSuperadminPasswordMD5,
@@ -343,7 +339,6 @@ const postgresqlSuperadmin = new mid.resource.Exec("postgresql-superadmin", {
     ],
   },
 }, {
-  provider,
   dependsOn: [
     postgresqlService,
   ],
