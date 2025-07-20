@@ -4,13 +4,12 @@ import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/sapslaj/mid/sdk/go/mid"
 	"github.com/sapslaj/mid/sdk/go/mid/resource"
-	"github.com/sapslaj/mid/sdk/go/mid/types"
 )
 
 func main() {
 	pulumi.Run(func(ctx *pulumi.Context) error {
 		provider, err := mid.NewProvider(ctx, "provider", &mid.ProviderArgs{
-			Connection: &types.ConnectionArgs{
+			Connection: &mid.ConnectionArgs{
 				User:     pulumi.String("root"),
 				Password: pulumi.String("hunter2"),
 				Host:     pulumi.String("localhost"),

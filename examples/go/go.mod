@@ -2,11 +2,11 @@ module provider-mid
 
 go 1.23.0
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/pulumi/pulumi/sdk/v3 v3.165.0
-	github.com/sapslaj/mid/sdk v0.0.0-20250706050324-691aeda7e784
+	github.com/sapslaj/mid/sdk v0.0.0-20250714035517-ddd28bc9633b
 )
 
 require (
@@ -24,7 +24,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.25.0 // indirect
 	github.com/charmbracelet/lipgloss v0.7.1 // indirect
 	github.com/cheggaaa/pb v1.0.29 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/cyphar/filepath-securejoin v0.3.6 // indirect
 	github.com/djherbis/times v1.5.0 // indirect
