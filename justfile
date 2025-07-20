@@ -192,7 +192,7 @@ install-tool-gci:
   mkdir -p ./bin
   GOBIN=`pwd`/bin go install github.com/daixiang0/gci@v0.13.6
 
-[group('goimports')]
+[group('tools')]
 install-tool-goimports:
   mkdir -p ./bin
   GOBIN=`pwd`/bin go install golang.org/x/tools/cmd/goimports@latest

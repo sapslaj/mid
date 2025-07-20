@@ -6,7 +6,9 @@ inputs:
     description: |
       Comma separated list of tools to install. The default of "all" installs all tools. Available tools are:
         dprint
+        gci
         go
+        goimports
         just
         nodejs
         pre-commit
@@ -38,8 +40,16 @@ runs:
           sdk/*.sum
 
     - name: Install Just
-      if: inputs.tools == 'all' || contains(inputs.tools, 'just')
+      if: inputs.tools == 'all' || contains(inputs.tools, 'just') || contains(inputs.tools, 'gci') || contains(inputs.tools, 'goimports')
       uses: extractions/setup-just@v3
+
+    - name: Install gci
+      if: inputs.tools == 'all' contains(inputs.tools, 'gci')
+      run: just install-tool-gci
+
+    - name: Install goimports
+      if: inputs.tools == 'all' contains(inputs.tools, 'goimports')
+      run: just install-tool-goimports
 
     - name: Setup Node
       if: inputs.tools == 'all' || contains(inputs.tools, 'nodejs')
