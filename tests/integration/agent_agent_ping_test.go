@@ -3,9 +3,9 @@ package tests
 import (
 	"testing"
 
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/stretchr/testify/require"
 
 	"github.com/sapslaj/mid/tests/testmachine"

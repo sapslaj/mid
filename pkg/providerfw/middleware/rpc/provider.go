@@ -24,13 +24,13 @@ import (
 	"math"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	"github.com/sapslaj/mid/pkg/providerfw/key"
-	"github.com/sapslaj/mid/pkg/providerfw/putil"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource/plugin"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource/urn"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	rpc "github.com/pulumi/pulumi/sdk/v3/proto/go"
+	"github.com/sapslaj/mid/pkg/providerfw/key"
+	"github.com/sapslaj/mid/pkg/providerfw/putil"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	p "github.com/sapslaj/mid/pkg/providerfw"

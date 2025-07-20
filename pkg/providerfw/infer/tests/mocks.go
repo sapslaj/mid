@@ -17,9 +17,9 @@ package tests
 import (
 	context "context"
 
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	pgp "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
-	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
 type TestFunction[I, O any] interface {

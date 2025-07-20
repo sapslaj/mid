@@ -19,10 +19,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	p "github.com/sapslaj/mid/pkg/providerfw"
-	"github.com/sapslaj/mid/pkg/providerfw/integration"
 	r "github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
+	p "github.com/sapslaj/mid/pkg/providerfw"
+	"github.com/sapslaj/mid/pkg/providerfw/integration"
 )
 
 func TestConstruct(t *testing.T) {

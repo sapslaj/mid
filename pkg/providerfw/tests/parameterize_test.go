@@ -19,8 +19,8 @@ import (
 	"testing"
 
 	"github.com/blang/semver"
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	pulumirpc "github.com/pulumi/pulumi/sdk/v3/proto/go"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

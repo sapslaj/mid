@@ -13,9 +13,6 @@ import (
 
 	"github.com/blang/semver"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
-)
-
-import (
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/internals"
 )
 

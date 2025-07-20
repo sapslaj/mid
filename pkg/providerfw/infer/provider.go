@@ -18,6 +18,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
+	"github.com/pulumi/pulumi/sdk/v3/go/common/util/contract"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	t "github.com/sapslaj/mid/pkg/providerfw/middleware"
 	"github.com/sapslaj/mid/pkg/providerfw/middleware/cancel"
@@ -25,8 +27,6 @@ import (
 	mContext "github.com/sapslaj/mid/pkg/providerfw/middleware/context"
 	"github.com/sapslaj/mid/pkg/providerfw/middleware/dispatch"
 	"github.com/sapslaj/mid/pkg/providerfw/middleware/schema"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/util/contract"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

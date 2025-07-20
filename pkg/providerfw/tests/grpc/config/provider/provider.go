@@ -18,9 +18,9 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 )
 
 func Provider() p.Provider {

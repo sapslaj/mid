@@ -30,8 +30,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 )
 
 func TestConstructLifecycle(t *testing.T) {

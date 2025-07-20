@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"os"
 
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi-random/sdk/v4/go/random"
 	"github.com/pulumi/pulumi/pkg/v3/codegen/schema"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	comProvider "github.com/pulumi/pulumi/sdk/v3/go/pulumi/provider"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 )
 
 const componentType = "test:index:Component"

@@ -22,10 +22,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/sapslaj/mid/pkg/providerfw/integration"
-	"github.com/pulumi/pulumi/sdk/v3/go/property"
 )
 
 type inv struct{}

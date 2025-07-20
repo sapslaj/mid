@@ -5,9 +5,9 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"

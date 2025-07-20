@@ -15,10 +15,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	goprovider "github.com/sapslaj/mid/pkg/providerfw"
-	infer "github.com/sapslaj/mid/pkg/providerfw/infer"
 	pulumi "github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	pprovider "github.com/pulumi/pulumi/sdk/v3/go/pulumi/provider"
+	goprovider "github.com/sapslaj/mid/pkg/providerfw"
+	infer "github.com/sapslaj/mid/pkg/providerfw/infer"
 	gomock "go.uber.org/mock/gomock"
 )
 

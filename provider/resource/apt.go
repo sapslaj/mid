@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	p "github.com/sapslaj/mid/pkg/providerfw"
-	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -16,6 +14,8 @@ import (
 
 	"github.com/sapslaj/mid/agent/ansible"
 	"github.com/sapslaj/mid/agent/rpc"
+	p "github.com/sapslaj/mid/pkg/providerfw"
+	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/sapslaj/mid/pkg/ptr"
 	"github.com/sapslaj/mid/pkg/telemetry"
 	"github.com/sapslaj/mid/provider/executor"

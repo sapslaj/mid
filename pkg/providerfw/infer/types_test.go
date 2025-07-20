@@ -18,9 +18,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sapslaj/mid/pkg/providerfw/middleware/schema"
 	pschema "github.com/pulumi/pulumi/pkg/v3/codegen/schema"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
+	"github.com/sapslaj/mid/pkg/providerfw/middleware/schema"
 	"github.com/stretchr/testify/assert"
 )
 

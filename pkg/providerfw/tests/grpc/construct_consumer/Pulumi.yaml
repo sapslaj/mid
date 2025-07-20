@@ -15,6 +15,6 @@ resources:
       myInput: foo
     options:
       provider: ${p}
-      
+
 outputs:
   myOutput: ${c.myOutput}

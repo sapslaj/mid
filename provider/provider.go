@@ -15,10 +15,10 @@
 package provider
 
 import (
-	p "github.com/sapslaj/mid/pkg/providerfw"
-	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 
+	p "github.com/sapslaj/mid/pkg/providerfw"
+	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/sapslaj/mid/provider/agent"
 	"github.com/sapslaj/mid/provider/midtypes"
 	"github.com/sapslaj/mid/provider/resource"

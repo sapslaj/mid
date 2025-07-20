@@ -9,12 +9,12 @@ import pulumi.runtime
 from typing import Any, Mapping, Optional, Sequence, Union, overload
 from . import _utilities
 
-__all__ = ['ComponentArgs', 'Component']
+__all__ = ["ComponentArgs", "Component"]
+
 
 @pulumi.input_type
 class ComponentArgs:
-    def __init__(__self__, *,
-                 my_input: Optional[pulumi.Input[str]] = None):
+    def __init__(__self__, *, my_input: Optional[pulumi.Input[str]] = None):
         """
         The set of arguments for constructing a Component resource.
         """
@@ -33,22 +33,27 @@ class ComponentArgs:
 
 class Component(pulumi.ComponentResource):
     @overload
-    def __init__(__self__,
-                 resource_name: str,
-                 opts: Optional[pulumi.ResourceOptions] = None,
-                 my_input: Optional[pulumi.Input[str]] = None,
-                 __props__=None):
+    def __init__(
+        __self__,
+        resource_name: str,
+        opts: Optional[pulumi.ResourceOptions] = None,
+        my_input: Optional[pulumi.Input[str]] = None,
+        __props__=None,
+    ):
         """
         Create a Component resource with the given unique name, props, and options.
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
         ...
+
     @overload
-    def __init__(__self__,
-                 resource_name: str,
-                 args: Optional[ComponentArgs] = None,
-                 opts: Optional[pulumi.ResourceOptions] = None):
+    def __init__(
+        __self__,
+        resource_name: str,
+        args: Optional[ComponentArgs] = None,
+        opts: Optional[pulumi.ResourceOptions] = None,
+    ):
         """
         Create a Component resource with the given unique name, props, and options.
         :param str resource_name: The name of the resource.
@@ -56,36 +61,44 @@ class Component(pulumi.ComponentResource):
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
         ...
+
     def __init__(__self__, resource_name: str, *args, **kwargs):
-        resource_args, opts = _utilities.get_resource_args_opts(ComponentArgs, pulumi.ResourceOptions, *args, **kwargs)
+        resource_args, opts = _utilities.get_resource_args_opts(
+            ComponentArgs, pulumi.ResourceOptions, *args, **kwargs
+        )
         if resource_args is not None:
             __self__._internal_init(resource_name, opts, **resource_args.__dict__)
         else:
             __self__._internal_init(resource_name, *args, **kwargs)
 
-    def _internal_init(__self__,
-                 resource_name: str,
-                 opts: Optional[pulumi.ResourceOptions] = None,
-                 my_input: Optional[pulumi.Input[str]] = None,
-                 __props__=None):
-        opts = pulumi.ResourceOptions.merge(_utilities.get_resource_opts_defaults(), opts)
+    def _internal_init(
+        __self__,
+        resource_name: str,
+        opts: Optional[pulumi.ResourceOptions] = None,
+        my_input: Optional[pulumi.Input[str]] = None,
+        __props__=None,
+    ):
+        opts = pulumi.ResourceOptions.merge(
+            _utilities.get_resource_opts_defaults(), opts
+        )
         if not isinstance(opts, pulumi.ResourceOptions):
-            raise TypeError('Expected resource options to be a ResourceOptions instance')
+            raise TypeError(
+                "Expected resource options to be a ResourceOptions instance"
+            )
         if opts.id is not None:
-            raise ValueError('ComponentResource classes do not support opts.id')
+            raise ValueError("ComponentResource classes do not support opts.id")
         else:
             if __props__ is not None:
-                raise TypeError('__props__ is only valid when passed in combination with a valid opts.id to get an existing resource')
+                raise TypeError(
+                    "__props__ is only valid when passed in combination with a valid opts.id to get an existing resource"
+                )
             __props__ = ComponentArgs.__new__(ComponentArgs)
 
             __props__.__dict__["my_input"] = my_input
             __props__.__dict__["my_output"] = None
         super(Component, __self__).__init__(
-            'test:index:Component',
-            resource_name,
-            __props__,
-            opts,
-            remote=True)
+            "test:index:Component", resource_name, __props__, opts, remote=True
+        )
 
     @property
     @pulumi.getter(name="myOutput")
@@ -104,10 +117,15 @@ class Component(pulumi.ComponentResource):
         def resp1(self) -> Optional[str]:
             return pulumi.get(self, "resp1")
 
-    def my_method(__self__, *,
-                  arg1: Optional[pulumi.Input[str]] = None) -> pulumi.Output['Component.MyMethodResult']:
+    def my_method(
+        __self__, *, arg1: Optional[pulumi.Input[str]] = None
+    ) -> pulumi.Output["Component.MyMethodResult"]:
         __args__ = dict()
-        __args__['__self__'] = __self__
-        __args__['arg1'] = arg1
-        return pulumi.runtime.call('test:index:Component/myMethod', __args__, res=__self__, typ=Component.MyMethodResult)
-
+        __args__["__self__"] = __self__
+        __args__["arg1"] = arg1
+        return pulumi.runtime.call(
+            "test:index:Component/myMethod",
+            __args__,
+            res=__self__,
+            typ=Component.MyMethodResult,
+        )

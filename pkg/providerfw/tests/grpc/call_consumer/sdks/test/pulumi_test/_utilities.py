@@ -69,7 +69,7 @@ def get_env_float(*args):
 def _get_semver_version():
     # __name__ is set to the fully-qualified name of the current module, In our case, it will be
     # <some module>._utilities. <some module> is the module we want to query the version for.
-    root_package, *rest = __name__.split('.')
+    root_package, *rest = __name__.split(".")
 
     # pkg_resources uses setuptools to inspect the set of installed packages. We use it here to ask
     # for the currently installed version of the root package (i.e. us) and get its version.
@@ -82,11 +82,11 @@ def _get_semver_version():
     pep440_version = PEP440Version.parse(pep440_version_string)
     (major, minor, patch) = pep440_version.release
     prerelease = None
-    if pep440_version.pre_tag == 'a':
+    if pep440_version.pre_tag == "a":
         prerelease = f"alpha.{pep440_version.pre}"
-    elif pep440_version.pre_tag == 'b':
+    elif pep440_version.pre_tag == "b":
         prerelease = f"beta.{pep440_version.pre}"
-    elif pep440_version.pre_tag == 'rc':
+    elif pep440_version.pre_tag == "rc":
         prerelease = f"rc.{pep440_version.pre}"
     elif pep440_version.dev is not None:
         prerelease = f"dev.{pep440_version.dev}"
@@ -102,17 +102,20 @@ def _get_semver_version():
 _version = _get_semver_version()
 _version_str = str(_version)
 
+
 def get_resource_opts_defaults() -> pulumi.ResourceOptions:
     return pulumi.ResourceOptions(
         version=get_version(),
         plugin_download_url=get_plugin_download_url(),
     )
 
+
 def get_invoke_opts_defaults() -> pulumi.InvokeOptions:
     return pulumi.InvokeOptions(
         version=get_version(),
         plugin_download_url=get_plugin_download_url(),
     )
+
 
 def get_resource_args_opts(resource_args_type, resource_options_type, *args, **kwargs):
     """
@@ -147,9 +150,9 @@ def get_resource_args_opts(resource_args_type, resource_options_type, *args, **k
 
 # Temporary: just use pulumi._utils.lazy_import once everyone upgrades.
 def lazy_import(fullname):
-
     import pulumi._utils as u
-    f = getattr(u, 'lazy_import', None)
+
+    f = getattr(u, "lazy_import", None)
     if f is None:
         f = _lazy_import_temp
 
@@ -189,10 +192,12 @@ class Package(pulumi.runtime.ResourcePackage):
     def version(self):
         return _version
 
-    def construct_provider(self, name: str, typ: str, urn: str) -> pulumi.ProviderResource:
-        if typ != self.pkg_info['token']:
+    def construct_provider(
+        self, name: str, typ: str, urn: str
+    ) -> pulumi.ProviderResource:
+        if typ != self.pkg_info["token"]:
             raise Exception(f"unknown provider type {typ}")
-        Provider = getattr(lazy_import(self.pkg_info['fqn']), self.pkg_info['class'])
+        Provider = getattr(lazy_import(self.pkg_info["fqn"]), self.pkg_info["class"])
         return Provider(name, pulumi.ResourceOptions(urn=urn))
 
 
@@ -205,12 +210,12 @@ class Module(pulumi.runtime.ResourceModule):
         return _version
 
     def construct(self, name: str, typ: str, urn: str) -> pulumi.Resource:
-        class_name = self.mod_info['classes'].get(typ, None)
+        class_name = self.mod_info["classes"].get(typ, None)
 
         if class_name is None:
             raise Exception(f"unknown resource type {typ}")
 
-        TheClass = getattr(lazy_import(self.mod_info['fqn']), class_name)
+        TheClass = getattr(lazy_import(self.mod_info["fqn"]), class_name)
         return TheClass(name, pulumi.ResourceOptions(urn=urn))
 
 
@@ -219,16 +224,15 @@ def register(resource_modules, resource_packages):
     resource_packages = json.loads(resource_packages)
 
     for pkg_info in resource_packages:
-        pulumi.runtime.register_resource_package(pkg_info['pkg'], Package(pkg_info))
+        pulumi.runtime.register_resource_package(pkg_info["pkg"], Package(pkg_info))
 
     for mod_info in resource_modules:
         pulumi.runtime.register_resource_module(
-            mod_info['pkg'],
-            mod_info['mod'],
-            Module(mod_info))
+            mod_info["pkg"], mod_info["mod"], Module(mod_info)
+        )
 
 
-_F = typing.TypeVar('_F', bound=typing.Callable[..., typing.Any])
+_F = typing.TypeVar("_F", bound=typing.Callable[..., typing.Any])
 
 
 def lift_output_func(func: typing.Any) -> typing.Callable[[_F], _F]:
@@ -241,14 +245,15 @@ def lift_output_func(func: typing.Any) -> typing.Callable[[_F], _F]:
         bound_args = func_sig.bind(*args, **kwargs)
         # Convert tuple to list, see pulumi/pulumi#8172
         args_list = list(bound_args.args)
-        return pulumi.Output.from_input({
-            'args': args_list,
-            'kwargs': bound_args.kwargs
-        }).apply(lambda resolved_args: func(*resolved_args['args'],
-                                            opts=opts,
-                                            **resolved_args['kwargs']))
+        return pulumi.Output.from_input(
+            {"args": args_list, "kwargs": bound_args.kwargs}
+        ).apply(
+            lambda resolved_args: func(
+                *resolved_args["args"], opts=opts, **resolved_args["kwargs"]
+            )
+        )
 
-    return (lambda _: lifted_func)
+    return lambda _: lifted_func
 
 
 def call_plain(
@@ -268,9 +273,9 @@ def call_plain(
 
     problem = None
     if not known:
-        problem = ' an unknown value'
+        problem = " an unknown value"
     elif secret:
-        problem = ' a secret value'
+        problem = " a secret value"
 
     if problem:
         raise AssertionError(
@@ -281,7 +286,9 @@ def call_plain(
     return result
 
 
-async def _await_output(o: pulumi.Output[typing.Any]) -> typing.Tuple[object, bool, bool, set]:
+async def _await_output(
+    o: pulumi.Output[typing.Any],
+) -> typing.Tuple[object, bool, bool, set]:
     return (
         await o._future,
         await o._is_known,
@@ -320,8 +327,10 @@ def deprecated(message: str) -> typing.Callable[[C], C]:
 
     return decorator
 
+
 def get_plugin_download_url():
-	return None
+    return None
+
 
 def get_version():
-     return _version_str
+    return _version_str

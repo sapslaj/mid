@@ -18,9 +18,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	provider "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/middleware/schema"
-	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 )
 
 type ProviderBuilder struct {

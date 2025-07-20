@@ -3,8 +3,8 @@ package midtypes
 import (
 	"context"
 
-	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"github.com/sapslaj/mid/pkg/env"
+	"github.com/sapslaj/mid/pkg/providerfw/infer"
 )
 
 type ResourceConfig struct {

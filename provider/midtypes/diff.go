@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 )
 
 // DiffAttribute performs deep equality on two values and returns an Update

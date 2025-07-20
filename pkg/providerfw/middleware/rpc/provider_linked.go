@@ -18,9 +18,9 @@ import (
 	_ "unsafe" // unsafe is needed to use go:linkname
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/pulumi/pulumi/sdk/v3/go/property"
 	rpc "github.com/pulumi/pulumi/sdk/v3/proto/go"
+	p "github.com/sapslaj/mid/pkg/providerfw"
 )
 
 type propertyToRPC func(m property.Map) (*structpb.Struct, error)

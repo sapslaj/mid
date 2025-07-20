@@ -34,9 +34,9 @@ import (
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/ende"
 	"github.com/sapslaj/mid/pkg/providerfw/introspect"
-	"github.com/sapslaj/mid/pkg/providerfw/putil"
 	t "github.com/sapslaj/mid/pkg/providerfw/middleware"
 	"github.com/sapslaj/mid/pkg/providerfw/middleware/schema"
+	"github.com/sapslaj/mid/pkg/providerfw/putil"
 )
 
 // CustomResource is a [custom resource](https://www.pulumi.com/docs/concepts/resources/)
@@ -1254,7 +1254,7 @@ func (rc *derivedResourceController[R, I, O]) Create(
 			// Failing to return full properties here will leak the created
 			// resource so we should warn users.
 			if retError != nil {
-				retError = internal.Errorf("failed to return partial resource: %w;"+
+				retError = p.Errorf("failed to return partial resource: %w;"+
 					" %s may be leaked", retError, req.Urn)
 			} else {
 				// We don't want to loose information conveyed in the
@@ -1353,7 +1353,7 @@ func (rc *derivedResourceController[R, I, O]) Read(
 			// Failing to return full properties here will leak the created
 			// resource so we should warn users.
 			if retError != nil {
-				retError = internal.Errorf("failed to return partial resource: %w",
+				retError = p.Errorf("failed to return partial resource: %w",
 					retError)
 			} else {
 				// We don't want to loose information conveyed in the
@@ -1423,7 +1423,7 @@ func (rc *derivedResourceController[R, I, O]) Update(
 			// Failing to return full properties here will leak the created
 			// resource so we should warn users.
 			if retError != nil {
-				retError = internal.Errorf("failed to return partial resource: %w",
+				retError = p.Errorf("failed to return partial resource: %w",
 					retError)
 			} else {
 				// We don't want to loose information conveyed in the

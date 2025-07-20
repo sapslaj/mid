@@ -19,12 +19,12 @@ import (
 	"fmt"
 	"reflect"
 
-	p "github.com/sapslaj/mid/pkg/providerfw"
 	pschema "github.com/pulumi/pulumi/pkg/v3/codegen/schema"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/tokens"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	comProvider "github.com/pulumi/pulumi/sdk/v3/go/pulumi/provider"
 
+	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/introspect"
 	t "github.com/sapslaj/mid/pkg/providerfw/middleware"
 	"github.com/sapslaj/mid/pkg/providerfw/middleware/schema"
