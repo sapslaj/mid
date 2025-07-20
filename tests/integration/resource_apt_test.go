@@ -28,7 +28,7 @@ func TestResourceApt(t *testing.T) {
 					}),
 					AssertCommand: "test -f /usr/bin/vim",
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -59,7 +59,7 @@ func TestResourceApt(t *testing.T) {
 						"ensure": property.New("latest"),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -88,7 +88,7 @@ func TestResourceApt(t *testing.T) {
 						"updateCache": property.New(true),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -109,7 +109,7 @@ func TestResourceApt(t *testing.T) {
 						"clean": property.New(true),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -131,7 +131,7 @@ func TestResourceApt(t *testing.T) {
 					}),
 					AssertCommand: "test -f /usr/bin/curl",
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -145,7 +145,7 @@ func TestResourceApt(t *testing.T) {
 					}),
 					AssertCommand: "test -f /usr/bin/curl && test -f /usr/bin/wget",
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"name": {
@@ -167,7 +167,7 @@ func TestResourceApt(t *testing.T) {
 					}),
 					AssertCommand: "test ! -f /usr/bin/curl && test -f /usr/bin/wget",
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"names": {
@@ -183,7 +183,7 @@ func TestResourceApt(t *testing.T) {
 					}),
 					AssertCommand: "test -f /usr/bin/curl && test ! -f /usr/bin/wget",
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"name": {
