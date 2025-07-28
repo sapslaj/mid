@@ -250,6 +250,9 @@ func (r Apt) runApt(
 		if strings.Contains(result.GetMsg(), "apt-get clean failed") {
 			shouldRetry = true
 		}
+		if strings.Contains(result.GetMsg(), "Problem renaming the file") {
+			shouldRetry = true
+		}
 
 		if !shouldRetry {
 			break
