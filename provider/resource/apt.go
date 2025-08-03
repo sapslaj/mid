@@ -253,6 +253,9 @@ func (r Apt) runApt(
 		if strings.Contains(result.GetMsg(), "Problem renaming the file") {
 			shouldRetry = true
 		}
+		if strings.Contains(result.GetMsg(), "Could not get lock") {
+			shouldRetry = true
+		}
 
 		if !shouldRetry {
 			break
