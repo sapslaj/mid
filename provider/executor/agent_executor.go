@@ -111,7 +111,7 @@ func (cs *ConnectionState) SetupAgent(ctx context.Context) error {
 		cs.Reachable = false
 		cs.Unreachable = true
 		span.SetStatus(codes.Error, err.Error())
-		return err
+		return errors.Join(ErrUnreachable, err)
 	}
 
 	cs.Agent = &midagent.Agent{
@@ -337,7 +337,7 @@ func CanConnect(
 		span.SetStatus(codes.Error, err.Error())
 		cs.Reachable = false
 		cs.Unreachable = true
-		return false, err
+		return false, errors.Join(ErrUnreachable, err)
 	}
 	defer sshClient.Close()
 	session, err := sshClient.NewSession()
@@ -348,7 +348,7 @@ func CanConnect(
 		span.SetStatus(codes.Error, err.Error())
 		cs.Reachable = false
 		cs.Unreachable = true
-		return false, err
+		return false, errors.Join(ErrUnreachable, err)
 	}
 	defer session.Close()
 
