@@ -708,6 +708,75 @@ func TestResourceExec(t *testing.T) {
 				ExpectFailure: true,
 			},
 		},
+
+		"update state on update": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"create": property.New(map[string]property.Value{
+						"command": property.New([]property.Value{
+							property.New("/bin/sh"),
+							property.New("-c"),
+							property.New("echo first"),
+						}),
+					}),
+				}),
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"create": property.New(map[string]property.Value{
+							"command": property.New([]property.Value{
+								property.New("/bin/sh"),
+								property.New("-c"),
+								property.New("echo first"),
+							}),
+						}),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"create": property.New(map[string]property.Value{
+							"command": property.New([]property.Value{
+								property.New("/bin/sh"),
+								property.New("-c"),
+								property.New("echo second"),
+							}),
+						}),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"create.command[2]": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"create": property.New(map[string]property.Value{
+							"command": property.New([]property.Value{
+								property.New("/bin/sh"),
+								property.New("-c"),
+								property.New("echo second"),
+							}),
+						}),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: false,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tc := range tests {

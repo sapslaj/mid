@@ -295,7 +295,7 @@ func (r Exec) Update(
 	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
 	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
-	state := req.State
+	state := r.updateState(req.Inputs, req.State, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
 	if req.DryRun {
