@@ -4,7 +4,6 @@ import (
 	"maps"
 	"reflect"
 	"slices"
-	"strings"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource/plugin"
@@ -41,13 +40,15 @@ func DiffAttributes(inputs any, state any, attributes []string) p.DiffResponse {
 	diff := map[string]p.PropertyDiff{}
 
 	for k, v := range pluginDiff {
+		propertyPath, err := resource.ParsePropertyPath(k)
+		contract.AssertNoErrorf(err, "could not parse generated property path")
+
 		selected := false
 		for i := range attributes {
-			// FIXME: this has the potential to be too greedy and match things it
-			// shouldn't. It should be breaking down the components of the key and
-			// ensuring there is a full match for all the components but i ain't got
-			// time to write that.
-			if strings.HasPrefix(k, attributes[i]) {
+			attributePropertyPath, err := resource.ParsePropertyPath(attributes[i])
+			contract.AssertNoErrorf(err, "could not parse attribute property path")
+
+			if attributePropertyPath.Contains(propertyPath) {
 				selected = true
 			}
 		}

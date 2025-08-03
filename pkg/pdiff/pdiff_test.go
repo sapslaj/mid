@@ -474,6 +474,34 @@ func TestDiffAllAttributesExcept(t *testing.T) {
 				},
 			},
 		},
+
+		"Exec exclude deleteBeforeReplace": {
+			inputs: resource.ExecArgs{
+				Create: midtypes.ExecCommand{
+					Command: []string{"true"},
+				},
+				DeleteBeforeReplace: ptr.Of(false),
+			},
+			state: resource.ExecState{
+				ExecArgs: resource.ExecArgs{
+					Create: midtypes.ExecCommand{
+						Command: []string{"true"},
+					},
+					DeleteBeforeReplace: ptr.Of(true),
+				},
+			},
+			exceptAttributes: []string{
+				"deleteBeforeReplace",
+				"connection",
+				"config",
+				"triggers",
+			},
+			expect: p.DiffResponse{
+				HasChanges:          false,
+				DeleteBeforeReplace: false,
+				DetailedDiff:        map[string]p.PropertyDiff{},
+			},
+		},
 	}
 
 	for name, tc := range tests {
