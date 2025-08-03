@@ -148,12 +148,8 @@ func TestResourceApt(t *testing.T) {
 						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
-							"name": {
-								Kind:      p.Update,
-								InputDiff: true,
-							},
 							"names": {
-								Kind:      p.Update,
+								Kind:      p.Add,
 								InputDiff: true,
 							},
 						},
@@ -170,8 +166,12 @@ func TestResourceApt(t *testing.T) {
 						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
-							"names": {
+							"names[0]": {
 								Kind:      p.Update,
+								InputDiff: true,
+							},
+							"names[1]": {
+								Kind:      p.Delete,
 								InputDiff: true,
 							},
 						},
@@ -187,11 +187,7 @@ func TestResourceApt(t *testing.T) {
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"name": {
-								Kind:      p.Update,
-								InputDiff: true,
-							},
-							"names": {
-								Kind:      p.Update,
+								Kind:      p.Add,
 								InputDiff: true,
 							},
 						},
