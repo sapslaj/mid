@@ -132,6 +132,12 @@ func (r SystemdService) updateService(
 	connection := midtypes.GetConnection(ctx, inputs.Connection)
 	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
+	if dryRun && !config.GetDryRunCheck() {
+		state = r.updateState(inputs, state, true)
+		span.SetStatus(codes.Ok, "")
+		return state, nil
+	}
+
 	parameters, err := r.argsToTaskParameters(inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -187,6 +193,7 @@ func (r SystemdService) updateService(
 
 	state = r.updateState(inputs, state, result.IsChanged())
 
+	span.SetStatus(codes.Ok, "")
 	return state, nil
 }
 

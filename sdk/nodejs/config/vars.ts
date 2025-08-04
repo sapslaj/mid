@@ -9,6 +9,14 @@ import * as utilities from "../utilities";
 declare var exports: any;
 const __config = new pulumi.Config("mid");
 
+export declare const check: boolean | undefined;
+Object.defineProperty(exports, "check", {
+  get() {
+    return __config.getObject<boolean>("check");
+  },
+  enumerable: true,
+});
+
 export declare const connection: outputs.Connection | undefined;
 Object.defineProperty(exports, "connection", {
   get() {

@@ -11,6 +11,9 @@ import (
 
 var _ = internal.GetEnvOrDefault
 
+func GetCheck(ctx *pulumi.Context) bool {
+	return config.GetBool(ctx, "mid:check")
+}
 func GetConnection(ctx *pulumi.Context) string {
 	return config.Get(ctx, "mid:connection")
 }

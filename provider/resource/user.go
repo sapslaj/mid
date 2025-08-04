@@ -156,6 +156,14 @@ func (r User) Create(
 	}
 	span.SetAttributes(attribute.String("pulumi.id", id))
 
+	if req.DryRun && !config.GetDryRunCheck() {
+		span.SetStatus(codes.Ok, "")
+		return infer.CreateResponse[UserState]{
+			ID:     id,
+			Output: state,
+		}, nil
+	}
+
 	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
@@ -272,6 +280,14 @@ func (r User) Update(
 
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
+
+	if req.DryRun && !config.GetDryRunCheck() {
+		state = r.updateState(req.Inputs, state, true)
+		span.SetStatus(codes.Ok, "")
+		return infer.UpdateResponse[UserState]{
+			Output: state,
+		}, nil
+	}
 
 	parameters, err := r.argsToTaskParameters(req.Inputs)
 	if err != nil {

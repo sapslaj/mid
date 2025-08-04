@@ -114,11 +114,13 @@ export interface ExecCommandArgs {
 }
 
 export interface ResourceConfig {
+  check?: boolean;
   deleteUnreachable?: boolean;
   parallel?: number;
 }
 
 export interface ResourceConfigArgs {
+  check?: pulumi.Input<boolean>;
   deleteUnreachable?: pulumi.Input<boolean>;
   parallel?: pulumi.Input<number>;
 }

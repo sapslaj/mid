@@ -749,6 +749,7 @@ func (o FileStatStateOutput) UserName() pulumi.StringPtrOutput {
 }
 
 type ResourceConfig struct {
+	Check             *bool `pulumi:"check"`
 	DeleteUnreachable *bool `pulumi:"deleteUnreachable"`
 	Parallel          *int  `pulumi:"parallel"`
 }
@@ -765,6 +766,7 @@ type ResourceConfigInput interface {
 }
 
 type ResourceConfigArgs struct {
+	Check             pulumi.BoolPtrInput `pulumi:"check"`
 	DeleteUnreachable pulumi.BoolPtrInput `pulumi:"deleteUnreachable"`
 	Parallel          pulumi.IntPtrInput  `pulumi:"parallel"`
 }
@@ -846,6 +848,10 @@ func (o ResourceConfigOutput) ToResourceConfigPtrOutputWithContext(ctx context.C
 	}).(ResourceConfigPtrOutput)
 }
 
+func (o ResourceConfigOutput) Check() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v ResourceConfig) *bool { return v.Check }).(pulumi.BoolPtrOutput)
+}
+
 func (o ResourceConfigOutput) DeleteUnreachable() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v ResourceConfig) *bool { return v.DeleteUnreachable }).(pulumi.BoolPtrOutput)
 }
@@ -876,6 +882,15 @@ func (o ResourceConfigPtrOutput) Elem() ResourceConfigOutput {
 		var ret ResourceConfig
 		return ret
 	}).(ResourceConfigOutput)
+}
+
+func (o ResourceConfigPtrOutput) Check() pulumi.BoolPtrOutput {
+	return o.ApplyT(func(v *ResourceConfig) *bool {
+		if v == nil {
+			return nil
+		}
+		return v.Check
+	}).(pulumi.BoolPtrOutput)
 }
 
 func (o ResourceConfigPtrOutput) DeleteUnreachable() pulumi.BoolPtrOutput {

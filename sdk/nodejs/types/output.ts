@@ -98,6 +98,7 @@ export interface FileStatState {
 }
 
 export interface ResourceConfig {
+  check?: boolean;
   deleteUnreachable?: boolean;
   parallel?: number;
 }

@@ -1120,6 +1120,12 @@ func (r File) createOrUpdate(
 	connection := midtypes.GetConnection(ctx, inputs.Connection)
 	config := midtypes.GetResourceConfig(ctx, inputs.Config)
 
+	if dryRun && !config.GetDryRunCheck() {
+		span.SetStatus(codes.Ok, "")
+		state = r.updateState(inputs, state, true)
+		return state, nil
+	}
+
 	if executor.PreviewUnreachable(ctx, connection, config, dryRun) {
 		span.SetAttributes(attribute.Bool("unreachable", true))
 		span.SetStatus(codes.Ok, "")

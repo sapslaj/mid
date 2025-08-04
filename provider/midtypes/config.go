@@ -17,6 +17,11 @@ type ResourceConfig struct {
 	// remote system. If not set or set to `0`, it will use the remote host's
 	// number of CPU cores. If set to `-1` it will be unlimited.
 	Parallel *int `pulumi:"parallel,optional"`
+
+	// DryRunCheck enables extra checks and dry-runs during preview. This is
+	// enabled by default. Disabling it will speed up preview at the cost of
+	// potentially running into unexpected errors during apply.
+	DryRunCheck *bool `pulumi:"check,optional"`
 }
 
 // GetDeleteUnreachable determines if the environment should delete unreachable
@@ -36,6 +41,13 @@ func (config ResourceConfig) GetParallel() int {
 	return env.MustGetDefault("PULUMI_MID_PARALLEL", 0)
 }
 
+func (config ResourceConfig) GetDryRunCheck() bool {
+	if config.DryRunCheck != nil {
+		return *config.DryRunCheck
+	}
+	return env.MustGetDefault("PULUMI_MID_DRY_RUN_CHECK", true)
+}
+
 // provider configuration
 type ProviderConfig struct {
 	ResourceConfig
@@ -52,12 +64,18 @@ func GetResourceConfig(ctx context.Context, config *ResourceConfig) ResourceConf
 	if providerConfig.Parallel != nil {
 		result.Parallel = providerConfig.Parallel
 	}
+	if providerConfig.DryRunCheck != nil {
+		result.DryRunCheck = providerConfig.DryRunCheck
+	}
 	if config != nil {
 		if config.DeleteUnreachable != nil {
 			result.DeleteUnreachable = config.DeleteUnreachable
 		}
 		if config.Parallel != nil {
 			result.Parallel = config.Parallel
+		}
+		if config.DryRunCheck != nil {
+			result.DryRunCheck = config.DryRunCheck
 		}
 	}
 	return result

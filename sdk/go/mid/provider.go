@@ -38,6 +38,7 @@ func NewProvider(ctx *pulumi.Context,
 }
 
 type providerArgs struct {
+	Check             *bool       `pulumi:"check"`
 	Connection        *Connection `pulumi:"connection"`
 	DeleteUnreachable *bool       `pulumi:"deleteUnreachable"`
 	Parallel          *int        `pulumi:"parallel"`
@@ -45,6 +46,7 @@ type providerArgs struct {
 
 // The set of arguments for constructing a Provider resource.
 type ProviderArgs struct {
+	Check             pulumi.BoolPtrInput
 	Connection        ConnectionPtrInput
 	DeleteUnreachable pulumi.BoolPtrInput
 	Parallel          pulumi.IntPtrInput
