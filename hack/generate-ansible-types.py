@@ -71,6 +71,8 @@ def scalar_type_ansible_to_go(t: str) -> str:
             return "float64"
         case "any":
             return "any"
+        case "list":
+            return "[]any"
         case _:
             raise Exception(f"unknown type '{t}'")
 
@@ -231,6 +233,8 @@ def process_module_file(module_file: str):
             for key, value in documentation["options"].items():
                 if "choices" not in value:
                     continue
+                if value["type"] == "raw":
+                    continue
                 if elements := value.get("elements", None):
                     enum_type = scalar_type_ansible_to_go(elements)
                 else:
@@ -322,7 +326,7 @@ def process_module_file(module_file: str):
                 f.write(" ")
                 if not required:
                     f.write("*")
-                if "choices" in value:
+                if "choices" in value and value["type"] != "raw":
                     f.write(f"{pascalcase_name}{pascalcased(key)}")
                 else:
                     f.write(composite_type_ansible_to_go(value))
