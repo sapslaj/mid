@@ -162,8 +162,8 @@ github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06 h1:OkMGxebDj
 github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06/go.mod h1:+ePHsJ1keEjQtpvf9HHw0f4ZeJ0TLRsxhunSI2hYJSs=
 github.com/santhosh-tekuri/jsonschema/v5 v5.0.0 h1:TToq11gyfNlrMFZiYujSekIsPd9AmsA2Bj/iv+s4JHE=
 github.com/santhosh-tekuri/jsonschema/v5 v5.0.0/go.mod h1:FKdcjfQW6rpZSnxxUvEA5H/cDPdvJ/SZJQLWWXWGrZ0=
-github.com/sapslaj/mid/sdk v0.0.0-20250803220232-006fbc324fd8 h1:+ols6LkxzLDECpXGZxWvtdCT5fxNLFr8mtCMG4LV6No=
-github.com/sapslaj/mid/sdk v0.0.0-20250803220232-006fbc324fd8/go.mod h1:SPAXcxO+lIN7gbHC9pdscXKgz+1fpb8ghR8TuK/tXho=
+github.com/sapslaj/mid/sdk v0.0.0-20250804042128-f13623120a31 h1:1BSSb8ZyKhOLYXJ8E3S/TXlYObf41v1wFyWUFLOaG4s=
+github.com/sapslaj/mid/sdk v0.0.0-20250804042128-f13623120a31/go.mod h1:SPAXcxO+lIN7gbHC9pdscXKgz+1fpb8ghR8TuK/tXho=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 h1:n661drycOFuPLCN3Uc8sB6B/s6Z4t2xvBgU1htSHuq8=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
