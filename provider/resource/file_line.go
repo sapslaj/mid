@@ -172,7 +172,11 @@ func (r FileLine) Diff(
 
 	diff = pdiff.MergeDiffResponses(
 		diff,
-		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{"triggers"}),
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
+			"connection",
+			"config",
+			"triggers",
+		}),
 		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
