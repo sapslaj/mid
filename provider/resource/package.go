@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"slices"
 
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/sapslaj/mid/pkg/pdiff"
@@ -84,54 +83,13 @@ func (r Package) Diff(
 		DetailedDiff: map[string]p.PropertyDiff{},
 	}
 
-	if req.Inputs.Name != nil {
-		if req.State.Name == nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["name"] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-		} else if *req.Inputs.Name != *req.State.Name {
-			diff.HasChanges = true
-			diff.DetailedDiff["name"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	}
-
-	if req.Inputs.Names != nil {
-		if req.State.Names == nil {
-			diff.HasChanges = true
-			diff.DetailedDiff["names"] = p.PropertyDiff{
-				Kind:      p.Add,
-				InputDiff: true,
-			}
-		} else if !slices.Equal(*req.State.Names, *req.Inputs.Names) {
-			diff.HasChanges = true
-			diff.DetailedDiff["names"] = p.PropertyDiff{
-				Kind:      p.Update,
-				InputDiff: true,
-			}
-		}
-	} else if req.State.Names != nil && !slices.Equal(*req.State.Names, *req.Inputs.Names) {
-		diff.HasChanges = true
-		diff.DetailedDiff["names"] = p.PropertyDiff{
-			Kind:      p.Update,
-			InputDiff: true,
-		}
-	}
-
-	if req.Inputs.Ensure != nil && *req.Inputs.Ensure != req.State.Ensure {
-		diff.HasChanges = true
-		diff.DetailedDiff["ensure"] = p.PropertyDiff{
-			Kind:      p.Update,
-			InputDiff: true,
-		}
-	}
-
 	diff = pdiff.MergeDiffResponses(
 		diff,
+		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
+			"connection",
+			"config",
+			"triggers",
+		}),
 		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
