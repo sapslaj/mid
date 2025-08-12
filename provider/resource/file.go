@@ -861,6 +861,14 @@ func (r File) copyLocalSourceArchive(
 
 	archive := inputs.Source.Archive
 
+	if archive == nil && dryRun {
+		state = r.updateStateDrifted(inputs, state, []string{
+			"source",
+		})
+		span.SetStatus(codes.Ok, "")
+		return state, nil
+	}
+
 	span.SetAttributes(
 		attribute.String("archive.sig", archive.Sig),
 		attribute.String("archive.hash", archive.Hash),
@@ -981,6 +989,14 @@ func (r File) copyLocalSourceAsset(
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return state, err
+	}
+
+	if asset == nil && dryRun {
+		state = r.updateStateDrifted(inputs, state, []string{
+			sourceProp,
+		})
+		span.SetStatus(codes.Ok, "")
+		return state, nil
 	}
 
 	span.SetAttributes(
