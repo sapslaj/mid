@@ -56,22 +56,22 @@ export class Service extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      if ((!args || args.name === undefined) && !opts.urn) {
+      if (args?.name === undefined && !opts.urn) {
         throw new Error("Missing required property 'name'");
       }
-      resourceInputs["arguments"] = args ? args.arguments : undefined;
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["arguments"] = args?.arguments;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["enabled"] = args ? args.enabled : undefined;
-      resourceInputs["name"] = args ? args.name : undefined;
-      resourceInputs["pattern"] = args ? args.pattern : undefined;
-      resourceInputs["runlevel"] = args ? args.runlevel : undefined;
-      resourceInputs["sleep"] = args ? args.sleep : undefined;
-      resourceInputs["state"] = args ? args.state : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
-      resourceInputs["use"] = args ? args.use : undefined;
+      resourceInputs["enabled"] = args?.enabled;
+      resourceInputs["name"] = args?.name;
+      resourceInputs["pattern"] = args?.pattern;
+      resourceInputs["runlevel"] = args?.runlevel;
+      resourceInputs["sleep"] = args?.sleep;
+      resourceInputs["state"] = args?.state;
+      resourceInputs["triggers"] = args?.triggers;
+      resourceInputs["use"] = args?.use;
     } else {
       resourceInputs["arguments"] = undefined /*out*/;
       resourceInputs["config"] = undefined /*out*/;

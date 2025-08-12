@@ -32,7 +32,7 @@ export class Provider extends pulumi.ProviderResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     {
-      resourceInputs["check"] = pulumi.output(args ? args.check : undefined).apply(JSON.stringify);
+      resourceInputs["check"] = pulumi.output(args?.check).apply(JSON.stringify);
       resourceInputs["connection"] = pulumi.output(
         args?.connection
           ? pulumi.secret(
@@ -40,10 +40,8 @@ export class Provider extends pulumi.ProviderResource {
           )
           : undefined,
       ).apply(JSON.stringify);
-      resourceInputs["deleteUnreachable"] = pulumi.output(args ? args.deleteUnreachable : undefined).apply(
-        JSON.stringify,
-      );
-      resourceInputs["parallel"] = pulumi.output(args ? args.parallel : undefined).apply(JSON.stringify);
+      resourceInputs["deleteUnreachable"] = pulumi.output(args?.deleteUnreachable).apply(JSON.stringify);
+      resourceInputs["parallel"] = pulumi.output(args?.parallel).apply(JSON.stringify);
     }
     opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts);
     super(Provider.__pulumiType, name, resourceInputs, opts);

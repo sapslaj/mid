@@ -50,15 +50,15 @@ export class AnsibleTaskList extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      if ((!args || args.tasks === undefined) && !opts.urn) {
+      if (args?.tasks === undefined && !opts.urn) {
         throw new Error("Missing required property 'tasks'");
       }
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["tasks"] = args ? args.tasks : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
+      resourceInputs["tasks"] = args?.tasks;
+      resourceInputs["triggers"] = args?.triggers;
       resourceInputs["results"] = undefined /*out*/;
     } else {
       resourceInputs["config"] = undefined /*out*/;

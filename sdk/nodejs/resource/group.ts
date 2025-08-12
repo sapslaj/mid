@@ -57,23 +57,23 @@ export class Group extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      if ((!args || args.name === undefined) && !opts.urn) {
+      if (args?.name === undefined && !opts.urn) {
         throw new Error("Missing required property 'name'");
       }
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["force"] = args ? args.force : undefined;
-      resourceInputs["gid"] = args ? args.gid : undefined;
-      resourceInputs["gidMax"] = args ? args.gidMax : undefined;
-      resourceInputs["gidMin"] = args ? args.gidMin : undefined;
-      resourceInputs["local"] = args ? args.local : undefined;
-      resourceInputs["name"] = args ? args.name : undefined;
-      resourceInputs["nonUnique"] = args ? args.nonUnique : undefined;
-      resourceInputs["system"] = args ? args.system : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
+      resourceInputs["ensure"] = args?.ensure;
+      resourceInputs["force"] = args?.force;
+      resourceInputs["gid"] = args?.gid;
+      resourceInputs["gidMax"] = args?.gidMax;
+      resourceInputs["gidMin"] = args?.gidMin;
+      resourceInputs["local"] = args?.local;
+      resourceInputs["name"] = args?.name;
+      resourceInputs["nonUnique"] = args?.nonUnique;
+      resourceInputs["system"] = args?.system;
+      resourceInputs["triggers"] = args?.triggers;
     } else {
       resourceInputs["config"] = undefined /*out*/;
       resourceInputs["connection"] = undefined /*out*/;

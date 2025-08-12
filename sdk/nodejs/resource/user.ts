@@ -68,34 +68,34 @@ export class User extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      if ((!args || args.name === undefined) && !opts.urn) {
+      if (args?.name === undefined && !opts.urn) {
         throw new Error("Missing required property 'name'");
       }
-      resourceInputs["comment"] = args ? args.comment : undefined;
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["comment"] = args?.comment;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["force"] = args ? args.force : undefined;
-      resourceInputs["group"] = args ? args.group : undefined;
-      resourceInputs["groups"] = args ? args.groups : undefined;
-      resourceInputs["groupsExclusive"] = args ? args.groupsExclusive : undefined;
-      resourceInputs["home"] = args ? args.home : undefined;
-      resourceInputs["local"] = args ? args.local : undefined;
-      resourceInputs["manageHome"] = args ? args.manageHome : undefined;
-      resourceInputs["name"] = args ? args.name : undefined;
-      resourceInputs["nonUnique"] = args ? args.nonUnique : undefined;
-      resourceInputs["password"] = args ? args.password : undefined;
-      resourceInputs["shell"] = args ? args.shell : undefined;
-      resourceInputs["skeleton"] = args ? args.skeleton : undefined;
-      resourceInputs["system"] = args ? args.system : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
-      resourceInputs["uid"] = args ? args.uid : undefined;
-      resourceInputs["uidMax"] = args ? args.uidMax : undefined;
-      resourceInputs["uidMin"] = args ? args.uidMin : undefined;
-      resourceInputs["umask"] = args ? args.umask : undefined;
-      resourceInputs["updatePassword"] = args ? args.updatePassword : undefined;
+      resourceInputs["ensure"] = args?.ensure;
+      resourceInputs["force"] = args?.force;
+      resourceInputs["group"] = args?.group;
+      resourceInputs["groups"] = args?.groups;
+      resourceInputs["groupsExclusive"] = args?.groupsExclusive;
+      resourceInputs["home"] = args?.home;
+      resourceInputs["local"] = args?.local;
+      resourceInputs["manageHome"] = args?.manageHome;
+      resourceInputs["name"] = args?.name;
+      resourceInputs["nonUnique"] = args?.nonUnique;
+      resourceInputs["password"] = args?.password;
+      resourceInputs["shell"] = args?.shell;
+      resourceInputs["skeleton"] = args?.skeleton;
+      resourceInputs["system"] = args?.system;
+      resourceInputs["triggers"] = args?.triggers;
+      resourceInputs["uid"] = args?.uid;
+      resourceInputs["uidMax"] = args?.uidMax;
+      resourceInputs["uidMin"] = args?.uidMin;
+      resourceInputs["umask"] = args?.umask;
+      resourceInputs["updatePassword"] = args?.updatePassword;
     } else {
       resourceInputs["comment"] = undefined /*out*/;
       resourceInputs["config"] = undefined /*out*/;

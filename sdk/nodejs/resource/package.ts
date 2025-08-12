@@ -51,14 +51,14 @@ export class Package extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["name"] = args ? args.name : undefined;
-      resourceInputs["names"] = args ? args.names : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
+      resourceInputs["ensure"] = args?.ensure;
+      resourceInputs["name"] = args?.name;
+      resourceInputs["names"] = args?.names;
+      resourceInputs["triggers"] = args?.triggers;
     } else {
       resourceInputs["config"] = undefined /*out*/;
       resourceInputs["connection"] = undefined /*out*/;

@@ -77,40 +77,40 @@ export class File extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      if ((!args || args.path === undefined) && !opts.urn) {
+      if (args?.path === undefined && !opts.urn) {
         throw new Error("Missing required property 'path'");
       }
-      resourceInputs["accessTime"] = args ? args.accessTime : undefined;
-      resourceInputs["accessTimeFormat"] = args ? args.accessTimeFormat : undefined;
-      resourceInputs["attributes"] = args ? args.attributes : undefined;
-      resourceInputs["backup"] = args ? args.backup : undefined;
-      resourceInputs["checksum"] = args ? args.checksum : undefined;
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["accessTime"] = args?.accessTime;
+      resourceInputs["accessTimeFormat"] = args?.accessTimeFormat;
+      resourceInputs["attributes"] = args?.attributes;
+      resourceInputs["backup"] = args?.backup;
+      resourceInputs["checksum"] = args?.checksum;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["content"] = args ? args.content : undefined;
-      resourceInputs["directoryMode"] = args ? args.directoryMode : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["follow"] = args ? args.follow : undefined;
-      resourceInputs["force"] = args ? args.force : undefined;
-      resourceInputs["group"] = args ? args.group : undefined;
-      resourceInputs["localFollow"] = args ? args.localFollow : undefined;
-      resourceInputs["mode"] = args ? args.mode : undefined;
-      resourceInputs["modificationTime"] = args ? args.modificationTime : undefined;
-      resourceInputs["modificationTimeFormat"] = args ? args.modificationTimeFormat : undefined;
-      resourceInputs["owner"] = args ? args.owner : undefined;
-      resourceInputs["path"] = args ? args.path : undefined;
-      resourceInputs["recurse"] = args ? args.recurse : undefined;
-      resourceInputs["remoteSource"] = args ? args.remoteSource : undefined;
-      resourceInputs["selevel"] = args ? args.selevel : undefined;
-      resourceInputs["serole"] = args ? args.serole : undefined;
-      resourceInputs["setype"] = args ? args.setype : undefined;
-      resourceInputs["seuser"] = args ? args.seuser : undefined;
-      resourceInputs["source"] = args ? args.source : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
-      resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
-      resourceInputs["validate"] = args ? args.validate : undefined;
+      resourceInputs["content"] = args?.content;
+      resourceInputs["directoryMode"] = args?.directoryMode;
+      resourceInputs["ensure"] = args?.ensure;
+      resourceInputs["follow"] = args?.follow;
+      resourceInputs["force"] = args?.force;
+      resourceInputs["group"] = args?.group;
+      resourceInputs["localFollow"] = args?.localFollow;
+      resourceInputs["mode"] = args?.mode;
+      resourceInputs["modificationTime"] = args?.modificationTime;
+      resourceInputs["modificationTimeFormat"] = args?.modificationTimeFormat;
+      resourceInputs["owner"] = args?.owner;
+      resourceInputs["path"] = args?.path;
+      resourceInputs["recurse"] = args?.recurse;
+      resourceInputs["remoteSource"] = args?.remoteSource;
+      resourceInputs["selevel"] = args?.selevel;
+      resourceInputs["serole"] = args?.serole;
+      resourceInputs["setype"] = args?.setype;
+      resourceInputs["seuser"] = args?.seuser;
+      resourceInputs["source"] = args?.source;
+      resourceInputs["triggers"] = args?.triggers;
+      resourceInputs["unsafeWrites"] = args?.unsafeWrites;
+      resourceInputs["validate"] = args?.validate;
       resourceInputs["_drifted"] = undefined /*out*/;
       resourceInputs["backupFile"] = undefined /*out*/;
       resourceInputs["stat"] = undefined /*out*/;

@@ -57,20 +57,20 @@ export class SystemdService extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["daemonReexec"] = args ? args.daemonReexec : undefined;
-      resourceInputs["daemonReload"] = args ? args.daemonReload : undefined;
-      resourceInputs["enabled"] = args ? args.enabled : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["force"] = args ? args.force : undefined;
-      resourceInputs["masked"] = args ? args.masked : undefined;
-      resourceInputs["name"] = args ? args.name : undefined;
-      resourceInputs["noBlock"] = args ? args.noBlock : undefined;
-      resourceInputs["scope"] = args ? args.scope : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
+      resourceInputs["daemonReexec"] = args?.daemonReexec;
+      resourceInputs["daemonReload"] = args?.daemonReload;
+      resourceInputs["enabled"] = args?.enabled;
+      resourceInputs["ensure"] = args?.ensure;
+      resourceInputs["force"] = args?.force;
+      resourceInputs["masked"] = args?.masked;
+      resourceInputs["name"] = args?.name;
+      resourceInputs["noBlock"] = args?.noBlock;
+      resourceInputs["scope"] = args?.scope;
+      resourceInputs["triggers"] = args?.triggers;
     } else {
       resourceInputs["config"] = undefined /*out*/;
       resourceInputs["connection"] = undefined /*out*/;

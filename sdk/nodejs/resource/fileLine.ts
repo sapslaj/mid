@@ -62,27 +62,27 @@ export class FileLine extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      if ((!args || args.path === undefined) && !opts.urn) {
+      if (args?.path === undefined && !opts.urn) {
         throw new Error("Missing required property 'path'");
       }
-      resourceInputs["backrefs"] = args ? args.backrefs : undefined;
-      resourceInputs["backup"] = args ? args.backup : undefined;
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["backrefs"] = args?.backrefs;
+      resourceInputs["backup"] = args?.backup;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["create"] = args ? args.create : undefined;
-      resourceInputs["ensure"] = args ? args.ensure : undefined;
-      resourceInputs["firstMatch"] = args ? args.firstMatch : undefined;
-      resourceInputs["insertAfter"] = args ? args.insertAfter : undefined;
-      resourceInputs["insertBefore"] = args ? args.insertBefore : undefined;
-      resourceInputs["line"] = args ? args.line : undefined;
-      resourceInputs["path"] = args ? args.path : undefined;
-      resourceInputs["regexp"] = args ? args.regexp : undefined;
-      resourceInputs["searchString"] = args ? args.searchString : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
-      resourceInputs["unsafeWrites"] = args ? args.unsafeWrites : undefined;
-      resourceInputs["validate"] = args ? args.validate : undefined;
+      resourceInputs["create"] = args?.create;
+      resourceInputs["ensure"] = args?.ensure;
+      resourceInputs["firstMatch"] = args?.firstMatch;
+      resourceInputs["insertAfter"] = args?.insertAfter;
+      resourceInputs["insertBefore"] = args?.insertBefore;
+      resourceInputs["line"] = args?.line;
+      resourceInputs["path"] = args?.path;
+      resourceInputs["regexp"] = args?.regexp;
+      resourceInputs["searchString"] = args?.searchString;
+      resourceInputs["triggers"] = args?.triggers;
+      resourceInputs["unsafeWrites"] = args?.unsafeWrites;
+      resourceInputs["validate"] = args?.validate;
       resourceInputs["_drifted"] = undefined /*out*/;
     } else {
       resourceInputs["_drifted"] = undefined /*out*/;

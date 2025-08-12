@@ -58,22 +58,22 @@ export class Exec extends pulumi.CustomResource {
     let resourceInputs: pulumi.Inputs = {};
     opts = opts || {};
     if (!opts.id) {
-      if ((!args || args.create === undefined) && !opts.urn) {
+      if (args?.create === undefined && !opts.urn) {
         throw new Error("Missing required property 'create'");
       }
-      resourceInputs["config"] = args ? args.config : undefined;
+      resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
         ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
         : undefined;
-      resourceInputs["create"] = args ? args.create : undefined;
-      resourceInputs["delete"] = args ? args.delete : undefined;
-      resourceInputs["deleteBeforeReplace"] = args ? args.deleteBeforeReplace : undefined;
-      resourceInputs["dir"] = args ? args.dir : undefined;
-      resourceInputs["environment"] = args ? args.environment : undefined;
-      resourceInputs["expandArgumentVars"] = args ? args.expandArgumentVars : undefined;
-      resourceInputs["logging"] = args ? args.logging : undefined;
-      resourceInputs["triggers"] = args ? args.triggers : undefined;
-      resourceInputs["update"] = args ? args.update : undefined;
+      resourceInputs["create"] = args?.create;
+      resourceInputs["delete"] = args?.delete;
+      resourceInputs["deleteBeforeReplace"] = args?.deleteBeforeReplace;
+      resourceInputs["dir"] = args?.dir;
+      resourceInputs["environment"] = args?.environment;
+      resourceInputs["expandArgumentVars"] = args?.expandArgumentVars;
+      resourceInputs["logging"] = args?.logging;
+      resourceInputs["triggers"] = args?.triggers;
+      resourceInputs["update"] = args?.update;
       resourceInputs["stderr"] = undefined /*out*/;
       resourceInputs["stdout"] = undefined /*out*/;
     } else {
