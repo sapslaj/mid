@@ -36,6 +36,7 @@ type Apt struct {
 	Name                     pulumi.StringPtrOutput      `pulumi:"name"`
 	Names                    pulumi.StringArrayOutput    `pulumi:"names"`
 	OnlyUpgrade              pulumi.BoolPtrOutput        `pulumi:"onlyUpgrade"`
+	PackagesTracked          pulumi.StringArrayOutput    `pulumi:"packagesTracked"`
 	PolicyRcD                pulumi.IntPtrOutput         `pulumi:"policyRcD"`
 	Purge                    pulumi.BoolPtrOutput        `pulumi:"purge"`
 	Triggers                 mid.TriggersOutputOutput    `pulumi:"triggers"`
@@ -319,6 +320,10 @@ func (o AptOutput) Names() pulumi.StringArrayOutput {
 
 func (o AptOutput) OnlyUpgrade() pulumi.BoolPtrOutput {
 	return o.ApplyT(func(v *Apt) pulumi.BoolPtrOutput { return v.OnlyUpgrade }).(pulumi.BoolPtrOutput)
+}
+
+func (o AptOutput) PackagesTracked() pulumi.StringArrayOutput {
+	return o.ApplyT(func(v *Apt) pulumi.StringArrayOutput { return v.PackagesTracked }).(pulumi.StringArrayOutput)
 }
 
 func (o AptOutput) PolicyRcD() pulumi.IntPtrOutput {

@@ -54,6 +54,7 @@ export class Apt extends pulumi.CustomResource {
   public readonly name!: pulumi.Output<string | undefined>;
   public readonly names!: pulumi.Output<string[] | undefined>;
   public readonly onlyUpgrade!: pulumi.Output<boolean | undefined>;
+  public readonly /*out*/ packagesTracked!: pulumi.Output<string[]>;
   public readonly policyRcD!: pulumi.Output<number | undefined>;
   public readonly purge!: pulumi.Output<boolean | undefined>;
   public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
@@ -103,6 +104,7 @@ export class Apt extends pulumi.CustomResource {
       resourceInputs["updateCacheRetries"] = args ? args.updateCacheRetries : undefined;
       resourceInputs["updateCacheRetryMaxDelay"] = args ? args.updateCacheRetryMaxDelay : undefined;
       resourceInputs["upgrade"] = args ? args.upgrade : undefined;
+      resourceInputs["packagesTracked"] = undefined /*out*/;
     } else {
       resourceInputs["allowChangeHeldPackages"] = undefined /*out*/;
       resourceInputs["allowDowngrade"] = undefined /*out*/;
@@ -125,6 +127,7 @@ export class Apt extends pulumi.CustomResource {
       resourceInputs["name"] = undefined /*out*/;
       resourceInputs["names"] = undefined /*out*/;
       resourceInputs["onlyUpgrade"] = undefined /*out*/;
+      resourceInputs["packagesTracked"] = undefined /*out*/;
       resourceInputs["policyRcD"] = undefined /*out*/;
       resourceInputs["purge"] = undefined /*out*/;
       resourceInputs["triggers"] = undefined /*out*/;

@@ -559,6 +559,7 @@ class Apt(pulumi.CustomResource):
                 update_cache_retry_max_delay
             )
             __props__.__dict__["upgrade"] = upgrade
+            __props__.__dict__["packages_tracked"] = None
         super(Apt, __self__).__init__(
             "mid:resource:Apt", resource_name, __props__, opts
         )
@@ -602,6 +603,7 @@ class Apt(pulumi.CustomResource):
         __props__.__dict__["name"] = None
         __props__.__dict__["names"] = None
         __props__.__dict__["only_upgrade"] = None
+        __props__.__dict__["packages_tracked"] = None
         __props__.__dict__["policy_rc_d"] = None
         __props__.__dict__["purge"] = None
         __props__.__dict__["triggers"] = None
@@ -715,6 +717,11 @@ class Apt(pulumi.CustomResource):
     @pulumi.getter(name="onlyUpgrade")
     def only_upgrade(self) -> pulumi.Output[Optional[_builtins.bool]]:
         return pulumi.get(self, "only_upgrade")
+
+    @_builtins.property
+    @pulumi.getter(name="packagesTracked")
+    def packages_tracked(self) -> pulumi.Output[Sequence[_builtins.str]]:
+        return pulumi.get(self, "packages_tracked")
 
     @_builtins.property
     @pulumi.getter(name="policyRcD")
