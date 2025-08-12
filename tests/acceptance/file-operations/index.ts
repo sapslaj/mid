@@ -1,5 +1,5 @@
 import * as aws from "@pulumi/aws";
-import { remote } from "@pulumi/command";
+import { local, remote } from "@pulumi/command";
 import * as pulumi from "@pulumi/pulumi";
 import * as tls from "@pulumi/tls";
 import * as mid from "@sapslaj/pulumi-mid";
@@ -202,6 +202,27 @@ new remote.Command("local-source-file-asset", {
   create: testfileAssertion("local-source-file-asset"),
 }, {
   dependsOn: [localSourceFileAsset],
+});
+
+const localSourceGeneratedFileAssetCommand = new local.Command("local-source-generated-file-asset", {
+  create: "true",
+  assetPaths: [
+    "testdata/testfile",
+  ],
+});
+
+const localSourceGeneratedFileAsset = new mid.resource.File("local-source-generated-file-asset", {
+  path: "/tmp/local-source-generated-file-asset",
+  source: localSourceGeneratedFileAssetCommand.assets.apply((assets) => assets!["testdata/testfile"]),
+}, {
+  provider,
+});
+
+new remote.Command("local-source-generated-file-asset", {
+  connection,
+  create: testfileAssertion("local-source-generated-file-asset"),
+}, {
+  dependsOn: [localSourceGeneratedFileAsset],
 });
 
 const localNetworkSourceAsset = new mid.resource.File("local-network-source-asset", {
