@@ -330,6 +330,11 @@ EXAMPLES = """
 """
 
 RETURN = """
+packages_tracked:
+    description: list of packages tracked by this task
+    type: list
+    elements: str
+    returned: success, in some cases
 cache_updated:
     description: if the cache was updated or not
     returned: success, in some cases
@@ -911,7 +916,13 @@ def install(
         if build_dep:
             changed = APT_GET_ZERO not in out
 
-        data = dict(changed=changed, stdout=out, stderr=err, diff=diff)
+        data = dict(
+            packages_tracked=package_names,
+            changed=changed,
+            stdout=out,
+            stderr=err,
+            diff=diff,
+        )
         if rc:
             status = False
             data = dict(
@@ -951,6 +962,7 @@ def install_deb(
     changed = False
     deps_to_install = []
     pkgs_to_install = []
+    packages_tracked = []
     for deb_file in debs.split(","):
         try:
             pkg = apt.debfile.DebPackage(deb_file, cache=apt.Cache())
@@ -981,6 +993,8 @@ def install_deb(
                     pass
                 else:
                     m.fail_json(msg=pkg._failure_string)
+
+            packages_tracked.append(pkg_name)
 
             # add any missing deps to the list of deps we need
             # to install so they're all done in one shot
@@ -1045,11 +1059,18 @@ def install_deb(
             stderr = err
 
         if rc == 0:
-            m.exit_json(changed=True, stdout=stdout, stderr=stderr, diff=diff)
+            m.exit_json(
+                packages_tracked=packages_tracked,
+                changed=True,
+                stdout=stdout,
+                stderr=stderr,
+                diff=diff,
+            )
         else:
             m.fail_json(msg="%s failed" % cmd, stdout=stdout, stderr=stderr)
     else:
         m.exit_json(
+            packages_tracked=packages_tracked,
             changed=changed,
             stdout=retvals.get("stdout", ""),
             stderr=retvals.get("stderr", ""),
@@ -1067,6 +1088,7 @@ def remove(
     autoremove=False,
     allow_change_held_packages=False,
 ):
+    packages_tracked = []
     pkg_list = []
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
     for package in pkgspec:
@@ -1074,12 +1096,13 @@ def remove(
         installed, installed_version, upgradable, has_files = package_status(
             m, name, version_cmp, version, None, cache, state="remove"
         )
+        packages_tracked.append(name)
         if installed_version or (has_files and purge):
             pkg_list.append("'%s'" % package)
     packages = " ".join(pkg_list)
 
     if not packages:
-        m.exit_json(changed=False)
+        m.exit_json(packages_tracked=packages_tracked, changed=False)
     else:
         if force:
             force_yes = "--force-yes"
@@ -1131,7 +1154,13 @@ def remove(
                 stderr=err,
                 rc=rc,
             )
-        m.exit_json(changed=True, stdout=out, stderr=err, diff=diff)
+        m.exit_json(
+            packages_tracked=packages_tracked,
+            changed=True,
+            stdout=out,
+            stderr=err,
+            diff=diff,
+        )
 
 
 def cleanup(

@@ -262,6 +262,9 @@ func (p AptParameters) ToRPCCall() (rpc.RPCCall[rpc.AnsibleExecuteArgs], error) 
 type AptReturn struct {
 	AnsibleCommonReturns
 
+	// list of packages tracked by this task
+	PackagesTracked *[]string `json:"packages_tracked,omitempty"`
+
 	// if the cache was updated or not
 	CacheUpdated *bool `json:"cache_updated,omitempty"`
 

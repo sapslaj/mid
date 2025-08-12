@@ -223,6 +223,24 @@ func TestResourceApt(t *testing.T) {
 			},
 			AssertDeleteCommand: `test ! -f /usr/bin/nano`,
 		},
+
+		"installing updating and deleting from deb file over http": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"deb": property.New("http://mirrors.kernel.org/ubuntu/pool/main/f/fonts-dejavu/fonts-dejavu-core_2.34-1ubuntu1_all.deb"),
+				}),
+				AssertCommand: `test -f /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf`,
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"deb": property.New("http://mirrors.kernel.org/ubuntu/pool/main/f/fonts-dejavu/fonts-dejavu-core_2.37-2build1_all.deb"),
+					}),
+					AssertCommand: `test -f /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf`,
+				},
+			},
+			AssertDeleteCommand: `test ! -f /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf`,
+		},
 	}
 
 	for name, tc := range tests {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -58,7 +59,8 @@ type AptArgs struct {
 
 type AptState struct {
 	AptArgs
-	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
+	PackagesTracked []string                `pulumi:"packagesTracked"`
+	Triggers        midtypes.TriggersOutput `pulumi:"triggers"`
 }
 
 func (r Apt) canAssumeEnsure(inputs AptArgs) bool {
@@ -309,7 +311,9 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
 	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
 
-	state := r.updateState(AptState{}, req.Inputs, true)
+	state := r.updateState(AptState{
+		PackagesTracked: []string{},
+	}, req.Inputs, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
 	id, err := resource.NewUniqueHex(req.Name, 8, 0)
@@ -339,13 +343,17 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 		}, err
 	}
 
-	_, err = r.runApt(ctx, connection, config, parameters, req.DryRun)
+	result, err := r.runApt(ctx, connection, config, parameters, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[AptState]{
 			ID:     id,
 			Output: state,
 		}, err
+	}
+
+	if result.PackagesTracked != nil {
+		state.PackagesTracked = *result.PackagesTracked
 	}
 
 	span.SetStatus(codes.Ok, "")
@@ -397,6 +405,10 @@ func (r Apt) Read(
 		}
 		span.SetStatus(codes.Error, err.Error())
 		return infer.ReadResponse[AptArgs, AptState]{}, err
+	}
+
+	if result.PackagesTracked != nil {
+		state.PackagesTracked = *result.PackagesTracked
 	}
 
 	state = r.updateState(state, req.Inputs, result.IsChanged())
@@ -460,6 +472,41 @@ func (r Apt) Update(
 			return infer.UpdateResponse[AptState]{
 				Output: state,
 			}, err
+		}
+
+		if result.PackagesTracked != nil {
+			state.PackagesTracked = *result.PackagesTracked
+		}
+
+		state := r.updateState(state, req.Inputs, result.IsChanged())
+		span.SetStatus(codes.Ok, "")
+		return infer.UpdateResponse[AptState]{
+			Output: state,
+		}, nil
+	}
+
+	if req.Inputs.Deb != nil {
+		// FIXME: need to detect if we switch from specifying `name`/`names` to
+		// `deb` and vice versa.
+
+		parameters, err := r.argsToTaskParameters(req.Inputs)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
+		}
+
+		result, err := r.runApt(ctx, connection, config, parameters, req.DryRun)
+		if err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			return infer.UpdateResponse[AptState]{
+				Output: state,
+			}, err
+		}
+
+		if result.PackagesTracked != nil {
+			state.PackagesTracked = *result.PackagesTracked
 		}
 
 		state := r.updateState(state, req.Inputs, result.IsChanged())
@@ -544,6 +591,11 @@ func (r Apt) Update(
 		if result.IsChanged() {
 			changed = true
 		}
+		if result.PackagesTracked != nil {
+			state.PackagesTracked = slices.DeleteFunc(state.PackagesTracked, func(tracked string) bool {
+				return slices.Contains(*result.PackagesTracked, tracked)
+			})
+		}
 	}
 
 	if len(presents) > 0 {
@@ -565,6 +617,13 @@ func (r Apt) Update(
 		}
 		if result.IsChanged() {
 			changed = true
+		}
+		if result.PackagesTracked != nil {
+			for _, tracked := range *result.PackagesTracked {
+				if !slices.Contains(state.PackagesTracked, tracked) {
+					state.PackagesTracked = append(state.PackagesTracked, tracked)
+				}
+			}
 		}
 	}
 
@@ -602,6 +661,11 @@ func (r Apt) Delete(ctx context.Context, req infer.DeleteRequest[AptState]) (inf
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.DeleteResponse{}, err
+	}
+
+	if parameters.Deb != nil {
+		parameters.Deb = nil
+		parameters.Name = ptr.Of(req.State.PackagesTracked)
 	}
 
 	_, err = r.runApt(ctx, connection, config, parameters, false)
