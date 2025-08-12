@@ -267,7 +267,7 @@ func (r Package) Read(
 	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	if result.IsChanged() {
-		if *req.Inputs.Ensure == "absent" {
+		if req.Inputs.Ensure != nil && *req.Inputs.Ensure == "absent" {
 			// we're going from present? to absent
 			if state.Ensure == "absent" {
 				state.Ensure = "present"
