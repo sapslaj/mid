@@ -683,3 +683,22 @@ func (r Apt) Delete(ctx context.Context, req infer.DeleteRequest[AptState]) (inf
 	span.SetStatus(codes.Ok, "")
 	return infer.DeleteResponse{}, nil
 }
+
+type AptStateV1 struct {
+	AptArgs
+	Triggers midtypes.TriggersOutput `pulumi:"triggers"`
+}
+
+func (r *Apt) StateMigrations(ctx context.Context) []infer.StateMigrationFunc[AptState] {
+	return []infer.StateMigrationFunc[AptState]{
+		infer.StateMigration(func(ctx context.Context, v1 AptStateV1) (infer.MigrationResult[AptState], error) {
+			return infer.MigrationResult[AptState]{
+				Result: &AptState{
+					Triggers:        v1.Triggers,
+					AptArgs:         v1.AptArgs,
+					PackagesTracked: []string{},
+				},
+			}, nil
+		}),
+	}
+}
