@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/sapslaj/mid/agent/rpc"
 	"github.com/sapslaj/mid/pkg/log"
@@ -19,6 +20,21 @@ func (s *Server) Start() error {
 	decoder := json.NewDecoder(os.Stdin)
 	mutex := sync.Mutex{}
 	wg := sync.WaitGroup{}
+	lastHeartbeat := time.Now()
+	heartbeatCheckClose := make(chan struct{})
+
+	go func() {
+		for {
+			select {
+			case <-time.Tick(100 * time.Millisecond):
+				if time.Now().Add(-2 * time.Minute).After(lastHeartbeat) {
+					panic("heartbeat timeout")
+				}
+			case <-heartbeatCheckClose:
+				return
+			}
+		}
+	}()
 
 	for {
 		s.Logger.Info("waiting for next call")
@@ -56,9 +72,14 @@ func (s *Server) Start() error {
 
 		if call.RPCFunction == rpc.RPCClose {
 			s.Logger.Info("received close, waiting for inflight to finish")
+			heartbeatCheckClose <- struct{}{}
 			wg.Wait()
 			s.Logger.Info("closing")
 			return nil
+		}
+
+		if call.RPCFunction == rpc.RPCAgentPing {
+			lastHeartbeat = time.Now()
 		}
 
 		wg.Add(1)
