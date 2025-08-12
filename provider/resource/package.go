@@ -83,12 +83,26 @@ func (r Package) Diff(
 		DetailedDiff: map[string]p.PropertyDiff{},
 	}
 
+	wantEnsure := "present"
+	if req.Inputs.Ensure != nil {
+		wantEnsure = *req.Inputs.Ensure
+	}
+
+	if wantEnsure != req.State.Ensure {
+		diff.HasChanges = true
+		diff.DetailedDiff["ensure"] = p.PropertyDiff{
+			Kind:      p.Update,
+			InputDiff: false,
+		}
+	}
+
 	diff = pdiff.MergeDiffResponses(
 		diff,
 		pdiff.DiffAllAttributesExcept(req.Inputs, req.State, []string{
 			"connection",
 			"config",
 			"triggers",
+			"ensure",
 		}),
 		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
@@ -229,6 +243,10 @@ func (r Package) Read(
 			// we're going from present? to absent
 			if state.Ensure == "absent" {
 				state.Ensure = "present"
+			}
+		} else {
+			if state.Ensure == "present" {
+				state.Ensure = "absent"
 			}
 		}
 	}
