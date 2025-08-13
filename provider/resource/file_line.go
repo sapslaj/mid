@@ -74,9 +74,7 @@ func (r FileLine) updateState(inputs FileLineArgs, state FileLineState, changed 
 }
 
 func (r FileLine) updateStateDrifted(inputs FileLineArgs, state FileLineState, props []string) FileLineState {
-	if len(props) > 0 {
-		state = r.updateState(inputs, state, true)
-	}
+	state = r.updateState(inputs, state, len(props) > 0)
 	inputsMap := introspect.StructToMap(inputs)
 	if state.Drifted == nil {
 		state.Drifted = []string{}

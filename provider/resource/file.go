@@ -91,9 +91,7 @@ func (r File) updateState(inputs FileArgs, state FileState, changed bool) FileSt
 }
 
 func (r File) updateStateDrifted(inputs FileArgs, state FileState, props []string) FileState {
-	if len(props) > 0 {
-		state = r.updateState(inputs, state, true)
-	}
+	state = r.updateState(inputs, state, len(props) > 0)
 	inputsMap := introspect.StructToMap(inputs)
 	if state.Drifted == nil {
 		state.Drifted = []string{}
