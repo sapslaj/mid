@@ -288,13 +288,10 @@ func (r SystemdService) Read(
 	))
 	defer span.End()
 
-	connection := midtypes.GetConnection(ctx, req.Inputs.Connection)
-	config := midtypes.GetResourceConfig(ctx, req.Inputs.Config)
-
 	state := req.State
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	parameters, err := r.argsToTaskParameters(req.Inputs)
+	state, err := r.updateService(ctx, req.Inputs, state, true)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.ReadResponse[SystemdServiceArgs, SystemdServiceState]{
@@ -303,30 +300,6 @@ func (r SystemdService) Read(
 			State:  state,
 		}, err
 	}
-
-	result, err := executor.AnsibleExecute[
-		ansible.SystemdServiceParameters,
-		ansible.SystemdServiceReturn,
-	](ctx, connection, config, parameters, true)
-	if err != nil {
-		if errors.Is(err, executor.ErrUnreachable) {
-			span.SetAttributes(attribute.Bool("unreachable", true))
-			span.SetStatus(codes.Ok, "")
-			return infer.ReadResponse[SystemdServiceArgs, SystemdServiceState]{
-				ID:     req.ID,
-				Inputs: req.Inputs,
-				State:  state,
-			}, nil
-		}
-		span.SetStatus(codes.Error, err.Error())
-		return infer.ReadResponse[SystemdServiceArgs, SystemdServiceState]{
-			ID:     req.ID,
-			Inputs: req.Inputs,
-			State:  state,
-		}, err
-	}
-
-	state = r.updateState(req.Inputs, state, result.IsChanged())
 
 	span.SetStatus(codes.Ok, "")
 	return infer.ReadResponse[SystemdServiceArgs, SystemdServiceState]{
