@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -316,20 +315,10 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 	}, req.Inputs, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(req.Name, 8, 0)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return infer.CreateResponse[AptState]{
-			ID:     id,
-			Output: state,
-		}, err
-	}
-	span.SetAttributes(attribute.String("pulumi.id", id))
-
 	if req.DryRun && !config.GetDryRunCheck() {
 		span.SetStatus(codes.Ok, "")
 		return infer.CreateResponse[AptState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, nil
 	}
@@ -338,7 +327,7 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[AptState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
@@ -347,7 +336,7 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[AptState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
@@ -358,7 +347,7 @@ func (r Apt) Create(ctx context.Context, req infer.CreateRequest[AptArgs]) (infe
 
 	span.SetStatus(codes.Ok, "")
 	return infer.CreateResponse[AptState]{
-		ID:     id,
+		ID:     req.Name,
 		Output: state,
 	}, nil
 }

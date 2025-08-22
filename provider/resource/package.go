@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/sapslaj/mid/pkg/pdiff"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
@@ -131,20 +130,10 @@ func (r Package) Create(
 	state := r.updateState(req.Inputs, PackageState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(req.Name, 8, 0)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return infer.CreateResponse[PackageState]{
-			ID:     id,
-			Output: state,
-		}, err
-	}
-	span.SetAttributes(attribute.String("pulumi.id", id))
-
 	if req.DryRun && !config.GetDryRunCheck() {
 		span.SetStatus(codes.Ok, "")
 		return infer.CreateResponse[PackageState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, nil
 	}
@@ -153,7 +142,7 @@ func (r Package) Create(
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[PackageState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
@@ -167,20 +156,20 @@ func (r Package) Create(
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
 			return infer.CreateResponse[PackageState]{
-				ID:     id,
+				ID:     req.Name,
 				Output: state,
 			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[PackageState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
 	return infer.CreateResponse[PackageState]{
-		ID:     id,
+		ID:     req.Name,
 		Output: state,
 	}, nil
 }

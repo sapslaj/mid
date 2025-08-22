@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"slices"
 
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
 	"go.opentelemetry.io/otel/attribute"
@@ -203,20 +202,10 @@ func (r FileLine) Create(
 	state.Drifted = []string{}
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(req.Name, 8, 0)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return infer.CreateResponse[FileLineState]{
-			ID:     id,
-			Output: state,
-		}, err
-	}
-	span.SetAttributes(attribute.String("pulumi.id", id))
-
 	if req.DryRun && !config.GetDryRunCheck() {
 		span.SetStatus(codes.Ok, "")
 		return infer.CreateResponse[FileLineState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, nil
 	}
@@ -225,7 +214,7 @@ func (r FileLine) Create(
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[FileLineState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
@@ -245,13 +234,13 @@ func (r FileLine) Create(
 				span.SetAttributes(attribute.Bool("unreachable", true))
 				span.SetStatus(codes.Ok, "")
 				return infer.CreateResponse[FileLineState]{
-					ID:     id,
+					ID:     req.Name,
 					Output: state,
 				}, nil
 			}
 			span.SetStatus(codes.Error, err.Error())
 			return infer.CreateResponse[FileLineState]{
-				ID:     id,
+				ID:     req.Name,
 				Output: state,
 			}, err
 		}
@@ -259,7 +248,7 @@ func (r FileLine) Create(
 			// file doesn't exist yet during req.DryRun
 			span.SetStatus(codes.Ok, "")
 			return infer.CreateResponse[FileLineState]{
-				ID:     id,
+				ID:     req.Name,
 				Output: state,
 			}, nil
 		}
@@ -274,20 +263,20 @@ func (r FileLine) Create(
 			span.SetAttributes(attribute.Bool("unreachable", true))
 			span.SetStatus(codes.Ok, "")
 			return infer.CreateResponse[FileLineState]{
-				ID:     id,
+				ID:     req.Name,
 				Output: state,
 			}, nil
 		}
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[FileLineState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
 	return infer.CreateResponse[FileLineState]{
-		ID:     id,
+		ID:     req.Name,
 		Output: state,
 	}, nil
 }

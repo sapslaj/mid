@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/sapslaj/mid/pkg/pdiff"
 	p "github.com/sapslaj/mid/pkg/providerfw"
 	"github.com/sapslaj/mid/pkg/providerfw/infer"
@@ -249,28 +248,18 @@ func (r SystemdService) Create(
 	}
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(req.Name, 8, 0)
+	state, err := r.updateService(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[SystemdServiceState]{
-			ID:     id,
-			Output: state,
-		}, err
-	}
-	span.SetAttributes(attribute.String("id", id))
-
-	state, err = r.updateService(ctx, req.Inputs, state, req.DryRun)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return infer.CreateResponse[SystemdServiceState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
 	return infer.CreateResponse[SystemdServiceState]{
-		ID:     id,
+		ID:     req.Name,
 		Output: state,
 	}, nil
 }

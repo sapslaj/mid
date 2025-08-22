@@ -1439,28 +1439,18 @@ func (r File) Create(
 	state := r.updateState(req.Inputs, FileState{}, true)
 	defer span.SetAttributes(telemetry.OtelJSON("pulumi.state", state))
 
-	id, err := resource.NewUniqueHex(req.Name, 8, 0)
+	state, err := r.createOrUpdate(ctx, req.Inputs, state, req.DryRun)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return infer.CreateResponse[FileState]{
-			ID:     id,
-			Output: state,
-		}, err
-	}
-	span.SetAttributes(attribute.String("pulumi.id", id))
-
-	state, err = r.createOrUpdate(ctx, req.Inputs, state, req.DryRun)
-	if err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		return infer.CreateResponse[FileState]{
-			ID:     id,
+			ID:     req.Name,
 			Output: state,
 		}, err
 	}
 
 	span.SetStatus(codes.Ok, "")
 	return infer.CreateResponse[FileState]{
-		ID:     id,
+		ID:     req.Name,
 		Output: state,
 	}, nil
 }
