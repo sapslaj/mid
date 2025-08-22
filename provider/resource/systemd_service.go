@@ -212,7 +212,7 @@ func (r SystemdService) Diff(
 	diff := p.DiffResponse{
 		HasChanges:          false,
 		DetailedDiff:        map[string]p.PropertyDiff{},
-		DeleteBeforeReplace: false,
+		DeleteBeforeReplace: true,
 	}
 
 	diff = pdiff.MergeDiffResponses(

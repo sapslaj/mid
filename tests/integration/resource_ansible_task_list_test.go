@@ -132,7 +132,7 @@ func TestResourceAnsibleTaskList(t *testing.T) {
 						}),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"triggers": {
@@ -227,7 +227,7 @@ func TestResourceAnsibleTaskList(t *testing.T) {
 						}),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"tasks.create[1].args.block": {
@@ -347,7 +347,7 @@ func TestResourceAnsibleTaskList(t *testing.T) {
 						}),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"tasks.create[0].ignoreErrors": {
@@ -443,7 +443,7 @@ func TestResourceAnsibleTaskList(t *testing.T) {
 						}),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"tasks.create[0].args.block": {

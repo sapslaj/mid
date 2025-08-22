@@ -100,7 +100,8 @@ func (r User) Diff(ctx context.Context, req infer.DiffRequest[UserArgs, UserStat
 	defer span.End()
 
 	diff := p.DiffResponse{
-		DetailedDiff: map[string]p.PropertyDiff{},
+		DetailedDiff:        map[string]p.PropertyDiff{},
+		DeleteBeforeReplace: true,
 	}
 
 	if req.Inputs.Name != req.State.Name {

@@ -58,7 +58,7 @@ func TestResourceFile(t *testing.T) {
 						"ensure": property.New("file"),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -81,7 +81,7 @@ func TestResourceFile(t *testing.T) {
 						"path": property.New("/foo"),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -205,7 +205,7 @@ func TestResourceFile(t *testing.T) {
 						"content": property.New("bar\n"),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"path": {
@@ -248,7 +248,7 @@ func TestResourceFile(t *testing.T) {
 					AssertBeforeCommand: "echo baz | sudo tee -a /foo",
 					Refresh:             true,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"content": {

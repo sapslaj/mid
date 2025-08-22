@@ -154,7 +154,7 @@ systemctl status mid-systemd-service-test.service || true
 						journalctl | tail -n 10 | grep -v "Started cron.service"
 					`,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -177,7 +177,7 @@ systemctl status mid-systemd-service-test.service || true
 						journalctl | tail -n 10 | grep -F "Started cron.service"
 					`,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"triggers": {
@@ -265,7 +265,7 @@ systemctl status mid-systemd-service-test.service || true
 						journalctl | tail -n 10 | grep -F -v "Reloading finished in"
 					`,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -286,7 +286,7 @@ systemctl status mid-systemd-service-test.service || true
 						journalctl | tail -n 10 | grep -F "Reloading finished in"
 					`,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"triggers": {
@@ -332,7 +332,7 @@ systemctl status mid-systemd-service-test.service || true
 						journalctl | tail -n 10 | grep -v "Reexecuting."
 					`,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -353,7 +353,7 @@ systemctl status mid-systemd-service-test.service || true
 						journalctl | tail -n 10 | grep "Reexecuting."
 					`,
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"triggers": {

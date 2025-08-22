@@ -279,7 +279,8 @@ func (r Apt) Diff(ctx context.Context, req infer.DiffRequest[AptArgs, AptState])
 	defer span.End()
 
 	diff := p.DiffResponse{
-		DetailedDiff: map[string]p.PropertyDiff{},
+		DetailedDiff:        map[string]p.PropertyDiff{},
+		DeleteBeforeReplace: true,
 	}
 
 	diff = pdiff.MergeDiffResponses(

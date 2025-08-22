@@ -79,7 +79,8 @@ func (r Package) Diff(
 	defer span.End()
 
 	diff := p.DiffResponse{
-		DetailedDiff: map[string]p.PropertyDiff{},
+		DetailedDiff:        map[string]p.PropertyDiff{},
+		DeleteBeforeReplace: true,
 	}
 
 	wantEnsure := "present"

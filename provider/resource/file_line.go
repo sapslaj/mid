@@ -156,7 +156,8 @@ func (r FileLine) Diff(
 	defer span.End()
 
 	diff := p.DiffResponse{
-		DetailedDiff: map[string]p.PropertyDiff{},
+		DetailedDiff:        map[string]p.PropertyDiff{},
+		DeleteBeforeReplace: true,
 	}
 
 	for _, prop := range req.State.Drifted {

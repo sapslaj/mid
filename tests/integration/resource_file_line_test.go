@@ -166,7 +166,7 @@ EOF
 					}),
 					AssertCommand: "grep -F 'foo bar baz' /fileline",
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"triggers": {
@@ -191,7 +191,7 @@ EOF
 					}),
 					AssertCommand: "grep -F 'foo bar baz' /fileline",
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						HasChanges:          false,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
@@ -219,7 +219,7 @@ EOF
 					AssertCommand: "grep -F 'foo bar foo' /fileline",
 					ExpectedDiff: &p.DiffResponse{
 						HasChanges:          true,
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"line": {
 								Kind:      p.Update,
@@ -237,7 +237,7 @@ EOF
 					AssertCommand: "grep -F 'foo bar foo' /fileline",
 					ExpectedDiff: &p.DiffResponse{
 						HasChanges:          false,
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
 				},
@@ -251,7 +251,7 @@ EOF
 					AssertCommand: "grep -F 'foo bar foo' /fileline",
 					ExpectedDiff: &p.DiffResponse{
 						HasChanges:          false,
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						DetailedDiff:        map[string]p.PropertyDiff{},
 					},
 				},
@@ -264,7 +264,7 @@ EOF
 					AssertCommand: "grep -F 'foo bar baz' /fileline",
 					ExpectedDiff: &p.DiffResponse{
 						HasChanges:          true,
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"line": {
 								Kind:      p.Update,
@@ -289,7 +289,7 @@ EOF
 					AssertCommand: "grep -F 'foo bar baz' /fileline",
 					ExpectedDiff: &p.DiffResponse{
 						HasChanges:          true,
-						DeleteBeforeReplace: false,
+						DeleteBeforeReplace: true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"line": {
 								Kind:      p.Update,
