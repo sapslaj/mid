@@ -148,7 +148,7 @@ func (c *config[T]) checkConfig(ctx context.Context, req p.CheckRequest) (p.Chec
 }
 
 func (c *config[T]) diffConfig(ctx context.Context, req p.DiffRequest) (p.DiffResponse, error) {
-	return diff[T, T, T](ctx, req, c.receiver, func(string) bool { return true })
+	return diff[T, T, T](ctx, req, c.receiver, func(string) bool { return false })
 }
 
 func (c *config[T]) configure(ctx context.Context, req p.ConfigureRequest) error {
