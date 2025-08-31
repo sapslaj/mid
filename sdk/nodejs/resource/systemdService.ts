@@ -33,18 +33,18 @@ export class SystemdService extends pulumi.CustomResource {
     return obj["__pulumiType"] === SystemdService.__pulumiType;
   }
 
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly daemonReexec!: pulumi.Output<boolean | undefined>;
-  public readonly daemonReload!: pulumi.Output<boolean | undefined>;
-  public readonly enabled!: pulumi.Output<boolean | undefined>;
-  public readonly ensure!: pulumi.Output<string | undefined>;
-  public readonly force!: pulumi.Output<boolean | undefined>;
-  public readonly masked!: pulumi.Output<boolean | undefined>;
-  public readonly name!: pulumi.Output<string | undefined>;
-  public readonly noBlock!: pulumi.Output<boolean | undefined>;
-  public readonly scope!: pulumi.Output<string | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly daemonReexec: pulumi.Output<boolean | undefined>;
+  declare public readonly daemonReload: pulumi.Output<boolean | undefined>;
+  declare public readonly enabled: pulumi.Output<boolean | undefined>;
+  declare public readonly ensure: pulumi.Output<string | undefined>;
+  declare public readonly force: pulumi.Output<boolean | undefined>;
+  declare public readonly masked: pulumi.Output<boolean | undefined>;
+  declare public readonly name: pulumi.Output<string | undefined>;
+  declare public readonly noBlock: pulumi.Output<boolean | undefined>;
+  declare public readonly scope: pulumi.Output<string | undefined>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a SystemdService resource with the given unique name, arguments, and options.

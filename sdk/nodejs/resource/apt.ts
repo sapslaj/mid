@@ -33,35 +33,35 @@ export class Apt extends pulumi.CustomResource {
     return obj["__pulumiType"] === Apt.__pulumiType;
   }
 
-  public readonly allowChangeHeldPackages!: pulumi.Output<boolean | undefined>;
-  public readonly allowDowngrade!: pulumi.Output<boolean | undefined>;
-  public readonly allowUnauthenticated!: pulumi.Output<boolean | undefined>;
-  public readonly autoclean!: pulumi.Output<boolean | undefined>;
-  public readonly autoremove!: pulumi.Output<boolean | undefined>;
-  public readonly cacheValidTime!: pulumi.Output<number | undefined>;
-  public readonly clean!: pulumi.Output<boolean | undefined>;
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly deb!: pulumi.Output<string | undefined>;
-  public readonly defaultRelease!: pulumi.Output<string | undefined>;
-  public readonly dpkgOptions!: pulumi.Output<string | undefined>;
-  public readonly ensure!: pulumi.Output<string | undefined>;
-  public readonly failOnAutoremove!: pulumi.Output<boolean | undefined>;
-  public readonly force!: pulumi.Output<boolean | undefined>;
-  public readonly forceAptGet!: pulumi.Output<boolean | undefined>;
-  public readonly installRecommends!: pulumi.Output<boolean | undefined>;
-  public readonly lockTimeout!: pulumi.Output<number | undefined>;
-  public readonly name!: pulumi.Output<string | undefined>;
-  public readonly names!: pulumi.Output<string[] | undefined>;
-  public readonly onlyUpgrade!: pulumi.Output<boolean | undefined>;
-  public readonly /*out*/ packagesTracked!: pulumi.Output<string[]>;
-  public readonly policyRcD!: pulumi.Output<number | undefined>;
-  public readonly purge!: pulumi.Output<boolean | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
-  public readonly updateCache!: pulumi.Output<boolean | undefined>;
-  public readonly updateCacheRetries!: pulumi.Output<number | undefined>;
-  public readonly updateCacheRetryMaxDelay!: pulumi.Output<number | undefined>;
-  public readonly upgrade!: pulumi.Output<string | undefined>;
+  declare public readonly allowChangeHeldPackages: pulumi.Output<boolean | undefined>;
+  declare public readonly allowDowngrade: pulumi.Output<boolean | undefined>;
+  declare public readonly allowUnauthenticated: pulumi.Output<boolean | undefined>;
+  declare public readonly autoclean: pulumi.Output<boolean | undefined>;
+  declare public readonly autoremove: pulumi.Output<boolean | undefined>;
+  declare public readonly cacheValidTime: pulumi.Output<number | undefined>;
+  declare public readonly clean: pulumi.Output<boolean | undefined>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly deb: pulumi.Output<string | undefined>;
+  declare public readonly defaultRelease: pulumi.Output<string | undefined>;
+  declare public readonly dpkgOptions: pulumi.Output<string | undefined>;
+  declare public readonly ensure: pulumi.Output<string | undefined>;
+  declare public readonly failOnAutoremove: pulumi.Output<boolean | undefined>;
+  declare public readonly force: pulumi.Output<boolean | undefined>;
+  declare public readonly forceAptGet: pulumi.Output<boolean | undefined>;
+  declare public readonly installRecommends: pulumi.Output<boolean | undefined>;
+  declare public readonly lockTimeout: pulumi.Output<number | undefined>;
+  declare public readonly name: pulumi.Output<string | undefined>;
+  declare public readonly names: pulumi.Output<string[] | undefined>;
+  declare public readonly onlyUpgrade: pulumi.Output<boolean | undefined>;
+  declare public readonly /*out*/ packagesTracked: pulumi.Output<string[]>;
+  declare public readonly policyRcD: pulumi.Output<number | undefined>;
+  declare public readonly purge: pulumi.Output<boolean | undefined>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly updateCache: pulumi.Output<boolean | undefined>;
+  declare public readonly updateCacheRetries: pulumi.Output<number | undefined>;
+  declare public readonly updateCacheRetryMaxDelay: pulumi.Output<number | undefined>;
+  declare public readonly upgrade: pulumi.Output<string | undefined>;
 
   /**
    * Create a Apt resource with the given unique name, arguments, and options.

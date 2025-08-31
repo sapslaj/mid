@@ -33,19 +33,19 @@ export class Exec extends pulumi.CustomResource {
     return obj["__pulumiType"] === Exec.__pulumiType;
   }
 
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly create!: pulumi.Output<outputs.ExecCommand>;
-  public readonly delete!: pulumi.Output<outputs.ExecCommand | undefined>;
-  public readonly deleteBeforeReplace!: pulumi.Output<boolean | undefined>;
-  public readonly dir!: pulumi.Output<string | undefined>;
-  public readonly environment!: pulumi.Output<{ [key: string]: string } | undefined>;
-  public readonly expandArgumentVars!: pulumi.Output<boolean | undefined>;
-  public readonly logging!: pulumi.Output<string | undefined>;
-  public readonly /*out*/ stderr!: pulumi.Output<string>;
-  public readonly /*out*/ stdout!: pulumi.Output<string>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
-  public readonly update!: pulumi.Output<outputs.ExecCommand | undefined>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly create: pulumi.Output<outputs.ExecCommand>;
+  declare public readonly delete: pulumi.Output<outputs.ExecCommand | undefined>;
+  declare public readonly deleteBeforeReplace: pulumi.Output<boolean | undefined>;
+  declare public readonly dir: pulumi.Output<string | undefined>;
+  declare public readonly environment: pulumi.Output<{ [key: string]: string } | undefined>;
+  declare public readonly expandArgumentVars: pulumi.Output<boolean | undefined>;
+  declare public readonly logging: pulumi.Output<string | undefined>;
+  declare public readonly /*out*/ stderr: pulumi.Output<string>;
+  declare public readonly /*out*/ stdout: pulumi.Output<string>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly update: pulumi.Output<outputs.ExecCommand | undefined>;
 
   /**
    * Create a Exec resource with the given unique name, arguments, and options.

@@ -33,11 +33,11 @@ export class AnsibleTaskList extends pulumi.CustomResource {
     return obj["__pulumiType"] === AnsibleTaskList.__pulumiType;
   }
 
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly /*out*/ results!: pulumi.Output<outputs.resource.AnsibleTaskListStateResults>;
-  public readonly tasks!: pulumi.Output<outputs.resource.AnsibleTaskListArgsTasks>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly /*out*/ results: pulumi.Output<outputs.resource.AnsibleTaskListStateResults>;
+  declare public readonly tasks: pulumi.Output<outputs.resource.AnsibleTaskListArgsTasks>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a AnsibleTaskList resource with the given unique name, arguments, and options.

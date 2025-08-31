@@ -33,18 +33,18 @@ export class Group extends pulumi.CustomResource {
     return obj["__pulumiType"] === Group.__pulumiType;
   }
 
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly ensure!: pulumi.Output<string | undefined>;
-  public readonly force!: pulumi.Output<boolean | undefined>;
-  public readonly gid!: pulumi.Output<number | undefined>;
-  public readonly gidMax!: pulumi.Output<number | undefined>;
-  public readonly gidMin!: pulumi.Output<number | undefined>;
-  public readonly local!: pulumi.Output<boolean | undefined>;
-  public readonly name!: pulumi.Output<string>;
-  public readonly nonUnique!: pulumi.Output<boolean | undefined>;
-  public readonly system!: pulumi.Output<boolean | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly ensure: pulumi.Output<string | undefined>;
+  declare public readonly force: pulumi.Output<boolean | undefined>;
+  declare public readonly gid: pulumi.Output<number | undefined>;
+  declare public readonly gidMax: pulumi.Output<number | undefined>;
+  declare public readonly gidMin: pulumi.Output<number | undefined>;
+  declare public readonly local: pulumi.Output<boolean | undefined>;
+  declare public readonly name: pulumi.Output<string>;
+  declare public readonly nonUnique: pulumi.Output<boolean | undefined>;
+  declare public readonly system: pulumi.Output<boolean | undefined>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a Group resource with the given unique name, arguments, and options.

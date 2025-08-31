@@ -33,17 +33,17 @@ export class Service extends pulumi.CustomResource {
     return obj["__pulumiType"] === Service.__pulumiType;
   }
 
-  public readonly arguments!: pulumi.Output<string | undefined>;
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly enabled!: pulumi.Output<boolean | undefined>;
-  public readonly name!: pulumi.Output<string>;
-  public readonly pattern!: pulumi.Output<string | undefined>;
-  public readonly runlevel!: pulumi.Output<string | undefined>;
-  public readonly sleep!: pulumi.Output<number | undefined>;
-  public readonly state!: pulumi.Output<string | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
-  public readonly use!: pulumi.Output<string | undefined>;
+  declare public readonly arguments: pulumi.Output<string | undefined>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly enabled: pulumi.Output<boolean | undefined>;
+  declare public readonly name: pulumi.Output<string>;
+  declare public readonly pattern: pulumi.Output<string | undefined>;
+  declare public readonly runlevel: pulumi.Output<string | undefined>;
+  declare public readonly sleep: pulumi.Output<number | undefined>;
+  declare public readonly state: pulumi.Output<string | undefined>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly use: pulumi.Output<string | undefined>;
 
   /**
    * Create a Service resource with the given unique name, arguments, and options.

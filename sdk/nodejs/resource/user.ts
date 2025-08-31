@@ -33,29 +33,29 @@ export class User extends pulumi.CustomResource {
     return obj["__pulumiType"] === User.__pulumiType;
   }
 
-  public readonly comment!: pulumi.Output<string | undefined>;
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly ensure!: pulumi.Output<string | undefined>;
-  public readonly force!: pulumi.Output<boolean | undefined>;
-  public readonly group!: pulumi.Output<string | undefined>;
-  public readonly groups!: pulumi.Output<string[] | undefined>;
-  public readonly groupsExclusive!: pulumi.Output<boolean | undefined>;
-  public readonly home!: pulumi.Output<string | undefined>;
-  public readonly local!: pulumi.Output<boolean | undefined>;
-  public readonly manageHome!: pulumi.Output<boolean | undefined>;
-  public readonly name!: pulumi.Output<string>;
-  public readonly nonUnique!: pulumi.Output<boolean | undefined>;
-  public readonly password!: pulumi.Output<string | undefined>;
-  public readonly shell!: pulumi.Output<string | undefined>;
-  public readonly skeleton!: pulumi.Output<string | undefined>;
-  public readonly system!: pulumi.Output<boolean | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
-  public readonly uid!: pulumi.Output<number | undefined>;
-  public readonly uidMax!: pulumi.Output<number | undefined>;
-  public readonly uidMin!: pulumi.Output<number | undefined>;
-  public readonly umask!: pulumi.Output<string | undefined>;
-  public readonly updatePassword!: pulumi.Output<string | undefined>;
+  declare public readonly comment: pulumi.Output<string | undefined>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly ensure: pulumi.Output<string | undefined>;
+  declare public readonly force: pulumi.Output<boolean | undefined>;
+  declare public readonly group: pulumi.Output<string | undefined>;
+  declare public readonly groups: pulumi.Output<string[] | undefined>;
+  declare public readonly groupsExclusive: pulumi.Output<boolean | undefined>;
+  declare public readonly home: pulumi.Output<string | undefined>;
+  declare public readonly local: pulumi.Output<boolean | undefined>;
+  declare public readonly manageHome: pulumi.Output<boolean | undefined>;
+  declare public readonly name: pulumi.Output<string>;
+  declare public readonly nonUnique: pulumi.Output<boolean | undefined>;
+  declare public readonly password: pulumi.Output<string | undefined>;
+  declare public readonly shell: pulumi.Output<string | undefined>;
+  declare public readonly skeleton: pulumi.Output<string | undefined>;
+  declare public readonly system: pulumi.Output<boolean | undefined>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly uid: pulumi.Output<number | undefined>;
+  declare public readonly uidMax: pulumi.Output<number | undefined>;
+  declare public readonly uidMin: pulumi.Output<number | undefined>;
+  declare public readonly umask: pulumi.Output<string | undefined>;
+  declare public readonly updatePassword: pulumi.Output<string | undefined>;
 
   /**
    * Create a User resource with the given unique name, arguments, and options.

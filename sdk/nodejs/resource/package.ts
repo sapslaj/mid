@@ -33,12 +33,12 @@ export class Package extends pulumi.CustomResource {
     return obj["__pulumiType"] === Package.__pulumiType;
   }
 
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly ensure!: pulumi.Output<string>;
-  public readonly name!: pulumi.Output<string | undefined>;
-  public readonly names!: pulumi.Output<string[] | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly ensure: pulumi.Output<string>;
+  declare public readonly name: pulumi.Output<string | undefined>;
+  declare public readonly names: pulumi.Output<string[] | undefined>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
 
   /**
    * Create a Package resource with the given unique name, arguments, and options.

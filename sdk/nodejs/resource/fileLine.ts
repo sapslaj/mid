@@ -33,23 +33,23 @@ export class FileLine extends pulumi.CustomResource {
     return obj["__pulumiType"] === FileLine.__pulumiType;
   }
 
-  public readonly /*out*/ _drifted!: pulumi.Output<string[]>;
-  public readonly backrefs!: pulumi.Output<boolean | undefined>;
-  public readonly backup!: pulumi.Output<boolean | undefined>;
-  public readonly config!: pulumi.Output<outputs.ResourceConfig | undefined>;
-  public readonly connection!: pulumi.Output<outputs.Connection | undefined>;
-  public readonly create!: pulumi.Output<boolean | undefined>;
-  public readonly ensure!: pulumi.Output<string | undefined>;
-  public readonly firstMatch!: pulumi.Output<boolean | undefined>;
-  public readonly insertAfter!: pulumi.Output<string | undefined>;
-  public readonly insertBefore!: pulumi.Output<string | undefined>;
-  public readonly line!: pulumi.Output<string | undefined>;
-  public readonly path!: pulumi.Output<string>;
-  public readonly regexp!: pulumi.Output<string | undefined>;
-  public readonly searchString!: pulumi.Output<string | undefined>;
-  public readonly triggers!: pulumi.Output<outputs.TriggersOutput>;
-  public readonly unsafeWrites!: pulumi.Output<boolean | undefined>;
-  public readonly validate!: pulumi.Output<string | undefined>;
+  declare public readonly /*out*/ _drifted: pulumi.Output<string[]>;
+  declare public readonly backrefs: pulumi.Output<boolean | undefined>;
+  declare public readonly backup: pulumi.Output<boolean | undefined>;
+  declare public readonly config: pulumi.Output<outputs.ResourceConfig | undefined>;
+  declare public readonly connection: pulumi.Output<outputs.Connection | undefined>;
+  declare public readonly create: pulumi.Output<boolean | undefined>;
+  declare public readonly ensure: pulumi.Output<string | undefined>;
+  declare public readonly firstMatch: pulumi.Output<boolean | undefined>;
+  declare public readonly insertAfter: pulumi.Output<string | undefined>;
+  declare public readonly insertBefore: pulumi.Output<string | undefined>;
+  declare public readonly line: pulumi.Output<string | undefined>;
+  declare public readonly path: pulumi.Output<string>;
+  declare public readonly regexp: pulumi.Output<string | undefined>;
+  declare public readonly searchString: pulumi.Output<string | undefined>;
+  declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
+  declare public readonly unsafeWrites: pulumi.Output<boolean | undefined>;
+  declare public readonly validate: pulumi.Output<string | undefined>;
 
   /**
    * Create a FileLine resource with the given unique name, arguments, and options.
