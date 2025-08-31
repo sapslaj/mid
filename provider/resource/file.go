@@ -269,6 +269,11 @@ func (r File) Diff(
 		midtypes.DiffTriggers(req.State, req.Inputs),
 	)
 
+	_, pathDiff := diff.DetailedDiff["path"]
+	if pathDiff {
+		diff.DeleteBeforeReplace = false
+	}
+
 	span.SetStatus(codes.Ok, "")
 	span.SetAttributes(telemetry.OtelJSON("pulumi.diff", diff))
 	return diff, nil

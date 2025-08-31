@@ -205,7 +205,7 @@ func TestResourceFile(t *testing.T) {
 						"content": property.New("bar\n"),
 					}),
 					ExpectedDiff: &p.DiffResponse{
-						DeleteBeforeReplace: true,
+						DeleteBeforeReplace: false,
 						HasChanges:          true,
 						DetailedDiff: map[string]p.PropertyDiff{
 							"path": {
