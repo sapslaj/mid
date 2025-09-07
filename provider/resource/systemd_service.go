@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/sapslaj/mid/pkg/pdiff"
 	p "github.com/sapslaj/mid/pkg/providerfw"
@@ -30,19 +31,28 @@ const (
 	SystemdServiceEnsureRestarted SystemdServiceEnsure = "restarted"
 )
 
+type SystemdServiceRefreshAction string
+
+const (
+	SystemdServiceRefreshActionRestart SystemdServiceRefreshAction = "restart"
+	SystemdServiceRefreshActionReload  SystemdServiceRefreshAction = "reload"
+	SystemdServiceRefreshActionKeep    SystemdServiceRefreshAction = "keep"
+)
+
 type SystemdServiceArgs struct {
-	DaemonReexec *bool                    `pulumi:"daemonReexec,optional"`
-	DaemonReload *bool                    `pulumi:"daemonReload,optional"`
-	Enabled      *bool                    `pulumi:"enabled,optional"`
-	Force        *bool                    `pulumi:"force,optional"`
-	Masked       *bool                    `pulumi:"masked,optional"`
-	Name         *string                  `pulumi:"name,optional"`
-	NoBlock      *bool                    `pulumi:"noBlock,optional"`
-	Scope        *string                  `pulumi:"scope,optional"`
-	Ensure       *SystemdServiceEnsure    `pulumi:"ensure,optional"`
-	Connection   *midtypes.Connection     `pulumi:"connection,optional"`
-	Config       *midtypes.ResourceConfig `pulumi:"config,optional"`
-	Triggers     *midtypes.TriggersInput  `pulumi:"triggers,optional"`
+	DaemonReexec  *bool                        `pulumi:"daemonReexec,optional"`
+	DaemonReload  *bool                        `pulumi:"daemonReload,optional"`
+	Enabled       *bool                        `pulumi:"enabled,optional"`
+	Force         *bool                        `pulumi:"force,optional"`
+	Masked        *bool                        `pulumi:"masked,optional"`
+	Name          *string                      `pulumi:"name,optional"`
+	NoBlock       *bool                        `pulumi:"noBlock,optional"`
+	Scope         *string                      `pulumi:"scope,optional"`
+	Ensure        *SystemdServiceEnsure        `pulumi:"ensure,optional"`
+	RefreshAction *SystemdServiceRefreshAction `pulumi:"refreshAction,optional"`
+	Connection    *midtypes.Connection         `pulumi:"connection,optional"`
+	Config        *midtypes.ResourceConfig     `pulumi:"config,optional"`
+	Triggers      *midtypes.TriggersInput      `pulumi:"triggers,optional"`
 }
 
 type SystemdServiceState struct {
@@ -153,8 +163,25 @@ func (r SystemdService) updateService(
 
 	span.SetAttributes(attribute.Bool("refresh", refresh))
 
+	refreshAction := SystemdServiceRefreshActionRestart
+	if inputs.RefreshAction != nil {
+		refreshAction = *inputs.RefreshAction
+	}
+
 	if refresh && inputs.Ensure != nil && *inputs.Ensure == "started" {
-		parameters.State = ansible.OptionalSystemdServiceState(string(SystemdServiceEnsureRestarted))
+		switch refreshAction {
+		case SystemdServiceRefreshActionKeep:
+			break
+		case SystemdServiceRefreshActionRestart:
+			parameters.State = ansible.OptionalSystemdServiceState(string(SystemdServiceEnsureRestarted))
+		case SystemdServiceRefreshActionReload:
+			parameters.State = ansible.OptionalSystemdServiceState(string(SystemdServiceEnsureReloaded))
+		default:
+			// TODO: implement this check in `r.Check()`
+			err = fmt.Errorf("invalid refreshAction: %q", refreshAction)
+			span.SetStatus(codes.Error, err.Error())
+			return state, err
+		}
 	}
 
 	if dryRun && inputs.Name != nil {
