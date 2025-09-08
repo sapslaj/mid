@@ -6,7 +6,7 @@ toolchain go1.24.6
 
 require (
 	github.com/pulumi/pulumi/sdk/v3 v3.184.0
-	github.com/sapslaj/mid/sdk v0.0.0-20250831205616-6aea1864ee97
+	github.com/sapslaj/mid/sdk v0.0.0-20250907234159-b8434c5eaef7
 )
 
 require (

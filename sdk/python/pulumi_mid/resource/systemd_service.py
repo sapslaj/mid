@@ -35,6 +35,7 @@ class SystemdServiceArgs:
         masked: Optional[pulumi.Input[_builtins.bool]] = None,
         name: Optional[pulumi.Input[_builtins.str]] = None,
         no_block: Optional[pulumi.Input[_builtins.bool]] = None,
+        refresh_action: Optional[pulumi.Input[_builtins.str]] = None,
         scope: Optional[pulumi.Input[_builtins.str]] = None,
         triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
     ):
@@ -61,6 +62,8 @@ class SystemdServiceArgs:
             pulumi.set(__self__, "name", name)
         if no_block is not None:
             pulumi.set(__self__, "no_block", no_block)
+        if refresh_action is not None:
+            pulumi.set(__self__, "refresh_action", refresh_action)
         if scope is not None:
             pulumi.set(__self__, "scope", scope)
         if triggers is not None:
@@ -157,6 +160,15 @@ class SystemdServiceArgs:
         pulumi.set(self, "no_block", value)
 
     @_builtins.property
+    @pulumi.getter(name="refreshAction")
+    def refresh_action(self) -> Optional[pulumi.Input[_builtins.str]]:
+        return pulumi.get(self, "refresh_action")
+
+    @refresh_action.setter
+    def refresh_action(self, value: Optional[pulumi.Input[_builtins.str]]):
+        pulumi.set(self, "refresh_action", value)
+
+    @_builtins.property
     @pulumi.getter
     def scope(self) -> Optional[pulumi.Input[_builtins.str]]:
         return pulumi.get(self, "scope")
@@ -203,6 +215,7 @@ class SystemdService(pulumi.CustomResource):
         masked: Optional[pulumi.Input[_builtins.bool]] = None,
         name: Optional[pulumi.Input[_builtins.str]] = None,
         no_block: Optional[pulumi.Input[_builtins.bool]] = None,
+        refresh_action: Optional[pulumi.Input[_builtins.str]] = None,
         scope: Optional[pulumi.Input[_builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
@@ -270,6 +283,7 @@ class SystemdService(pulumi.CustomResource):
         masked: Optional[pulumi.Input[_builtins.bool]] = None,
         name: Optional[pulumi.Input[_builtins.str]] = None,
         no_block: Optional[pulumi.Input[_builtins.bool]] = None,
+        refresh_action: Optional[pulumi.Input[_builtins.str]] = None,
         scope: Optional[pulumi.Input[_builtins.str]] = None,
         triggers: Optional[
             pulumi.Input[
@@ -305,6 +319,7 @@ class SystemdService(pulumi.CustomResource):
             __props__.__dict__["masked"] = masked
             __props__.__dict__["name"] = name
             __props__.__dict__["no_block"] = no_block
+            __props__.__dict__["refresh_action"] = refresh_action
             __props__.__dict__["scope"] = scope
             __props__.__dict__["triggers"] = triggers
         super(SystemdService, __self__).__init__(
@@ -339,6 +354,7 @@ class SystemdService(pulumi.CustomResource):
         __props__.__dict__["masked"] = None
         __props__.__dict__["name"] = None
         __props__.__dict__["no_block"] = None
+        __props__.__dict__["refresh_action"] = None
         __props__.__dict__["scope"] = None
         __props__.__dict__["triggers"] = None
         return SystemdService(resource_name, opts=opts, __props__=__props__)
@@ -392,6 +408,11 @@ class SystemdService(pulumi.CustomResource):
     @pulumi.getter(name="noBlock")
     def no_block(self) -> pulumi.Output[Optional[_builtins.bool]]:
         return pulumi.get(self, "no_block")
+
+    @_builtins.property
+    @pulumi.getter(name="refreshAction")
+    def refresh_action(self) -> pulumi.Output[Optional[_builtins.str]]:
+        return pulumi.get(self, "refresh_action")
 
     @_builtins.property
     @pulumi.getter

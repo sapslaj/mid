@@ -43,6 +43,7 @@ export class SystemdService extends pulumi.CustomResource {
   declare public readonly masked: pulumi.Output<boolean | undefined>;
   declare public readonly name: pulumi.Output<string | undefined>;
   declare public readonly noBlock: pulumi.Output<boolean | undefined>;
+  declare public readonly refreshAction: pulumi.Output<string | undefined>;
   declare public readonly scope: pulumi.Output<string | undefined>;
   declare public readonly triggers: pulumi.Output<outputs.TriggersOutput>;
 
@@ -69,6 +70,7 @@ export class SystemdService extends pulumi.CustomResource {
       resourceInputs["masked"] = args?.masked;
       resourceInputs["name"] = args?.name;
       resourceInputs["noBlock"] = args?.noBlock;
+      resourceInputs["refreshAction"] = args?.refreshAction;
       resourceInputs["scope"] = args?.scope;
       resourceInputs["triggers"] = args?.triggers;
     } else {
@@ -82,6 +84,7 @@ export class SystemdService extends pulumi.CustomResource {
       resourceInputs["masked"] = undefined /*out*/;
       resourceInputs["name"] = undefined /*out*/;
       resourceInputs["noBlock"] = undefined /*out*/;
+      resourceInputs["refreshAction"] = undefined /*out*/;
       resourceInputs["scope"] = undefined /*out*/;
       resourceInputs["triggers"] = undefined /*out*/;
     }
@@ -104,6 +107,7 @@ export interface SystemdServiceArgs {
   masked?: pulumi.Input<boolean>;
   name?: pulumi.Input<string>;
   noBlock?: pulumi.Input<boolean>;
+  refreshAction?: pulumi.Input<string>;
   scope?: pulumi.Input<string>;
   triggers?: pulumi.Input<inputs.TriggersInputArgs>;
 }
