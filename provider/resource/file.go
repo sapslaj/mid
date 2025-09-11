@@ -1157,6 +1157,11 @@ func (r File) createOrUpdate(
 		return state, nil
 	}
 
+	calculateChecksum := true
+	if inputs.Ensure != nil && *inputs.Ensure == FileEnsureDirectory && inputs.Recurse != nil && *inputs.Recurse == false {
+		calculateChecksum = false
+	}
+
 	statResult, err := executor.CallAgent[
 		rpc.FileStatArgs,
 		rpc.FileStatResult,
@@ -1165,7 +1170,7 @@ func (r File) createOrUpdate(
 		Args: rpc.FileStatArgs{
 			Path:              inputs.Path,
 			FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
-			CalculateChecksum: true,
+			CalculateChecksum: calculateChecksum,
 		},
 	})
 	if err != nil {
@@ -1401,6 +1406,11 @@ func (r File) createOrUpdate(
 		// clear drifted if we aren't doing a dry-run
 		state.Drifted = []string{}
 
+		calculateChecksum := true
+		if inputs.Ensure != nil && *inputs.Ensure == FileEnsureDirectory && inputs.Recurse != nil && *inputs.Recurse == false {
+			calculateChecksum = false
+		}
+
 		statResult, err := executor.CallAgent[
 			rpc.FileStatArgs,
 			rpc.FileStatResult,
@@ -1409,7 +1419,7 @@ func (r File) createOrUpdate(
 			Args: rpc.FileStatArgs{
 				Path:              inputs.Path,
 				FollowSymlinks:    inputs.Follow != nil && *inputs.Follow,
-				CalculateChecksum: true,
+				CalculateChecksum: calculateChecksum,
 			},
 		})
 		if err != nil {
