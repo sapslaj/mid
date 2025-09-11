@@ -79,7 +79,7 @@ type FileArgs struct {
 type FileState struct {
 	FileArgs
 	BackupFile *string                 `pulumi:"backupFile,optional"`
-	Drifted    []string                `pulumi:"_drifted"`
+	Drifted    []string                `pulumi:"_drifted,optional"`
 	Stat       midtypes.FileStatState  `pulumi:"stat"`
 	Triggers   midtypes.TriggersOutput `pulumi:"triggers"`
 }
