@@ -35,6 +35,7 @@ def build_agent(goos: str, goarch: str):
         check=True,
         env={
             **os.environ,
+            "CGO_ENABLED": "0",
             "GOOS": goos,
             "GOARCH": goarch,
         },
