@@ -12,9 +12,6 @@ permissions:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  NPM_REGISTRY_URL: https://npm.pkg.github.com
   GOPRIVATE: github.com/sapslaj
 
 jobs:
@@ -102,9 +99,18 @@ jobs:
           files: |
             dist/**/*
           target_commitish: ${{ steps.commit.outputs.commit_hash }}
-      - uses: JS-DevTools/npm-publish@v3
+      - name: GitHub Packages publish
+        uses: JS-DevTools/npm-publish@v3
         with:
           access: public
-          token: ${{ env.NPM_TOKEN }}
-          registry: ${{ env.NPM_REGISTRY_URL }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          registry: https://npm.pkg.github.com
+          package: ${{ github.workspace }}/sdk/nodejs/bin/package.json
+      - name: NPM publish
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          access: public
+          provenance: true
+          token: ${{ secrets.NPM_PUBLISH_ACCESS_TOKEN }}
+          registry: https://registry.npmjs.org/
           package: ${{ github.workspace }}/sdk/nodejs/bin/package.json
