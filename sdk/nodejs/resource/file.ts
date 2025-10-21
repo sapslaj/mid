@@ -33,7 +33,7 @@ export class File extends pulumi.CustomResource {
     return obj["__pulumiType"] === File.__pulumiType;
   }
 
-  declare public readonly /*out*/ _drifted: pulumi.Output<string[]>;
+  declare public readonly /*out*/ _drifted: pulumi.Output<string[] | undefined>;
   declare public readonly accessTime: pulumi.Output<string | undefined>;
   declare public readonly accessTimeFormat: pulumi.Output<string | undefined>;
   declare public readonly attributes: pulumi.Output<string | undefined>;

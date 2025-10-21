@@ -628,7 +628,7 @@ class File(pulumi.CustomResource):
 
     @_builtins.property
     @pulumi.getter
-    def _drifted(self) -> pulumi.Output[Sequence[_builtins.str]]:
+    def _drifted(self) -> pulumi.Output[Optional[Sequence[_builtins.str]]]:
         return pulumi.get(self, "_drifted")
 
     @_builtins.property
