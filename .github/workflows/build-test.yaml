@@ -54,7 +54,7 @@ jobs:
           fetch-tags: true
       - uses: webfactory/ssh-agent@v0.9.1
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.GH_ACTIONS_SSH_PRIVATE_KEY }}
       - name: Setup tools
         uses: ./.github/actions/setup-tools
         with:
