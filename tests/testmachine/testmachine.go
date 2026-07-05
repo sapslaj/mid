@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,7 +18,8 @@ import (
 	"time"
 
 	"github.com/anatol/vmtest"
-	"github.com/ory/dockertest/v3"
+	"github.com/moby/moby/client"
+	"github.com/ory/dockertest/v4"
 	"github.com/sapslaj/mid/pkg/env"
 	"golang.org/x/crypto/ssh"
 )
@@ -48,17 +50,14 @@ type TestMachine struct {
 	DataPath    string
 
 	// Docker
-	DockertestPool  *dockertest.Pool
-	DockerContainer *dockertest.Resource
+	DockertestPool  dockertest.Pool
+	DockerContainer dockertest.Resource
 
 	// QEMU
 	QemuInstance *vmtest.Qemu
 }
 
 func (tm *TestMachine) Close() error {
-	if tm.DockerContainer != nil {
-		tm.DockertestPool.Purge(tm.DockerContainer)
-	}
 	if tm.QemuInstance != nil {
 		tm.QemuInstance.Kill()
 	}
@@ -161,37 +160,50 @@ func NewDocker(t *testing.T, config Config) (*TestMachine, error) {
 	}
 
 	var err error
-	tm.DockertestPool, err = dockertest.NewPool("")
+	tm.DockertestPool = dockertest.NewPoolT(t, "")
 	if err != nil {
 		return tm, err
 	}
 
-	for purgeAttempt := 1; purgeAttempt <= 10; purgeAttempt++ {
-		existing, exists := tm.DockertestPool.ContainerByName(config.Name)
-		if !exists {
-			break
-		}
+	existingContainers, err := tm.DockertestPool.Client().ContainerList(t.Context(), client.ContainerListOptions{
+		All: true,
+	})
+	if err != nil {
+		return tm, err
+	}
 
-		t.Logf("(purge attempt: %d/10) removing orphaned container", purgeAttempt)
-		err = tm.DockertestPool.Purge(existing)
-		if err == nil {
+	existingContainerID := ""
+	for _, existingContainer := range existingContainers.Items {
+		if slices.Contains(existingContainer.Names, config.Name) {
+			existingContainerID = existingContainer.ID
 			break
-		}
-		if strings.Contains(err.Error(), "API error (409)") {
-			wait := time.Duration(purgeAttempt) * 5 * time.Second
-			t.Logf("(purge attempt: %d/10) error: %v", purgeAttempt, err)
-			t.Logf("(purge attempt: %d/10) trying again in %s", purgeAttempt, wait)
-			time.Sleep(wait)
-		} else {
-			return tm, err
 		}
 	}
 
-	tm.DockerContainer, err = tm.DockertestPool.BuildAndRun(
-		config.Name,
-		path.Join(config.DataPath, "Dockerfile"),
-		[]string{},
-	)
+	if existingContainerID != "" {
+		for purgeAttempt := 1; purgeAttempt <= 10; purgeAttempt++ {
+			t.Logf("(purge attempt: %d/10) removing orphaned container", purgeAttempt)
+			_, err = tm.DockertestPool.Client().ContainerRemove(t.Context(), existingContainerID, client.ContainerRemoveOptions{
+				RemoveVolumes: true,
+				RemoveLinks:   true,
+			})
+			if err == nil {
+				break
+			}
+			if strings.Contains(err.Error(), "API error (409)") {
+				wait := time.Duration(purgeAttempt) * 5 * time.Second
+				t.Logf("(purge attempt: %d/10) error: %v", purgeAttempt, err)
+				t.Logf("(purge attempt: %d/10) trying again in %s", purgeAttempt, wait)
+				time.Sleep(wait)
+			} else {
+				return tm, err
+			}
+		}
+	}
+
+	tm.DockerContainer = tm.DockertestPool.BuildAndRunT(t, config.Name, &dockertest.BuildOptions{
+		ContextDir: path.Join(config.DataPath),
+	}, dockertest.WithoutReuse())
 	if err != nil {
 		return tm, err
 	}
