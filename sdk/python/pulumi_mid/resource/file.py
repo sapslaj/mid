@@ -26,34 +26,34 @@ class FileArgs:
         __self__,
         *,
         path: pulumi.Input[_builtins.str],
-        access_time: Optional[pulumi.Input[_builtins.str]] = None,
-        access_time_format: Optional[pulumi.Input[_builtins.str]] = None,
-        attributes: Optional[pulumi.Input[_builtins.str]] = None,
-        backup: Optional[pulumi.Input[_builtins.bool]] = None,
-        checksum: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        content: Optional[pulumi.Input[_builtins.str]] = None,
-        directory_mode: Optional[pulumi.Input[_builtins.str]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        follow: Optional[pulumi.Input[_builtins.bool]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        group: Optional[pulumi.Input[_builtins.str]] = None,
-        local_follow: Optional[pulumi.Input[_builtins.bool]] = None,
-        mode: Optional[pulumi.Input[_builtins.str]] = None,
-        modification_time: Optional[pulumi.Input[_builtins.str]] = None,
-        modification_time_format: Optional[pulumi.Input[_builtins.str]] = None,
-        owner: Optional[pulumi.Input[_builtins.str]] = None,
-        recurse: Optional[pulumi.Input[_builtins.bool]] = None,
-        remote_source: Optional[pulumi.Input[_builtins.str]] = None,
-        selevel: Optional[pulumi.Input[_builtins.str]] = None,
-        serole: Optional[pulumi.Input[_builtins.str]] = None,
-        setype: Optional[pulumi.Input[_builtins.str]] = None,
-        seuser: Optional[pulumi.Input[_builtins.str]] = None,
-        source: Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
-        unsafe_writes: Optional[pulumi.Input[_builtins.bool]] = None,
-        validate: Optional[pulumi.Input[_builtins.str]] = None,
+        access_time: pulumi.Input[Optional[_builtins.str]] = None,
+        access_time_format: pulumi.Input[Optional[_builtins.str]] = None,
+        attributes: pulumi.Input[Optional[_builtins.str]] = None,
+        backup: pulumi.Input[Optional[_builtins.bool]] = None,
+        checksum: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        content: pulumi.Input[Optional[_builtins.str]] = None,
+        directory_mode: pulumi.Input[Optional[_builtins.str]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        follow: pulumi.Input[Optional[_builtins.bool]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        group: pulumi.Input[Optional[_builtins.str]] = None,
+        local_follow: pulumi.Input[Optional[_builtins.bool]] = None,
+        mode: pulumi.Input[Optional[_builtins.str]] = None,
+        modification_time: pulumi.Input[Optional[_builtins.str]] = None,
+        modification_time_format: pulumi.Input[Optional[_builtins.str]] = None,
+        owner: pulumi.Input[Optional[_builtins.str]] = None,
+        recurse: pulumi.Input[Optional[_builtins.bool]] = None,
+        remote_source: pulumi.Input[Optional[_builtins.str]] = None,
+        selevel: pulumi.Input[Optional[_builtins.str]] = None,
+        serole: pulumi.Input[Optional[_builtins.str]] = None,
+        setype: pulumi.Input[Optional[_builtins.str]] = None,
+        seuser: pulumi.Input[Optional[_builtins.str]] = None,
+        source: pulumi.Input[Optional[Union[pulumi.Asset, pulumi.Archive]]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
+        unsafe_writes: pulumi.Input[Optional[_builtins.bool]] = None,
+        validate: pulumi.Input[Optional[_builtins.str]] = None,
     ):
         """
         The set of arguments for constructing a File resource.
@@ -127,256 +127,256 @@ class FileArgs:
 
     @_builtins.property
     @pulumi.getter(name="accessTime")
-    def access_time(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def access_time(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "access_time")
 
     @access_time.setter
-    def access_time(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def access_time(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "access_time", value)
 
     @_builtins.property
     @pulumi.getter(name="accessTimeFormat")
-    def access_time_format(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def access_time_format(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "access_time_format")
 
     @access_time_format.setter
-    def access_time_format(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def access_time_format(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "access_time_format", value)
 
     @_builtins.property
     @pulumi.getter
-    def attributes(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def attributes(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "attributes")
 
     @attributes.setter
-    def attributes(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def attributes(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "attributes", value)
 
     @_builtins.property
     @pulumi.getter
-    def backup(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def backup(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "backup")
 
     @backup.setter
-    def backup(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def backup(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "backup", value)
 
     @_builtins.property
     @pulumi.getter
-    def checksum(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def checksum(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "checksum")
 
     @checksum.setter
-    def checksum(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def checksum(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "checksum", value)
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def content(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def content(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "content")
 
     @content.setter
-    def content(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def content(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "content", value)
 
     @_builtins.property
     @pulumi.getter(name="directoryMode")
-    def directory_mode(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def directory_mode(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "directory_mode")
 
     @directory_mode.setter
-    def directory_mode(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def directory_mode(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "directory_mode", value)
 
     @_builtins.property
     @pulumi.getter
-    def ensure(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ensure(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ensure")
 
     @ensure.setter
-    def ensure(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ensure(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ensure", value)
 
     @_builtins.property
     @pulumi.getter
-    def follow(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def follow(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "follow")
 
     @follow.setter
-    def follow(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def follow(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "follow", value)
 
     @_builtins.property
     @pulumi.getter
-    def force(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def force(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "force")
 
     @force.setter
-    def force(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def force(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "force", value)
 
     @_builtins.property
     @pulumi.getter
-    def group(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def group(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "group")
 
     @group.setter
-    def group(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def group(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "group", value)
 
     @_builtins.property
     @pulumi.getter(name="localFollow")
-    def local_follow(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def local_follow(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "local_follow")
 
     @local_follow.setter
-    def local_follow(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def local_follow(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "local_follow", value)
 
     @_builtins.property
     @pulumi.getter
-    def mode(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def mode(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "mode")
 
     @mode.setter
-    def mode(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def mode(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "mode", value)
 
     @_builtins.property
     @pulumi.getter(name="modificationTime")
-    def modification_time(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def modification_time(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "modification_time")
 
     @modification_time.setter
-    def modification_time(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def modification_time(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "modification_time", value)
 
     @_builtins.property
     @pulumi.getter(name="modificationTimeFormat")
-    def modification_time_format(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def modification_time_format(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "modification_time_format")
 
     @modification_time_format.setter
-    def modification_time_format(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def modification_time_format(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "modification_time_format", value)
 
     @_builtins.property
     @pulumi.getter
-    def owner(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def owner(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "owner")
 
     @owner.setter
-    def owner(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def owner(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "owner", value)
 
     @_builtins.property
     @pulumi.getter
-    def recurse(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def recurse(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "recurse")
 
     @recurse.setter
-    def recurse(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def recurse(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "recurse", value)
 
     @_builtins.property
     @pulumi.getter(name="remoteSource")
-    def remote_source(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def remote_source(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "remote_source")
 
     @remote_source.setter
-    def remote_source(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def remote_source(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "remote_source", value)
 
     @_builtins.property
     @pulumi.getter
-    def selevel(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def selevel(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "selevel")
 
     @selevel.setter
-    def selevel(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def selevel(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "selevel", value)
 
     @_builtins.property
     @pulumi.getter
-    def serole(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def serole(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "serole")
 
     @serole.setter
-    def serole(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def serole(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "serole", value)
 
     @_builtins.property
     @pulumi.getter
-    def setype(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def setype(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "setype")
 
     @setype.setter
-    def setype(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def setype(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "setype", value)
 
     @_builtins.property
     @pulumi.getter
-    def seuser(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def seuser(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "seuser")
 
     @seuser.setter
-    def seuser(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def seuser(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "seuser", value)
 
     @_builtins.property
     @pulumi.getter
-    def source(self) -> Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]]:
+    def source(self) -> pulumi.Input[Optional[Union[pulumi.Asset, pulumi.Archive]]]:
         return pulumi.get(self, "source")
 
     @source.setter
     def source(
-        self, value: Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]]
+        self, value: pulumi.Input[Optional[Union[pulumi.Asset, pulumi.Archive]]]
     ):
         pulumi.set(self, "source", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @_builtins.property
     @pulumi.getter(name="unsafeWrites")
-    def unsafe_writes(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def unsafe_writes(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "unsafe_writes")
 
     @unsafe_writes.setter
-    def unsafe_writes(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def unsafe_writes(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "unsafe_writes", value)
 
     @_builtins.property
     @pulumi.getter
-    def validate(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def validate(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "validate")
 
     @validate.setter
-    def validate(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def validate(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "validate", value)
 
 
@@ -387,57 +387,58 @@ class File(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        access_time: Optional[pulumi.Input[_builtins.str]] = None,
-        access_time_format: Optional[pulumi.Input[_builtins.str]] = None,
-        attributes: Optional[pulumi.Input[_builtins.str]] = None,
-        backup: Optional[pulumi.Input[_builtins.bool]] = None,
-        checksum: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[
-            pulumi.Input[
+        access_time: pulumi.Input[Optional[_builtins.str]] = None,
+        access_time_format: pulumi.Input[Optional[_builtins.str]] = None,
+        attributes: pulumi.Input[Optional[_builtins.str]] = None,
+        backup: pulumi.Input[Optional[_builtins.bool]] = None,
+        checksum: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        content: Optional[pulumi.Input[_builtins.str]] = None,
-        directory_mode: Optional[pulumi.Input[_builtins.str]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        follow: Optional[pulumi.Input[_builtins.bool]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        group: Optional[pulumi.Input[_builtins.str]] = None,
-        local_follow: Optional[pulumi.Input[_builtins.bool]] = None,
-        mode: Optional[pulumi.Input[_builtins.str]] = None,
-        modification_time: Optional[pulumi.Input[_builtins.str]] = None,
-        modification_time_format: Optional[pulumi.Input[_builtins.str]] = None,
-        owner: Optional[pulumi.Input[_builtins.str]] = None,
-        path: Optional[pulumi.Input[_builtins.str]] = None,
-        recurse: Optional[pulumi.Input[_builtins.bool]] = None,
-        remote_source: Optional[pulumi.Input[_builtins.str]] = None,
-        selevel: Optional[pulumi.Input[_builtins.str]] = None,
-        serole: Optional[pulumi.Input[_builtins.str]] = None,
-        setype: Optional[pulumi.Input[_builtins.str]] = None,
-        seuser: Optional[pulumi.Input[_builtins.str]] = None,
-        source: Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        content: pulumi.Input[Optional[_builtins.str]] = None,
+        directory_mode: pulumi.Input[Optional[_builtins.str]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        follow: pulumi.Input[Optional[_builtins.bool]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        group: pulumi.Input[Optional[_builtins.str]] = None,
+        local_follow: pulumi.Input[Optional[_builtins.bool]] = None,
+        mode: pulumi.Input[Optional[_builtins.str]] = None,
+        modification_time: pulumi.Input[Optional[_builtins.str]] = None,
+        modification_time_format: pulumi.Input[Optional[_builtins.str]] = None,
+        owner: pulumi.Input[Optional[_builtins.str]] = None,
+        path: pulumi.Input[Optional[_builtins.str]] = None,
+        recurse: pulumi.Input[Optional[_builtins.bool]] = None,
+        remote_source: pulumi.Input[Optional[_builtins.str]] = None,
+        selevel: pulumi.Input[Optional[_builtins.str]] = None,
+        serole: pulumi.Input[Optional[_builtins.str]] = None,
+        setype: pulumi.Input[Optional[_builtins.str]] = None,
+        seuser: pulumi.Input[Optional[_builtins.str]] = None,
+        source: pulumi.Input[Optional[Union[pulumi.Asset, pulumi.Archive]]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        unsafe_writes: Optional[pulumi.Input[_builtins.bool]] = None,
-        validate: Optional[pulumi.Input[_builtins.str]] = None,
+        unsafe_writes: pulumi.Input[Optional[_builtins.bool]] = None,
+        validate: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         """
         Create a File resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -452,6 +453,7 @@ class File(pulumi.CustomResource):
     ):
         """
         Create a File resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param FileArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -471,53 +473,53 @@ class File(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        access_time: Optional[pulumi.Input[_builtins.str]] = None,
-        access_time_format: Optional[pulumi.Input[_builtins.str]] = None,
-        attributes: Optional[pulumi.Input[_builtins.str]] = None,
-        backup: Optional[pulumi.Input[_builtins.bool]] = None,
-        checksum: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[
-            pulumi.Input[
+        access_time: pulumi.Input[Optional[_builtins.str]] = None,
+        access_time_format: pulumi.Input[Optional[_builtins.str]] = None,
+        attributes: pulumi.Input[Optional[_builtins.str]] = None,
+        backup: pulumi.Input[Optional[_builtins.bool]] = None,
+        checksum: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        content: Optional[pulumi.Input[_builtins.str]] = None,
-        directory_mode: Optional[pulumi.Input[_builtins.str]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        follow: Optional[pulumi.Input[_builtins.bool]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        group: Optional[pulumi.Input[_builtins.str]] = None,
-        local_follow: Optional[pulumi.Input[_builtins.bool]] = None,
-        mode: Optional[pulumi.Input[_builtins.str]] = None,
-        modification_time: Optional[pulumi.Input[_builtins.str]] = None,
-        modification_time_format: Optional[pulumi.Input[_builtins.str]] = None,
-        owner: Optional[pulumi.Input[_builtins.str]] = None,
-        path: Optional[pulumi.Input[_builtins.str]] = None,
-        recurse: Optional[pulumi.Input[_builtins.bool]] = None,
-        remote_source: Optional[pulumi.Input[_builtins.str]] = None,
-        selevel: Optional[pulumi.Input[_builtins.str]] = None,
-        serole: Optional[pulumi.Input[_builtins.str]] = None,
-        setype: Optional[pulumi.Input[_builtins.str]] = None,
-        seuser: Optional[pulumi.Input[_builtins.str]] = None,
-        source: Optional[pulumi.Input[Union[pulumi.Asset, pulumi.Archive]]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        content: pulumi.Input[Optional[_builtins.str]] = None,
+        directory_mode: pulumi.Input[Optional[_builtins.str]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        follow: pulumi.Input[Optional[_builtins.bool]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        group: pulumi.Input[Optional[_builtins.str]] = None,
+        local_follow: pulumi.Input[Optional[_builtins.bool]] = None,
+        mode: pulumi.Input[Optional[_builtins.str]] = None,
+        modification_time: pulumi.Input[Optional[_builtins.str]] = None,
+        modification_time_format: pulumi.Input[Optional[_builtins.str]] = None,
+        owner: pulumi.Input[Optional[_builtins.str]] = None,
+        path: pulumi.Input[Optional[_builtins.str]] = None,
+        recurse: pulumi.Input[Optional[_builtins.bool]] = None,
+        remote_source: pulumi.Input[Optional[_builtins.str]] = None,
+        selevel: pulumi.Input[Optional[_builtins.str]] = None,
+        serole: pulumi.Input[Optional[_builtins.str]] = None,
+        setype: pulumi.Input[Optional[_builtins.str]] = None,
+        seuser: pulumi.Input[Optional[_builtins.str]] = None,
+        source: pulumi.Input[Optional[Union[pulumi.Asset, pulumi.Archive]]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        unsafe_writes: Optional[pulumi.Input[_builtins.bool]] = None,
-        validate: Optional[pulumi.Input[_builtins.str]] = None,
+        unsafe_writes: pulumi.Input[Optional[_builtins.bool]] = None,
+        validate: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         opts = pulumi.ResourceOptions.merge(

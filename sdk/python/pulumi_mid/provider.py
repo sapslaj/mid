@@ -24,10 +24,10 @@ class ProviderArgs:
     def __init__(
         __self__,
         *,
-        check: Optional[pulumi.Input[_builtins.bool]] = None,
-        connection: Optional[pulumi.Input["ConnectionArgs"]] = None,
-        delete_unreachable: Optional[pulumi.Input[_builtins.bool]] = None,
-        parallel: Optional[pulumi.Input[_builtins.int]] = None,
+        check: pulumi.Input[Optional[_builtins.bool]] = None,
+        connection: pulumi.Input[Optional["ConnectionArgs"]] = None,
+        delete_unreachable: pulumi.Input[Optional[_builtins.bool]] = None,
+        parallel: pulumi.Input[Optional[_builtins.int]] = None,
     ):
         """
         The set of arguments for constructing a Provider resource.
@@ -43,38 +43,38 @@ class ProviderArgs:
 
     @_builtins.property
     @pulumi.getter
-    def check(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def check(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "check")
 
     @check.setter
-    def check(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def check(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "check", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter(name="deleteUnreachable")
-    def delete_unreachable(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def delete_unreachable(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "delete_unreachable")
 
     @delete_unreachable.setter
-    def delete_unreachable(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def delete_unreachable(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "delete_unreachable", value)
 
     @_builtins.property
     @pulumi.getter
-    def parallel(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def parallel(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "parallel")
 
     @parallel.setter
-    def parallel(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def parallel(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "parallel", value)
 
 
@@ -85,16 +85,17 @@ class Provider(pulumi.ProviderResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        check: Optional[pulumi.Input[_builtins.bool]] = None,
-        connection: Optional[
-            pulumi.Input[Union["ConnectionArgs", "ConnectionArgsDict"]]
+        check: pulumi.Input[Optional[_builtins.bool]] = None,
+        connection: pulumi.Input[
+            Optional[Union["ConnectionArgs", "ConnectionArgsDict"]]
         ] = None,
-        delete_unreachable: Optional[pulumi.Input[_builtins.bool]] = None,
-        parallel: Optional[pulumi.Input[_builtins.int]] = None,
+        delete_unreachable: pulumi.Input[Optional[_builtins.bool]] = None,
+        parallel: pulumi.Input[Optional[_builtins.int]] = None,
         __props__=None,
     ):
         """
         Create a Mid resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -109,6 +110,7 @@ class Provider(pulumi.ProviderResource):
     ):
         """
         Create a Mid resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param ProviderArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -128,12 +130,12 @@ class Provider(pulumi.ProviderResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        check: Optional[pulumi.Input[_builtins.bool]] = None,
-        connection: Optional[
-            pulumi.Input[Union["ConnectionArgs", "ConnectionArgsDict"]]
+        check: pulumi.Input[Optional[_builtins.bool]] = None,
+        connection: pulumi.Input[
+            Optional[Union["ConnectionArgs", "ConnectionArgsDict"]]
         ] = None,
-        delete_unreachable: Optional[pulumi.Input[_builtins.bool]] = None,
-        parallel: Optional[pulumi.Input[_builtins.int]] = None,
+        delete_unreachable: pulumi.Input[Optional[_builtins.bool]] = None,
+        parallel: pulumi.Input[Optional[_builtins.int]] = None,
         __props__=None,
     ):
         opts = pulumi.ResourceOptions.merge(

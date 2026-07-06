@@ -83,7 +83,9 @@ export class Apt extends pulumi.CustomResource {
       resourceInputs["clean"] = args?.clean;
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["deb"] = args?.deb;
       resourceInputs["defaultRelease"] = args?.defaultRelease;
@@ -145,32 +147,32 @@ export class Apt extends pulumi.CustomResource {
  * The set of arguments for constructing a Apt resource.
  */
 export interface AptArgs {
-  allowChangeHeldPackages?: pulumi.Input<boolean>;
-  allowDowngrade?: pulumi.Input<boolean>;
-  allowUnauthenticated?: pulumi.Input<boolean>;
-  autoclean?: pulumi.Input<boolean>;
-  autoremove?: pulumi.Input<boolean>;
-  cacheValidTime?: pulumi.Input<number>;
-  clean?: pulumi.Input<boolean>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  deb?: pulumi.Input<string>;
-  defaultRelease?: pulumi.Input<string>;
-  dpkgOptions?: pulumi.Input<string>;
-  ensure?: pulumi.Input<string>;
-  failOnAutoremove?: pulumi.Input<boolean>;
-  force?: pulumi.Input<boolean>;
-  forceAptGet?: pulumi.Input<boolean>;
-  installRecommends?: pulumi.Input<boolean>;
-  lockTimeout?: pulumi.Input<number>;
-  name?: pulumi.Input<string>;
-  names?: pulumi.Input<pulumi.Input<string>[]>;
-  onlyUpgrade?: pulumi.Input<boolean>;
-  policyRcD?: pulumi.Input<number>;
-  purge?: pulumi.Input<boolean>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
-  updateCache?: pulumi.Input<boolean>;
-  updateCacheRetries?: pulumi.Input<number>;
-  updateCacheRetryMaxDelay?: pulumi.Input<number>;
-  upgrade?: pulumi.Input<string>;
+  allowChangeHeldPackages?: pulumi.Input<boolean | undefined>;
+  allowDowngrade?: pulumi.Input<boolean | undefined>;
+  allowUnauthenticated?: pulumi.Input<boolean | undefined>;
+  autoclean?: pulumi.Input<boolean | undefined>;
+  autoremove?: pulumi.Input<boolean | undefined>;
+  cacheValidTime?: pulumi.Input<number | undefined>;
+  clean?: pulumi.Input<boolean | undefined>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  deb?: pulumi.Input<string | undefined>;
+  defaultRelease?: pulumi.Input<string | undefined>;
+  dpkgOptions?: pulumi.Input<string | undefined>;
+  ensure?: pulumi.Input<string | undefined>;
+  failOnAutoremove?: pulumi.Input<boolean | undefined>;
+  force?: pulumi.Input<boolean | undefined>;
+  forceAptGet?: pulumi.Input<boolean | undefined>;
+  installRecommends?: pulumi.Input<boolean | undefined>;
+  lockTimeout?: pulumi.Input<number | undefined>;
+  name?: pulumi.Input<string | undefined>;
+  names?: pulumi.Input<pulumi.Input<string>[] | undefined>;
+  onlyUpgrade?: pulumi.Input<boolean | undefined>;
+  policyRcD?: pulumi.Input<number | undefined>;
+  purge?: pulumi.Input<boolean | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
+  updateCache?: pulumi.Input<boolean | undefined>;
+  updateCacheRetries?: pulumi.Input<number | undefined>;
+  updateCacheRetryMaxDelay?: pulumi.Input<number | undefined>;
+  upgrade?: pulumi.Input<string | undefined>;
 }

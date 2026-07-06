@@ -7,7 +7,7 @@ provider = mid.Provider(
         "user": "root",
         "password": "hunter2",
         "host": "localhost",
-        "port": 2222,
+        "port": float(2222),
     },
 )
 vim = mid.resource.Package(

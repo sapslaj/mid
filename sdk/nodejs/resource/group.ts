@@ -62,7 +62,9 @@ export class Group extends pulumi.CustomResource {
       }
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["ensure"] = args?.ensure;
       resourceInputs["force"] = args?.force;
@@ -97,16 +99,16 @@ export class Group extends pulumi.CustomResource {
  * The set of arguments for constructing a Group resource.
  */
 export interface GroupArgs {
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  ensure?: pulumi.Input<string>;
-  force?: pulumi.Input<boolean>;
-  gid?: pulumi.Input<number>;
-  gidMax?: pulumi.Input<number>;
-  gidMin?: pulumi.Input<number>;
-  local?: pulumi.Input<boolean>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  ensure?: pulumi.Input<string | undefined>;
+  force?: pulumi.Input<boolean | undefined>;
+  gid?: pulumi.Input<number | undefined>;
+  gidMax?: pulumi.Input<number | undefined>;
+  gidMin?: pulumi.Input<number | undefined>;
+  local?: pulumi.Input<boolean | undefined>;
   name: pulumi.Input<string>;
-  nonUnique?: pulumi.Input<boolean>;
-  system?: pulumi.Input<boolean>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
+  nonUnique?: pulumi.Input<boolean | undefined>;
+  system?: pulumi.Input<boolean | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
 }

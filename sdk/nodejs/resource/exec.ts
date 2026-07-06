@@ -63,7 +63,9 @@ export class Exec extends pulumi.CustomResource {
       }
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["create"] = args?.create;
       resourceInputs["delete"] = args?.delete;
@@ -100,15 +102,15 @@ export class Exec extends pulumi.CustomResource {
  * The set of arguments for constructing a Exec resource.
  */
 export interface ExecArgs {
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
   create: pulumi.Input<inputs.ExecCommandArgs>;
-  delete?: pulumi.Input<inputs.ExecCommandArgs>;
-  deleteBeforeReplace?: pulumi.Input<boolean>;
-  dir?: pulumi.Input<string>;
-  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
-  expandArgumentVars?: pulumi.Input<boolean>;
-  logging?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
-  update?: pulumi.Input<inputs.ExecCommandArgs>;
+  delete?: pulumi.Input<inputs.ExecCommandArgs | undefined>;
+  deleteBeforeReplace?: pulumi.Input<boolean | undefined>;
+  dir?: pulumi.Input<string | undefined>;
+  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> } | undefined>;
+  expandArgumentVars?: pulumi.Input<boolean | undefined>;
+  logging?: pulumi.Input<string | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
+  update?: pulumi.Input<inputs.ExecCommandArgs | undefined>;
 }

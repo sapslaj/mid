@@ -69,7 +69,9 @@ export class FileLine extends pulumi.CustomResource {
       resourceInputs["backup"] = args?.backup;
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["create"] = args?.create;
       resourceInputs["ensure"] = args?.ensure;
@@ -112,20 +114,20 @@ export class FileLine extends pulumi.CustomResource {
  * The set of arguments for constructing a FileLine resource.
  */
 export interface FileLineArgs {
-  backrefs?: pulumi.Input<boolean>;
-  backup?: pulumi.Input<boolean>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  create?: pulumi.Input<boolean>;
-  ensure?: pulumi.Input<string>;
-  firstMatch?: pulumi.Input<boolean>;
-  insertAfter?: pulumi.Input<string>;
-  insertBefore?: pulumi.Input<string>;
-  line?: pulumi.Input<string>;
+  backrefs?: pulumi.Input<boolean | undefined>;
+  backup?: pulumi.Input<boolean | undefined>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  create?: pulumi.Input<boolean | undefined>;
+  ensure?: pulumi.Input<string | undefined>;
+  firstMatch?: pulumi.Input<boolean | undefined>;
+  insertAfter?: pulumi.Input<string | undefined>;
+  insertBefore?: pulumi.Input<string | undefined>;
+  line?: pulumi.Input<string | undefined>;
   path: pulumi.Input<string>;
-  regexp?: pulumi.Input<string>;
-  searchString?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
-  unsafeWrites?: pulumi.Input<boolean>;
-  validate?: pulumi.Input<string>;
+  regexp?: pulumi.Input<string | undefined>;
+  searchString?: pulumi.Input<string | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
+  unsafeWrites?: pulumi.Input<boolean | undefined>;
+  validate?: pulumi.Input<string | undefined>;
 }

@@ -25,12 +25,12 @@ class PackageArgs:
     def __init__(
         __self__,
         *,
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        names: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        names: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
     ):
         """
         The set of arguments for constructing a Package resource.
@@ -50,58 +50,58 @@ class PackageArgs:
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def ensure(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ensure(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ensure")
 
     @ensure.setter
-    def ensure(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ensure(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ensure", value)
 
     @_builtins.property
     @pulumi.getter
-    def name(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def name(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "name")
 
     @name.setter
-    def name(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def name(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "name", value)
 
     @_builtins.property
     @pulumi.getter
-    def names(self) -> Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]]:
+    def names(self) -> pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]]:
         return pulumi.get(self, "names")
 
     @names.setter
     def names(
-        self, value: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]]
+        self, value: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]]
     ):
         pulumi.set(self, "names", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
 
@@ -112,24 +112,24 @@ class Package(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        names: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        names: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
@@ -140,6 +140,7 @@ class Package(pulumi.CustomResource):
     ):
         """
         Create a Package resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -154,6 +155,7 @@ class Package(pulumi.CustomResource):
     ):
         """
         Create a Package resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param PackageArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -173,24 +175,24 @@ class Package(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        names: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        names: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",

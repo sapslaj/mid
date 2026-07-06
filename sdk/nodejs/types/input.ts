@@ -56,29 +56,29 @@ export interface ConnectionArgs {
   /**
    * The address of the resource to connect to.
    */
-  host?: pulumi.Input<string>;
-  hostKey?: pulumi.Input<string>;
+  host?: pulumi.Input<string | undefined>;
+  hostKey?: pulumi.Input<string | undefined>;
   /**
    * The password we should use for the connection.
    */
-  password?: pulumi.Input<string>;
-  perDialTimeout?: pulumi.Input<number>;
+  password?: pulumi.Input<string | undefined>;
+  perDialTimeout?: pulumi.Input<number | undefined>;
   /**
    * The port to connect to. Defaults to 22.
    */
-  port?: pulumi.Input<number>;
+  port?: pulumi.Input<number | undefined>;
   /**
    * The contents of an SSH key to use for the
    * connection. This takes preference over the password if provided.
    */
-  privateKey?: pulumi.Input<string>;
-  privateKeyPassword?: pulumi.Input<string>;
-  sshAgent?: pulumi.Input<boolean>;
-  sshAgentSocketPath?: pulumi.Input<string>;
+  privateKey?: pulumi.Input<string | undefined>;
+  privateKeyPassword?: pulumi.Input<string | undefined>;
+  sshAgent?: pulumi.Input<boolean | undefined>;
+  sshAgentSocketPath?: pulumi.Input<string | undefined>;
   /**
    * The user that we should use for the connection.
    */
-  user?: pulumi.Input<string>;
+  user?: pulumi.Input<string | undefined>;
 }
 /**
  * connectionArgsProvideDefaults sets the appropriate defaults for ConnectionArgs
@@ -101,16 +101,16 @@ export interface ExecCommandArgs {
    * default working directory for the SSH user and session, usually the user's
    * home.
    */
-  dir?: pulumi.Input<string>;
+  dir?: pulumi.Input<string | undefined>;
   /**
    * Key-value pairs of environment variables to pass to the process. These are
    * merged with any system-wide environment variables.
    */
-  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> } | undefined>;
   /**
    * Pass a string to the command's process as standard in.
    */
-  stdin?: pulumi.Input<string>;
+  stdin?: pulumi.Input<string | undefined>;
 }
 
 export interface ResourceConfig {
@@ -120,9 +120,9 @@ export interface ResourceConfig {
 }
 
 export interface ResourceConfigArgs {
-  check?: pulumi.Input<boolean>;
-  deleteUnreachable?: pulumi.Input<boolean>;
-  parallel?: pulumi.Input<number>;
+  check?: pulumi.Input<boolean | undefined>;
+  deleteUnreachable?: pulumi.Input<boolean | undefined>;
+  parallel?: pulumi.Input<number | undefined>;
 }
 
 export interface TriggersInputArgs {
@@ -130,26 +130,26 @@ export interface TriggersInputArgs {
    * Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
    * any value in this list changes.
    */
-  refresh?: pulumi.Input<any[]>;
+  refresh?: pulumi.Input<any[] | undefined>;
   /**
    * Completely delete and replace the resource if any value in this list
    * changes.
    */
-  replace?: pulumi.Input<any[]>;
+  replace?: pulumi.Input<any[] | undefined>;
 }
 
 export namespace resource {
   export interface AnsibleTaskListArgsTaskArgs {
     args: pulumi.Input<{ [key: string]: any }>;
-    check?: pulumi.Input<boolean>;
-    environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
-    ignoreErrors?: pulumi.Input<boolean>;
+    check?: pulumi.Input<boolean | undefined>;
+    environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> } | undefined>;
+    ignoreErrors?: pulumi.Input<boolean | undefined>;
     module: pulumi.Input<string>;
   }
 
   export interface AnsibleTaskListArgsTasksArgs {
     create: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[]>;
-    delete?: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[]>;
-    update?: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[]>;
+    delete?: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[] | undefined>;
+    update?: pulumi.Input<pulumi.Input<inputs.resource.AnsibleTaskListArgsTaskArgs>[] | undefined>;
   }
 }

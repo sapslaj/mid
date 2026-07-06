@@ -197,23 +197,23 @@ def exec_(
 
 
 def exec__output(
-    command: Optional[pulumi.Input[Sequence[_builtins.str]]] = None,
-    config: Optional[
-        pulumi.Input[
+    command: pulumi.Input[Optional[Sequence[_builtins.str]]] = None,
+    config: pulumi.Input[
+        Optional[
             Optional[
                 Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
             ]
         ]
     ] = None,
-    connection: Optional[
-        pulumi.Input[
+    connection: pulumi.Input[
+        Optional[
             Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
         ]
     ] = None,
-    dir: Optional[pulumi.Input[Optional[_builtins.str]]] = None,
-    environment: Optional[pulumi.Input[Optional[Mapping[str, _builtins.str]]]] = None,
-    expand_argument_vars: Optional[pulumi.Input[Optional[_builtins.bool]]] = None,
-    stdin: Optional[pulumi.Input[Optional[_builtins.str]]] = None,
+    dir: pulumi.Input[Optional[Optional[_builtins.str]]] = None,
+    environment: pulumi.Input[Optional[Optional[Mapping[str, _builtins.str]]]] = None,
+    expand_argument_vars: pulumi.Input[Optional[Optional[_builtins.bool]]] = None,
+    stdin: pulumi.Input[Optional[Optional[_builtins.str]]] = None,
     opts: Optional[Union[pulumi.InvokeOptions, pulumi.InvokeOutputOptions]] = None,
 ) -> pulumi.Output[ExecResult]:
     """

@@ -25,34 +25,34 @@ class AptArgs:
     def __init__(
         __self__,
         *,
-        allow_change_held_packages: Optional[pulumi.Input[_builtins.bool]] = None,
-        allow_downgrade: Optional[pulumi.Input[_builtins.bool]] = None,
-        allow_unauthenticated: Optional[pulumi.Input[_builtins.bool]] = None,
-        autoclean: Optional[pulumi.Input[_builtins.bool]] = None,
-        autoremove: Optional[pulumi.Input[_builtins.bool]] = None,
-        cache_valid_time: Optional[pulumi.Input[_builtins.int]] = None,
-        clean: Optional[pulumi.Input[_builtins.bool]] = None,
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        deb: Optional[pulumi.Input[_builtins.str]] = None,
-        default_release: Optional[pulumi.Input[_builtins.str]] = None,
-        dpkg_options: Optional[pulumi.Input[_builtins.str]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        fail_on_autoremove: Optional[pulumi.Input[_builtins.bool]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        force_apt_get: Optional[pulumi.Input[_builtins.bool]] = None,
-        install_recommends: Optional[pulumi.Input[_builtins.bool]] = None,
-        lock_timeout: Optional[pulumi.Input[_builtins.int]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        names: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        only_upgrade: Optional[pulumi.Input[_builtins.bool]] = None,
-        policy_rc_d: Optional[pulumi.Input[_builtins.int]] = None,
-        purge: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
-        update_cache: Optional[pulumi.Input[_builtins.bool]] = None,
-        update_cache_retries: Optional[pulumi.Input[_builtins.int]] = None,
-        update_cache_retry_max_delay: Optional[pulumi.Input[_builtins.int]] = None,
-        upgrade: Optional[pulumi.Input[_builtins.str]] = None,
+        allow_change_held_packages: pulumi.Input[Optional[_builtins.bool]] = None,
+        allow_downgrade: pulumi.Input[Optional[_builtins.bool]] = None,
+        allow_unauthenticated: pulumi.Input[Optional[_builtins.bool]] = None,
+        autoclean: pulumi.Input[Optional[_builtins.bool]] = None,
+        autoremove: pulumi.Input[Optional[_builtins.bool]] = None,
+        cache_valid_time: pulumi.Input[Optional[_builtins.int]] = None,
+        clean: pulumi.Input[Optional[_builtins.bool]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        deb: pulumi.Input[Optional[_builtins.str]] = None,
+        default_release: pulumi.Input[Optional[_builtins.str]] = None,
+        dpkg_options: pulumi.Input[Optional[_builtins.str]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        fail_on_autoremove: pulumi.Input[Optional[_builtins.bool]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        force_apt_get: pulumi.Input[Optional[_builtins.bool]] = None,
+        install_recommends: pulumi.Input[Optional[_builtins.bool]] = None,
+        lock_timeout: pulumi.Input[Optional[_builtins.int]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        names: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        only_upgrade: pulumi.Input[Optional[_builtins.bool]] = None,
+        policy_rc_d: pulumi.Input[Optional[_builtins.int]] = None,
+        purge: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
+        update_cache: pulumi.Input[Optional[_builtins.bool]] = None,
+        update_cache_retries: pulumi.Input[Optional[_builtins.int]] = None,
+        update_cache_retry_max_delay: pulumi.Input[Optional[_builtins.int]] = None,
+        upgrade: pulumi.Input[Optional[_builtins.str]] = None,
     ):
         """
         The set of arguments for constructing a Apt resource.
@@ -120,258 +120,258 @@ class AptArgs:
 
     @_builtins.property
     @pulumi.getter(name="allowChangeHeldPackages")
-    def allow_change_held_packages(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def allow_change_held_packages(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "allow_change_held_packages")
 
     @allow_change_held_packages.setter
-    def allow_change_held_packages(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def allow_change_held_packages(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "allow_change_held_packages", value)
 
     @_builtins.property
     @pulumi.getter(name="allowDowngrade")
-    def allow_downgrade(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def allow_downgrade(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "allow_downgrade")
 
     @allow_downgrade.setter
-    def allow_downgrade(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def allow_downgrade(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "allow_downgrade", value)
 
     @_builtins.property
     @pulumi.getter(name="allowUnauthenticated")
-    def allow_unauthenticated(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def allow_unauthenticated(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "allow_unauthenticated")
 
     @allow_unauthenticated.setter
-    def allow_unauthenticated(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def allow_unauthenticated(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "allow_unauthenticated", value)
 
     @_builtins.property
     @pulumi.getter
-    def autoclean(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def autoclean(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "autoclean")
 
     @autoclean.setter
-    def autoclean(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def autoclean(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "autoclean", value)
 
     @_builtins.property
     @pulumi.getter
-    def autoremove(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def autoremove(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "autoremove")
 
     @autoremove.setter
-    def autoremove(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def autoremove(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "autoremove", value)
 
     @_builtins.property
     @pulumi.getter(name="cacheValidTime")
-    def cache_valid_time(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def cache_valid_time(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "cache_valid_time")
 
     @cache_valid_time.setter
-    def cache_valid_time(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def cache_valid_time(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "cache_valid_time", value)
 
     @_builtins.property
     @pulumi.getter
-    def clean(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def clean(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "clean")
 
     @clean.setter
-    def clean(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def clean(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "clean", value)
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def deb(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def deb(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "deb")
 
     @deb.setter
-    def deb(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def deb(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "deb", value)
 
     @_builtins.property
     @pulumi.getter(name="defaultRelease")
-    def default_release(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def default_release(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "default_release")
 
     @default_release.setter
-    def default_release(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def default_release(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "default_release", value)
 
     @_builtins.property
     @pulumi.getter(name="dpkgOptions")
-    def dpkg_options(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def dpkg_options(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "dpkg_options")
 
     @dpkg_options.setter
-    def dpkg_options(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def dpkg_options(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "dpkg_options", value)
 
     @_builtins.property
     @pulumi.getter
-    def ensure(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ensure(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ensure")
 
     @ensure.setter
-    def ensure(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ensure(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ensure", value)
 
     @_builtins.property
     @pulumi.getter(name="failOnAutoremove")
-    def fail_on_autoremove(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def fail_on_autoremove(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "fail_on_autoremove")
 
     @fail_on_autoremove.setter
-    def fail_on_autoremove(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def fail_on_autoremove(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "fail_on_autoremove", value)
 
     @_builtins.property
     @pulumi.getter
-    def force(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def force(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "force")
 
     @force.setter
-    def force(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def force(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "force", value)
 
     @_builtins.property
     @pulumi.getter(name="forceAptGet")
-    def force_apt_get(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def force_apt_get(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "force_apt_get")
 
     @force_apt_get.setter
-    def force_apt_get(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def force_apt_get(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "force_apt_get", value)
 
     @_builtins.property
     @pulumi.getter(name="installRecommends")
-    def install_recommends(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def install_recommends(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "install_recommends")
 
     @install_recommends.setter
-    def install_recommends(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def install_recommends(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "install_recommends", value)
 
     @_builtins.property
     @pulumi.getter(name="lockTimeout")
-    def lock_timeout(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def lock_timeout(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "lock_timeout")
 
     @lock_timeout.setter
-    def lock_timeout(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def lock_timeout(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "lock_timeout", value)
 
     @_builtins.property
     @pulumi.getter
-    def name(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def name(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "name")
 
     @name.setter
-    def name(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def name(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "name", value)
 
     @_builtins.property
     @pulumi.getter
-    def names(self) -> Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]]:
+    def names(self) -> pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]]:
         return pulumi.get(self, "names")
 
     @names.setter
     def names(
-        self, value: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]]
+        self, value: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]]
     ):
         pulumi.set(self, "names", value)
 
     @_builtins.property
     @pulumi.getter(name="onlyUpgrade")
-    def only_upgrade(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def only_upgrade(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "only_upgrade")
 
     @only_upgrade.setter
-    def only_upgrade(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def only_upgrade(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "only_upgrade", value)
 
     @_builtins.property
     @pulumi.getter(name="policyRcD")
-    def policy_rc_d(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def policy_rc_d(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "policy_rc_d")
 
     @policy_rc_d.setter
-    def policy_rc_d(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def policy_rc_d(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "policy_rc_d", value)
 
     @_builtins.property
     @pulumi.getter
-    def purge(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def purge(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "purge")
 
     @purge.setter
-    def purge(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def purge(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "purge", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @_builtins.property
     @pulumi.getter(name="updateCache")
-    def update_cache(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def update_cache(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "update_cache")
 
     @update_cache.setter
-    def update_cache(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def update_cache(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "update_cache", value)
 
     @_builtins.property
     @pulumi.getter(name="updateCacheRetries")
-    def update_cache_retries(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def update_cache_retries(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "update_cache_retries")
 
     @update_cache_retries.setter
-    def update_cache_retries(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def update_cache_retries(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "update_cache_retries", value)
 
     @_builtins.property
     @pulumi.getter(name="updateCacheRetryMaxDelay")
-    def update_cache_retry_max_delay(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def update_cache_retry_max_delay(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "update_cache_retry_max_delay")
 
     @update_cache_retry_max_delay.setter
     def update_cache_retry_max_delay(
-        self, value: Optional[pulumi.Input[_builtins.int]]
+        self, value: pulumi.Input[Optional[_builtins.int]]
     ):
         pulumi.set(self, "update_cache_retry_max_delay", value)
 
     @_builtins.property
     @pulumi.getter
-    def upgrade(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def upgrade(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "upgrade")
 
     @upgrade.setter
-    def upgrade(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def upgrade(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "upgrade", value)
 
 
@@ -382,56 +382,57 @@ class Apt(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        allow_change_held_packages: Optional[pulumi.Input[_builtins.bool]] = None,
-        allow_downgrade: Optional[pulumi.Input[_builtins.bool]] = None,
-        allow_unauthenticated: Optional[pulumi.Input[_builtins.bool]] = None,
-        autoclean: Optional[pulumi.Input[_builtins.bool]] = None,
-        autoremove: Optional[pulumi.Input[_builtins.bool]] = None,
-        cache_valid_time: Optional[pulumi.Input[_builtins.int]] = None,
-        clean: Optional[pulumi.Input[_builtins.bool]] = None,
-        config: Optional[
-            pulumi.Input[
+        allow_change_held_packages: pulumi.Input[Optional[_builtins.bool]] = None,
+        allow_downgrade: pulumi.Input[Optional[_builtins.bool]] = None,
+        allow_unauthenticated: pulumi.Input[Optional[_builtins.bool]] = None,
+        autoclean: pulumi.Input[Optional[_builtins.bool]] = None,
+        autoremove: pulumi.Input[Optional[_builtins.bool]] = None,
+        cache_valid_time: pulumi.Input[Optional[_builtins.int]] = None,
+        clean: pulumi.Input[Optional[_builtins.bool]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        deb: Optional[pulumi.Input[_builtins.str]] = None,
-        default_release: Optional[pulumi.Input[_builtins.str]] = None,
-        dpkg_options: Optional[pulumi.Input[_builtins.str]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        fail_on_autoremove: Optional[pulumi.Input[_builtins.bool]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        force_apt_get: Optional[pulumi.Input[_builtins.bool]] = None,
-        install_recommends: Optional[pulumi.Input[_builtins.bool]] = None,
-        lock_timeout: Optional[pulumi.Input[_builtins.int]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        names: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        only_upgrade: Optional[pulumi.Input[_builtins.bool]] = None,
-        policy_rc_d: Optional[pulumi.Input[_builtins.int]] = None,
-        purge: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        deb: pulumi.Input[Optional[_builtins.str]] = None,
+        default_release: pulumi.Input[Optional[_builtins.str]] = None,
+        dpkg_options: pulumi.Input[Optional[_builtins.str]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        fail_on_autoremove: pulumi.Input[Optional[_builtins.bool]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        force_apt_get: pulumi.Input[Optional[_builtins.bool]] = None,
+        install_recommends: pulumi.Input[Optional[_builtins.bool]] = None,
+        lock_timeout: pulumi.Input[Optional[_builtins.int]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        names: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        only_upgrade: pulumi.Input[Optional[_builtins.bool]] = None,
+        policy_rc_d: pulumi.Input[Optional[_builtins.int]] = None,
+        purge: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        update_cache: Optional[pulumi.Input[_builtins.bool]] = None,
-        update_cache_retries: Optional[pulumi.Input[_builtins.int]] = None,
-        update_cache_retry_max_delay: Optional[pulumi.Input[_builtins.int]] = None,
-        upgrade: Optional[pulumi.Input[_builtins.str]] = None,
+        update_cache: pulumi.Input[Optional[_builtins.bool]] = None,
+        update_cache_retries: pulumi.Input[Optional[_builtins.int]] = None,
+        update_cache_retry_max_delay: pulumi.Input[Optional[_builtins.int]] = None,
+        upgrade: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         """
         Create a Apt resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -446,6 +447,7 @@ class Apt(pulumi.CustomResource):
     ):
         """
         Create a Apt resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param AptArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -465,52 +467,52 @@ class Apt(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        allow_change_held_packages: Optional[pulumi.Input[_builtins.bool]] = None,
-        allow_downgrade: Optional[pulumi.Input[_builtins.bool]] = None,
-        allow_unauthenticated: Optional[pulumi.Input[_builtins.bool]] = None,
-        autoclean: Optional[pulumi.Input[_builtins.bool]] = None,
-        autoremove: Optional[pulumi.Input[_builtins.bool]] = None,
-        cache_valid_time: Optional[pulumi.Input[_builtins.int]] = None,
-        clean: Optional[pulumi.Input[_builtins.bool]] = None,
-        config: Optional[
-            pulumi.Input[
+        allow_change_held_packages: pulumi.Input[Optional[_builtins.bool]] = None,
+        allow_downgrade: pulumi.Input[Optional[_builtins.bool]] = None,
+        allow_unauthenticated: pulumi.Input[Optional[_builtins.bool]] = None,
+        autoclean: pulumi.Input[Optional[_builtins.bool]] = None,
+        autoremove: pulumi.Input[Optional[_builtins.bool]] = None,
+        cache_valid_time: pulumi.Input[Optional[_builtins.int]] = None,
+        clean: pulumi.Input[Optional[_builtins.bool]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        deb: Optional[pulumi.Input[_builtins.str]] = None,
-        default_release: Optional[pulumi.Input[_builtins.str]] = None,
-        dpkg_options: Optional[pulumi.Input[_builtins.str]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        fail_on_autoremove: Optional[pulumi.Input[_builtins.bool]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        force_apt_get: Optional[pulumi.Input[_builtins.bool]] = None,
-        install_recommends: Optional[pulumi.Input[_builtins.bool]] = None,
-        lock_timeout: Optional[pulumi.Input[_builtins.int]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        names: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        only_upgrade: Optional[pulumi.Input[_builtins.bool]] = None,
-        policy_rc_d: Optional[pulumi.Input[_builtins.int]] = None,
-        purge: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        deb: pulumi.Input[Optional[_builtins.str]] = None,
+        default_release: pulumi.Input[Optional[_builtins.str]] = None,
+        dpkg_options: pulumi.Input[Optional[_builtins.str]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        fail_on_autoremove: pulumi.Input[Optional[_builtins.bool]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        force_apt_get: pulumi.Input[Optional[_builtins.bool]] = None,
+        install_recommends: pulumi.Input[Optional[_builtins.bool]] = None,
+        lock_timeout: pulumi.Input[Optional[_builtins.int]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        names: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        only_upgrade: pulumi.Input[Optional[_builtins.bool]] = None,
+        policy_rc_d: pulumi.Input[Optional[_builtins.int]] = None,
+        purge: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        update_cache: Optional[pulumi.Input[_builtins.bool]] = None,
-        update_cache_retries: Optional[pulumi.Input[_builtins.int]] = None,
-        update_cache_retry_max_delay: Optional[pulumi.Input[_builtins.int]] = None,
-        upgrade: Optional[pulumi.Input[_builtins.str]] = None,
+        update_cache: pulumi.Input[Optional[_builtins.bool]] = None,
+        update_cache_retries: pulumi.Input[Optional[_builtins.int]] = None,
+        update_cache_retry_max_delay: pulumi.Input[Optional[_builtins.int]] = None,
+        upgrade: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         opts = pulumi.ResourceOptions.merge(

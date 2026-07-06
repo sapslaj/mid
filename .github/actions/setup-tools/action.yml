@@ -11,7 +11,7 @@ inputs:
         goimports
         just
         nodejs
-        pre-commit
+        prek
         pulumicli
         pulumictl
         python
@@ -67,7 +67,7 @@ runs:
         version: "0.7.6"
 
     - name: Setup Python
-      if: inputs.tools == 'all' || contains(inputs.tools, 'python') || contains(inputs.tools, 'pre-commit')
+      if: inputs.tools == 'all' || contains(inputs.tools, 'python')
       uses: actions/setup-python@v5
       with:
         python-version-file: pyproject.toml
@@ -78,9 +78,9 @@ runs:
       run: uv sync --locked --all-extras --dev
 
     - name: Setup pre-commit
-      if: inputs.tools == 'all' || contains(inputs.tools, 'pre-commit')
+      if: inputs.tools == 'all' || contains(inputs.tools, 'prek')
       shell: bash
-      run: pip install pre-commit
+      run: uv tool install prek
 
     - name: Install pulumictl
       if: inputs.tools == 'all' || contains(inputs.tools, 'pulumictl')

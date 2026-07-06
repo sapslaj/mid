@@ -13,12 +13,10 @@ import os
 import sys
 import typing
 import warnings
-import base64
 
 import pulumi
 import pulumi.runtime
 from pulumi.runtime.sync_await import _sync_await
-from pulumi.runtime.proto import resource_pb2
 
 from semver import VersionInfo as SemverVersion
 from parver import Version as PEP440Version
@@ -70,9 +68,6 @@ def _get_semver_version():
     # __name__ is set to the fully-qualified name of the current module, In our case, it will be
     # <some module>._utilities. <some module> is the module we want to query the version for.
     root_package, *rest = __name__.split(".")
-
-    # pkg_resources uses setuptools to inspect the set of installed packages. We use it here to ask
-    # for the currently installed version of the root package (i.e. us) and get its version.
 
     # Unfortunately, PEP440 and semver differ slightly in incompatible ways. The Pulumi engine expects
     # to receive a valid semver string when receiving requests from the language host, so it's our

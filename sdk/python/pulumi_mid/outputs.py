@@ -77,6 +77,7 @@ class Connection(dict):
     ):
         """
         Instructions for how to connect to a remote endpoint.
+
         :param _builtins.str host: The address of the resource to connect to.
         :param _builtins.str password: The password we should use for the connection.
         :param _builtins.float port: The port to connect to. Defaults to 22.

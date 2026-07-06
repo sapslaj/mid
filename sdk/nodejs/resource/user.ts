@@ -74,7 +74,9 @@ export class User extends pulumi.CustomResource {
       resourceInputs["comment"] = args?.comment;
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["ensure"] = args?.ensure;
       resourceInputs["force"] = args?.force;
@@ -130,27 +132,27 @@ export class User extends pulumi.CustomResource {
  * The set of arguments for constructing a User resource.
  */
 export interface UserArgs {
-  comment?: pulumi.Input<string>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  ensure?: pulumi.Input<string>;
-  force?: pulumi.Input<boolean>;
-  group?: pulumi.Input<string>;
-  groups?: pulumi.Input<pulumi.Input<string>[]>;
-  groupsExclusive?: pulumi.Input<boolean>;
-  home?: pulumi.Input<string>;
-  local?: pulumi.Input<boolean>;
-  manageHome?: pulumi.Input<boolean>;
+  comment?: pulumi.Input<string | undefined>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  ensure?: pulumi.Input<string | undefined>;
+  force?: pulumi.Input<boolean | undefined>;
+  group?: pulumi.Input<string | undefined>;
+  groups?: pulumi.Input<pulumi.Input<string>[] | undefined>;
+  groupsExclusive?: pulumi.Input<boolean | undefined>;
+  home?: pulumi.Input<string | undefined>;
+  local?: pulumi.Input<boolean | undefined>;
+  manageHome?: pulumi.Input<boolean | undefined>;
   name: pulumi.Input<string>;
-  nonUnique?: pulumi.Input<boolean>;
-  password?: pulumi.Input<string>;
-  shell?: pulumi.Input<string>;
-  skeleton?: pulumi.Input<string>;
-  system?: pulumi.Input<boolean>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
-  uid?: pulumi.Input<number>;
-  uidMax?: pulumi.Input<number>;
-  uidMin?: pulumi.Input<number>;
-  umask?: pulumi.Input<string>;
-  updatePassword?: pulumi.Input<string>;
+  nonUnique?: pulumi.Input<boolean | undefined>;
+  password?: pulumi.Input<string | undefined>;
+  shell?: pulumi.Input<string | undefined>;
+  skeleton?: pulumi.Input<string | undefined>;
+  system?: pulumi.Input<boolean | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
+  uid?: pulumi.Input<number | undefined>;
+  uidMax?: pulumi.Input<number | undefined>;
+  uidMin?: pulumi.Input<number | undefined>;
+  umask?: pulumi.Input<string | undefined>;
+  updatePassword?: pulumi.Input<string | undefined>;
 }

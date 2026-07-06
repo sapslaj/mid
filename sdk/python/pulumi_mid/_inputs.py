@@ -30,43 +30,38 @@ __all__ = [
     "TriggersInputArgsDict",
 ]
 
-MYPY = False
 
-if not MYPY:
+class ConnectionDict(TypedDict):
+    """
+    Instructions for how to connect to a remote endpoint.
+    """
 
-    class ConnectionDict(TypedDict):
-        """
-        Instructions for how to connect to a remote endpoint.
-        """
-
-        host: NotRequired[_builtins.str]
-        """
-        The address of the resource to connect to.
-        """
-        host_key: NotRequired[_builtins.str]
-        password: NotRequired[_builtins.str]
-        """
-        The password we should use for the connection.
-        """
-        per_dial_timeout: NotRequired[_builtins.int]
-        port: NotRequired[_builtins.float]
-        """
-        The port to connect to. Defaults to 22.
-        """
-        private_key: NotRequired[_builtins.str]
-        """
-        The contents of an SSH key to use for the
-        connection. This takes preference over the password if provided.
-        """
-        private_key_password: NotRequired[_builtins.str]
-        ssh_agent: NotRequired[_builtins.bool]
-        ssh_agent_socket_path: NotRequired[_builtins.str]
-        user: NotRequired[_builtins.str]
-        """
-        The user that we should use for the connection.
-        """
-elif False:
-    ConnectionDict: TypeAlias = Mapping[str, Any]
+    host: NotRequired[_builtins.str]
+    """
+    The address of the resource to connect to.
+    """
+    host_key: NotRequired[_builtins.str]
+    password: NotRequired[_builtins.str]
+    """
+    The password we should use for the connection.
+    """
+    per_dial_timeout: NotRequired[_builtins.int]
+    port: NotRequired[_builtins.float]
+    """
+    The port to connect to. Defaults to 22.
+    """
+    private_key: NotRequired[_builtins.str]
+    """
+    The contents of an SSH key to use for the
+    connection. This takes preference over the password if provided.
+    """
+    private_key_password: NotRequired[_builtins.str]
+    ssh_agent: NotRequired[_builtins.bool]
+    ssh_agent_socket_path: NotRequired[_builtins.str]
+    user: NotRequired[_builtins.str]
+    """
+    The user that we should use for the connection.
+    """
 
 
 @pulumi.input_type
@@ -87,6 +82,7 @@ class Connection:
     ):
         """
         Instructions for how to connect to a remote endpoint.
+
         :param _builtins.str host: The address of the resource to connect to.
         :param _builtins.str password: The password we should use for the connection.
         :param _builtins.float port: The port to connect to. Defaults to 22.
@@ -226,41 +222,37 @@ class Connection:
         pulumi.set(self, "user", value)
 
 
-if not MYPY:
+class ConnectionArgsDict(TypedDict):
+    """
+    Instructions for how to connect to a remote endpoint.
+    """
 
-    class ConnectionArgsDict(TypedDict):
-        """
-        Instructions for how to connect to a remote endpoint.
-        """
-
-        host: NotRequired[pulumi.Input[_builtins.str]]
-        """
-        The address of the resource to connect to.
-        """
-        host_key: NotRequired[pulumi.Input[_builtins.str]]
-        password: NotRequired[pulumi.Input[_builtins.str]]
-        """
-        The password we should use for the connection.
-        """
-        per_dial_timeout: NotRequired[pulumi.Input[_builtins.int]]
-        port: NotRequired[pulumi.Input[_builtins.float]]
-        """
-        The port to connect to. Defaults to 22.
-        """
-        private_key: NotRequired[pulumi.Input[_builtins.str]]
-        """
-        The contents of an SSH key to use for the
-        connection. This takes preference over the password if provided.
-        """
-        private_key_password: NotRequired[pulumi.Input[_builtins.str]]
-        ssh_agent: NotRequired[pulumi.Input[_builtins.bool]]
-        ssh_agent_socket_path: NotRequired[pulumi.Input[_builtins.str]]
-        user: NotRequired[pulumi.Input[_builtins.str]]
-        """
-        The user that we should use for the connection.
-        """
-elif False:
-    ConnectionArgsDict: TypeAlias = Mapping[str, Any]
+    host: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    """
+    The address of the resource to connect to.
+    """
+    host_key: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    password: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    """
+    The password we should use for the connection.
+    """
+    per_dial_timeout: NotRequired[pulumi.Input[Optional[_builtins.int]]]
+    port: NotRequired[pulumi.Input[Optional[_builtins.float]]]
+    """
+    The port to connect to. Defaults to 22.
+    """
+    private_key: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    """
+    The contents of an SSH key to use for the
+    connection. This takes preference over the password if provided.
+    """
+    private_key_password: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    ssh_agent: NotRequired[pulumi.Input[Optional[_builtins.bool]]]
+    ssh_agent_socket_path: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    user: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    """
+    The user that we should use for the connection.
+    """
 
 
 @pulumi.input_type
@@ -268,19 +260,20 @@ class ConnectionArgs:
     def __init__(
         __self__,
         *,
-        host: Optional[pulumi.Input[_builtins.str]] = None,
-        host_key: Optional[pulumi.Input[_builtins.str]] = None,
-        password: Optional[pulumi.Input[_builtins.str]] = None,
-        per_dial_timeout: Optional[pulumi.Input[_builtins.int]] = None,
-        port: Optional[pulumi.Input[_builtins.float]] = None,
-        private_key: Optional[pulumi.Input[_builtins.str]] = None,
-        private_key_password: Optional[pulumi.Input[_builtins.str]] = None,
-        ssh_agent: Optional[pulumi.Input[_builtins.bool]] = None,
-        ssh_agent_socket_path: Optional[pulumi.Input[_builtins.str]] = None,
-        user: Optional[pulumi.Input[_builtins.str]] = None,
+        host: pulumi.Input[Optional[_builtins.str]] = None,
+        host_key: pulumi.Input[Optional[_builtins.str]] = None,
+        password: pulumi.Input[Optional[_builtins.str]] = None,
+        per_dial_timeout: pulumi.Input[Optional[_builtins.int]] = None,
+        port: pulumi.Input[Optional[_builtins.float]] = None,
+        private_key: pulumi.Input[Optional[_builtins.str]] = None,
+        private_key_password: pulumi.Input[Optional[_builtins.str]] = None,
+        ssh_agent: pulumi.Input[Optional[_builtins.bool]] = None,
+        ssh_agent_socket_path: pulumi.Input[Optional[_builtins.str]] = None,
+        user: pulumi.Input[Optional[_builtins.str]] = None,
     ):
         """
         Instructions for how to connect to a remote endpoint.
+
         :param pulumi.Input[_builtins.str] host: The address of the resource to connect to.
         :param pulumi.Input[_builtins.str] password: The password we should use for the connection.
         :param pulumi.Input[_builtins.float] port: The port to connect to. Defaults to 22.
@@ -315,61 +308,61 @@ class ConnectionArgs:
 
     @_builtins.property
     @pulumi.getter
-    def host(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def host(self) -> pulumi.Input[Optional[_builtins.str]]:
         """
         The address of the resource to connect to.
         """
         return pulumi.get(self, "host")
 
     @host.setter
-    def host(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def host(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "host", value)
 
     @_builtins.property
     @pulumi.getter(name="hostKey")
-    def host_key(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def host_key(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "host_key")
 
     @host_key.setter
-    def host_key(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def host_key(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "host_key", value)
 
     @_builtins.property
     @pulumi.getter
-    def password(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def password(self) -> pulumi.Input[Optional[_builtins.str]]:
         """
         The password we should use for the connection.
         """
         return pulumi.get(self, "password")
 
     @password.setter
-    def password(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def password(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "password", value)
 
     @_builtins.property
     @pulumi.getter(name="perDialTimeout")
-    def per_dial_timeout(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def per_dial_timeout(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "per_dial_timeout")
 
     @per_dial_timeout.setter
-    def per_dial_timeout(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def per_dial_timeout(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "per_dial_timeout", value)
 
     @_builtins.property
     @pulumi.getter
-    def port(self) -> Optional[pulumi.Input[_builtins.float]]:
+    def port(self) -> pulumi.Input[Optional[_builtins.float]]:
         """
         The port to connect to. Defaults to 22.
         """
         return pulumi.get(self, "port")
 
     @port.setter
-    def port(self, value: Optional[pulumi.Input[_builtins.float]]):
+    def port(self, value: pulumi.Input[Optional[_builtins.float]]):
         pulumi.set(self, "port", value)
 
     @_builtins.property
     @pulumi.getter(name="privateKey")
-    def private_key(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def private_key(self) -> pulumi.Input[Optional[_builtins.str]]:
         """
         The contents of an SSH key to use for the
         connection. This takes preference over the password if provided.
@@ -377,75 +370,71 @@ class ConnectionArgs:
         return pulumi.get(self, "private_key")
 
     @private_key.setter
-    def private_key(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def private_key(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "private_key", value)
 
     @_builtins.property
     @pulumi.getter(name="privateKeyPassword")
-    def private_key_password(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def private_key_password(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "private_key_password")
 
     @private_key_password.setter
-    def private_key_password(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def private_key_password(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "private_key_password", value)
 
     @_builtins.property
     @pulumi.getter(name="sshAgent")
-    def ssh_agent(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def ssh_agent(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "ssh_agent")
 
     @ssh_agent.setter
-    def ssh_agent(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def ssh_agent(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "ssh_agent", value)
 
     @_builtins.property
     @pulumi.getter(name="sshAgentSocketPath")
-    def ssh_agent_socket_path(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ssh_agent_socket_path(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ssh_agent_socket_path")
 
     @ssh_agent_socket_path.setter
-    def ssh_agent_socket_path(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ssh_agent_socket_path(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ssh_agent_socket_path", value)
 
     @_builtins.property
     @pulumi.getter
-    def user(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def user(self) -> pulumi.Input[Optional[_builtins.str]]:
         """
         The user that we should use for the connection.
         """
         return pulumi.get(self, "user")
 
     @user.setter
-    def user(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def user(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "user", value)
 
 
-if not MYPY:
-
-    class ExecCommandArgsDict(TypedDict):
-        command: pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]
-        """
-        List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
-        """
-        dir: NotRequired[pulumi.Input[_builtins.str]]
-        """
-        Directory path to chdir to before executing the command. Defaults to the
-        default working directory for the SSH user and session, usually the user's
-        home.
-        """
-        environment: NotRequired[
-            pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]
-        ]
-        """
-        Key-value pairs of environment variables to pass to the process. These are
-        merged with any system-wide environment variables.
-        """
-        stdin: NotRequired[pulumi.Input[_builtins.str]]
-        """
-        Pass a string to the command's process as standard in.
-        """
-elif False:
-    ExecCommandArgsDict: TypeAlias = Mapping[str, Any]
+class ExecCommandArgsDict(TypedDict):
+    command: pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]
+    """
+    List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
+    """
+    dir: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    """
+    Directory path to chdir to before executing the command. Defaults to the
+    default working directory for the SSH user and session, usually the user's
+    home.
+    """
+    environment: NotRequired[
+        pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]
+    ]
+    """
+    Key-value pairs of environment variables to pass to the process. These are
+    merged with any system-wide environment variables.
+    """
+    stdin: NotRequired[pulumi.Input[Optional[_builtins.str]]]
+    """
+    Pass a string to the command's process as standard in.
+    """
 
 
 @pulumi.input_type
@@ -454,11 +443,11 @@ class ExecCommandArgs:
         __self__,
         *,
         command: pulumi.Input[Sequence[pulumi.Input[_builtins.str]]],
-        dir: Optional[pulumi.Input[_builtins.str]] = None,
-        environment: Optional[
-            pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]
+        dir: pulumi.Input[Optional[_builtins.str]] = None,
+        environment: pulumi.Input[
+            Optional[Mapping[str, pulumi.Input[_builtins.str]]]
         ] = None,
-        stdin: Optional[pulumi.Input[_builtins.str]] = None,
+        stdin: pulumi.Input[Optional[_builtins.str]] = None,
     ):
         """
         :param pulumi.Input[Sequence[pulumi.Input[_builtins.str]]] command: List of arguments to execute. Under the hood, these are passed to `execve`, bypassing any shell
@@ -491,7 +480,7 @@ class ExecCommandArgs:
 
     @_builtins.property
     @pulumi.getter
-    def dir(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def dir(self) -> pulumi.Input[Optional[_builtins.str]]:
         """
         Directory path to chdir to before executing the command. Defaults to the
         default working directory for the SSH user and session, usually the user's
@@ -500,14 +489,14 @@ class ExecCommandArgs:
         return pulumi.get(self, "dir")
 
     @dir.setter
-    def dir(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def dir(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "dir", value)
 
     @_builtins.property
     @pulumi.getter
     def environment(
         self,
-    ) -> Optional[pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]]:
+    ) -> pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]:
         """
         Key-value pairs of environment variables to pass to the process. These are
         merged with any system-wide environment variables.
@@ -516,31 +505,27 @@ class ExecCommandArgs:
 
     @environment.setter
     def environment(
-        self, value: Optional[pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]]
+        self, value: pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]
     ):
         pulumi.set(self, "environment", value)
 
     @_builtins.property
     @pulumi.getter
-    def stdin(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def stdin(self) -> pulumi.Input[Optional[_builtins.str]]:
         """
         Pass a string to the command's process as standard in.
         """
         return pulumi.get(self, "stdin")
 
     @stdin.setter
-    def stdin(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def stdin(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "stdin", value)
 
 
-if not MYPY:
-
-    class ResourceConfigDict(TypedDict):
-        check: NotRequired[_builtins.bool]
-        delete_unreachable: NotRequired[_builtins.bool]
-        parallel: NotRequired[_builtins.int]
-elif False:
-    ResourceConfigDict: TypeAlias = Mapping[str, Any]
+class ResourceConfigDict(TypedDict):
+    check: NotRequired[_builtins.bool]
+    delete_unreachable: NotRequired[_builtins.bool]
+    parallel: NotRequired[_builtins.int]
 
 
 @pulumi.input_type
@@ -587,14 +572,10 @@ class ResourceConfig:
         pulumi.set(self, "parallel", value)
 
 
-if not MYPY:
-
-    class ResourceConfigArgsDict(TypedDict):
-        check: NotRequired[pulumi.Input[_builtins.bool]]
-        delete_unreachable: NotRequired[pulumi.Input[_builtins.bool]]
-        parallel: NotRequired[pulumi.Input[_builtins.int]]
-elif False:
-    ResourceConfigArgsDict: TypeAlias = Mapping[str, Any]
+class ResourceConfigArgsDict(TypedDict):
+    check: NotRequired[pulumi.Input[Optional[_builtins.bool]]]
+    delete_unreachable: NotRequired[pulumi.Input[Optional[_builtins.bool]]]
+    parallel: NotRequired[pulumi.Input[Optional[_builtins.int]]]
 
 
 @pulumi.input_type
@@ -602,9 +583,9 @@ class ResourceConfigArgs:
     def __init__(
         __self__,
         *,
-        check: Optional[pulumi.Input[_builtins.bool]] = None,
-        delete_unreachable: Optional[pulumi.Input[_builtins.bool]] = None,
-        parallel: Optional[pulumi.Input[_builtins.int]] = None,
+        check: pulumi.Input[Optional[_builtins.bool]] = None,
+        delete_unreachable: pulumi.Input[Optional[_builtins.bool]] = None,
+        parallel: pulumi.Input[Optional[_builtins.int]] = None,
     ):
         if check is not None:
             pulumi.set(__self__, "check", check)
@@ -615,47 +596,43 @@ class ResourceConfigArgs:
 
     @_builtins.property
     @pulumi.getter
-    def check(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def check(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "check")
 
     @check.setter
-    def check(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def check(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "check", value)
 
     @_builtins.property
     @pulumi.getter(name="deleteUnreachable")
-    def delete_unreachable(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def delete_unreachable(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "delete_unreachable")
 
     @delete_unreachable.setter
-    def delete_unreachable(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def delete_unreachable(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "delete_unreachable", value)
 
     @_builtins.property
     @pulumi.getter
-    def parallel(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def parallel(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "parallel")
 
     @parallel.setter
-    def parallel(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def parallel(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "parallel", value)
 
 
-if not MYPY:
-
-    class TriggersInputArgsDict(TypedDict):
-        refresh: NotRequired[pulumi.Input[Sequence[Any]]]
-        """
-        Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
-        any value in this list changes.
-        """
-        replace: NotRequired[pulumi.Input[Sequence[Any]]]
-        """
-        Completely delete and replace the resource if any value in this list
-        changes.
-        """
-elif False:
-    TriggersInputArgsDict: TypeAlias = Mapping[str, Any]
+class TriggersInputArgsDict(TypedDict):
+    refresh: NotRequired[pulumi.Input[Optional[Sequence[Any]]]]
+    """
+    Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
+    any value in this list changes.
+    """
+    replace: NotRequired[pulumi.Input[Optional[Sequence[Any]]]]
+    """
+    Completely delete and replace the resource if any value in this list
+    changes.
+    """
 
 
 @pulumi.input_type
@@ -663,8 +640,8 @@ class TriggersInputArgs:
     def __init__(
         __self__,
         *,
-        refresh: Optional[pulumi.Input[Sequence[Any]]] = None,
-        replace: Optional[pulumi.Input[Sequence[Any]]] = None,
+        refresh: pulumi.Input[Optional[Sequence[Any]]] = None,
+        replace: pulumi.Input[Optional[Sequence[Any]]] = None,
     ):
         """
         :param pulumi.Input[Sequence[Any]] refresh: Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
@@ -679,7 +656,7 @@ class TriggersInputArgs:
 
     @_builtins.property
     @pulumi.getter
-    def refresh(self) -> Optional[pulumi.Input[Sequence[Any]]]:
+    def refresh(self) -> pulumi.Input[Optional[Sequence[Any]]]:
         """
         Run any "refresh" operations (e.g. service restarts, change diffs, etc) if
         any value in this list changes.
@@ -687,12 +664,12 @@ class TriggersInputArgs:
         return pulumi.get(self, "refresh")
 
     @refresh.setter
-    def refresh(self, value: Optional[pulumi.Input[Sequence[Any]]]):
+    def refresh(self, value: pulumi.Input[Optional[Sequence[Any]]]):
         pulumi.set(self, "refresh", value)
 
     @_builtins.property
     @pulumi.getter
-    def replace(self) -> Optional[pulumi.Input[Sequence[Any]]]:
+    def replace(self) -> pulumi.Input[Optional[Sequence[Any]]]:
         """
         Completely delete and replace the resource if any value in this list
         changes.
@@ -700,5 +677,5 @@ class TriggersInputArgs:
         return pulumi.get(self, "replace")
 
     @replace.setter
-    def replace(self, value: Optional[pulumi.Input[Sequence[Any]]]):
+    def replace(self, value: pulumi.Input[Optional[Sequence[Any]]]):
         pulumi.set(self, "replace", value)

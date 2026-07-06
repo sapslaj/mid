@@ -292,21 +292,21 @@ def file_stat(
 
 
 def file_stat_output(
-    calculate_checksum: Optional[pulumi.Input[Optional[_builtins.bool]]] = None,
-    config: Optional[
-        pulumi.Input[
+    calculate_checksum: pulumi.Input[Optional[Optional[_builtins.bool]]] = None,
+    config: pulumi.Input[
+        Optional[
             Optional[
                 Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
             ]
         ]
     ] = None,
-    connection: Optional[
-        pulumi.Input[
+    connection: pulumi.Input[
+        Optional[
             Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
         ]
     ] = None,
-    follow_symlinks: Optional[pulumi.Input[Optional[_builtins.bool]]] = None,
-    path: Optional[pulumi.Input[_builtins.str]] = None,
+    follow_symlinks: pulumi.Input[Optional[Optional[_builtins.bool]]] = None,
+    path: pulumi.Input[Optional[_builtins.str]] = None,
     opts: Optional[Union[pulumi.InvokeOptions, pulumi.InvokeOutputOptions]] = None,
 ) -> pulumi.Output[FileStatResult]:
     """

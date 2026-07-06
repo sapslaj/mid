@@ -21,7 +21,7 @@ fmt:
   `pwd`/bin/goimports -w **/*.go
   `pwd`/bin/gci write --custom-order -s standard -s default -s 'prefix(github.com/sapslaj/mid)' **/*.go
   dprint fmt
-  -pre-commit run -a
+  prek run -a
 
 [group('examples')]
 [group('tidy')]

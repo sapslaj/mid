@@ -47,7 +47,9 @@ export function execOutput(args: ExecOutputArgs, opts?: pulumi.InvokeOutputOptio
   return pulumi.runtime.invokeOutput("mid:agent:exec", {
     "command": args.command,
     "config": args.config,
-    "connection": args.connection ? pulumi.output(args.connection).apply(inputs.connectionProvideDefaults) : undefined,
+    "connection": pulumi.output(args.connection).apply(v =>
+      v === undefined ? undefined : inputs.connectionProvideDefaults(v)
+    ),
     "dir": args.dir,
     "environment": args.environment,
     "expandArgumentVars": args.expandArgumentVars,
@@ -57,10 +59,10 @@ export function execOutput(args: ExecOutputArgs, opts?: pulumi.InvokeOutputOptio
 
 export interface ExecOutputArgs {
   command: pulumi.Input<pulumi.Input<string>[]>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  dir?: pulumi.Input<string>;
-  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
-  expandArgumentVars?: pulumi.Input<boolean>;
-  stdin?: pulumi.Input<string>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  dir?: pulumi.Input<string | undefined>;
+  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> } | undefined>;
+  expandArgumentVars?: pulumi.Input<boolean | undefined>;
+  stdin?: pulumi.Input<string | undefined>;
 }

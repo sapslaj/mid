@@ -208,23 +208,23 @@ def ansible_execute(
 
 
 def ansible_execute_output(
-    args: Optional[pulumi.Input[Mapping[str, Any]]] = None,
-    check: Optional[pulumi.Input[Optional[_builtins.bool]]] = None,
-    config: Optional[
-        pulumi.Input[
+    args: pulumi.Input[Optional[Mapping[str, Any]]] = None,
+    check: pulumi.Input[Optional[Optional[_builtins.bool]]] = None,
+    config: pulumi.Input[
+        Optional[
             Optional[
                 Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
             ]
         ]
     ] = None,
-    connection: Optional[
-        pulumi.Input[
+    connection: pulumi.Input[
+        Optional[
             Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
         ]
     ] = None,
-    debug_keep_temp_files: Optional[pulumi.Input[Optional[_builtins.bool]]] = None,
-    environment: Optional[pulumi.Input[Optional[Mapping[str, _builtins.str]]]] = None,
-    name: Optional[pulumi.Input[_builtins.str]] = None,
+    debug_keep_temp_files: pulumi.Input[Optional[Optional[_builtins.bool]]] = None,
+    environment: pulumi.Input[Optional[Optional[Mapping[str, _builtins.str]]]] = None,
+    name: pulumi.Input[Optional[_builtins.str]] = None,
     opts: Optional[Union[pulumi.InvokeOptions, pulumi.InvokeOutputOptions]] = None,
 ) -> pulumi.Output[AnsibleExecuteResult]:
     """

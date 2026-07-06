@@ -26,21 +26,21 @@ class FileLineArgs:
         __self__,
         *,
         path: pulumi.Input[_builtins.str],
-        backrefs: Optional[pulumi.Input[_builtins.bool]] = None,
-        backup: Optional[pulumi.Input[_builtins.bool]] = None,
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        create: Optional[pulumi.Input[_builtins.bool]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        first_match: Optional[pulumi.Input[_builtins.bool]] = None,
-        insert_after: Optional[pulumi.Input[_builtins.str]] = None,
-        insert_before: Optional[pulumi.Input[_builtins.str]] = None,
-        line: Optional[pulumi.Input[_builtins.str]] = None,
-        regexp: Optional[pulumi.Input[_builtins.str]] = None,
-        search_string: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
-        unsafe_writes: Optional[pulumi.Input[_builtins.bool]] = None,
-        validate: Optional[pulumi.Input[_builtins.str]] = None,
+        backrefs: pulumi.Input[Optional[_builtins.bool]] = None,
+        backup: pulumi.Input[Optional[_builtins.bool]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        create: pulumi.Input[Optional[_builtins.bool]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        first_match: pulumi.Input[Optional[_builtins.bool]] = None,
+        insert_after: pulumi.Input[Optional[_builtins.str]] = None,
+        insert_before: pulumi.Input[Optional[_builtins.str]] = None,
+        line: pulumi.Input[Optional[_builtins.str]] = None,
+        regexp: pulumi.Input[Optional[_builtins.str]] = None,
+        search_string: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
+        unsafe_writes: pulumi.Input[Optional[_builtins.bool]] = None,
+        validate: pulumi.Input[Optional[_builtins.str]] = None,
     ):
         """
         The set of arguments for constructing a FileLine resource.
@@ -88,137 +88,137 @@ class FileLineArgs:
 
     @_builtins.property
     @pulumi.getter
-    def backrefs(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def backrefs(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "backrefs")
 
     @backrefs.setter
-    def backrefs(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def backrefs(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "backrefs", value)
 
     @_builtins.property
     @pulumi.getter
-    def backup(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def backup(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "backup")
 
     @backup.setter
-    def backup(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def backup(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "backup", value)
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def create(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def create(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "create")
 
     @create.setter
-    def create(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def create(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "create", value)
 
     @_builtins.property
     @pulumi.getter
-    def ensure(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ensure(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ensure")
 
     @ensure.setter
-    def ensure(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ensure(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ensure", value)
 
     @_builtins.property
     @pulumi.getter(name="firstMatch")
-    def first_match(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def first_match(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "first_match")
 
     @first_match.setter
-    def first_match(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def first_match(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "first_match", value)
 
     @_builtins.property
     @pulumi.getter(name="insertAfter")
-    def insert_after(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def insert_after(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "insert_after")
 
     @insert_after.setter
-    def insert_after(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def insert_after(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "insert_after", value)
 
     @_builtins.property
     @pulumi.getter(name="insertBefore")
-    def insert_before(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def insert_before(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "insert_before")
 
     @insert_before.setter
-    def insert_before(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def insert_before(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "insert_before", value)
 
     @_builtins.property
     @pulumi.getter
-    def line(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def line(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "line")
 
     @line.setter
-    def line(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def line(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "line", value)
 
     @_builtins.property
     @pulumi.getter
-    def regexp(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def regexp(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "regexp")
 
     @regexp.setter
-    def regexp(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def regexp(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "regexp", value)
 
     @_builtins.property
     @pulumi.getter(name="searchString")
-    def search_string(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def search_string(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "search_string")
 
     @search_string.setter
-    def search_string(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def search_string(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "search_string", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @_builtins.property
     @pulumi.getter(name="unsafeWrites")
-    def unsafe_writes(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def unsafe_writes(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "unsafe_writes")
 
     @unsafe_writes.setter
-    def unsafe_writes(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def unsafe_writes(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "unsafe_writes", value)
 
     @_builtins.property
     @pulumi.getter
-    def validate(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def validate(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "validate")
 
     @validate.setter
-    def validate(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def validate(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "validate", value)
 
 
@@ -229,44 +229,45 @@ class FileLine(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        backrefs: Optional[pulumi.Input[_builtins.bool]] = None,
-        backup: Optional[pulumi.Input[_builtins.bool]] = None,
-        config: Optional[
-            pulumi.Input[
+        backrefs: pulumi.Input[Optional[_builtins.bool]] = None,
+        backup: pulumi.Input[Optional[_builtins.bool]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        create: Optional[pulumi.Input[_builtins.bool]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        first_match: Optional[pulumi.Input[_builtins.bool]] = None,
-        insert_after: Optional[pulumi.Input[_builtins.str]] = None,
-        insert_before: Optional[pulumi.Input[_builtins.str]] = None,
-        line: Optional[pulumi.Input[_builtins.str]] = None,
-        path: Optional[pulumi.Input[_builtins.str]] = None,
-        regexp: Optional[pulumi.Input[_builtins.str]] = None,
-        search_string: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        create: pulumi.Input[Optional[_builtins.bool]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        first_match: pulumi.Input[Optional[_builtins.bool]] = None,
+        insert_after: pulumi.Input[Optional[_builtins.str]] = None,
+        insert_before: pulumi.Input[Optional[_builtins.str]] = None,
+        line: pulumi.Input[Optional[_builtins.str]] = None,
+        path: pulumi.Input[Optional[_builtins.str]] = None,
+        regexp: pulumi.Input[Optional[_builtins.str]] = None,
+        search_string: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        unsafe_writes: Optional[pulumi.Input[_builtins.bool]] = None,
-        validate: Optional[pulumi.Input[_builtins.str]] = None,
+        unsafe_writes: pulumi.Input[Optional[_builtins.bool]] = None,
+        validate: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         """
         Create a FileLine resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -281,6 +282,7 @@ class FileLine(pulumi.CustomResource):
     ):
         """
         Create a FileLine resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param FileLineArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -300,40 +302,40 @@ class FileLine(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        backrefs: Optional[pulumi.Input[_builtins.bool]] = None,
-        backup: Optional[pulumi.Input[_builtins.bool]] = None,
-        config: Optional[
-            pulumi.Input[
+        backrefs: pulumi.Input[Optional[_builtins.bool]] = None,
+        backup: pulumi.Input[Optional[_builtins.bool]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        create: Optional[pulumi.Input[_builtins.bool]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        first_match: Optional[pulumi.Input[_builtins.bool]] = None,
-        insert_after: Optional[pulumi.Input[_builtins.str]] = None,
-        insert_before: Optional[pulumi.Input[_builtins.str]] = None,
-        line: Optional[pulumi.Input[_builtins.str]] = None,
-        path: Optional[pulumi.Input[_builtins.str]] = None,
-        regexp: Optional[pulumi.Input[_builtins.str]] = None,
-        search_string: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        create: pulumi.Input[Optional[_builtins.bool]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        first_match: pulumi.Input[Optional[_builtins.bool]] = None,
+        insert_after: pulumi.Input[Optional[_builtins.str]] = None,
+        insert_before: pulumi.Input[Optional[_builtins.str]] = None,
+        line: pulumi.Input[Optional[_builtins.str]] = None,
+        path: pulumi.Input[Optional[_builtins.str]] = None,
+        regexp: pulumi.Input[Optional[_builtins.str]] = None,
+        search_string: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        unsafe_writes: Optional[pulumi.Input[_builtins.bool]] = None,
-        validate: Optional[pulumi.Input[_builtins.str]] = None,
+        unsafe_writes: pulumi.Input[Optional[_builtins.bool]] = None,
+        validate: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         opts = pulumi.ResourceOptions.merge(

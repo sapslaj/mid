@@ -36,7 +36,9 @@ export class Provider extends pulumi.ProviderResource {
       resourceInputs["connection"] = pulumi.output(
         args?.connection
           ? pulumi.secret(
-            args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined,
+            pulumi.output(args.connection).apply(v =>
+              v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+            ),
           )
           : undefined,
       ).apply(JSON.stringify);
@@ -52,8 +54,8 @@ export class Provider extends pulumi.ProviderResource {
  * The set of arguments for constructing a Provider resource.
  */
 export interface ProviderArgs {
-  check?: pulumi.Input<boolean>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  deleteUnreachable?: pulumi.Input<boolean>;
-  parallel?: pulumi.Input<number>;
+  check?: pulumi.Input<boolean | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  deleteUnreachable?: pulumi.Input<boolean | undefined>;
+  parallel?: pulumi.Input<number | undefined>;
 }

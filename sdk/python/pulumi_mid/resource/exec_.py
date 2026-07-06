@@ -26,18 +26,18 @@ class ExecArgs:
         __self__,
         *,
         create: pulumi.Input["_root_inputs.ExecCommandArgs"],
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        delete: Optional[pulumi.Input["_root_inputs.ExecCommandArgs"]] = None,
-        delete_before_replace: Optional[pulumi.Input[_builtins.bool]] = None,
-        dir: Optional[pulumi.Input[_builtins.str]] = None,
-        environment: Optional[
-            pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        delete: pulumi.Input[Optional["_root_inputs.ExecCommandArgs"]] = None,
+        delete_before_replace: pulumi.Input[Optional[_builtins.bool]] = None,
+        dir: pulumi.Input[Optional[_builtins.str]] = None,
+        environment: pulumi.Input[
+            Optional[Mapping[str, pulumi.Input[_builtins.str]]]
         ] = None,
-        expand_argument_vars: Optional[pulumi.Input[_builtins.bool]] = None,
-        logging: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
-        update: Optional[pulumi.Input["_root_inputs.ExecCommandArgs"]] = None,
+        expand_argument_vars: pulumi.Input[Optional[_builtins.bool]] = None,
+        logging: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
+        update: pulumi.Input[Optional["_root_inputs.ExecCommandArgs"]] = None,
     ):
         """
         The set of arguments for constructing a Exec resource.
@@ -75,96 +75,96 @@ class ExecArgs:
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def delete(self) -> Optional[pulumi.Input["_root_inputs.ExecCommandArgs"]]:
+    def delete(self) -> pulumi.Input[Optional["_root_inputs.ExecCommandArgs"]]:
         return pulumi.get(self, "delete")
 
     @delete.setter
-    def delete(self, value: Optional[pulumi.Input["_root_inputs.ExecCommandArgs"]]):
+    def delete(self, value: pulumi.Input[Optional["_root_inputs.ExecCommandArgs"]]):
         pulumi.set(self, "delete", value)
 
     @_builtins.property
     @pulumi.getter(name="deleteBeforeReplace")
-    def delete_before_replace(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def delete_before_replace(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "delete_before_replace")
 
     @delete_before_replace.setter
-    def delete_before_replace(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def delete_before_replace(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "delete_before_replace", value)
 
     @_builtins.property
     @pulumi.getter
-    def dir(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def dir(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "dir")
 
     @dir.setter
-    def dir(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def dir(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "dir", value)
 
     @_builtins.property
     @pulumi.getter
     def environment(
         self,
-    ) -> Optional[pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]]:
+    ) -> pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]:
         return pulumi.get(self, "environment")
 
     @environment.setter
     def environment(
-        self, value: Optional[pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]]
+        self, value: pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]
     ):
         pulumi.set(self, "environment", value)
 
     @_builtins.property
     @pulumi.getter(name="expandArgumentVars")
-    def expand_argument_vars(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def expand_argument_vars(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "expand_argument_vars")
 
     @expand_argument_vars.setter
-    def expand_argument_vars(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def expand_argument_vars(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "expand_argument_vars", value)
 
     @_builtins.property
     @pulumi.getter
-    def logging(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def logging(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "logging")
 
     @logging.setter
-    def logging(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def logging(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "logging", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @_builtins.property
     @pulumi.getter
-    def update(self) -> Optional[pulumi.Input["_root_inputs.ExecCommandArgs"]]:
+    def update(self) -> pulumi.Input[Optional["_root_inputs.ExecCommandArgs"]]:
         return pulumi.get(self, "update")
 
     @update.setter
-    def update(self, value: Optional[pulumi.Input["_root_inputs.ExecCommandArgs"]]):
+    def update(self, value: pulumi.Input[Optional["_root_inputs.ExecCommandArgs"]]):
         pulumi.set(self, "update", value)
 
 
@@ -175,50 +175,50 @@ class Exec(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        create: Optional[
-            pulumi.Input[
+        create: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ExecCommandArgs", "_root_inputs.ExecCommandArgsDict"
                 ]
             ]
         ] = None,
-        delete: Optional[
-            pulumi.Input[
+        delete: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ExecCommandArgs", "_root_inputs.ExecCommandArgsDict"
                 ]
             ]
         ] = None,
-        delete_before_replace: Optional[pulumi.Input[_builtins.bool]] = None,
-        dir: Optional[pulumi.Input[_builtins.str]] = None,
-        environment: Optional[
-            pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]
+        delete_before_replace: pulumi.Input[Optional[_builtins.bool]] = None,
+        dir: pulumi.Input[Optional[_builtins.str]] = None,
+        environment: pulumi.Input[
+            Optional[Mapping[str, pulumi.Input[_builtins.str]]]
         ] = None,
-        expand_argument_vars: Optional[pulumi.Input[_builtins.bool]] = None,
-        logging: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        expand_argument_vars: pulumi.Input[Optional[_builtins.bool]] = None,
+        logging: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        update: Optional[
-            pulumi.Input[
+        update: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ExecCommandArgs", "_root_inputs.ExecCommandArgsDict"
                 ]
@@ -228,6 +228,7 @@ class Exec(pulumi.CustomResource):
     ):
         """
         Create a Exec resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -242,6 +243,7 @@ class Exec(pulumi.CustomResource):
     ):
         """
         Create a Exec resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param ExecArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -261,50 +263,50 @@ class Exec(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        create: Optional[
-            pulumi.Input[
+        create: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ExecCommandArgs", "_root_inputs.ExecCommandArgsDict"
                 ]
             ]
         ] = None,
-        delete: Optional[
-            pulumi.Input[
+        delete: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ExecCommandArgs", "_root_inputs.ExecCommandArgsDict"
                 ]
             ]
         ] = None,
-        delete_before_replace: Optional[pulumi.Input[_builtins.bool]] = None,
-        dir: Optional[pulumi.Input[_builtins.str]] = None,
-        environment: Optional[
-            pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]
+        delete_before_replace: pulumi.Input[Optional[_builtins.bool]] = None,
+        dir: pulumi.Input[Optional[_builtins.str]] = None,
+        environment: pulumi.Input[
+            Optional[Mapping[str, pulumi.Input[_builtins.str]]]
         ] = None,
-        expand_argument_vars: Optional[pulumi.Input[_builtins.bool]] = None,
-        logging: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        expand_argument_vars: pulumi.Input[Optional[_builtins.bool]] = None,
+        logging: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        update: Optional[
-            pulumi.Input[
+        update: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ExecCommandArgs", "_root_inputs.ExecCommandArgsDict"
                 ]

@@ -81,19 +81,19 @@ def agent_ping(
 
 
 def agent_ping_output(
-    config: Optional[
-        pulumi.Input[
+    config: pulumi.Input[
+        Optional[
             Optional[
                 Union["_root_inputs.ResourceConfig", "_root_inputs.ResourceConfigDict"]
             ]
         ]
     ] = None,
-    connection: Optional[
-        pulumi.Input[
+    connection: pulumi.Input[
+        Optional[
             Optional[Union["_root_inputs.Connection", "_root_inputs.ConnectionDict"]]
         ]
     ] = None,
-    ping: Optional[pulumi.Input[Optional[_builtins.str]]] = None,
+    ping: pulumi.Input[Optional[Optional[_builtins.str]]] = None,
     opts: Optional[Union[pulumi.InvokeOptions, pulumi.InvokeOutputOptions]] = None,
 ) -> pulumi.Output[AgentPingResult]:
     """

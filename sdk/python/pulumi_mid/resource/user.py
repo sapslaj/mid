@@ -26,28 +26,28 @@ class UserArgs:
         __self__,
         *,
         name: pulumi.Input[_builtins.str],
-        comment: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        group: Optional[pulumi.Input[_builtins.str]] = None,
-        groups: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        groups_exclusive: Optional[pulumi.Input[_builtins.bool]] = None,
-        home: Optional[pulumi.Input[_builtins.str]] = None,
-        local: Optional[pulumi.Input[_builtins.bool]] = None,
-        manage_home: Optional[pulumi.Input[_builtins.bool]] = None,
-        non_unique: Optional[pulumi.Input[_builtins.bool]] = None,
-        password: Optional[pulumi.Input[_builtins.str]] = None,
-        shell: Optional[pulumi.Input[_builtins.str]] = None,
-        skeleton: Optional[pulumi.Input[_builtins.str]] = None,
-        system: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
-        uid: Optional[pulumi.Input[_builtins.int]] = None,
-        uid_max: Optional[pulumi.Input[_builtins.int]] = None,
-        uid_min: Optional[pulumi.Input[_builtins.int]] = None,
-        umask: Optional[pulumi.Input[_builtins.str]] = None,
-        update_password: Optional[pulumi.Input[_builtins.str]] = None,
+        comment: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        group: pulumi.Input[Optional[_builtins.str]] = None,
+        groups: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        groups_exclusive: pulumi.Input[Optional[_builtins.bool]] = None,
+        home: pulumi.Input[Optional[_builtins.str]] = None,
+        local: pulumi.Input[Optional[_builtins.bool]] = None,
+        manage_home: pulumi.Input[Optional[_builtins.bool]] = None,
+        non_unique: pulumi.Input[Optional[_builtins.bool]] = None,
+        password: pulumi.Input[Optional[_builtins.str]] = None,
+        shell: pulumi.Input[Optional[_builtins.str]] = None,
+        skeleton: pulumi.Input[Optional[_builtins.str]] = None,
+        system: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
+        uid: pulumi.Input[Optional[_builtins.int]] = None,
+        uid_max: pulumi.Input[Optional[_builtins.int]] = None,
+        uid_min: pulumi.Input[Optional[_builtins.int]] = None,
+        umask: pulumi.Input[Optional[_builtins.str]] = None,
+        update_password: pulumi.Input[Optional[_builtins.str]] = None,
     ):
         """
         The set of arguments for constructing a User resource.
@@ -109,202 +109,202 @@ class UserArgs:
 
     @_builtins.property
     @pulumi.getter
-    def comment(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def comment(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "comment")
 
     @comment.setter
-    def comment(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def comment(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "comment", value)
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def ensure(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ensure(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ensure")
 
     @ensure.setter
-    def ensure(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ensure(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ensure", value)
 
     @_builtins.property
     @pulumi.getter
-    def force(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def force(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "force")
 
     @force.setter
-    def force(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def force(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "force", value)
 
     @_builtins.property
     @pulumi.getter
-    def group(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def group(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "group")
 
     @group.setter
-    def group(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def group(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "group", value)
 
     @_builtins.property
     @pulumi.getter
-    def groups(self) -> Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]]:
+    def groups(self) -> pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]]:
         return pulumi.get(self, "groups")
 
     @groups.setter
     def groups(
-        self, value: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]]
+        self, value: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]]
     ):
         pulumi.set(self, "groups", value)
 
     @_builtins.property
     @pulumi.getter(name="groupsExclusive")
-    def groups_exclusive(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def groups_exclusive(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "groups_exclusive")
 
     @groups_exclusive.setter
-    def groups_exclusive(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def groups_exclusive(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "groups_exclusive", value)
 
     @_builtins.property
     @pulumi.getter
-    def home(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def home(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "home")
 
     @home.setter
-    def home(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def home(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "home", value)
 
     @_builtins.property
     @pulumi.getter
-    def local(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def local(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "local")
 
     @local.setter
-    def local(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def local(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "local", value)
 
     @_builtins.property
     @pulumi.getter(name="manageHome")
-    def manage_home(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def manage_home(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "manage_home")
 
     @manage_home.setter
-    def manage_home(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def manage_home(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "manage_home", value)
 
     @_builtins.property
     @pulumi.getter(name="nonUnique")
-    def non_unique(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def non_unique(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "non_unique")
 
     @non_unique.setter
-    def non_unique(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def non_unique(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "non_unique", value)
 
     @_builtins.property
     @pulumi.getter
-    def password(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def password(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "password")
 
     @password.setter
-    def password(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def password(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "password", value)
 
     @_builtins.property
     @pulumi.getter
-    def shell(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def shell(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "shell")
 
     @shell.setter
-    def shell(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def shell(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "shell", value)
 
     @_builtins.property
     @pulumi.getter
-    def skeleton(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def skeleton(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "skeleton")
 
     @skeleton.setter
-    def skeleton(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def skeleton(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "skeleton", value)
 
     @_builtins.property
     @pulumi.getter
-    def system(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def system(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "system")
 
     @system.setter
-    def system(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def system(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "system", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @_builtins.property
     @pulumi.getter
-    def uid(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def uid(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "uid")
 
     @uid.setter
-    def uid(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def uid(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "uid", value)
 
     @_builtins.property
     @pulumi.getter(name="uidMax")
-    def uid_max(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def uid_max(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "uid_max")
 
     @uid_max.setter
-    def uid_max(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def uid_max(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "uid_max", value)
 
     @_builtins.property
     @pulumi.getter(name="uidMin")
-    def uid_min(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def uid_min(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "uid_min")
 
     @uid_min.setter
-    def uid_min(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def uid_min(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "uid_min", value)
 
     @_builtins.property
     @pulumi.getter
-    def umask(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def umask(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "umask")
 
     @umask.setter
-    def umask(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def umask(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "umask", value)
 
     @_builtins.property
     @pulumi.getter(name="updatePassword")
-    def update_password(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def update_password(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "update_password")
 
     @update_password.setter
-    def update_password(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def update_password(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "update_password", value)
 
 
@@ -315,51 +315,52 @@ class User(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        comment: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[
-            pulumi.Input[
+        comment: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        group: Optional[pulumi.Input[_builtins.str]] = None,
-        groups: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        groups_exclusive: Optional[pulumi.Input[_builtins.bool]] = None,
-        home: Optional[pulumi.Input[_builtins.str]] = None,
-        local: Optional[pulumi.Input[_builtins.bool]] = None,
-        manage_home: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        non_unique: Optional[pulumi.Input[_builtins.bool]] = None,
-        password: Optional[pulumi.Input[_builtins.str]] = None,
-        shell: Optional[pulumi.Input[_builtins.str]] = None,
-        skeleton: Optional[pulumi.Input[_builtins.str]] = None,
-        system: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        group: pulumi.Input[Optional[_builtins.str]] = None,
+        groups: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        groups_exclusive: pulumi.Input[Optional[_builtins.bool]] = None,
+        home: pulumi.Input[Optional[_builtins.str]] = None,
+        local: pulumi.Input[Optional[_builtins.bool]] = None,
+        manage_home: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        non_unique: pulumi.Input[Optional[_builtins.bool]] = None,
+        password: pulumi.Input[Optional[_builtins.str]] = None,
+        shell: pulumi.Input[Optional[_builtins.str]] = None,
+        skeleton: pulumi.Input[Optional[_builtins.str]] = None,
+        system: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        uid: Optional[pulumi.Input[_builtins.int]] = None,
-        uid_max: Optional[pulumi.Input[_builtins.int]] = None,
-        uid_min: Optional[pulumi.Input[_builtins.int]] = None,
-        umask: Optional[pulumi.Input[_builtins.str]] = None,
-        update_password: Optional[pulumi.Input[_builtins.str]] = None,
+        uid: pulumi.Input[Optional[_builtins.int]] = None,
+        uid_max: pulumi.Input[Optional[_builtins.int]] = None,
+        uid_min: pulumi.Input[Optional[_builtins.int]] = None,
+        umask: pulumi.Input[Optional[_builtins.str]] = None,
+        update_password: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         """
         Create a User resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -374,6 +375,7 @@ class User(pulumi.CustomResource):
     ):
         """
         Create a User resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param UserArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -393,47 +395,47 @@ class User(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        comment: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[
-            pulumi.Input[
+        comment: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        group: Optional[pulumi.Input[_builtins.str]] = None,
-        groups: Optional[pulumi.Input[Sequence[pulumi.Input[_builtins.str]]]] = None,
-        groups_exclusive: Optional[pulumi.Input[_builtins.bool]] = None,
-        home: Optional[pulumi.Input[_builtins.str]] = None,
-        local: Optional[pulumi.Input[_builtins.bool]] = None,
-        manage_home: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        non_unique: Optional[pulumi.Input[_builtins.bool]] = None,
-        password: Optional[pulumi.Input[_builtins.str]] = None,
-        shell: Optional[pulumi.Input[_builtins.str]] = None,
-        skeleton: Optional[pulumi.Input[_builtins.str]] = None,
-        system: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        group: pulumi.Input[Optional[_builtins.str]] = None,
+        groups: pulumi.Input[Optional[Sequence[pulumi.Input[_builtins.str]]]] = None,
+        groups_exclusive: pulumi.Input[Optional[_builtins.bool]] = None,
+        home: pulumi.Input[Optional[_builtins.str]] = None,
+        local: pulumi.Input[Optional[_builtins.bool]] = None,
+        manage_home: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        non_unique: pulumi.Input[Optional[_builtins.bool]] = None,
+        password: pulumi.Input[Optional[_builtins.str]] = None,
+        shell: pulumi.Input[Optional[_builtins.str]] = None,
+        skeleton: pulumi.Input[Optional[_builtins.str]] = None,
+        system: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        uid: Optional[pulumi.Input[_builtins.int]] = None,
-        uid_max: Optional[pulumi.Input[_builtins.int]] = None,
-        uid_min: Optional[pulumi.Input[_builtins.int]] = None,
-        umask: Optional[pulumi.Input[_builtins.str]] = None,
-        update_password: Optional[pulumi.Input[_builtins.str]] = None,
+        uid: pulumi.Input[Optional[_builtins.int]] = None,
+        uid_max: pulumi.Input[Optional[_builtins.int]] = None,
+        uid_min: pulumi.Input[Optional[_builtins.int]] = None,
+        umask: pulumi.Input[Optional[_builtins.str]] = None,
+        update_password: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         opts = pulumi.ResourceOptions.merge(

@@ -34,13 +34,15 @@ export function agentPingOutput(
   opts = pulumi.mergeOptions(utilities.resourceOptsDefaults(), opts || {});
   return pulumi.runtime.invokeOutput("mid:agent:agentPing", {
     "config": args.config,
-    "connection": args.connection ? pulumi.output(args.connection).apply(inputs.connectionProvideDefaults) : undefined,
+    "connection": pulumi.output(args.connection).apply(v =>
+      v === undefined ? undefined : inputs.connectionProvideDefaults(v)
+    ),
     "ping": args.ping,
   }, opts);
 }
 
 export interface AgentPingOutputArgs {
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  ping?: pulumi.Input<string>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  ping?: pulumi.Input<string | undefined>;
 }

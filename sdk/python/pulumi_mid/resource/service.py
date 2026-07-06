@@ -26,16 +26,16 @@ class ServiceArgs:
         __self__,
         *,
         name: pulumi.Input[_builtins.str],
-        arguments: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        enabled: Optional[pulumi.Input[_builtins.bool]] = None,
-        pattern: Optional[pulumi.Input[_builtins.str]] = None,
-        runlevel: Optional[pulumi.Input[_builtins.str]] = None,
-        sleep: Optional[pulumi.Input[_builtins.int]] = None,
-        state: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
-        use: Optional[pulumi.Input[_builtins.str]] = None,
+        arguments: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        enabled: pulumi.Input[Optional[_builtins.bool]] = None,
+        pattern: pulumi.Input[Optional[_builtins.str]] = None,
+        runlevel: pulumi.Input[Optional[_builtins.str]] = None,
+        sleep: pulumi.Input[Optional[_builtins.int]] = None,
+        state: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
+        use: pulumi.Input[Optional[_builtins.str]] = None,
     ):
         """
         The set of arguments for constructing a Service resource.
@@ -73,92 +73,92 @@ class ServiceArgs:
 
     @_builtins.property
     @pulumi.getter
-    def arguments(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def arguments(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "arguments")
 
     @arguments.setter
-    def arguments(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def arguments(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "arguments", value)
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def enabled(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def enabled(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "enabled")
 
     @enabled.setter
-    def enabled(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def enabled(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "enabled", value)
 
     @_builtins.property
     @pulumi.getter
-    def pattern(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def pattern(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "pattern")
 
     @pattern.setter
-    def pattern(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def pattern(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "pattern", value)
 
     @_builtins.property
     @pulumi.getter
-    def runlevel(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def runlevel(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "runlevel")
 
     @runlevel.setter
-    def runlevel(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def runlevel(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "runlevel", value)
 
     @_builtins.property
     @pulumi.getter
-    def sleep(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def sleep(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "sleep")
 
     @sleep.setter
-    def sleep(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def sleep(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "sleep", value)
 
     @_builtins.property
     @pulumi.getter
-    def state(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def state(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "state")
 
     @state.setter
-    def state(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def state(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "state", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
     @_builtins.property
     @pulumi.getter
-    def use(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def use(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "use")
 
     @use.setter
-    def use(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def use(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "use", value)
 
 
@@ -169,39 +169,40 @@ class Service(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        arguments: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[
-            pulumi.Input[
+        arguments: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        enabled: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        pattern: Optional[pulumi.Input[_builtins.str]] = None,
-        runlevel: Optional[pulumi.Input[_builtins.str]] = None,
-        sleep: Optional[pulumi.Input[_builtins.int]] = None,
-        state: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        enabled: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        pattern: pulumi.Input[Optional[_builtins.str]] = None,
+        runlevel: pulumi.Input[Optional[_builtins.str]] = None,
+        sleep: pulumi.Input[Optional[_builtins.int]] = None,
+        state: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        use: Optional[pulumi.Input[_builtins.str]] = None,
+        use: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         """
         Create a Service resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -216,6 +217,7 @@ class Service(pulumi.CustomResource):
     ):
         """
         Create a Service resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param ServiceArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -235,35 +237,35 @@ class Service(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        arguments: Optional[pulumi.Input[_builtins.str]] = None,
-        config: Optional[
-            pulumi.Input[
+        arguments: pulumi.Input[Optional[_builtins.str]] = None,
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        enabled: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        pattern: Optional[pulumi.Input[_builtins.str]] = None,
-        runlevel: Optional[pulumi.Input[_builtins.str]] = None,
-        sleep: Optional[pulumi.Input[_builtins.int]] = None,
-        state: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        enabled: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        pattern: pulumi.Input[Optional[_builtins.str]] = None,
+        runlevel: pulumi.Input[Optional[_builtins.str]] = None,
+        sleep: pulumi.Input[Optional[_builtins.int]] = None,
+        state: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
                 ]
             ]
         ] = None,
-        use: Optional[pulumi.Input[_builtins.str]] = None,
+        use: pulumi.Input[Optional[_builtins.str]] = None,
         __props__=None,
     ):
         opts = pulumi.ResourceOptions.merge(

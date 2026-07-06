@@ -53,7 +53,9 @@ export class Package extends pulumi.CustomResource {
     if (!opts.id) {
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["ensure"] = args?.ensure;
       resourceInputs["name"] = args?.name;
@@ -76,10 +78,10 @@ export class Package extends pulumi.CustomResource {
  * The set of arguments for constructing a Package resource.
  */
 export interface PackageArgs {
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  ensure?: pulumi.Input<string>;
-  name?: pulumi.Input<string>;
-  names?: pulumi.Input<pulumi.Input<string>[]>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  ensure?: pulumi.Input<string | undefined>;
+  name?: pulumi.Input<string | undefined>;
+  names?: pulumi.Input<pulumi.Input<string>[] | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
 }

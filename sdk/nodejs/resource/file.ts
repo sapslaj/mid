@@ -87,7 +87,9 @@ export class File extends pulumi.CustomResource {
       resourceInputs["checksum"] = args?.checksum;
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["content"] = args?.content;
       resourceInputs["directoryMode"] = args?.directoryMode;
@@ -159,33 +161,33 @@ export class File extends pulumi.CustomResource {
  * The set of arguments for constructing a File resource.
  */
 export interface FileArgs {
-  accessTime?: pulumi.Input<string>;
-  accessTimeFormat?: pulumi.Input<string>;
-  attributes?: pulumi.Input<string>;
-  backup?: pulumi.Input<boolean>;
-  checksum?: pulumi.Input<string>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  content?: pulumi.Input<string>;
-  directoryMode?: pulumi.Input<string>;
-  ensure?: pulumi.Input<string>;
-  follow?: pulumi.Input<boolean>;
-  force?: pulumi.Input<boolean>;
-  group?: pulumi.Input<string>;
-  localFollow?: pulumi.Input<boolean>;
-  mode?: pulumi.Input<string>;
-  modificationTime?: pulumi.Input<string>;
-  modificationTimeFormat?: pulumi.Input<string>;
-  owner?: pulumi.Input<string>;
+  accessTime?: pulumi.Input<string | undefined>;
+  accessTimeFormat?: pulumi.Input<string | undefined>;
+  attributes?: pulumi.Input<string | undefined>;
+  backup?: pulumi.Input<boolean | undefined>;
+  checksum?: pulumi.Input<string | undefined>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  content?: pulumi.Input<string | undefined>;
+  directoryMode?: pulumi.Input<string | undefined>;
+  ensure?: pulumi.Input<string | undefined>;
+  follow?: pulumi.Input<boolean | undefined>;
+  force?: pulumi.Input<boolean | undefined>;
+  group?: pulumi.Input<string | undefined>;
+  localFollow?: pulumi.Input<boolean | undefined>;
+  mode?: pulumi.Input<string | undefined>;
+  modificationTime?: pulumi.Input<string | undefined>;
+  modificationTimeFormat?: pulumi.Input<string | undefined>;
+  owner?: pulumi.Input<string | undefined>;
   path: pulumi.Input<string>;
-  recurse?: pulumi.Input<boolean>;
-  remoteSource?: pulumi.Input<string>;
-  selevel?: pulumi.Input<string>;
-  serole?: pulumi.Input<string>;
-  setype?: pulumi.Input<string>;
-  seuser?: pulumi.Input<string>;
-  source?: pulumi.Input<pulumi.asset.Asset | pulumi.asset.Archive>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
-  unsafeWrites?: pulumi.Input<boolean>;
-  validate?: pulumi.Input<string>;
+  recurse?: pulumi.Input<boolean | undefined>;
+  remoteSource?: pulumi.Input<string | undefined>;
+  selevel?: pulumi.Input<string | undefined>;
+  serole?: pulumi.Input<string | undefined>;
+  setype?: pulumi.Input<string | undefined>;
+  seuser?: pulumi.Input<string | undefined>;
+  source?: pulumi.Input<pulumi.asset.Asset | pulumi.asset.Archive | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
+  unsafeWrites?: pulumi.Input<boolean | undefined>;
+  validate?: pulumi.Input<string | undefined>;
 }

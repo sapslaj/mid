@@ -55,16 +55,18 @@ export function fileStatOutput(
   return pulumi.runtime.invokeOutput("mid:agent:fileStat", {
     "calculateChecksum": args.calculateChecksum,
     "config": args.config,
-    "connection": args.connection ? pulumi.output(args.connection).apply(inputs.connectionProvideDefaults) : undefined,
+    "connection": pulumi.output(args.connection).apply(v =>
+      v === undefined ? undefined : inputs.connectionProvideDefaults(v)
+    ),
     "followSymlinks": args.followSymlinks,
     "path": args.path,
   }, opts);
 }
 
 export interface FileStatOutputArgs {
-  calculateChecksum?: pulumi.Input<boolean>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  followSymlinks?: pulumi.Input<boolean>;
+  calculateChecksum?: pulumi.Input<boolean | undefined>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  followSymlinks?: pulumi.Input<boolean | undefined>;
   path: pulumi.Input<string>;
 }

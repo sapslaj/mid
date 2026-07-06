@@ -62,7 +62,9 @@ export class Service extends pulumi.CustomResource {
       resourceInputs["arguments"] = args?.arguments;
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["enabled"] = args?.enabled;
       resourceInputs["name"] = args?.name;
@@ -94,15 +96,15 @@ export class Service extends pulumi.CustomResource {
  * The set of arguments for constructing a Service resource.
  */
 export interface ServiceArgs {
-  arguments?: pulumi.Input<string>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  enabled?: pulumi.Input<boolean>;
+  arguments?: pulumi.Input<string | undefined>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  enabled?: pulumi.Input<boolean | undefined>;
   name: pulumi.Input<string>;
-  pattern?: pulumi.Input<string>;
-  runlevel?: pulumi.Input<string>;
-  sleep?: pulumi.Input<number>;
-  state?: pulumi.Input<string>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
-  use?: pulumi.Input<string>;
+  pattern?: pulumi.Input<string | undefined>;
+  runlevel?: pulumi.Input<string | undefined>;
+  sleep?: pulumi.Input<number | undefined>;
+  state?: pulumi.Input<string | undefined>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
+  use?: pulumi.Input<string | undefined>;
 }

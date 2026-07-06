@@ -55,7 +55,9 @@ export class AnsibleTaskList extends pulumi.CustomResource {
       }
       resourceInputs["config"] = args?.config;
       resourceInputs["connection"] = args
-        ? (args.connection ? pulumi.output(args.connection).apply(inputs.connectionArgsProvideDefaults) : undefined)
+        ? pulumi.output(args.connection).apply(v =>
+          v === undefined ? undefined : inputs.connectionArgsProvideDefaults(v)
+        )
         : undefined;
       resourceInputs["tasks"] = args?.tasks;
       resourceInputs["triggers"] = args?.triggers;
@@ -76,8 +78,8 @@ export class AnsibleTaskList extends pulumi.CustomResource {
  * The set of arguments for constructing a AnsibleTaskList resource.
  */
 export interface AnsibleTaskListArgs {
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
   tasks: pulumi.Input<inputs.resource.AnsibleTaskListArgsTasksArgs>;
-  triggers?: pulumi.Input<inputs.TriggersInputArgs>;
+  triggers?: pulumi.Input<inputs.TriggersInputArgs | undefined>;
 }

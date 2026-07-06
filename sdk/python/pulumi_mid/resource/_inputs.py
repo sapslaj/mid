@@ -16,105 +16,21 @@ else:
 from .. import _utilities
 
 __all__ = [
-    "AnsibleTaskListArgsTasksArgs",
-    "AnsibleTaskListArgsTasksArgsDict",
     "AnsibleTaskListArgsTaskArgs",
     "AnsibleTaskListArgsTaskArgsDict",
+    "AnsibleTaskListArgsTasksArgs",
+    "AnsibleTaskListArgsTasksArgsDict",
 ]
 
-MYPY = False
 
-if not MYPY:
-
-    class AnsibleTaskListArgsTasksArgsDict(TypedDict):
-        create: pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgsDict"]]]
-        delete: NotRequired[
-            pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgsDict"]]]
-        ]
-        update: NotRequired[
-            pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgsDict"]]]
-        ]
-elif False:
-    AnsibleTaskListArgsTasksArgsDict: TypeAlias = Mapping[str, Any]
-
-
-@pulumi.input_type
-class AnsibleTaskListArgsTasksArgs:
-    def __init__(
-        __self__,
-        *,
-        create: pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]],
-        delete: Optional[
-            pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
-        ] = None,
-        update: Optional[
-            pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
-        ] = None,
-    ):
-        pulumi.set(__self__, "create", create)
-        if delete is not None:
-            pulumi.set(__self__, "delete", delete)
-        if update is not None:
-            pulumi.set(__self__, "update", update)
-
-    @_builtins.property
-    @pulumi.getter
-    def create(
-        self,
-    ) -> pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]:
-        return pulumi.get(self, "create")
-
-    @create.setter
-    def create(
-        self, value: pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
-    ):
-        pulumi.set(self, "create", value)
-
-    @_builtins.property
-    @pulumi.getter
-    def delete(
-        self,
-    ) -> Optional[pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]]:
-        return pulumi.get(self, "delete")
-
-    @delete.setter
-    def delete(
-        self,
-        value: Optional[
-            pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
-        ],
-    ):
-        pulumi.set(self, "delete", value)
-
-    @_builtins.property
-    @pulumi.getter
-    def update(
-        self,
-    ) -> Optional[pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]]:
-        return pulumi.get(self, "update")
-
-    @update.setter
-    def update(
-        self,
-        value: Optional[
-            pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
-        ],
-    ):
-        pulumi.set(self, "update", value)
-
-
-if not MYPY:
-
-    class AnsibleTaskListArgsTaskArgsDict(TypedDict):
-        args: pulumi.Input[Mapping[str, Any]]
-        module: pulumi.Input[_builtins.str]
-        check: NotRequired[pulumi.Input[_builtins.bool]]
-        environment: NotRequired[
-            pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]
-        ]
-        ignore_errors: NotRequired[pulumi.Input[_builtins.bool]]
-elif False:
-    AnsibleTaskListArgsTaskArgsDict: TypeAlias = Mapping[str, Any]
+class AnsibleTaskListArgsTaskArgsDict(TypedDict):
+    args: pulumi.Input[Mapping[str, Any]]
+    module: pulumi.Input[_builtins.str]
+    check: NotRequired[pulumi.Input[Optional[_builtins.bool]]]
+    environment: NotRequired[
+        pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]
+    ]
+    ignore_errors: NotRequired[pulumi.Input[Optional[_builtins.bool]]]
 
 
 @pulumi.input_type
@@ -124,11 +40,11 @@ class AnsibleTaskListArgsTaskArgs:
         *,
         args: pulumi.Input[Mapping[str, Any]],
         module: pulumi.Input[_builtins.str],
-        check: Optional[pulumi.Input[_builtins.bool]] = None,
-        environment: Optional[
-            pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]
+        check: pulumi.Input[Optional[_builtins.bool]] = None,
+        environment: pulumi.Input[
+            Optional[Mapping[str, pulumi.Input[_builtins.str]]]
         ] = None,
-        ignore_errors: Optional[pulumi.Input[_builtins.bool]] = None,
+        ignore_errors: pulumi.Input[Optional[_builtins.bool]] = None,
     ):
         pulumi.set(__self__, "args", args)
         pulumi.set(__self__, "module", module)
@@ -159,31 +75,110 @@ class AnsibleTaskListArgsTaskArgs:
 
     @_builtins.property
     @pulumi.getter
-    def check(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def check(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "check")
 
     @check.setter
-    def check(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def check(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "check", value)
 
     @_builtins.property
     @pulumi.getter
     def environment(
         self,
-    ) -> Optional[pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]]:
+    ) -> pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]:
         return pulumi.get(self, "environment")
 
     @environment.setter
     def environment(
-        self, value: Optional[pulumi.Input[Mapping[str, pulumi.Input[_builtins.str]]]]
+        self, value: pulumi.Input[Optional[Mapping[str, pulumi.Input[_builtins.str]]]]
     ):
         pulumi.set(self, "environment", value)
 
     @_builtins.property
     @pulumi.getter(name="ignoreErrors")
-    def ignore_errors(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def ignore_errors(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "ignore_errors")
 
     @ignore_errors.setter
-    def ignore_errors(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def ignore_errors(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "ignore_errors", value)
+
+
+class AnsibleTaskListArgsTasksArgsDict(TypedDict):
+    create: pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgsDict"]]]
+    delete: NotRequired[
+        pulumi.Input[
+            Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgsDict"]]]
+        ]
+    ]
+    update: NotRequired[
+        pulumi.Input[
+            Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgsDict"]]]
+        ]
+    ]
+
+
+@pulumi.input_type
+class AnsibleTaskListArgsTasksArgs:
+    def __init__(
+        __self__,
+        *,
+        create: pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]],
+        delete: pulumi.Input[
+            Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
+        ] = None,
+        update: pulumi.Input[
+            Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
+        ] = None,
+    ):
+        pulumi.set(__self__, "create", create)
+        if delete is not None:
+            pulumi.set(__self__, "delete", delete)
+        if update is not None:
+            pulumi.set(__self__, "update", update)
+
+    @_builtins.property
+    @pulumi.getter
+    def create(
+        self,
+    ) -> pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]:
+        return pulumi.get(self, "create")
+
+    @create.setter
+    def create(
+        self, value: pulumi.Input[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
+    ):
+        pulumi.set(self, "create", value)
+
+    @_builtins.property
+    @pulumi.getter
+    def delete(
+        self,
+    ) -> pulumi.Input[Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]]:
+        return pulumi.get(self, "delete")
+
+    @delete.setter
+    def delete(
+        self,
+        value: pulumi.Input[
+            Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
+        ],
+    ):
+        pulumi.set(self, "delete", value)
+
+    @_builtins.property
+    @pulumi.getter
+    def update(
+        self,
+    ) -> pulumi.Input[Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]]:
+        return pulumi.get(self, "update")
+
+    @update.setter
+    def update(
+        self,
+        value: pulumi.Input[
+            Optional[Sequence[pulumi.Input["AnsibleTaskListArgsTaskArgs"]]]
+        ],
+    ):
+        pulumi.set(self, "update", value)

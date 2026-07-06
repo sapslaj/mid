@@ -26,17 +26,17 @@ class GroupArgs:
         __self__,
         *,
         name: pulumi.Input[_builtins.str],
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        gid: Optional[pulumi.Input[_builtins.int]] = None,
-        gid_max: Optional[pulumi.Input[_builtins.int]] = None,
-        gid_min: Optional[pulumi.Input[_builtins.int]] = None,
-        local: Optional[pulumi.Input[_builtins.bool]] = None,
-        non_unique: Optional[pulumi.Input[_builtins.bool]] = None,
-        system: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        gid: pulumi.Input[Optional[_builtins.int]] = None,
+        gid_max: pulumi.Input[Optional[_builtins.int]] = None,
+        gid_min: pulumi.Input[Optional[_builtins.int]] = None,
+        local: pulumi.Input[Optional[_builtins.bool]] = None,
+        non_unique: pulumi.Input[Optional[_builtins.bool]] = None,
+        system: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
     ):
         """
         The set of arguments for constructing a Group resource.
@@ -76,101 +76,101 @@ class GroupArgs:
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter
-    def ensure(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ensure(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ensure")
 
     @ensure.setter
-    def ensure(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ensure(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ensure", value)
 
     @_builtins.property
     @pulumi.getter
-    def force(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def force(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "force")
 
     @force.setter
-    def force(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def force(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "force", value)
 
     @_builtins.property
     @pulumi.getter
-    def gid(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def gid(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "gid")
 
     @gid.setter
-    def gid(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def gid(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "gid", value)
 
     @_builtins.property
     @pulumi.getter(name="gidMax")
-    def gid_max(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def gid_max(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "gid_max")
 
     @gid_max.setter
-    def gid_max(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def gid_max(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "gid_max", value)
 
     @_builtins.property
     @pulumi.getter(name="gidMin")
-    def gid_min(self) -> Optional[pulumi.Input[_builtins.int]]:
+    def gid_min(self) -> pulumi.Input[Optional[_builtins.int]]:
         return pulumi.get(self, "gid_min")
 
     @gid_min.setter
-    def gid_min(self, value: Optional[pulumi.Input[_builtins.int]]):
+    def gid_min(self, value: pulumi.Input[Optional[_builtins.int]]):
         pulumi.set(self, "gid_min", value)
 
     @_builtins.property
     @pulumi.getter
-    def local(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def local(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "local")
 
     @local.setter
-    def local(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def local(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "local", value)
 
     @_builtins.property
     @pulumi.getter(name="nonUnique")
-    def non_unique(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def non_unique(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "non_unique")
 
     @non_unique.setter
-    def non_unique(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def non_unique(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "non_unique", value)
 
     @_builtins.property
     @pulumi.getter
-    def system(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def system(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "system")
 
     @system.setter
-    def system(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def system(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "system", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
 
@@ -181,30 +181,30 @@ class Group(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        gid: Optional[pulumi.Input[_builtins.int]] = None,
-        gid_max: Optional[pulumi.Input[_builtins.int]] = None,
-        gid_min: Optional[pulumi.Input[_builtins.int]] = None,
-        local: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        non_unique: Optional[pulumi.Input[_builtins.bool]] = None,
-        system: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        gid: pulumi.Input[Optional[_builtins.int]] = None,
+        gid_max: pulumi.Input[Optional[_builtins.int]] = None,
+        gid_min: pulumi.Input[Optional[_builtins.int]] = None,
+        local: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        non_unique: pulumi.Input[Optional[_builtins.bool]] = None,
+        system: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
@@ -215,6 +215,7 @@ class Group(pulumi.CustomResource):
     ):
         """
         Create a Group resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -229,6 +230,7 @@ class Group(pulumi.CustomResource):
     ):
         """
         Create a Group resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param GroupArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -248,30 +250,30 @@ class Group(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        gid: Optional[pulumi.Input[_builtins.int]] = None,
-        gid_max: Optional[pulumi.Input[_builtins.int]] = None,
-        gid_min: Optional[pulumi.Input[_builtins.int]] = None,
-        local: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        non_unique: Optional[pulumi.Input[_builtins.bool]] = None,
-        system: Optional[pulumi.Input[_builtins.bool]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        gid: pulumi.Input[Optional[_builtins.int]] = None,
+        gid_max: pulumi.Input[Optional[_builtins.int]] = None,
+        gid_min: pulumi.Input[Optional[_builtins.int]] = None,
+        local: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        non_unique: pulumi.Input[Optional[_builtins.bool]] = None,
+        system: pulumi.Input[Optional[_builtins.bool]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",

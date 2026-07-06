@@ -25,19 +25,19 @@ class SystemdServiceArgs:
     def __init__(
         __self__,
         *,
-        config: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]] = None,
-        connection: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]] = None,
-        daemon_reexec: Optional[pulumi.Input[_builtins.bool]] = None,
-        daemon_reload: Optional[pulumi.Input[_builtins.bool]] = None,
-        enabled: Optional[pulumi.Input[_builtins.bool]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        masked: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        no_block: Optional[pulumi.Input[_builtins.bool]] = None,
-        refresh_action: Optional[pulumi.Input[_builtins.str]] = None,
-        scope: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]] = None,
+        config: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]] = None,
+        connection: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]] = None,
+        daemon_reexec: pulumi.Input[Optional[_builtins.bool]] = None,
+        daemon_reload: pulumi.Input[Optional[_builtins.bool]] = None,
+        enabled: pulumi.Input[Optional[_builtins.bool]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        masked: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        no_block: pulumi.Input[Optional[_builtins.bool]] = None,
+        refresh_action: pulumi.Input[Optional[_builtins.str]] = None,
+        scope: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]] = None,
     ):
         """
         The set of arguments for constructing a SystemdService resource.
@@ -71,119 +71,119 @@ class SystemdServiceArgs:
 
     @_builtins.property
     @pulumi.getter
-    def config(self) -> Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]:
+    def config(self) -> pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]:
         return pulumi.get(self, "config")
 
     @config.setter
-    def config(self, value: Optional[pulumi.Input["_root_inputs.ResourceConfigArgs"]]):
+    def config(self, value: pulumi.Input[Optional["_root_inputs.ResourceConfigArgs"]]):
         pulumi.set(self, "config", value)
 
     @_builtins.property
     @pulumi.getter
-    def connection(self) -> Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]:
+    def connection(self) -> pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]:
         return pulumi.get(self, "connection")
 
     @connection.setter
-    def connection(self, value: Optional[pulumi.Input["_root_inputs.ConnectionArgs"]]):
+    def connection(self, value: pulumi.Input[Optional["_root_inputs.ConnectionArgs"]]):
         pulumi.set(self, "connection", value)
 
     @_builtins.property
     @pulumi.getter(name="daemonReexec")
-    def daemon_reexec(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def daemon_reexec(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "daemon_reexec")
 
     @daemon_reexec.setter
-    def daemon_reexec(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def daemon_reexec(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "daemon_reexec", value)
 
     @_builtins.property
     @pulumi.getter(name="daemonReload")
-    def daemon_reload(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def daemon_reload(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "daemon_reload")
 
     @daemon_reload.setter
-    def daemon_reload(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def daemon_reload(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "daemon_reload", value)
 
     @_builtins.property
     @pulumi.getter
-    def enabled(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def enabled(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "enabled")
 
     @enabled.setter
-    def enabled(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def enabled(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "enabled", value)
 
     @_builtins.property
     @pulumi.getter
-    def ensure(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def ensure(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "ensure")
 
     @ensure.setter
-    def ensure(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def ensure(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "ensure", value)
 
     @_builtins.property
     @pulumi.getter
-    def force(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def force(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "force")
 
     @force.setter
-    def force(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def force(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "force", value)
 
     @_builtins.property
     @pulumi.getter
-    def masked(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def masked(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "masked")
 
     @masked.setter
-    def masked(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def masked(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "masked", value)
 
     @_builtins.property
     @pulumi.getter
-    def name(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def name(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "name")
 
     @name.setter
-    def name(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def name(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "name", value)
 
     @_builtins.property
     @pulumi.getter(name="noBlock")
-    def no_block(self) -> Optional[pulumi.Input[_builtins.bool]]:
+    def no_block(self) -> pulumi.Input[Optional[_builtins.bool]]:
         return pulumi.get(self, "no_block")
 
     @no_block.setter
-    def no_block(self, value: Optional[pulumi.Input[_builtins.bool]]):
+    def no_block(self, value: pulumi.Input[Optional[_builtins.bool]]):
         pulumi.set(self, "no_block", value)
 
     @_builtins.property
     @pulumi.getter(name="refreshAction")
-    def refresh_action(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def refresh_action(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "refresh_action")
 
     @refresh_action.setter
-    def refresh_action(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def refresh_action(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "refresh_action", value)
 
     @_builtins.property
     @pulumi.getter
-    def scope(self) -> Optional[pulumi.Input[_builtins.str]]:
+    def scope(self) -> pulumi.Input[Optional[_builtins.str]]:
         return pulumi.get(self, "scope")
 
     @scope.setter
-    def scope(self, value: Optional[pulumi.Input[_builtins.str]]):
+    def scope(self, value: pulumi.Input[Optional[_builtins.str]]):
         pulumi.set(self, "scope", value)
 
     @_builtins.property
     @pulumi.getter
-    def triggers(self) -> Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]:
+    def triggers(self) -> pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]:
         return pulumi.get(self, "triggers")
 
     @triggers.setter
-    def triggers(self, value: Optional[pulumi.Input["_root_inputs.TriggersInputArgs"]]):
+    def triggers(self, value: pulumi.Input[Optional["_root_inputs.TriggersInputArgs"]]):
         pulumi.set(self, "triggers", value)
 
 
@@ -194,31 +194,31 @@ class SystemdService(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        daemon_reexec: Optional[pulumi.Input[_builtins.bool]] = None,
-        daemon_reload: Optional[pulumi.Input[_builtins.bool]] = None,
-        enabled: Optional[pulumi.Input[_builtins.bool]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        masked: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        no_block: Optional[pulumi.Input[_builtins.bool]] = None,
-        refresh_action: Optional[pulumi.Input[_builtins.str]] = None,
-        scope: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        daemon_reexec: pulumi.Input[Optional[_builtins.bool]] = None,
+        daemon_reload: pulumi.Input[Optional[_builtins.bool]] = None,
+        enabled: pulumi.Input[Optional[_builtins.bool]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        masked: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        no_block: pulumi.Input[Optional[_builtins.bool]] = None,
+        refresh_action: pulumi.Input[Optional[_builtins.str]] = None,
+        scope: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",
@@ -229,6 +229,7 @@ class SystemdService(pulumi.CustomResource):
     ):
         """
         Create a SystemdService resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param pulumi.ResourceOptions opts: Options for the resource.
         """
@@ -243,6 +244,7 @@ class SystemdService(pulumi.CustomResource):
     ):
         """
         Create a SystemdService resource with the given unique name, props, and options.
+
         :param str resource_name: The name of the resource.
         :param SystemdServiceArgs args: The arguments to use to populate this resource's properties.
         :param pulumi.ResourceOptions opts: Options for the resource.
@@ -262,31 +264,31 @@ class SystemdService(pulumi.CustomResource):
         __self__,
         resource_name: str,
         opts: Optional[pulumi.ResourceOptions] = None,
-        config: Optional[
-            pulumi.Input[
+        config: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.ResourceConfigArgs",
                     "_root_inputs.ResourceConfigArgsDict",
                 ]
             ]
         ] = None,
-        connection: Optional[
-            pulumi.Input[
+        connection: pulumi.Input[
+            Optional[
                 Union["_root_inputs.ConnectionArgs", "_root_inputs.ConnectionArgsDict"]
             ]
         ] = None,
-        daemon_reexec: Optional[pulumi.Input[_builtins.bool]] = None,
-        daemon_reload: Optional[pulumi.Input[_builtins.bool]] = None,
-        enabled: Optional[pulumi.Input[_builtins.bool]] = None,
-        ensure: Optional[pulumi.Input[_builtins.str]] = None,
-        force: Optional[pulumi.Input[_builtins.bool]] = None,
-        masked: Optional[pulumi.Input[_builtins.bool]] = None,
-        name: Optional[pulumi.Input[_builtins.str]] = None,
-        no_block: Optional[pulumi.Input[_builtins.bool]] = None,
-        refresh_action: Optional[pulumi.Input[_builtins.str]] = None,
-        scope: Optional[pulumi.Input[_builtins.str]] = None,
-        triggers: Optional[
-            pulumi.Input[
+        daemon_reexec: pulumi.Input[Optional[_builtins.bool]] = None,
+        daemon_reload: pulumi.Input[Optional[_builtins.bool]] = None,
+        enabled: pulumi.Input[Optional[_builtins.bool]] = None,
+        ensure: pulumi.Input[Optional[_builtins.str]] = None,
+        force: pulumi.Input[Optional[_builtins.bool]] = None,
+        masked: pulumi.Input[Optional[_builtins.bool]] = None,
+        name: pulumi.Input[Optional[_builtins.str]] = None,
+        no_block: pulumi.Input[Optional[_builtins.bool]] = None,
+        refresh_action: pulumi.Input[Optional[_builtins.str]] = None,
+        scope: pulumi.Input[Optional[_builtins.str]] = None,
+        triggers: pulumi.Input[
+            Optional[
                 Union[
                     "_root_inputs.TriggersInputArgs",
                     "_root_inputs.TriggersInputArgsDict",

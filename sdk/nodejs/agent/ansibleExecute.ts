@@ -52,7 +52,9 @@ export function ansibleExecuteOutput(
     "args": args.args,
     "check": args.check,
     "config": args.config,
-    "connection": args.connection ? pulumi.output(args.connection).apply(inputs.connectionProvideDefaults) : undefined,
+    "connection": pulumi.output(args.connection).apply(v =>
+      v === undefined ? undefined : inputs.connectionProvideDefaults(v)
+    ),
     "debugKeepTempFiles": args.debugKeepTempFiles,
     "environment": args.environment,
     "name": args.name,
@@ -61,10 +63,10 @@ export function ansibleExecuteOutput(
 
 export interface AnsibleExecuteOutputArgs {
   args: pulumi.Input<{ [key: string]: any }>;
-  check?: pulumi.Input<boolean>;
-  config?: pulumi.Input<inputs.ResourceConfigArgs>;
-  connection?: pulumi.Input<inputs.ConnectionArgs>;
-  debugKeepTempFiles?: pulumi.Input<boolean>;
-  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> }>;
+  check?: pulumi.Input<boolean | undefined>;
+  config?: pulumi.Input<inputs.ResourceConfigArgs | undefined>;
+  connection?: pulumi.Input<inputs.ConnectionArgs | undefined>;
+  debugKeepTempFiles?: pulumi.Input<boolean | undefined>;
+  environment?: pulumi.Input<{ [key: string]: pulumi.Input<string> } | undefined>;
   name: pulumi.Input<string>;
 }
