@@ -100,14 +100,14 @@ jobs:
             dist/**/*
           target_commitish: ${{ steps.commit.outputs.commit_hash }}
       - name: GitHub Packages publish
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           access: public
           token: ${{ secrets.GITHUB_TOKEN }}
           registry: https://npm.pkg.github.com
           package: ${{ github.workspace }}/sdk/nodejs/bin/package.json
       - name: NPM publish
-        uses: JS-DevTools/npm-publish@v3
+        uses: JS-DevTools/npm-publish@v4
         with:
           access: public
           provenance: true
