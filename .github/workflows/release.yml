@@ -107,6 +107,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           registry: https://npm.pkg.github.com
           package: ${{ github.workspace }}/sdk/nodejs/bin/package.json
+      - name: Upgrade npm for trusted publishing support
+        run: npm install -g npm@latest
       - name: NPM publish
         uses: JS-DevTools/npm-publish@v4
         with:
