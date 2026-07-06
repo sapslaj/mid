@@ -111,6 +111,5 @@ jobs:
         with:
           access: public
           provenance: true
-          token: ${{ secrets.NPM_PUBLISH_ACCESS_TOKEN }}
           registry: https://registry.npmjs.org/
           package: ${{ github.workspace }}/sdk/nodejs/bin/package.json
