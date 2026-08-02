@@ -302,6 +302,59 @@ func TestResourceFile(t *testing.T) {
 			},
 		},
 
+		"changes to triggers but not file contents should diff correctly": {
+			Create: Operation{
+				Inputs: property.NewMap(map[string]property.Value{
+					"path":   property.New("/foo"),
+					"ensure": property.New("file"),
+					"triggers": property.New(property.NewMap(map[string]property.Value{
+						"refresh": property.New(property.NewArray([]property.Value{
+							property.New("v1"),
+						})),
+					})),
+				}),
+			},
+			Updates: []Operation{
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/foo"),
+						"ensure": property.New("file"),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("v2"),
+							})),
+						})),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						HasChanges:          true,
+						DeleteBeforeReplace: true,
+						DetailedDiff: map[string]p.PropertyDiff{
+							"triggers": {
+								Kind:      p.Update,
+								InputDiff: true,
+							},
+						},
+					},
+				},
+				{
+					Inputs: property.NewMap(map[string]property.Value{
+						"path":   property.New("/foo"),
+						"ensure": property.New("file"),
+						"triggers": property.New(property.NewMap(map[string]property.Value{
+							"refresh": property.New(property.NewArray([]property.Value{
+								property.New("v2"),
+							})),
+						})),
+					}),
+					ExpectedDiff: &p.DiffResponse{
+						DeleteBeforeReplace: true,
+						HasChanges:          false,
+						DetailedDiff:        map[string]p.PropertyDiff{},
+					},
+				},
+			},
+		},
+
 		// FIXME: these tests are borked for some reason
 		// "source asset": {
 		// 	Create: Operation{

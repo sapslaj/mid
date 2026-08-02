@@ -1335,6 +1335,8 @@ func (r File) createOrUpdate(
 			return err
 		}
 
+		// unconditionally update state so triggers get synced
+		state = r.updateState(inputs, state, false)
 		if result.IsChanged() {
 			state = r.updateStateDrifted(inputs, state, r.ansibleFileDiffedAttributes(result))
 		}
