@@ -14,8 +14,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/bramvdbogaerde/go-scp"
 	"github.com/google/uuid"
+	"github.com/pkg/sftp"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -301,7 +301,7 @@ func (agent *Agent) Heartbeat(timeout time.Duration) (time.Duration, bool) {
 		return 0, false
 	}
 	_, err := agent.Ping(ctx)
-	duration := time.Now().Sub(start)
+	duration := time.Since(start)
 
 	span.SetAttributes(attribute.Stringer("duration", duration))
 	logger = logger.With("duration", duration)
@@ -417,17 +417,47 @@ func InstallAgent(ctx context.Context, agent *Agent) error {
 		return err
 	}
 
-	scpClient, err := scp.NewClientBySSH(agent.Client)
+	sftpClient, err := sftp.NewClient(agent.Client)
 	if err != nil {
 		err = errors.Join(ErrInstallingAgent, err)
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
-	defer scpClient.Close()
+	defer sftpClient.Close()
 
-	err = scpClient.CopyFile(ctx, bytes.NewReader(agentBinary), ".mid/mid-agent", "0700")
+	uuid, err := uuid.NewRandom()
 	if err != nil {
 		err = errors.Join(ErrInstallingAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	file := ".mid/mid-agent." + uuid.String()
+
+	dest, err := sftpClient.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_TRUNC)
+	if err != nil {
+		err = errors.Join(ErrInstallingAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+	defer dest.Close()
+
+	_, err = io.Copy(dest, bytes.NewReader(agentBinary))
+	if err != nil {
+		err = errors.Join(ErrInstallingAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	err = sftpClient.PosixRename(file, ".mid/mid-agent")
+	if err != nil {
+		err = errors.Join(ErrInstallingAgent, err)
+		span.SetStatus(codes.Error, err.Error())
+		return err
+	}
+
+	err = sftpClient.Chmod(".mid/mid-agent", 0o700)
+	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return err
 	}
@@ -489,7 +519,7 @@ func Connect(ctx context.Context, agent *Agent) error {
 
 	for i := 0; i <= 10; i++ {
 		if i == 10 {
-			logger.Error(fmt.Sprintf("agent installation still in progress but should be finished by now; bailing"))
+			logger.Error("agent installation still in progress but should be finished by now; bailing")
 			err = errors.Join(ErrConnectingToAgent, fmt.Errorf("another agent installation is in progress"))
 			span.SetStatus(codes.Error, err.Error())
 			return err
@@ -810,13 +840,13 @@ func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
 		return "", err
 	}
 
-	scpClient, err := scp.NewClientBySSH(agent.Client)
+	sftpClient, err := sftp.NewClient(agent.Client)
 	if err != nil {
 		err = errors.Join(ErrStagingFile, err)
 		span.SetStatus(codes.Error, err.Error())
 		return "", err
 	}
-	defer scpClient.Close()
+	defer sftpClient.Close()
 
 	uid, err := uuid.NewRandom()
 	if err != nil {
@@ -872,23 +902,33 @@ func StageFile(ctx context.Context, agent *Agent, f io.Reader) (string, error) {
 			break
 		}
 
-		attemptCtx, attemptSpan := Tracer.Start(ctx, "mid/agent.StageFile:CopyFile:Attempt", trace.WithAttributes(
+		_, attemptSpan := Tracer.Start(ctx, "mid/agent.StageFile:CopyFile:Attempt", trace.WithAttributes(
 			attribute.Int("retry.attempt", attempt),
 		))
 
-		err = scpClient.CopyFile(attemptCtx, f, remotePath, "0400")
+		var dest *sftp.File
+		dest, err = sftpClient.OpenFile(remotePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC)
+		if err != nil {
+			attemptSpan.SetStatus(codes.Error, err.Error())
+			attemptSpan.End()
+			goto sleep
+		}
+
+		_, err = io.Copy(dest, f)
 		if err == nil {
 			attemptSpan.SetStatus(codes.Ok, "")
 		} else {
 			attemptSpan.SetStatus(codes.Error, err.Error())
 		}
 
+		dest.Close()
 		attemptSpan.End()
 
 		if err == nil {
 			break
 		}
 
+	sleep:
 		sleepDuration := time.Duration(attempt) * 10 * time.Second
 		_, sleepSpan := Tracer.Start(ctx, "mid/agent.StageFile:CopyFile:Sleep", trace.WithAttributes(
 			attribute.Int("retry.attempt", attempt),
