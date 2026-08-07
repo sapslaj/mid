@@ -526,20 +526,28 @@ func Connect(ctx context.Context, agent *Agent) error {
 		}
 
 		// check for lock file
-		installLockOutput, err := RunRemoteCommand(ctx, agent, "/bin/sh -c 'test ! -f .mid/install.lock ; echo $?'")
-		if strings.TrimSpace(string(installLockOutput)) == "0" {
-			break
+		installLockOutput, lockErr := RunRemoteCommand(ctx, agent, "/bin/sh -c 'test -f .mid/install.lock ; echo $?'")
+		if lockErr == nil && strings.TrimSpace(string(installLockOutput)) == "0" {
+			// nope, installation is still going
+			logger.Info(fmt.Sprintf("agent installation in progress, waiting %d seconds", i*10))
+			time.Sleep(time.Duration(i) * 10 * time.Second)
+			continue
+		}
+		if lockErr != nil {
+			logger.Warn(fmt.Sprintf("error checking for install lock, waiting %d seconds", i*10))
+			time.Sleep(time.Duration(i) * 10 * time.Second)
+			continue
 		}
 
 		// try it and see what happens
+		// FIXME: refactor this
 		initOutput, err = RunRemoteCommand(ctx, agent, "file .mid/mid-agent && .mid/mid-agent --version")
-		if err == nil {
-			break
+		if err != nil {
+			logger.Warn(fmt.Sprintf("error checking for install version, waiting %d seconds", i*10))
+			time.Sleep(time.Duration(i) * 10 * time.Second)
+			continue
 		}
-
-		// nope, installation is still going
-		logger.Info(fmt.Sprintf("agent installation in progress, waiting %d seconds", i*10))
-		time.Sleep(time.Duration(i) * 10 * time.Second)
+		break
 	}
 
 	agentNotInstalled = strings.Contains(string(initOutput), "No such file or directory")
