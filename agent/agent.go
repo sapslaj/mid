@@ -539,21 +539,14 @@ func Connect(ctx context.Context, agent *Agent) error {
 			continue
 		}
 
-		// try it and see what happens
-		// FIXME: refactor this
-		initOutput, err = RunRemoteCommand(ctx, agent, "file .mid/mid-agent && .mid/mid-agent --version")
-		if err != nil {
-			logger.Warn(fmt.Sprintf("error checking for install version, waiting %d seconds", i*10))
-			time.Sleep(time.Duration(i) * 10 * time.Second)
-			continue
-		}
 		break
 	}
 
+	initOutput, err = RunRemoteCommand(ctx, agent, "file .mid/mid-agent && .mid/mid-agent --version")
 	agentNotInstalled = strings.Contains(string(initOutput), "No such file or directory")
 	agentVersionMismatch = !strings.Contains(string(initOutput), fmt.Sprintf("mid-agent version %s", version.Version))
 
-	if agentNotInstalled || agentVersionMismatch {
+	if err != nil || agentNotInstalled || agentVersionMismatch {
 		logger.Info("copying agent")
 		err = InstallAgent(ctx, agent)
 		if err != nil {
