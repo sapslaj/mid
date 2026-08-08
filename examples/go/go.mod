@@ -4,7 +4,7 @@ go 1.25
 
 require (
 	github.com/pulumi/pulumi/sdk/v3 v3.184.0
-	github.com/sapslaj/mid/sdk v0.0.0-20260807012503-cb9bdc32d18c
+	github.com/sapslaj/mid/sdk v0.0.0-20260808013215-f36bfb30e846
 )
 
 require (
