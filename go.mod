@@ -70,8 +70,8 @@ require (
 	github.com/git-pkgs/purl v0.1.10 // indirect
 	github.com/git-pkgs/vers v0.2.4 // indirect
 	github.com/go-git/gcfg/v2 v2.0.2 // indirect
-	github.com/go-git/go-billy/v6 v6.0.0-alpha.1 // indirect
-	github.com/go-git/go-git/v6 v6.0.0-alpha.4 // indirect
+	github.com/go-git/go-billy/v6 v6.0.0-alpha.2 // indirect
+	github.com/go-git/go-git/v6 v6.0.0-alpha.5 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-test/deep v1.1.1 // indirect
@@ -152,7 +152,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
