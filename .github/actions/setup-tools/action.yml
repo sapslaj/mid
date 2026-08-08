@@ -59,6 +59,7 @@ runs:
       with:
         node-version: 24.x
         registry-url: https://npm.pkg.github.com
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Install uv
       if: inputs.tools == 'all' || contains(inputs.tools, 'python')
