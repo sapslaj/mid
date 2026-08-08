@@ -31,7 +31,7 @@ runs:
 
     - name: Install Go
       if: inputs.tools == 'all' || contains(inputs.tools, 'go')
-      uses: actions/setup-go@v5
+      uses: actions/setup-go@v7
       with:
         go-version: "1.25.x"
         cache-dependency-path: |
@@ -41,7 +41,7 @@ runs:
 
     - name: Install Just
       if: inputs.tools == 'all' || contains(inputs.tools, 'just') || contains(inputs.tools, 'gci') || contains(inputs.tools, 'goimports')
-      uses: extractions/setup-just@v3
+      uses: extractions/setup-just@v4
 
     - name: Install gci
       if: inputs.tools == 'all' || contains(inputs.tools, 'gci')
@@ -55,20 +55,20 @@ runs:
 
     - name: Setup Node
       if: inputs.tools == 'all' || contains(inputs.tools, 'nodejs')
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
-        node-version: 20.x
+        node-version: 24.x
         registry-url: https://npm.pkg.github.com
 
     - name: Install uv
       if: inputs.tools == 'all' || contains(inputs.tools, 'python')
-      uses: astral-sh/setup-uv@v5
+      uses: astral-sh/setup-uv@v9
       with:
-        version: "0.7.6"
+        version: "0.12.3"
 
     - name: Setup Python
       if: inputs.tools == 'all' || contains(inputs.tools, 'python')
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version-file: pyproject.toml
 
@@ -84,14 +84,14 @@ runs:
 
     - name: Install pulumictl
       if: inputs.tools == 'all' || contains(inputs.tools, 'pulumictl')
-      uses: jaxxstorm/action-install-gh-release@v1.11.0
+      uses: jaxxstorm/action-install-gh-release@v3.0.0
       with:
         tag: v0.0.46
         repo: pulumi/pulumictl
 
     - name: Install Pulumi CLI
       if: inputs.tools == 'all' || contains(inputs.tools, 'pulumicli')
-      uses: pulumi/actions@9519177da243fd32cab35cdbf19cce1ab7472fcc # v6
+      uses: pulumi/actions@v7
       with:
         pulumi-version: "dev"
 
@@ -109,6 +109,6 @@ runs:
 
     - name: Install Schema Tools
       if: inputs.tools == 'all' || contains(inputs.tools, 'schema-tools')
-      uses: jaxxstorm/action-install-gh-release@v1.11.0
+      uses: jaxxstorm/action-install-gh-release@v3.0.0
       with:
         repo: pulumi/schema-tools
