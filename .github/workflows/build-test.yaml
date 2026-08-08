@@ -59,6 +59,7 @@ jobs:
         uses: ./.github/actions/setup-tools
         with:
           tools: all
+          node-auth-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build
         run: |
           set -eux
@@ -89,6 +90,7 @@ jobs:
         uses: ./.github/actions/setup-tools
         with:
           tools: all
+          node-auth-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run smoketest container
         run: |
           docker build -t mid-smoketest docker/smoketest/
@@ -200,6 +202,7 @@ jobs:
         uses: ./.github/actions/setup-tools
         with:
           tools: all
+          node-auth-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: arn:aws:iam::854523357306:role/github-actions

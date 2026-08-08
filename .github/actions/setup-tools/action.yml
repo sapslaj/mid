@@ -18,6 +18,8 @@ inputs:
         qemu
         schema-tools
     default: all
+  node-auth-token:
+    default: ""
 
 runs:
   using: "composite"
@@ -59,7 +61,7 @@ runs:
       with:
         node-version: 24.x
         registry-url: https://npm.pkg.github.com
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.node-auth-token }}
 
     - name: Install uv
       if: inputs.tools == 'all' || contains(inputs.tools, 'python')
