@@ -31,9 +31,17 @@ const (
 	QEMUBackend   Backend = "qemu"
 )
 
+type Distro string
+
+const (
+	Ubuntu Distro = "ubuntu"
+	Rocky  Distro = "rocky"
+)
+
 type Config struct {
 	Name        string
 	Backend     Backend
+	Distro      Distro
 	DataPath    string
 	SSHUsername string
 }
@@ -82,8 +90,18 @@ func New(t *testing.T, config Config) (*TestMachine, error) {
 	}
 	t.Logf("testmachine: using backend %q", config.Backend)
 
+	if config.Distro == "" {
+		config.Distro = Ubuntu
+	}
+	t.Logf("testmachine: using distro %q", config.Distro)
+
 	if config.SSHUsername == "" {
-		config.SSHUsername = "ubuntu"
+		switch config.Distro {
+		case Ubuntu:
+			config.SSHUsername = "ubuntu"
+		case Rocky:
+			config.SSHUsername = "rocky"
+		}
 	}
 	t.Logf("testmachine: using ssh username %q", config.SSHUsername)
 
@@ -161,9 +179,6 @@ func NewDocker(t *testing.T, config Config) (*TestMachine, error) {
 
 	var err error
 	tm.DockertestPool = dockertest.NewPoolT(t, "")
-	if err != nil {
-		return tm, err
-	}
 
 	existingContainers, err := tm.DockertestPool.Client().ContainerList(t.Context(), client.ContainerListOptions{
 		All: true,
@@ -203,6 +218,7 @@ func NewDocker(t *testing.T, config Config) (*TestMachine, error) {
 
 	tm.DockerContainer = tm.DockertestPool.BuildAndRunT(t, config.Name, &dockertest.BuildOptions{
 		ContextDir: path.Join(config.DataPath),
+		Dockerfile: string(config.Distro) + ".Dockerfile",
 	}, dockertest.WithoutReuse())
 	if err != nil {
 		return tm, err
@@ -228,13 +244,24 @@ func NewQEMU(t *testing.T, config Config) (*TestMachine, error) {
 		Config: config,
 	}
 
-	img := path.Join(config.DataPath, "noble-server-cloudimg-amd64.img")
-
-	err := DownloadQEMUImage(
-		t,
-		"http://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img",
-		img,
-	)
+	var img string
+	var err error
+	switch config.Distro {
+	case Ubuntu:
+		img = path.Join(config.DataPath, "noble-server-cloudimg-amd64.img")
+		err = DownloadQEMUImage(
+			t,
+			"http://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img",
+			img,
+		)
+	case Rocky:
+		img = path.Join(config.DataPath, "Rocky-10-GenericCloud-Base.latest.x86_64.qcow2")
+		err = DownloadQEMUImage(
+			t,
+			"https://dl.rockylinux.org/pub/rocky/10/images/x86_64/Rocky-10-GenericCloud-Base.latest.x86_64.qcow2",
+			img,
+		)
+	}
 	if err != nil {
 		return tm, err
 	}
@@ -245,12 +272,13 @@ func NewQEMU(t *testing.T, config Config) (*TestMachine, error) {
 	buildQemuParams := func(kvm bool) []string {
 		params := []string{
 			"-snapshot",
+			"-cpu", "host",
 			"-smp", "2", // XXX: does this need to be configurable?
 			"-m", "1024", // XXX: does this need to be configurable?
 			"-netdev", fmt.Sprintf("id=net00,type=user,hostfwd=tcp::%d-:22", tm.SSHPort),
 			"-device", "virtio-net-pci,netdev=net00",
 			"-drive", fmt.Sprintf("if=virtio,format=qcow2,file=%s", img),
-			"-drive", fmt.Sprintf("if=virtio,format=raw,file=%s", path.Join(config.DataPath, "seed.img")),
+			"-drive", fmt.Sprintf("if=virtio,format=raw,file=%s", path.Join(config.DataPath, string(config.Distro) + "-seed.img")),
 		}
 		if kvm {
 			params = append(params, "-accel", "kvm")
